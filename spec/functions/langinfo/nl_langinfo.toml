@@ -1,0 +1,18 @@
+name = "nl_langinfo"
+header = "langinfo.h"
+prototype = "char *nl_langinfo(nl_item item)"
+standard = ["POSIX.1-2024 XSH nl_langinfo"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:locale-codeset", "diff:glibc", "diff:musl"]
+provenance = "original"
+semantics = [
+  "Return the immutable CODESET name for the current LC_CTYPE locale.",
+  "Return an immutable empty string for unsupported items. Preserve errno.",
+]
+
+[abi]
+narrow_args = ["edi:s32"]
+variadic = false

@@ -590,8 +590,8 @@ functions = ["dirname"]
 [[headers]]
 name = "stdio.h"
 standard = "POSIX.1-2024 XBD <stdio.h>"
-count = 8
-functions = ["flockfile", "fseeko", "ftello", "funlockfile", "getc_unlocked", "pclose", "popen", "putchar_unlocked"]
+count = 9
+functions = ["fileno", "flockfile", "fseeko", "ftello", "funlockfile", "getc_unlocked", "pclose", "popen", "putchar_unlocked"]
 
 [[headers]]
 name = "string.h"
@@ -628,3 +628,17 @@ name = "errno.h"
 standard = "Runtime ABI <errno.h>"
 count = 1
 functions = ["__errno_location"]
+
+[[headers]]
+name = "langinfo.h"
+standard = "POSIX.1-2024 XBD <langinfo.h>"
+count = 3
+functions = ["nl_langinfo"]
+macros = ["CODESET"]
+types = ["nl_item"]
+
+[[headers]]
+name = "math.h"
+standard = "POSIX.1-2024 XBD <math.h>"
+count = 1
+macros = ["M_PI"]

@@ -3,7 +3,7 @@
 
 This index lists authored function specifications. For implementation state, run `tools/queue status`.
 
-Specs: 618 of 639 inventoried functions. The inventory covers C17, the named POSIX subset, runtime ABI entries, and Linux compatibility extensions. see [inventory scope](cookbook/specifications.md#inventory-scope).
+Specs: 620 of 641 inventoried functions. The inventory covers C17, the named POSIX subset, runtime ABI entries, and Linux compatibility extensions. see [inventory scope](cookbook/specifications.md#inventory-scope).
 
 | Function | Header | Prototype | Standard |
 | --- | --- | --- | --- |
@@ -196,6 +196,7 @@ Specs: 618 of 639 inventoried functions. The inventory covers C17, the named POS
 | [`fgets`](../spec/functions/stdio/fgets.toml) | `<stdio.h>` | `char * fgets(char *restrict dest, int n, FILE *restrict stream)` | C17 7.21.7.2 |
 | [`fgetwc`](../spec/functions/wchar/fgetwc.toml) | `<wchar.h>` | `wint_t fgetwc(FILE *stream)` | C17 7.29.3.1 |
 | [`fgetws`](../spec/functions/wchar/fgetws.toml) | `<wchar.h>` | `wchar_t *fgetws(wchar_t *restrict string, int count, FILE *restrict stream)` | C17 7.29.3.2 |
+| [`fileno`](../spec/functions/stdio/fileno.toml) | `<stdio.h>` | `int fileno(FILE *stream)` | POSIX.1-2024 XSH fileno |
 | [`flockfile`](../spec/functions/stdio/flockfile.toml) | `<stdio.h>` | `void flockfile(FILE *stream)` | POSIX.1-2024 XSH flockfile |
 | [`floor`](../spec/functions/math/floor.toml) | `<math.h>` | `double floor(double x)` | C17 7.12.9.2 |
 | [`floorf`](../spec/functions/math/floorf.toml) | `<math.h>` | `float floorf(float x)` | C17 7.12.9.2 |
@@ -363,6 +364,7 @@ Specs: 618 of 639 inventoried functions. The inventory covers C17, the named POS
 | [`nexttoward`](../spec/functions/math/nexttoward.toml) | `<math.h>` | `double nexttoward(double x, long double y)` | C17 7.12.11.4 |
 | [`nexttowardf`](../spec/functions/math/nexttowardf.toml) | `<math.h>` | `float nexttowardf(float x, long double y)` | C17 7.12.11.4 |
 | [`nexttowardl`](../spec/functions/math/nexttowardl.toml) | `<math.h>` | `long double nexttowardl(long double x, long double y)` | C17 7.12.11.4 |
+| [`nl_langinfo`](../spec/functions/langinfo/nl_langinfo.toml) | `<langinfo.h>` | `char *nl_langinfo(nl_item item)` | POSIX.1-2024 XSH nl_langinfo |
 | [`open`](../spec/functions/fcntl/open.toml) | `<fcntl.h>` | `int open(const char *path, int flags, ...)` | POSIX.1-2024 XSH open |
 | [`openat`](../spec/functions/fcntl/openat.toml) | `<fcntl.h>` | `int openat(int dirfd, const char *path, int flags, ...)` | POSIX.1-2024 XSH openat |
 | [`opendir`](../spec/functions/dirent/opendir.toml) | `<dirent.h>` | `DIR *opendir(const char *name)` | POSIX.1-2024 XSH opendir |
