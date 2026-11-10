@@ -1,4 +1,5 @@
 ; Encode scalar esi to rdi or discard, using the state at rdx. Return the byte count.
+; ECX selects the encoding: zero current locale, one C, two UTF-8.
 bits 64
 default rel
 
@@ -12,7 +13,14 @@ __al_mb_encode:
     jne .invalid
     cmp esi, 0x80
     jb .ascii
-    test dword [rel __al_locale_flags], 1
+    test ecx, ecx
+    jz .locale
+    dec ecx
+    jmp .encoding
+.locale:
+    mov ecx, [rel __al_locale_flags]
+.encoding:
+    test ecx, 1
     jz .invalid
     cmp esi, 0x10ffff
     ja .invalid

@@ -58,23 +58,36 @@ __al_stream_flush:
 .input:
     mov rsi, [rbx + 48]
     sub rsi, [rbx + 40]           ; bytes read ahead
+    mov eax, [rbx + 160]
+    add rsi, rax
     cmp qword [rbx + 72], -1
     je .reposition
     inc rsi                      ; pending pushback is also logically unread
 .reposition:
     test rsi, rsi
-    jz .reset
+    jz .input_reset
     neg rsi
     mov rdi, [rbx]
     mov edx, 1                    ; SEEK_CUR
     call __al_stdio_seek
     test rax, rax
     js .error
+.input_reset:
+    mov rax, [rbx + 136]
+    cmp dword [rbx + 148], -1
+    je .clear
+    mov rax, [rbx + 168]
+    jmp .clear
 .reset:
+    xor eax, eax
+.clear:
     mov qword [rbx + 40], 0
     mov qword [rbx + 48], 0
     mov qword [rbx + 56], 0
     mov qword [rbx + 72], -1
+    mov [rbx + 136], rax
+    mov qword [rbx + 144], -1
+    mov dword [rbx + 160], 0
     xor eax, eax
     jmp .done
 .closed:

@@ -1,4 +1,5 @@
 ; Decode at most rsi bytes from rdi using state rdx. Return count and scalar in rax/edx.
+; ECX selects the encoding: zero current locale, one C, two UTF-8.
 bits 64
 default rel
 
@@ -10,6 +11,14 @@ section .text.__al_mb_decode alloc exec nowrite progbits
 __al_mb_decode:
     test rsi, rsi
     jz .incomplete_empty
+    mov eax, ecx
+    test eax, eax
+    jz .locale
+    dec eax
+    jmp .encoding
+.locale:
+    mov eax, [rel __al_locale_flags]
+.encoding:
     xor r9d, r9d
     mov r8d, [rdx + 4]
     test r8d, r8d
@@ -18,7 +27,7 @@ __al_mb_decode:
     mov r9d, 1
     cmp ecx, 0x80
     jb .complete
-    test dword [rel __al_locale_flags], 1
+    test eax, 1
     jz .invalid
     cmp ecx, 0xc2
     jb .invalid
@@ -56,7 +65,7 @@ __al_mb_decode:
     and ecx, 31
     jmp .continuation
 .pending:
-    test dword [rel __al_locale_flags], 1
+    test eax, 1
     jz .invalid
     test r8d, 0xff000000
     jnz .invalid

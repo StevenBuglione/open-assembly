@@ -3,10 +3,30 @@
 %define OPEN_ASSEMBLY_77636861722E68
 
 extern btowc
+extern fgetwc
+extern fgetws
+extern fputwc
+extern fputws
+extern fwide
+extern fwprintf
+extern fwscanf
+extern getwc
+extern getwchar
 extern mbrlen
 extern mbrtowc
 extern mbsinit
 extern mbsrtowcs
+extern putwc
+extern putwchar
+extern swprintf
+extern swscanf
+extern ungetwc
+extern vfwprintf
+extern vfwscanf
+extern vswprintf
+extern vswscanf
+extern vwprintf
+extern vwscanf
 extern wcrtomb
 extern wcscat
 extern wcschr
@@ -14,6 +34,7 @@ extern wcscmp
 extern wcscoll
 extern wcscpy
 extern wcscspn
+extern wcsftime
 extern wcslen
 extern wcsncat
 extern wcsncmp
@@ -38,5 +59,7 @@ extern wmemcmp
 extern wmemcpy
 extern wmemmove
 extern wmemset
+extern wprintf
+extern wscanf
 
 %endif

@@ -95,7 +95,7 @@ tmpfile:
 .anonymous:
     mov r12, rax
 .open_stream:
-    mov edi, 4224                 ; FILE and its inline buffer
+    mov edi, 4272                 ; FILE and its inline buffer
     call malloc
     test rax, rax
     jz .release_descriptor

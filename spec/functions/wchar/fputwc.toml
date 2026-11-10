@@ -1,0 +1,17 @@
+name = "fputwc"
+header = "wchar.h"
+prototype = "wint_t fputwc(wchar_t character, FILE *stream)"
+standard = ["C17 7.29.3.3"]
+deps = []
+errno = ["EBADF", "EILSEQ", "EIO"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:c17-wide-stdio", "diff:glibc", "diff:musl"]
+provenance = "original"
+semantics = [
+  "Encode and write a wide character using the stream encoding. Return the character or WEOF.",
+]
+
+[abi]
+narrow_args = ["edi:s32"]
+variadic = false

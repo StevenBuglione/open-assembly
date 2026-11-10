@@ -164,7 +164,8 @@ __al_scan_float:
 .pattern:
     or eax, 32
     mov rcx, [rsp + 40]
-    cmp al, [rcx]
+    movzx edx, byte [rcx]
+    cmp eax, edx
     jne .finish
     inc rcx
     mov [rsp + 40], rcx

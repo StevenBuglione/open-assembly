@@ -27,6 +27,7 @@ __al_mbs_convert:
     mov rdi, r12
     mov esi, 4
     mov rdx, r13
+    xor ecx, ecx                ; use current LC_CTYPE
     call __al_mb_decode
     test rax, rax
     js .invalid

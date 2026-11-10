@@ -1,0 +1,19 @@
+name = "vswscanf"
+header = "wchar.h"
+prototype = "int vswscanf(const wchar_t *restrict string, const wchar_t *restrict format, va_list args)"
+standard = ["C17 7.29.2.8"]
+deps = []
+errno = ["EILSEQ", "EINVAL", "EIO", "ENOMEM"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:c17-wide-stdio", "reference:sysv-amd64", "diff:glibc", "diff:musl"]
+provenance = "original"
+semantics = [
+  "Interpret C17 wide scan conversions, with field widths and consumed counts in wide characters.",
+  "Return the number of assignments, or EOF when input fails before the first completed conversion.",
+  "For c, s and scansets, l selects wchar_t output. Other character destinations receive multibyte text.",
+]
+
+[abi]
+narrow_args = []
+variadic = false
