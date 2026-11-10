@@ -108,7 +108,12 @@ LANGINFO_CONSTANTS = {"CODESET": 14}
 MATH_XSI_CONSTANTS = {"M_PI": "3.141592653589793238462643383279502884"}
 FNM_CONSTANTS = {"FNM_PATHNAME": 1, "FNM_NOESCAPE": 2, "FNM_PERIOD": 4, "FNM_CASEFOLD": 16,
                  "FNM_IGNORECASE": 16, "FNM_NOMATCH": 1}
+GLOB_CONSTANTS = {"GLOB_ERR": 1, "GLOB_MARK": 2, "GLOB_NOSORT": 4,
+                  "GLOB_DOOFFS": 8, "GLOB_NOCHECK": 16, "GLOB_APPEND": 32,
+                  "GLOB_NOESCAPE": 64, "GLOB_NOSPACE": 1, "GLOB_ABORTED": 2,
+                  "GLOB_NOMATCH": 3}
 POSIX_SCOPE = {
+    "glob.h": {"functions": {"glob", "globfree"}, "types": {"glob_t"}, "macros": set(GLOB_CONSTANTS)},
     "fnmatch.h": {"functions": {"fnmatch"}, "macros": set(FNM_CONSTANTS)},
     "langinfo.h": {"functions": {"nl_langinfo"}, "types": {"nl_item"}, "macros": set(LANGINFO_CONSTANTS)},
     "math.h": {"macros": set(MATH_XSI_CONSTANTS)},

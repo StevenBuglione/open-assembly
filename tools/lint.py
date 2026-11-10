@@ -77,6 +77,8 @@ COMPLEX_EXTENDED_ARGUMENTS = {**{name + "l": 2 for name in (
     "creal", "cimag", "conj", "cproj", "cabs", "carg", "clog", "csqrt", "cexp", "ccos", "csin", "ccosh", "csinh", "ctan", "ctanh", "catan", "catanh", "casin", "cacos", "casinh", "cacosh",
 )}, "cpowl": 4}
 PRIVATE_FUNCTIONS = {
+    "glob/__al_glob_add", "glob/__al_glob_candidate", "glob/__al_glob_compare",
+    "glob/__al_glob_error", "glob/__al_glob_parse", "glob/__al_glob_path", "glob/__al_glob_walk",
     "stdio/__al_scan_wset", "stdio/__al_scan_wmember", "stdio/__al_scan_wchars",
     "stdio/__al_fmt_unit", "stdio/__al_fmt_wemit", "stdio/__al_fmt_wtext",
     "stdio/__al_fmt_nwide",
@@ -1377,7 +1379,8 @@ def check_file(path, function, fixture_syscall, functions_snapshot=project_funct
         "rt/__errno_location", "rt/__al_stream_owner", "pthread/pthread_self", "locale/__al_mbstate_default",
     }
     program.callback_table = CALLBACK_TABLES.get(relative_runtime)
-    program.callback_argument = ("rdi" if relative_runtime == "pthread/__al_thread_start"
+    program.callback_argument = ("rdx" if relative_runtime == "glob/__al_glob_error"
+                                   else "rdi" if relative_runtime == "pthread/__al_thread_start"
                                    else CALLBACK_ARGUMENTS.get(function))
     if relative_runtime == "time/__al_realtime_parts":
         program.callback_resolver = "__al_vdso_clock_entry"

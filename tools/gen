@@ -9,7 +9,7 @@ import sys
 import tempfile
 
 from extensions import extension_functions, load_packages
-from spec import (FNM_CONSTANTS, LANGINFO_CONSTANTS, MATH_XSI_CONSTANTS, NETDB_CONSTANTS, POSIX_FDS, PTHREAD_CREATION, PTHREAD_MUTEX_TYPES, PTHREAD_ONCE_CONSTANTS, PTHREAD_TSD_LIMITS, ROOT, SEEK_ORIGINS, STAT_FILE_KINDS, SpecError, comment_header, has_runtime_entry,
+from spec import (FNM_CONSTANTS, GLOB_CONSTANTS, LANGINFO_CONSTANTS, MATH_XSI_CONSTANTS, NETDB_CONSTANTS, POSIX_FDS, PTHREAD_CREATION, PTHREAD_MUTEX_TYPES, PTHREAD_ONCE_CONSTANTS, PTHREAD_TSD_LIMITS, ROOT, SEEK_ORIGINS, STAT_FILE_KINDS, SpecError, comment_header, has_runtime_entry,
                   TERMIOS_LINUX_SPEEDS, TERMIOS_POSIX_CONSTANTS,
                   load_file_abi, load_network_abi, load_process_abi, load_project, load_signal_abi, load_time_abi, nasm_name)
 
@@ -130,6 +130,7 @@ def make_outputs(project, include_tracked=True, include_test=True):
         "langinfo.h": LANGINFO_CONSTANTS,
         "math.h": MATH_XSI_CONSTANTS,
         "fnmatch.h": FNM_CONSTANTS,
+        "glob.h": GLOB_CONSTANTS,
         "netdb.h": NETDB_CONSTANTS,
         "termios.h": TERMIOS_POSIX_CONSTANTS | TERMIOS_LINUX_SPEEDS,
         "unistd.h": file_abi["seek"] | file_abi["access_modes"] | file_abi["sysconf_names"],
@@ -323,6 +324,8 @@ def make_outputs(project, include_tracked=True, include_test=True):
                               "#define WIFSTOPPED(status) (((status) & 0xff) == 0x7f)",
                               "#define WSTOPSIG(status) (((status) >> 8) & 0xff)",
                               "#define WIFCONTINUED(status) ((status) == 0xffff)", ""))
+            elif header == "glob.h":
+                lines.extend(("typedef struct { size_t gl_pathc; char **gl_pathv; size_t gl_offs; } glob_t;", ""))
             elif header == "dirent.h":
                 lines.extend(("typedef struct __al_DIR DIR;", "", "struct dirent {", "    unsigned long d_ino;",
                               "    long d_off;", "    unsigned short d_reclen;", "    unsigned char d_type;",

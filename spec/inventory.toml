@@ -796,3 +796,11 @@ standard = "POSIX.1-2024 XBD <fnmatch.h>"
 count = 7
 functions = ["fnmatch"]
 macros = ["FNM_CASEFOLD", "FNM_IGNORECASE", "FNM_NOMATCH", "FNM_NOESCAPE", "FNM_PATHNAME", "FNM_PERIOD"]
+
+[[headers]]
+name = "glob.h"
+standard = "POSIX.1-2024 XBD <glob.h>"
+count = 13
+functions = ["glob", "globfree"]
+types = ["glob_t"]
+macros = ["GLOB_ABORTED", "GLOB_APPEND", "GLOB_DOOFFS", "GLOB_ERR", "GLOB_MARK", "GLOB_NOCHECK", "GLOB_NOESCAPE", "GLOB_NOMATCH", "GLOB_NOSORT", "GLOB_NOSPACE"]

@@ -3,7 +3,7 @@
 
 This index lists authored function specifications. For implementation state, run `tools/queue status`.
 
-Specs: 708 of 708 inventoried functions. The inventory covers C17, the named POSIX subset, runtime ABI entries, and Linux compatibility extensions. see [inventory scope](cookbook/specifications.md#inventory-scope).
+Specs: 710 of 710 inventoried functions. The inventory covers C17, the named POSIX subset, runtime ABI entries, and Linux compatibility extensions. see [inventory scope](cookbook/specifications.md#inventory-scope).
 
 | Function | Header | Prototype | Standard |
 | --- | --- | --- | --- |
@@ -290,6 +290,8 @@ Specs: 708 of 708 inventoried functions. The inventory covers C17, the named POS
 | [`gettimeofday`](../spec/functions/sys/time/gettimeofday.toml) | `<sys/time.h>` | `int gettimeofday(struct timeval *restrict value, void *restrict zone)` | Extension ABI gettimeofday |
 | [`getwc`](../spec/functions/wchar/getwc.toml) | `<wchar.h>` | `wint_t getwc(FILE *stream)` | C17 7.29.3.6 |
 | [`getwchar`](../spec/functions/wchar/getwchar.toml) | `<wchar.h>` | `wint_t getwchar(void)` | C17 7.29.3.7 |
+| [`glob`](../spec/functions/glob/glob.toml) | `<glob.h>` | `int glob(const char *restrict pattern, int flags, int (*errfunc)(const char *, int), glob_t *restrict result)` | POSIX.1-2024 XSH glob |
+| [`globfree`](../spec/functions/glob/globfree.toml) | `<glob.h>` | `void globfree(glob_t *result)` | POSIX.1-2024 XSH globfree |
 | [`gmtime`](../spec/functions/time/gmtime.toml) | `<time.h>` | `struct tm *gmtime(const time_t *timer)` | C17 7.27.3.3 |
 | [`gmtime_r`](../spec/functions/time/gmtime_r.toml) | `<time.h>` | `struct tm *gmtime_r(const time_t *restrict timer, struct tm *restrict result)` | POSIX.1-2024 XSH gmtime_r |
 | [`htonl`](../spec/functions/arpa/inet/htonl.toml) | `<arpa/inet.h>` | `uint32_t htonl(uint32_t value)` | POSIX.1-2024 XSH htonl |
