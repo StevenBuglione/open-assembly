@@ -23,7 +23,14 @@ extern wcsrchr
 extern wcsrtombs
 extern wcsspn
 extern wcsstr
+extern wcstod
+extern wcstof
 extern wcstok
+extern wcstol
+extern wcstold
+extern wcstoll
+extern wcstoul
+extern wcstoull
 extern wcsxfrm
 extern wctob
 extern wmemchr

@@ -19,6 +19,7 @@ RUNTIME_SRC = Path("src/x86_64-linux")
 STARTUP_SRC = RUNTIME_SRC / "rt/_start.asm"
 MANIFEST = Path("tests/runtime/manifest.toml")
 BACKENDS = {"native", "qemu", "valgrind"}
+RUNTIME_BUILD_TIMEOUT = 180
 DEFINED_KINDS = {"T", "B", "D", "R"}
 PHASE1_PUBLIC = {"__errno_location", "__stack_chk_fail", "_Exit", "_exit", "atexit",
                  "close", "exit", "read", "write"}
@@ -132,7 +133,8 @@ def phase1_inputs():
 
 
 def build_runtime(directory, log):
-    checked(log, ["make", "--no-print-directory", "runtime", f"RUNTIME_BUILD={directory}"], timeout=60)
+    checked(log, ["make", "--no-print-directory", "runtime", f"RUNTIME_BUILD={directory}"],
+            timeout=RUNTIME_BUILD_TIMEOUT)
     startup = directory / "crt1.o"
     archive = directory / "libopenasm.a"
     sources = sorted(path for path in RUNTIME_SRC.rglob("*.asm") if path != STARTUP_SRC)

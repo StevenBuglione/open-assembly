@@ -245,6 +245,7 @@ __al_scan_float:
     mov byte [rdi + rax], 0
     lea rsi, [rel validation_number]
     lea rdx, [rel validation_meta]
+    mov ecx, 1
     call __al_float_lex           ; validate without rounding or raising flags
     test rax, rax
     js .matching_failure
