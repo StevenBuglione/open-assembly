@@ -23,16 +23,29 @@ WIDE = {
     "wcsncmp", "wcsncpy", "wcspbrk", "wcsrchr", "wcsspn", "wcsstr", "wcstok", "wcsxfrm",
     "wmemchr", "wmemcmp", "wmemcpy", "wmemmove", "wmemset",
 }
-EXTERNAL = {
+LOCALE_EXTERNAL = {
     "functional-wcsstr": ("functional/wcsstr.c", ("wcsstr",)),
     "functional-wcstol": ("functional/wcstol.c", ("wcstol",)),
     "regression-wcsstr-false-negative": ("regression/wcsstr-false-negative.c", ("wcsstr",)),
     "regression-mbsrtowcs-overflow": ("regression/mbsrtowcs-overflow.c", ("mbsrtowcs",)),
     "regression-wcsncpy-read-overflow": ("regression/wcsncpy-read-overflow.c", ("wcsncpy",)),
 }
+STDIO = {
+    "fwide", "fgetwc", "getwc", "getwchar", "fgetws", "fputwc", "putwc", "putwchar",
+    "fputws", "ungetwc", "fwprintf", "wprintf", "swprintf", "vfwprintf", "vwprintf",
+    "vswprintf", "fwscanf", "wscanf", "swscanf", "vfwscanf", "vwscanf", "vswscanf",
+}
+STDIO_EXTERNAL = {
+    "functional-swprintf": ("functional/swprintf.c", ("swprintf",)),
+    "functional-fwscanf": ("functional/fwscanf.c", ("fwscanf",)),
+    "regression-fgetwc-buffering": ("regression/fgetwc-buffering.c", ("fgetwc",)),
+}
+EXTERNAL = {"libc-test": LOCALE_EXTERNAL, "stdio": STDIO_EXTERNAL}
 SUITES = {
-    "libc-test": ({symbol for _, symbols in EXTERNAL.values() for symbol in symbols},
+    "libc-test": ({symbol for _, symbols in LOCALE_EXTERNAL.values() for symbol in symbols},
                   ["Pinned upstream functional and regression subset with currently supported APIs."]),
+    "stdio": (STDIO, ["Wide stream orientation, UTF-8 conversion and formatted I/O.",
+                       "Pinned upstream wide stdio subset and independent directed controls."]),
     "multibyte": (MULTIBYTE, ["Initial C and C.UTF-8 API slice.",
                              "Valid scalar sweeps are complete for the three scalar conversion pairs.",
                              "Malformed and restartable state cases are directed.",
@@ -48,23 +61,28 @@ SUITES = {
 SCALAR_CASES = ("multibyte-scalar16", "multibyte-scalar32", "multibyte-scalar-wide")
 
 
-def inputs(suite, *, upstream=False):
+def inputs(suite, scope):
     bound = phase1_inputs()
     paths = [Path(__file__).relative_to(ROOT), Path("tools/phase6.py"),
              Path("docs/adr/0012-c-utf8-multibyte.md"),
              *sorted(path for path in suite.iterdir() if path.is_file())]
-    if upstream:
+    if scope == "libc-test":
         paths.append(Path("docs/adr/0018-wide-numeric-conversion.md"))
+    if scope == "stdio":
+        paths.extend(Path("docs/adr") / name for name in (
+            "0021-wide-stream-orientation.md", "0023-wide-formatted-output.md",
+            "0025-wide-formatted-input.md",
+        ))
     bound.update(snapshot_inputs(ROOT, paths))
     return dict(sorted(bound.items()))
 
 
 def execute(scope):
     name = f"phase9-{scope}"
-    upstream = scope == "libc-test"
-    suite = Path("tests/phase9") if upstream else Path("tests/phase9") / scope
+    upstream_only = scope == "libc-test"
+    suite = Path("tests/phase9") if upstream_only else Path("tests/phase9") / scope
     public, limits = SUITES[scope]
-    snapshot = partial(inputs, suite, upstream=upstream)
+    snapshot = partial(inputs, suite, scope)
     evidence = {"schema_version": 1, "scope": name, "production_verified": False,
                 "outcome": "fail", "checks": {}, "limits": limits}
     checks = evidence["checks"]
@@ -74,8 +92,9 @@ def execute(scope):
         project = load_project()
         if not public <= project.functions.keys():
             raise GateError("the public Phase 9 specifications are incomplete")
-        if not upstream:
-            parse = partial(parse_probe, suite=suite, programs=(), fault_wrappers={})
+        if not upstream_only:
+            wraps = {suite / "position.c": ("__al_stdio_io",)} if scope == "stdio" else {}
+            parse = partial(parse_probe, suite=suite, programs=(), fault_wrappers=wraps)
             probes, controls = load_probes(suite / "manifest.toml", public, parse)
         runners = {"native": [], "qemu": [shutil.which("qemu-x86_64")],
                    "valgrind": [shutil.which("valgrind"), "--quiet", "--error-exitcode=99",
@@ -91,11 +110,15 @@ def execute(scope):
             if first[3] != second[3]:
                 raise GateError("isolated Phase 9 runtime builds differ")
             runtime.update(outcome="pass", artifacts=first[3])
-            if upstream:
+            if scope in EXTERNAL:
                 record = checks["external_conformance"] = {"outcome": "fail"}
-                libc_test(directory / "libc-test", first, runners, record, cases=EXTERNAL,
-                          c_flags=("-Wno-error=unused-parameter",))
-            else:
+                flags = ("-Wno-error=unused-parameter",)
+                if scope == "stdio":
+                    flags += ("-Wno-error=sign-compare",)
+                common = {"regression-fgetwc-buffering": ("utf8.c",)} if scope == "stdio" else None
+                libc_test(directory / "libc-test", first, runners, record, cases=EXTERNAL[scope],
+                          c_flags=flags, common=common)
+            if not upstream_only:
                 cases = checks["cases"] = {}
                 run_cases(probes, directory, first, second, runners, cases, host_macro="OA_PHASE9_HOST")
                 stubs = checks["stub_controls"] = {"outcome": "fail", "symbols": {}}

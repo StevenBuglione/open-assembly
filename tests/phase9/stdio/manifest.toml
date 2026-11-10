@@ -1,0 +1,538 @@
+schema = 1
+
+[[case]]
+name = "wide-stdio-fwide"
+sources = ["tests/phase9/stdio/basic.c"]
+requires = ["fwide"]
+args = ["fwide"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "wide-stdio-fgetwc"
+sources = ["tests/phase9/stdio/basic.c"]
+requires = ["fgetwc"]
+args = ["fgetwc"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "wide-stdio-getwc"
+sources = ["tests/phase9/stdio/basic.c"]
+requires = ["getwc"]
+args = ["getwc"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "wide-stdio-fgetws"
+sources = ["tests/phase9/stdio/basic.c"]
+requires = ["fgetws"]
+args = ["fgetws"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "wide-stdio-ungetwc"
+sources = ["tests/phase9/stdio/basic.c"]
+requires = ["ungetwc"]
+args = ["ungetwc"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "wide-stdio-fputwc"
+sources = ["tests/phase9/stdio/basic.c"]
+requires = ["fputwc"]
+args = ["fputwc"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "wide-stdio-putwc"
+sources = ["tests/phase9/stdio/basic.c"]
+requires = ["putwc"]
+args = ["putwc"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "wide-stdio-fputws"
+sources = ["tests/phase9/stdio/basic.c"]
+requires = ["fputws"]
+args = ["fputws"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "wide-stdio-getwchar"
+sources = ["tests/phase9/stdio/basic.c"]
+requires = ["getwchar"]
+args = ["getwchar"]
+status = 0
+stdin_hex = "cea9e4b8ad0a5a"
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "wide-stdio-putwchar"
+sources = ["tests/phase9/stdio/basic.c"]
+requires = ["putwchar"]
+args = ["putwchar"]
+status = 0
+stdin_hex = ""
+stderr = ""
+oracle = ["reference:c17-wide-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+stdout = ""
+stdout_hex = "cea9"
+host = true
+env = {}
+
+[[case]]
+name = "wide-stdio-stream-policy"
+sources = ["tests/phase9/stdio/basic.c"]
+requires = ["fgetws", "freopen", "fwide", "ungetwc"]
+args = ["stream-policy"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Project captured-encoding, byte-orientation rejection and single pending pushback rules."
+env = {}
+
+[[case]]
+name = "wide-stdio-swprintf"
+sources = ["tests/phase9/stdio/output.c"]
+requires = ["swprintf"]
+args = ["swprintf"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "wide-stdio-vswprintf"
+sources = ["tests/phase9/stdio/output.c"]
+requires = ["vswprintf"]
+args = ["vswprintf"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "wide-stdio-fwprintf"
+sources = ["tests/phase9/stdio/output.c"]
+requires = ["fwprintf"]
+args = ["fwprintf"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "wide-stdio-vfwprintf"
+sources = ["tests/phase9/stdio/output.c"]
+requires = ["vfwprintf"]
+args = ["vfwprintf"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "wide-stdio-wprintf"
+sources = ["tests/phase9/stdio/output.c"]
+requires = ["wprintf"]
+args = ["wprintf"]
+status = 0
+stdin_hex = ""
+stderr = ""
+oracle = ["reference:c17-wide-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+stdout = ""
+stdout_hex = "2d33377c302e357c322e32357ccea97ce4b8ad7c32617c312f322f332f342f35"
+host = true
+env = {}
+
+[[case]]
+name = "wide-stdio-vwprintf"
+sources = ["tests/phase9/stdio/output.c"]
+requires = ["vwprintf"]
+args = ["vwprintf"]
+status = 0
+stdin_hex = ""
+stderr = ""
+oracle = ["reference:c17-wide-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+stdout = ""
+stdout_hex = "2d33377c302e357c322e32357ccea97ce4b8ad7c32617c312f322f332f342f35"
+host = true
+env = {}
+
+[[case]]
+name = "wide-stdio-truncated"
+sources = ["tests/phase9/stdio/output.c"]
+requires = ["swprintf", "vswprintf"]
+args = ["truncated"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Project terminated output prefix on truncation and encoding failure."
+env = {}
+
+[[case]]
+name = "wide-stdio-swscanf"
+sources = ["tests/phase9/stdio/input.c"]
+requires = ["swscanf"]
+args = ["swscanf"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "wide-stdio-vswscanf"
+sources = ["tests/phase9/stdio/input.c"]
+requires = ["vswscanf"]
+args = ["vswscanf"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "wide-stdio-fwscanf"
+sources = ["tests/phase9/stdio/input.c"]
+requires = ["fwscanf"]
+args = ["fwscanf"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "wide-stdio-vfwscanf"
+sources = ["tests/phase9/stdio/input.c"]
+requires = ["vfwscanf"]
+args = ["vfwscanf"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "wide-stdio-wscanf"
+sources = ["tests/phase9/stdio/input.c"]
+requires = ["wscanf"]
+args = ["wscanf"]
+status = 0
+stdin_hex = "2d33377ccea97c7879797c322e32357c31312f32322f33332f343421"
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "wide-stdio-vwscanf"
+sources = ["tests/phase9/stdio/input.c"]
+requires = ["vwscanf"]
+args = ["vwscanf"]
+status = 0
+stdin_hex = "2d33377ccea97c7879797c322e32357c31312f32322f33332f343421"
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "wide-stdio-boundaries"
+sources = ["tests/phase9/stdio/input.c"]
+requires = ["swscanf"]
+args = ["boundaries"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Project UTF-8 whitespace and full-width c conversion on input failure."
+env = {}
+
+[[case]]
+name = "wide-stdio-position"
+sources = ["tests/phase9/stdio/position.c"]
+requires = ["fwscanf", "ftell", "fgetpos", "fsetpos", "ungetwc"]
+args = ["position"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+link_wraps = ["__al_stdio_io"]
+host_skip = "Project logical wide position with simultaneous scanner lookahead and caller pushback."
+env = {}
+
+[[case]]
+name = "wide-stdio-resumed"
+sources = ["tests/phase9/stdio/position.c"]
+requires = ["fgetwc", "fwscanf", "fgetpos", "fsetpos", "fileno"]
+args = ["resumed"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+link_wraps = ["__al_stdio_io"]
+host_skip = "Project-only read failure injection and restartable decoder state."
+env = {}
+
+[[stub]]
+symbol = "fwide"
+case = "wide-stdio-fwide"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "fgetwc"
+case = "wide-stdio-fgetwc"
+status = 12
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "getwc"
+case = "wide-stdio-getwc"
+status = 12
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "fgetws"
+case = "wide-stdio-fgetws"
+status = 12
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "ungetwc"
+case = "wide-stdio-ungetwc"
+status = 12
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "fputwc"
+case = "wide-stdio-fputwc"
+status = 13
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "putwc"
+case = "wide-stdio-putwc"
+status = 13
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "fputws"
+case = "wide-stdio-fputws"
+status = 14
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "getwchar"
+case = "wide-stdio-getwchar"
+status = 15
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "putwchar"
+case = "wide-stdio-putwchar"
+status = 16
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "swprintf"
+case = "wide-stdio-swprintf"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "vswprintf"
+case = "wide-stdio-vswprintf"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "fwprintf"
+case = "wide-stdio-fwprintf"
+status = 12
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "vfwprintf"
+case = "wide-stdio-vfwprintf"
+status = 12
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "wprintf"
+case = "wide-stdio-wprintf"
+status = 14
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "vwprintf"
+case = "wide-stdio-vwprintf"
+status = 14
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "swscanf"
+case = "wide-stdio-swscanf"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "vswscanf"
+case = "wide-stdio-vswscanf"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "fwscanf"
+case = "wide-stdio-fwscanf"
+status = 12
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "vfwscanf"
+case = "wide-stdio-vfwscanf"
+status = 12
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "wscanf"
+case = "wide-stdio-wscanf"
+status = 13
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "vwscanf"
+case = "wide-stdio-vwscanf"
+status = 13
+stdout = ""
+stderr = ""
