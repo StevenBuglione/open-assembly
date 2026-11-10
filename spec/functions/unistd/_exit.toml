@@ -1,0 +1,19 @@
+name = "_exit"
+header = "unistd.h"
+prototype = "_Noreturn void _exit(int status)"
+standard = ["POSIX.1-2024 XSH _exit"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "reference:linux-wait-status"]
+provenance = "original"
+semantics = [
+  "Terminate the process immediately without invoking registered callbacks or flushing stdio streams.",
+  "The low eight bits of status are available to the parent; the function never returns.",
+]
+
+[abi]
+narrow_args = ["edi:s32"]
+variadic = false
+noreturn = true

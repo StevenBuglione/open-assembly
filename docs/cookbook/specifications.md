@@ -1,8 +1,9 @@
 # Function specifications
 
-Phase 0 includes the specification, inventory, and fixture verification
-workflow. The only authored function specification is `strlen`; no
-production library function is implemented or verified.
+The specification, inventory, and fixture workflow established in Phase 0
+also covers the production bootstrap functions. The
+[runtime ABI](../adr/0002-runtime-abi.md) defines the entry, thread block,
+and private syscall interfaces shared by those functions.
 
 A function is described once, in
 `spec/functions/<header-without-.h>/<function>.toml`. For example, the
@@ -24,12 +25,13 @@ Required fields:
 | `semantics` | Nonempty list of single-line requirements written for independent test authors. Include the input contract and relevant edge cases. |
 | `provenance` | `"original"` or a source record described below. |
 | `abi.narrow_args`, `abi.variadic` | An array of incoming SysV integer register and extension pairs, e.g. `["edi:s32", "sil:u8"]`, and a boolean agreeing with the prototype's ellipsis. The schema cross-checks builtin types with known incoming registers. Use explicit metadata for opaque typedefs and aggregates; review plain char signedness for the target. |
+| `abi.noreturn` | Optional boolean, defaulting to `false`. Use `true` for a prototype with `_Noreturn`; the checker uses it to validate nonreturning functions. |
 
 Unknown fields, duplicate values and handwritten status are errors.
 Use [`spec/deviations.toml`](../../spec/deviations.toml) for deliberate
 choices that differ from musl when C17 leaves behavior open. Its
 `[[deviations]]` rows name the `function` and `standard` and explain the
-`choice` and `reason`. Phase 0 has no recorded deviations.
+`choice` and `reason`.
 
 ## Inventory scope
 
@@ -67,20 +69,23 @@ does not enumerate, and future library directions.
 
 The initial POSIX target is the
 [POSIX.1-2024 `<unistd.h>` bootstrap subset](https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/unistd.h.html):
-`_exit`, `close`, `read`, `write`, `size_t`, and `ssize_t`. Additional
-POSIX APIs must be scoped and added in later milestones. In this inventory,
-1 of 505 named functions has a spec, and none has a production
-implementation. Cataloging a name does not implement the function or
-define any type layout, macro value, or conformance claim.
+`_exit`, `close`, `read`, `write`, `size_t`, `ssize_t`, and the three
+standard file descriptor macros. Additional POSIX APIs must be scoped and
+added in later milestones. The runtime ABI entries `__errno_location` and
+`__stack_chk_fail` are cataloged separately from standards interfaces. See
+the [API index](../api-index.md) for authored specifications. Cataloging a
+name does not implement the function or establish conformance.
 
 ## Generated files
 
 Run `tools/gen` to refresh `include/asm/<header>.inc`,
 `build/include/c/<header>.h`, and [the API index](../api-index.md). Only
 headers with authored function specs are generated. The C declarations are
-ignored test inputs; they rely on the test compiler's `<stddef.h>` and do
-not replace the host libc headers as a whole. Other type layouts and the
-full public C header surface are future work.
+ignored test inputs; they rely on the test compiler's `<stddef.h>` and use
+the Linux UAPI `<asm/errno.h>` for target errno values. The generated
+`errno` lvalue calls `__errno_location`; `ssize_t` is `long` on this target.
+The generated C and NASM unistd declarations share the file descriptor
+constants. Full public C headers are future work.
 
 `tools/gen --check` compares the expected path set and exact bytes without
 editing files. From a fresh checkout, run `tools/gen --test-headers` first
@@ -120,5 +125,5 @@ hashes, tool identity, and individual outcomes. The queue reports stale
 and malformed evidence separately. Even a passing and current fixture
 cannot verify a production function or unlock its dependents. The complete
 production evidence producer and the failed-attempt history for computed
-`blocked` status are pending. Phase 0 rejects production verification
-claims.
+`blocked` status are pending. Phase 1 has a separate runtime gate; its
+evidence does not verify individual functions or unlock the queue.

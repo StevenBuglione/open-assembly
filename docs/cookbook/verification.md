@@ -1,4 +1,45 @@
-# Phase 0 verification
+# Verification
+
+## Phase 1 runtime acceptance
+
+```sh
+./tools/container make runtime
+./tools/container make phase1
+```
+
+The runtime build produces `build/runtime/crt1.o` and
+`build/runtime/libopenasm.a`. Link the startup object, then the application
+objects, then the archive. The Phase 1 gate uses `ld` directly with
+`-static -no-pie --gc-sections -e _start` and checks the symbols resolved by
+the link. Each C test is compiled with `-ffreestanding -fno-builtin`. Its
+required assembly references must appear as strong undefined symbols before
+linking and resolve to the runtime in the executable.
+
+The gate builds in two isolated directories and compares hashes of the startup
+object, archive, archive members, test objects, and executables. Each archive
+member must match its standalone object. The ELF audit checks each assembly
+object for the GNU stack note, executable section flags, and compiler
+producer metadata. Every linked executable must be static non-PIE, with a
+non-executable stack, no writable executable load segment, and no unresolved
+symbols.
+
+The assembly and compiler-built hello worlds run natively, with QEMU user-mode
+emulation, and under Valgrind Memcheck. The independent runtime manifest
+also checks the startup vectors, TLS image, stack guard, syscall register
+mapping, errno and I/O, interrupted reads, exit and callback order, and fatal
+paths. It names the oracle and records the expected exit status and byte
+output for each case. The exact-environment startup cases run natively and
+under QEMU. Memcheck injects an `LD_PRELOAD` entry, which a separate startup
+case checks alongside the TLS assertions. The two stack-failure cases run
+natively because QEMU and Memcheck add their own fatal-signal diagnostics.
+
+One generated stub per public Phase 1 function replaces calls to that
+function through the static linker. Each selected independent probe must
+report its expected rejection. A link error or an unexpected crash fails
+the gate. The full report is `build/evidence/phase1.json`, with source and
+tool hashes, expected and observed results, and reasons for backend skips.
+
+## Phase 0 fixture verification
 
 Run the milestone inside the pinned toolchain.
 
@@ -40,7 +81,7 @@ checks the relevant assembly objects for an empty non-executable stack
 note and compiler producer metadata. It checks the test executables for
 static non-PIE layout, a non-executable stack and resolved symbols.
 
-## Individual checks
+### Individual fixture checks
 
 ```sh
 ./tools/container tools/lint --function strlen tests/fixtures/strlen.good.asm
@@ -72,11 +113,20 @@ the actual values supplied to callees.
 
 Unknown instructions and directives, preprocessor expansions, indirect
 or cross-function jumps, escapes of the tracked frame address, and stack
-accesses the checker cannot resolve fail closed. The Phase 0 subset
-supports fixed stack frames and requires explicit executable sections.
-Fixture-only ABI annotations are restricted to the independent checker
-corpus. Public assembly gets its narrow-argument and variadic metadata
-from specs and requires a matching generated comment header.
+accesses the checker cannot resolve fail closed. Public assembly gets its
+narrow-argument, variadic, and non-returning metadata from specs and requires
+a matching generated comment header. Fixture-only annotations are restricted
+to the independent checker corpus.
+
+The runtime model distinguishes Linux process entry from a System V call.
+The startup code can read the initial argument count and derive the initial
+argument-vector address. The private syscall wrapper can read its seventh
+argument from the caller's stack. The signal restorer is constrained to
+Linux `rt_sigreturn` and a trap fallback. The modeled indirect call in
+`exit` requires a pointer loaded from the registered-callback table.
+The `errno` accessor may read the thread control block pointer through
+`fs:0`. Literal data and zero-initialized storage use explicit non-executable
+sections. Data exports must have a modeled runtime owner.
 
 ## Evidence and production requirements
 

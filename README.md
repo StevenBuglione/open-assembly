@@ -1,25 +1,30 @@
 # open-assembly
 
 An assembly-authored libc project targeting x86-64 Linux System V, ISO C17,
-and a named POSIX subset. Phase 0 provides specifications, test fixtures
-and independent verification tools. The repository currently has zero
-production libc implementations.
+and a named POSIX subset. Phase 0 provides specifications, test fixtures,
+and independent verification tools. Phase 1 provides a static startup
+object and runtime archive with initial-thread TLS and errno, a private
+Linux syscall boundary, basic I/O, exit callbacks, and stack-protector
+failure handling.
 
-With Nix and Docker available, run the Phase 0 acceptance checks in the
+With Nix and Docker available, run the milestone acceptance checks in the
 pinned toolchain container.
 
 ```sh
-./tools/container make phase0
+./tools/container make phase0 phase1
 ```
 
-The gate writes evidence to `build/evidence/`. The
-[verification cookbook](docs/cookbook/verification.md) describes the checks,
-individual commands and requirements still pending for production.
-The [API index](docs/api-index.md) reflects the current specification
-inventory.
+The gates write evidence to `build/evidence/`. Use
+`./tools/container make runtime` to build `build/runtime/crt1.o` and
+`build/runtime/libopenasm.a`. The cookbook lists the checks and the remaining
+per-function production requirements. [Verification cookbook](docs/cookbook/verification.md)
 
-Project constraints are recorded in [AGENTS.md](AGENTS.md) and
-[the scope decision](docs/adr/0001-project-scope.md). See
-[the roadmap](docs/plan.md) for subsequent milestones.
+The project records its scope, runtime ABI, and current specifications in
+the repository. [Project contract](AGENTS.md) ·
+[Scope](docs/adr/0001-project-scope.md) ·
+[Runtime ABI](docs/adr/0002-runtime-abi.md) · [API index](docs/api-index.md)
+
+The roadmap lists the remaining milestones and their exit gates.
+[Roadmap](docs/plan.md)
 
 Licensed under the MIT License.

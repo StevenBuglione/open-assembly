@@ -3,8 +3,17 @@
 
 This index lists authored function specifications. For implementation state, run `tools/queue status`.
 
-Specs: 1 of 505 inventoried functions. The inventory covers C17 and the named POSIX bootstrap subset; see [inventory scope](cookbook/specifications.md#inventory-scope).
+Specs: 10 of 507 inventoried functions. The inventory covers C17, the named POSIX bootstrap subset, and runtime ABI entries; see [inventory scope](cookbook/specifications.md#inventory-scope).
 
 | Function | Header | Prototype | Standard |
 | --- | --- | --- | --- |
+| [`_Exit`](../spec/functions/stdlib/_Exit.toml) | `<stdlib.h>` | `_Noreturn void _Exit(int status)` | C17 7.22.4.5 |
+| [`__errno_location`](../spec/functions/errno/__errno_location.toml) | `<errno.h>` | `int *__errno_location(void)` | Runtime ABI __errno_location, C17 7.5 |
+| [`__stack_chk_fail`](../spec/functions/compiler_rt/__stack_chk_fail.toml) | `<compiler_rt.h>` | `_Noreturn void __stack_chk_fail(void)` | Runtime ABI __stack_chk_fail |
+| [`_exit`](../spec/functions/unistd/_exit.toml) | `<unistd.h>` | `_Noreturn void _exit(int status)` | POSIX.1-2024 XSH _exit |
+| [`atexit`](../spec/functions/stdlib/atexit.toml) | `<stdlib.h>` | `int atexit(void (*func)(void))` | C17 7.22.4.2 |
+| [`close`](../spec/functions/unistd/close.toml) | `<unistd.h>` | `int close(int fd)` | POSIX.1-2024 XSH close |
+| [`exit`](../spec/functions/stdlib/exit.toml) | `<stdlib.h>` | `_Noreturn void exit(int status)` | C17 7.22.4.4 |
+| [`read`](../spec/functions/unistd/read.toml) | `<unistd.h>` | `ssize_t read(int fd, void *buf, size_t count)` | POSIX.1-2024 XSH read |
 | [`strlen`](../spec/functions/string/strlen.toml) | `<string.h>` | `size_t strlen(const char *s)` | C17 7.24.6.3 |
+| [`write`](../spec/functions/unistd/write.toml) | `<unistd.h>` | `ssize_t write(int fd, const void *buf, size_t count)` | POSIX.1-2024 XSH write |

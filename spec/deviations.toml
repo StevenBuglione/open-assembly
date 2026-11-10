@@ -1,2 +1,13 @@
 schema_version = 1
-deviations = []
+
+[[deviations]]
+function = "atexit"
+standard = "C17 7.22.4.2"
+choice = "Support exactly 32 pending registrations in the bootstrap runtime."
+reason = "The C minimum is available before the allocator exists."
+
+[[deviations]]
+function = "close"
+standard = "POSIX.1-2024 XSH close"
+choice = "Report a Linux EINTR result even though the kernel has already released the descriptor."
+reason = "Linux may reuse the descriptor before returning the error; retrying the syscall may close a different file."

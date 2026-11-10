@@ -1,0 +1,20 @@
+name = "atexit"
+header = "stdlib.h"
+prototype = "int atexit(void (*func)(void))"
+standard = ["C17 7.22.4.2"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "reference:runtime-abi"]
+provenance = "original"
+semantics = [
+  "Register a valid void(void) callback for normal termination; a null callback is outside the contract.",
+  "There are 32 pending slots; return zero on success or a nonzero value when all slots are occupied.",
+  "Each registration counts separately, even when it names a previously registered function.",
+  "A running callback's slot is no longer pending; it may register another callback before returning.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

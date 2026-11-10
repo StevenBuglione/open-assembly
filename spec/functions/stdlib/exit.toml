@@ -1,0 +1,22 @@
+name = "exit"
+header = "stdlib.h"
+prototype = "_Noreturn void exit(int status)"
+standard = ["C17 7.22.4.4"]
+deps = ["atexit", "_exit"]
+errno = []
+mt_safe = false
+as_safe = false
+oracles = ["diff:glibc", "reference:runtime-abi", "reference:linux-wait-status"]
+provenance = "original"
+semantics = [
+  "Invoke atexit callbacks in reverse order of registration, once per registration, before terminating.",
+  "Callbacks may register more callbacks, which run before older pending callbacks.",
+  "A repeated or recursive call to exit is outside the C17 contract.",
+  "The low eight bits of status are available to the parent; the function never returns.",
+  "Phase 1 has no stdio streams or library-created temporary files to clean up.",
+]
+
+[abi]
+narrow_args = ["edi:s32"]
+variadic = false
+noreturn = true

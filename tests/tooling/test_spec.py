@@ -95,6 +95,7 @@ class ProjectTest(unittest.TestCase):
             ("strlen(const char *s)", "strlen(const char *s); int injected(void)", "expected one C function"),
             ("strlen(const char *s)", "strlen(const char *s,)", "invalid parameter"),
             ("strlen(const char *s)", "strlen(const char *s, ...)", "abi.variadic disagrees"),
+            ("variadic = false", "variadic = false\nnoreturn = true", "abi.noreturn disagrees"),
             ("narrow_args = []", 'narrow_args = ["edi:s32", "dil:u8"]', "same incoming ABI register"),
             ("C17 7.24.6.3", "C17 7.21", "references do not include"),
             ("deps = []", 'deps = ["imaginary_function"]', "dependency not in inventory"),
@@ -197,7 +198,15 @@ class ProjectTest(unittest.TestCase):
             "checks": {"semantic": {"outcome": "pass"}, "coverage": {"outcome": "pending"}},
         }
 
+    def phase0_queue_specs(self):
+        # Model the Phase 0 fixture queue in isolation from newer runtime specs.
+        for path in (self.root / "spec/functions").rglob("*.toml"):
+            if path != self.root / STRLEN:
+                path.unlink()
+        self.write("spec/deviations.toml", "schema_version = 1\ndeviations = []\n")
+
     def test_evidence_never_unlocks_dependencies_in_phase0(self):
+        self.phase0_queue_specs()
         self.add_function("strncat", ("strlen",))
         self.assertEqual("strlen\n", self.run_tool("queue", "next"))
         good = self.fixture_evidence()
@@ -228,6 +237,7 @@ class ProjectTest(unittest.TestCase):
         self.assertIn("no eligible specified function", self.run_tool("queue", "next", expect=1))
 
     def test_dependency_on_inventoried_but_unspecified_function_is_pending(self):
+        self.phase0_queue_specs()
         self.edit(STRLEN, "deps = []", 'deps = ["strncat"]')
         self.assertIn("strncat: todo; specification pending", self.run_tool("queue", "status", "strncat"))
         self.assertIn("no eligible specified function", self.run_tool("queue", "next", expect=1))

@@ -1,0 +1,20 @@
+name = "__stack_chk_fail"
+header = "compiler_rt.h"
+prototype = "_Noreturn void __stack_chk_fail(void)"
+standard = ["Runtime ABI __stack_chk_fail"]
+deps = ["_exit"]
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:runtime-abi", "reference:linux-wait-status"]
+provenance = "original"
+semantics = [
+  "Compiler stack-protector failure entry; never returns or invokes atexit callbacks.",
+  "Write open-assembly: stack smashing detected followed by a newline to standard error on a best-effort basis.",
+  "Terminate by default SIGABRT; use exit status 134 if the signal path returns without terminating.",
+]
+
+[abi]
+narrow_args = []
+variadic = false
+noreturn = true

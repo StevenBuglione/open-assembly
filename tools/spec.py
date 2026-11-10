@@ -1,4 +1,4 @@
-"""Read and validate the Open Assembly Phase 0 source contracts."""
+"""Read and validate the Open Assembly source contracts."""
 
 from dataclasses import dataclass
 import hashlib
@@ -10,7 +10,7 @@ import tomllib
 ROOT = Path(__file__).resolve().parent.parent
 IDENTIFIER = r"[A-Za-z_][A-Za-z0-9_]*"
 HEADER = r"[a-z][a-z0-9_]*(?:/[a-z][a-z0-9_]*)*\.h"
-STANDARD = r"(?:C17 7(?:\.[0-9]+)+|POSIX\.1-2024 (?:XBD|XSH) [A-Za-z0-9_./<>-]+)"
+STANDARD = r"(?:C17 7(?:\.[0-9]+)+|POSIX\.1-2024 (?:XBD|XSH) [A-Za-z0-9_./<>-]+|Runtime ABI [A-Za-z_<>.]+)"
 C17_HEADERS = dict(zip(
     ("assert complex ctype errno fenv float inttypes iso646 limits locale math "
      "setjmp signal stdalign stdarg stdatomic stdbool stddef stdint stdio stdlib "
@@ -29,6 +29,8 @@ UPSTREAMS = {
 LICENSES = {"MIT", "BSD-2-Clause", "BSD-3-Clause", "CC0-1.0", "Apache-2.0", "BSL-1.0", "LicenseRef-fdlibm"}
 C17_SOURCE = "https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2310.pdf"
 POSIX_SOURCE = "https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/unistd.h.html"
+POSIX_FDS = {"STDIN_FILENO": 0, "STDOUT_FILENO": 1, "STDERR_FILENO": 2}
+RUNTIME_ABI = {"compiler_rt.h": "__stack_chk_fail", "errno.h": "__errno_location"}
 
 
 class SpecError(ValueError):
@@ -39,6 +41,7 @@ class SpecError(ValueError):
 class Abi:
     narrow_args: tuple[str, ...]
     variadic: bool
+    noreturn: bool = False
 
 
 @dataclass(frozen=True)
@@ -206,6 +209,9 @@ def load_inventory(root):
         if edition == "C17":
             if name[:-2] not in C17_HEADERS or standard != f"C17 7.{C17_HEADERS[name[:-2]]}":
                 fail(where, "incorrect C17 header or clause")
+        elif edition == "Runtime":
+            if name not in RUNTIME_ABI or standard != f"Runtime ABI <{name}>":
+                fail(where, "outside the named runtime ABI scope")
         elif name != "unistd.h" or standard != "POSIX.1-2024 XBD <unistd.h>":
             fail(where, "outside the named POSIX bootstrap scope")
         found = list(inventory_group(table, name, standard, "required", where))
@@ -213,7 +219,9 @@ def load_inventory(root):
         if type(groups) is not list:
             fail(where, "expected a conditional array of tables")
         if edition != "C17" and groups:
-            fail(where, "the POSIX bootstrap subset has no conditional entries")
+            fail(where, "the POSIX and runtime ABI bootstrap subsets have no conditional entries")
+        if edition == "Runtime" and [(i.kind, i.name) for i in found] != [("functions", RUNTIME_ABI[name])]:
+            fail(where, "expected only the named runtime ABI entry")
         conditions = set()
         for group in groups:
             keys(group, {"when"}, where, KINDS)
@@ -235,12 +243,14 @@ def load_inventory(root):
             identities.add(identity)
             items.append(item)
     expected = {("C17", name + ".h") for name in C17_HEADERS} | {("POSIX.1-2024", "unistd.h")}
+    expected |= {("Runtime", name) for name in RUNTIME_ABI}
     if missing := expected - headers:
         fail(path, "missing required header(s): " + ", ".join(" ".join(pair) for pair in sorted(missing)))
     posix = {(i.kind, i.name) for i in items if i.standard.startswith("POSIX.1-2024 ") and i.availability == "required"}
     if posix != ({("functions", name) for name in ("_exit", "close", "read", "write")}
-                 | {("types", name) for name in ("ssize_t", "size_t")}):
-        fail(path, "expected the six explicitly scoped POSIX bootstrap entries")
+                 | {("types", name) for name in ("ssize_t", "size_t")}
+                 | {("macros", name) for name in POSIX_FDS}):
+        fail(path, "expected the explicitly scoped POSIX bootstrap entries")
     return tuple(sorted(items, key=lambda item: (item.standard, item.header, item.kind, item.name)))
 
 
@@ -387,7 +397,7 @@ def load_function(path, root):
     name = matching(raw["name"], IDENTIFIER, f"{path}: name")
     header = matching(raw["header"], HEADER, f"{path}: header")
     ret, params = split_parameters(raw["prototype"], name, f"{path}: prototype")
-    keys(raw["abi"], {"narrow_args", "variadic"}, f"{path}: abi")
+    keys(raw["abi"], {"narrow_args", "variadic"}, f"{path}: abi", ("noreturn",))
     narrow = string_list(
         raw["abi"]["narrow_args"],
         r"(?:(?:edi|esi|edx|ecx|r8d|r9d):[su]32|(?:di|si|dx|cx|r8w|r9w):[su]16|(?:dil|sil|dl|cl|r8b|r9b):[su]8)",
@@ -399,6 +409,9 @@ def load_function(path, root):
     variadic = boolean(raw["abi"]["variadic"], f"{path}: abi.variadic")
     if variadic != ("..." in params):
         fail(path, "abi.variadic disagrees with the prototype")
+    noreturn = boolean(raw["abi"].get("noreturn", False), f"{path}: abi.noreturn")
+    if noreturn != ("_Noreturn" in ret.split()):
+        fail(path, "abi.noreturn disagrees with the prototype")
     validate_narrow_args(ret, params, narrow, path)
     return FunctionSpec(
         name, header, raw["prototype"],
@@ -411,7 +424,7 @@ def load_function(path, root):
                     f"{path}: oracles", nonempty=True),
         load_provenance(raw["provenance"], root, name, f"{path}: provenance"),
         string_list(raw["semantics"], r"[ -~]+", f"{path}: semantics", nonempty=True),
-        Abi(narrow, variadic), path.relative_to(root),
+        Abi(narrow, variadic, noreturn), path.relative_to(root),
     )
 
 
@@ -456,6 +469,8 @@ def load_project(root=ROOT):
             fail(path, f"standard references do not include a clause under {group}")
         if group.startswith("POSIX.1-2024 ") and not ({group, f"POSIX.1-2024 XSH {spec.name}"} & set(spec.standard)):
             fail(path, f"expected a POSIX.1-2024 reference for {spec.name}")
+        if group.startswith("Runtime ABI ") and f"Runtime ABI {spec.name}" not in spec.standard:
+            fail(path, f"expected a runtime ABI reference for {spec.name}")
         functions[spec.name] = spec
     inventory_names = {item.name for item in inventory if item.kind == "functions"}
     visited, active = set(), []
@@ -489,6 +504,8 @@ def comment_header(spec):
         ("narrow_args", ", ".join(spec.abi.narrow_args) or "-"),
         ("variadic", str(spec.abi.variadic).lower()),
     ]
+    if spec.abi.noreturn:
+        fields.append(("noreturn", "true"))
     if isinstance(provenance, Provenance):
         fields.extend((key, getattr(provenance, key)) for key in ("url", "revision", "upstream_path", "license", "notice"))
     fields.extend(("semantics", line) for line in spec.semantics)

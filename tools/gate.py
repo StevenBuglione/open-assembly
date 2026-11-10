@@ -39,13 +39,16 @@ class GateError(Exception):
     pass
 
 
-def run(command, *, timeout=30):
+def run(command, *, timeout=30, environment=None):
     command = list(map(str, command))
     try:
-        result = subprocess.run(command, cwd=ROOT, capture_output=True, text=True,
-                                timeout=timeout, env={**os.environ, "LC_ALL": "C"})
+        if environment is None:
+            environment = {**os.environ, "LC_ALL": "C"}
+        result = subprocess.run(command, cwd=ROOT, capture_output=True,
+                                timeout=timeout, env=environment)
         return {"command": command, "returncode": result.returncode,
-                "stdout": result.stdout, "stderr": result.stderr}
+                "stdout": result.stdout.decode("utf-8", errors="surrogateescape"),
+                "stderr": result.stderr.decode("utf-8", errors="surrogateescape")}
     except subprocess.TimeoutExpired as error:
         raise GateError(f"{' '.join(command)} exceeded its {timeout}-second limit") from error
 
@@ -70,9 +73,10 @@ def write_evidence(name, evidence):
     return target
 
 
-def identify_tools():
+def identify_tools(*additional):
     result = {}
-    for tool in ("python3", "nasm", "gcc", "ld", "nm", "objcopy", "readelf", "valgrind", "git"):
+    for tool in ("python3", "nasm", "gcc", "ld", "nm", "objcopy", "readelf", "valgrind", "git",
+                 *additional):
         path = shutil.which(tool)
         if path is None:
             raise GateError(f"missing tool {tool}")
@@ -146,7 +150,9 @@ def source_policy(checks, directory):
     for source in sorted(path for root in ("src", "ext", "apps")
                          for path in Path(root).rglob("*.asm")):
         checked(log, ["tools/lint", source])
-        checked(log, ["nasm", "-f", "elf64", "-o", object_path, source])
+        checked(log, ["nasm", "-f", "elf64", "-Wall", "-Werror", "-Wno-reloc-rel-dword",
+                      "-I", "include/asm/",
+                      "-o", object_path, source])
         checked(log, ["tools/elf-audit", "--assembly-object", object_path])
     record["outcome"] = "pass"
 
@@ -318,18 +324,18 @@ def mutate(checks, harness):
     print(f"PASS bounded fixture mutation {killed}/{total} killed", flush=True)
 
 
-def verify_setup(checks, phase0):
+def verify_setup(checks, phase0, *, snapshot=inputs):
     log = []
     result = {"outcome": "fail", "commands": log}
     checks["generated_outputs"] = result
     checked(log, ["tools/gen", "--test-headers"])
-    snapshot = inputs()
+    input_snapshot = snapshot()
     checked(log, ["tools/gen", "--check"])
     checked(log, ["tools/provenance", "--check"])
     if phase0:
         checked(log, ["python3", "tests/tooling/test_spec.py"], timeout=60)
     result["outcome"] = "pass"
-    return snapshot
+    return input_snapshot
 
 
 def execute(phase0, fixture, default_fixture):
@@ -400,12 +406,13 @@ def main(default_fixture=None):
     parser.add_argument("function", nargs="?")
     options = parser.add_mutually_exclusive_group()
     options.add_argument("--phase0", action="store_true", help="run Phase 0 milestone acceptance")
+    options.add_argument("--phase1", action="store_true", help="run Phase 1 runtime acceptance")
     options.add_argument("--fixture", choices=("good", "wrong", "stub"),
                          help="test one candidate and return its semantic result")
     options.add_argument("--production", action="store_true", help="require full production verification")
     options.add_argument("--protected-base", metavar="SHA", help="check protected paths against a commit")
     args = parser.parse_args()
-    if default_fixture and (args.phase0 or args.fixture or args.production or args.protected_base):
+    if default_fixture and (args.phase0 or args.phase1 or args.fixture or args.production or args.protected_base):
         parser.error("this tool only accepts a function name")
     if args.protected_base:
         if args.function:
@@ -416,11 +423,16 @@ def main(default_fixture=None):
             print(f"gate: {error}", file=sys.stderr)
             return 1
         return 0
+    if args.phase1:
+        if args.function:
+            parser.error("--phase1 does not take a function")
+        from phase1 import execute_phase1
+        return execute_phase1()
     if args.phase0:
         if args.function:
             parser.error("--phase0 does not take a function")
     elif args.function is None:
-        parser.error("supply a function name or --phase0")
+        parser.error("supply a function name, --phase0 or --phase1")
     if args.production:
         for key, reason in PENDING.items():
             print(f"{args.function}: pending {key} ({reason})", file=sys.stderr)
