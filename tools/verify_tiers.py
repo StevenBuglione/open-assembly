@@ -23,6 +23,7 @@ from musl_authorship import ARCHIVE_SHA256 as MUSL_ARCHIVE_SHA, POLICY as AUTHOR
 from musl_authorship import inputs as authorship_inputs
 from phase1 import RUNTIME_SRC, build_runtime, phase1_inputs
 from phase2 import phase2_functions
+from phase11_platform import boot_cases, verify_boot_cases, write_boot_header
 from spec import ROOT, SpecError, has_runtime_entry, load_project, regular_file, relative_path, sha256_file, snapshot_inputs
 
 PHASES = (
@@ -43,7 +44,6 @@ PHASES = (
 EXTRA = ("fcntl-production", "extension-control", "extension-packages")
 FUZZ_SECONDS = 300
 GAPS = {
-    "remaining_old_current_kernel_matrix": "The boot gate covers its named runtime checks. The remaining old/current kernel matrix needs its own evidence.",
     "remaining_restricted_seccomp_matrix": "Installed filters cover four named failure paths. Remaining restrictive-profile scopes need their own observations.",
     "remaining_binary32_domains": "The full remaining binary32 math campaigns need artifact-bound completion and audit.",
     "ltp_gnulib_conformance": "The roadmap's independent LTP and gnulib subsets need pinned executable gates.",
@@ -377,12 +377,44 @@ def check_old_kernel(data):
             raise GateError("old-kernel evidence lacks the required boot and fallback proof")
 
 
+    cases = boot_cases()
+    observations = data.get("kernel_cases")
+    expected = [case.name for case in cases]
+    if len(expected) != 13 or type(observations) is not dict or set(observations) != set(expected):
+        raise GateError("old-kernel evidence lacks the 13 paired native and guest cases")
+    verify_boot_cases(data["observations"]["guest"]["stdout"], expected)
+    with tempfile.TemporaryDirectory(prefix="tier-kernel-manifest-", dir=BUILD) as work:
+        header = write_boot_header(cases, Path(work))
+        if artifacts.get("guest_manifest_header_sha256") != sha256_file(header):
+            raise GateError("old-kernel evidence does not bind the exact guest case manifest")
+    silent = {"returncode": 0, "stdout": "", "stderr": ""}
+    for case in cases:
+        item = observations[case.name]
+        if type(item) is not dict:
+            raise GateError(f"old-kernel evidence lacks the paired result for {case.name}")
+        hashes = item.get("artifacts")
+        native = item.get("native")
+        command = native.get("command") if type(native) is dict else None
+        if (item.get("arguments") != case.args or item.get("environment") != case.env
+                or item.get("oracle") != list(case.oracle)
+                or type(hashes) is not dict or set(hashes) != {case.name, "test-0.o"}
+                or any(type(digest) is not str or re.fullmatch(r"[0-9a-f]{64}", digest) is None
+                       for digest in hashes.values())
+                or type(command) is not list or not command or type(command[0]) is not str
+                or Path(command[0]).name != case.name or command[1:] != case.args
+                or any(native.get(field) != value for field, value in silent.items())
+                or item.get("guest") != silent):
+            raise GateError(f"old-kernel evidence lacks exact artifacts or paired results for {case.name}")
+    return expected
+
+
 def old_kernel(started, status, record):
     if status != 0:
         raise GateError(f"old-kernel container exited {status}")
     path, data = fresh_report(ROOT, "phase11-old-kernel.json", "phase11-old-kernel", started)
-    check_old_kernel(data)
-    record.update(evidence=path.relative_to(ROOT).as_posix(), evidence_sha256=sha256_file(path))
+    paired_cases = check_old_kernel(data)
+    record.update(evidence=path.relative_to(ROOT).as_posix(), evidence_sha256=sha256_file(path),
+                  paired_cases=paired_cases)
 
 
 def check_authorship(data, review, scan_hash, expected):

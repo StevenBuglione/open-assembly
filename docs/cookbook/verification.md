@@ -379,7 +379,8 @@ packages in dependency order and validates each fresh per-function production
 report. A missing independent plan or unmet package dependency keeps that
 scope pending. The host wrapper first starts the separate
 QEMU-system image for the pinned old-kernel boot check. The tier validates
-that report against the current inputs and records the four installed
+that report against the current inputs. It requires all 13 paired native
+and guest case results and their exact guest manifest. It records the four installed
 seccomp filter observations independently. The musl authorship scan
 checks the relocated-copy and distinct NASM controls and archives its
 hash-linked review queue. Entries in that queue are similarity signals
@@ -394,7 +395,7 @@ deviations. Both workflows upload evidence even when verification fails.
 Every listed gate must produce a fresh passing report with matching input
 hashes. Use repeated `--only` selections for focused diagnosis. Such a run
 exits nonzero with a partial report. The current matrix also records unmet
-broader old/current-kernel and restrictive-seccomp coverage, remaining full binary32 domains,
+restrictive-seccomp coverage and the remaining full binary32 domains,
 LTP and gnulib, and performance requirements. A tier
 with any failure or unmet requirement exits nonzero and cannot qualify
 a release. The platform section records the actual native kernel and
