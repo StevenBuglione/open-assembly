@@ -42,6 +42,8 @@ def make_outputs(project, include_tracked=True, include_test=True):
                 lines.append("")
             elif header == "errno.h":
                 lines.extend(("#include <asm/errno.h>", "", "#define errno (*__errno_location())", ""))
+            elif header == "inttypes.h":
+                lines.extend(("#include <stdint.h>", ""))
             lines.extend(f"{spec.prototype};" for spec in specs)
             lines.extend(("", "#endif", ""))
             outputs[C / header] = "\n".join(lines)

@@ -1,0 +1,19 @@
+name = "atoi"
+header = "stdlib.h"
+prototype = "int atoi(const char *s)"
+standard = ["C17 7.22.1.2"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "reference:decimal-integer"]
+provenance = "original"
+semantics = [
+  "Skip C-locale whitespace, then consume one optional sign and a run of decimal digits.",
+  "Return the converted value, or zero when there are no digits. Do not change errno.",
+  "Inputs whose converted value is outside the return type's range are outside the C17 contract.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

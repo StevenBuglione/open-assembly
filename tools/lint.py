@@ -60,9 +60,10 @@ RUNTIME = ("src", "x86_64-linux")
 PRIVATE_FUNCTIONS = {
     "internal/__al_syscall", "internal/__al_syscall_result", "internal/__al_rt_sigreturn",
     "internal/__al_lock", "internal/__al_unlock", "rt/_start", "rt/__al_tls_init",
-    "rt/__al_panic", "rt/__al_abort", "rt/__al_diagnostic",
+    "rt/__al_panic", "rt/__al_abort", "rt/__al_diagnostic", "stdlib/__al_strtox",
 }
 PRIVATE_NORETURN = {"_start", "__al_rt_sigreturn", "__al_panic", "__al_abort"}
+COMPARATOR_ARGUMENTS = {"bsearch": "r8", "qsort": "rcx"}
 PRIVATE_DATA = {
     "__al_initial_envp": "rt/_start",
     "__al_auxv": "rt/_start",
@@ -181,6 +182,8 @@ class Program:
     caller_stack_arg: bool = False
     tls_self: bool = False
     callback_dispatch: bool = False
+    callback_table: bool = False
+    comparator_argument: str | None = None
 
 
 def parse(source, narrow, variadic, allow_seed_metadata):
@@ -545,7 +548,8 @@ def transfer_data(state, program, ins):
     # movzx/movsx into 32- or 64-bit destinations also overwrites all high bits.
     updated = write_gpr(state, dest, line, al=al)
     if program.callback_dispatch and dest.width == 64:
-        if opcode == "lea" and src.kind == "mem" and src.value == "__al_atexit_state":
+        if (program.callback_table and opcode == "lea" and src.kind == "mem"
+                and src.value == "__al_atexit_state"):
             updated = replace(updated, callback_table_registers=updated.callback_table_registers | {dest.base})
         if opcode == "mov":
             slot = (src.kind == "mem" and re.fullmatch(
@@ -616,6 +620,13 @@ def transfer(state, program, ins, syscall_boundary, x87_return):
         reject(line, "ISA_BASELINE", f"{opcode} exceeds the SSE2 baseline")
     if opcode in MOVES | ARITH | UNARY | SSE_MOVE | SSE_ALU | {"cmp", "test"}:
         return transfer_data(state, program, ins)
+    if opcode == "div":
+        (divisor,) = check_operands(ins, {1})
+        if divisor.kind != "gpr" or divisor.width != 64:
+            reject(line, "INSTRUCTION", "only unsigned division by a full-width GPR is modeled")
+        read_registers(state, ("rax", "rdx", divisor.base), line)
+        state = write_gpr(state, operand("rax", line), line)
+        return write_gpr(state, operand("rdx", line), line)
     if opcode in JCC | {"ret", "call", "jmp", "syscall", "sysenter", "int", "int3",
                         "iret", "iretq", "sysret", "sysretq"}:
         return transfer_control(state, program, ins, syscall_boundary, x87_return)
@@ -697,7 +708,9 @@ def verify(program, syscall_boundary, x87_return):
         noreturn = names[start] in program.noreturn
         states = {start: State(pending_args=frozenset(program.narrow),
                                process_entry=program.process_entry,
-                               caller_stack_arg=program.caller_stack_arg, tls_self=program.tls_self)}
+                               caller_stack_arg=program.caller_stack_arg, tls_self=program.tls_self,
+                               callback_registers=(frozenset({program.comparator_argument})
+                                                   if program.comparator_argument else frozenset()))}
         work = deque([start])
         terminal = False
         while work:
@@ -799,7 +812,9 @@ def check_file(path, function, fixture_syscall):
     program.signal_restorer = relative_runtime == "internal/__al_rt_sigreturn"
     program.caller_stack_arg = relative_runtime == "internal/__al_syscall"
     program.tls_self = relative_runtime == "rt/__errno_location"
-    program.callback_dispatch = relative_runtime == "stdlib/exit"
+    program.callback_table = relative_runtime == "stdlib/exit"
+    program.comparator_argument = COMPARATOR_ARGUMENTS.get(function)
+    program.callback_dispatch = program.callback_table or program.comparator_argument is not None
     if program.process_entry:
         program.external_signatures.add("main")
     if program.external_data - (PRIVATE_DATA.keys() if runtime or app else set()):

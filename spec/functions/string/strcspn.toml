@@ -1,0 +1,18 @@
+name = "strcspn"
+header = "string.h"
+prototype = "size_t strcspn(const char *s, const char *reject)"
+standard = ["C17 7.24.5.3"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "reference:byte-strings"]
+provenance = "original"
+semantics = [
+  "Return the number of bytes in the initial segment of s containing no byte present in reject.",
+  "If reject is empty, return the length of s. Neither string terminator counts as a set member.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

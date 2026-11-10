@@ -1,5 +1,53 @@
 # Verification
 
+## Phase 2 function gates
+
+```sh
+./tools/container make gate FUNC=strlen
+./tools/container tools/coverage strlen
+./tools/container tools/stubcheck strlen
+./tools/container tools/mutate strlen
+./tools/container make phase2
+```
+
+The production gate uses the shipped assembly source and the independent
+manifest under `tests/phase2/`. It renames the candidate and its linked
+assembly dependencies in copies of the objects so the hosted test process
+can still call glibc or musl independently. The numeric differentials use
+the host thread-local errno accessor. Phase 1 tests the runtime's own TLS
+and errno accessor on the freestanding link.
+
+Each local gate checks the static ABI model, executable symbols, native ABI,
+fixed vectors, guarded access where applicable, and glibc and musl
+differentials. It runs the fixed fuzz prefix and a 60-second libFuzzer
+campaign. LibFuzzer instruments the C harness. A QEMU plugin measures
+the actual assembly branches and maps both outcomes of each conditional
+jump to its NASM source line. Valgrind runs the guard test or, for scalar
+functions, the unit test.
+
+The semantic probes must reject a generated zero-return stub. Mutation
+applies branch inversions, signedness changes, one-unit comparison changes,
+and return offsets. An attributed oracle failure counts as a kill. A
+build failure, unexpected signal, or timeout fails the campaign. Reviewed
+equivalent mutations are listed separately with their exact source hash
+and proof. The kill threshold is 90 percent of applicable mutants.
+
+The pinned upstream libc-test snapshot supplies functional cases that
+exercise selected candidates. The gate compiles each unchanged test
+against the renamed candidate symbol and records the test and license
+hashes. [Pinned libc-test source](https://repo.or.cz/libc-test.git/commit/63e36e934e8f2bedf645303a90b64098e2af6c8f)
+
+The batch runs independent functions concurrently and checks public
+dependencies first. It combines the nine numeric wrappers' coverage and
+mutation tests into a separate result for the shared integer scanner.
+A wrapper with no branches still needs fresh scanner evidence.
+
+Production reports use `build/evidence/<function>.production.json`.
+The queue checks the current source, tests, tooling, and pinned inputs
+before using a pass. Run `python3 tools/phase2.py --only coverage` in
+the pinned toolchain for a batch of candidate-only branch checks.
+The later nightly and release platform matrices are separate.
+
 ## Phase 1 runtime acceptance
 
 ```sh
@@ -139,12 +187,9 @@ output. Time-bounded fuzzing uses the reported seed and runs at least the
 same fixed prefix. Elapsed execution speed determines the total number
 of cases after that prefix.
 
-Production verification remains pending for source-mapped branch
-coverage, AFL++ or libFuzzer campaigns, musl differential testing,
-external conformance suites, full per-function mutation, and the platform
-matrix. `tools/coverage strlen` and `tools/gate --production strlen`
-exit nonzero while those checks are unavailable. Phase 0 supplies
-test fixtures only.
+Phase 0 supplies test fixtures. Its evidence cannot verify production
+functions. Run the separate production gate for functions with an
+independent Phase 2 manifest.
 
 On pull requests, CI compares the protected oracle and external test paths
 with the base commit. New files are allowed. Edits, deletions, moves and

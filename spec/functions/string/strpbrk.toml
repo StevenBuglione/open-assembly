@@ -1,0 +1,17 @@
+name = "strpbrk"
+header = "string.h"
+prototype = "char *strpbrk(const char *s, const char *accept)"
+standard = ["C17 7.24.5.4"]
+deps = ["strcspn"]
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "reference:byte-strings"]
+provenance = "original"
+semantics = [
+  "Return the first address in s whose nonzero byte occurs in accept, or NULL when there is no such byte.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

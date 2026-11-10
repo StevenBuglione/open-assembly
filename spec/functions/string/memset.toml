@@ -1,0 +1,18 @@
+name = "memset"
+header = "string.h"
+prototype = "void *memset(void *s, int c, size_t n)"
+standard = ["C17 7.24.6.1"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "reference:byte-ranges"]
+provenance = "original"
+semantics = [
+  "Store c converted to unsigned char in exactly n bytes and return s.",
+  "With zero length, perform no access.",
+]
+
+[abi]
+narrow_args = ["esi:s32"]
+variadic = false

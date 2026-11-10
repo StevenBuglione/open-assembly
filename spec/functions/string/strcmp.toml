@@ -1,0 +1,17 @@
+name = "strcmp"
+header = "string.h"
+prototype = "int strcmp(const char *a, const char *b)"
+standard = ["C17 7.24.4.2"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "reference:byte-strings"]
+provenance = "original"
+semantics = [
+  "Compare the strings including NUL as unsigned bytes. Return the sign of the first difference or zero if equal.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

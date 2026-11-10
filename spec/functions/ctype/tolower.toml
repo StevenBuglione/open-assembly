@@ -1,0 +1,18 @@
+name = "tolower"
+header = "ctype.h"
+prototype = "int tolower(int c)"
+standard = ["C17 7.4.2.1"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "reference:ascii-c-locale"]
+provenance = "original"
+semantics = [
+  "Input is EOF (-1) or a value representable as unsigned char. Other inputs are outside the C17 contract.",
+  "Map ASCII A through Z to the matching lowercase letter. Return all other inputs unchanged.",
+]
+
+[abi]
+narrow_args = ["edi:s32"]
+variadic = false

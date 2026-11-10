@@ -1,0 +1,18 @@
+name = "isprint"
+header = "ctype.h"
+prototype = "int isprint(int c)"
+standard = ["C17 7.4.1.8"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "reference:ascii-c-locale"]
+provenance = "original"
+semantics = [
+  "Input is EOF (-1) or a value representable as unsigned char. Other inputs are outside the C17 contract.",
+  "In the C locale, return 1 for ASCII bytes 32 through 126. Return 0 otherwise, including EOF.",
+]
+
+[abi]
+narrow_args = ["edi:s32"]
+variadic = false

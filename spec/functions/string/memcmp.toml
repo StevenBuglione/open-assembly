@@ -1,0 +1,18 @@
+name = "memcmp"
+header = "string.h"
+prototype = "int memcmp(const void *a, const void *b, size_t n)"
+standard = ["C17 7.24.4.1"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "reference:byte-ranges"]
+provenance = "original"
+semantics = [
+  "Compare up to n bytes as unsigned char, using the sign of the first difference.",
+  "Return zero for equal ranges. With zero length, access neither region and return zero.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

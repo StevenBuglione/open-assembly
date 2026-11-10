@@ -6,6 +6,12 @@ let
     name = "open-assembly-toolchain-root";
     paths = packages;
     pathsToLink = [ "/bin" ];
+    postBuild = ''
+      mkdir -p "$out/share/open-assembly"
+      ln -s "${environment.OPEN_ASSEMBLY_GLIB_HEADERS}" "$out/share/open-assembly/glib-headers"
+      ln -s "${environment.OPEN_ASSEMBLY_GLIB_CONFIG}" "$out/share/open-assembly/glib-config"
+      ln -s "${environment.OPEN_ASSEMBLY_LIBC_TEST}" "$out/share/open-assembly/libc-test"
+    '';
   };
 in pkgs.dockerTools.buildLayeredImage {
   name = "open-assembly-toolchain";

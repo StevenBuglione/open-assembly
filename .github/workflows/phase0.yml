@@ -12,7 +12,7 @@ permissions:
 jobs:
   acceptance:
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 50
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -24,8 +24,8 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: ./tools/container tools/gate --protected-base "$BASE_SHA"
-      - name: Run the pinned Phase 0 and Phase 1 gates
-        run: ./tools/container make -k phase0 phase1
+      - name: Run pinned fixture, runtime, and production gates
+        run: ./tools/container make -k phase0 phase1 phase2
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:

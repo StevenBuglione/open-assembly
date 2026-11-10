@@ -1,0 +1,19 @@
+name = "strerror"
+header = "string.h"
+prototype = "char *strerror(int error)"
+standard = ["C17 7.24.6.2"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:errno-message-contract"]
+provenance = "original"
+semantics = [
+  "Return a nonempty NUL-terminated C-locale message for the supplied number.",
+  "Unassigned numbers and zero use No error information. The returned storage is immutable and remains valid.",
+  "Do not change errno. Message wording is implementation-defined.",
+]
+
+[abi]
+narrow_args = ["edi:s32"]
+variadic = false

@@ -171,6 +171,7 @@ static int guard_checks(void)
 struct libc_oracle {
     pid_t pid;
     int socket;
+    const char *name;
 };
 
 static int start_oracle(struct libc_oracle *oracle, const char *path)
@@ -250,20 +251,21 @@ static int compare(const struct libc_oracle *oracle, const char *mode, const cha
     if (send_bytes(oracle->socket, &size, sizeof size) != 0 ||
         send_bytes(oracle->socket, bytes, size) != 0 ||
         receive_bytes(oracle->socket, &expected, sizeof expected) != 0) {
-        fprintf(stderr, "ERROR %s: glibc oracle communication failed on case %zu\n", mode, index);
+        fprintf(stderr, "ERROR %s: %s oracle communication failed on case %zu\n",
+                mode, oracle->name, index);
         return 2;
     }
 
     if (expected != first_zero) {
-        fprintf(stderr, "ERROR %s: glibc oracle returned %" PRIu64 " for case %zu with first zero at %zu\n",
-                mode, expected, index, first_zero);
+        fprintf(stderr, "ERROR %s: %s oracle returned %" PRIu64 " for case %zu with first zero at %zu\n",
+                mode, oracle->name, expected, index, first_zero);
         return 2;
     }
 
     size_t actual = __al_test_strlen((const char *)bytes);
     if (actual != expected) {
-        fprintf(stderr, "FAIL %s diff:glibc: %s case %zu expected %" PRIu64 ", got %zu\n",
-                mode, name, index, expected, actual);
+        fprintf(stderr, "FAIL %s diff:%s: %s case %zu expected %" PRIu64 ", got %zu\n",
+                mode, oracle->name, name, index, expected, actual);
         return 1;
     }
     return 0;
@@ -299,7 +301,7 @@ static int differential_checks(const struct libc_oracle *oracle)
         if (status)
             return status;
     }
-    printf("PASS differential diff:glibc and reference:byte-count %zu cases\n", count);
+    printf("PASS differential diff:%s and reference:byte-count %zu cases\n", oracle->name, count);
     return 0;
 }
 
@@ -334,22 +336,29 @@ static int fuzz_checks(const struct libc_oracle *oracle, unsigned seconds)
         if (count >= STRLEN_FUZZ_MIN_CASES && now_ns(&now) != 0)
             return 2;
     }
-    printf("PASS fuzz diff:glibc and reference:byte-count %zu cases seed %#" PRIx32 "\n",
-           count, STRLEN_FUZZ_SEED);
+    printf("PASS fuzz diff:%s and reference:byte-count %zu cases seed %#" PRIx32 "\n",
+           oracle->name, count, STRLEN_FUZZ_SEED);
     return 0;
 }
 
 static int oracle_checks(const char *mode, const char *path, unsigned seconds)
 {
-    struct libc_oracle oracle;
+    const char *name = getenv("OPEN_ASSEMBLY_STRLEN_ORACLE");
+    if (!name)
+        name = "glibc";
+    if (strcmp(name, "glibc") != 0 && strcmp(name, "musl") != 0) {
+        fprintf(stderr, "ERROR %s: unrecognized libc oracle %s\n", mode, name);
+        return 2;
+    }
+    struct libc_oracle oracle = {.name = name};
     if (start_oracle(&oracle, path) != 0) {
-        fprintf(stderr, "ERROR %s: launch glibc oracle: %s\n", mode, strerror(errno));
+        fprintf(stderr, "ERROR %s: launch %s oracle: %s\n", mode, name, strerror(errno));
         return 2;
     }
     int status = strcmp(mode, "differential") == 0
         ? differential_checks(&oracle) : fuzz_checks(&oracle, seconds);
     if (finish_oracle(&oracle) != 0) {
-        fprintf(stderr, "ERROR %s: glibc oracle did not exit successfully\n", mode);
+        fprintf(stderr, "ERROR %s: %s oracle did not exit successfully\n", mode, name);
         return 2;
     }
     return status;
