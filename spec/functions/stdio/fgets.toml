@@ -1,0 +1,18 @@
+name = "fgets"
+header = "stdio.h"
+prototype = "char * fgets(char *restrict dest, int n, FILE *restrict stream)"
+standard = ["C17 7.21.7.2"]
+deps = []
+errno = ["EBADF", "EIO"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:phase4-stdio"]
+provenance = "original"
+semantics = [
+  "Read at most n-1 bytes, stopping after newline or at EOF, and append NUL.",
+  "Return dest on success or NULL for error, nonpositive n, or EOF before any byte. n equal to 1 writes an empty string.",
+]
+
+[abi]
+narrow_args = ["esi:s32"]
+variadic = false

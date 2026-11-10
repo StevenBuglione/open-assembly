@@ -1,5 +1,28 @@
 # Verification
 
+## Phase 4 streams and utilities
+
+```sh
+./tools/container make apps
+./tools/container make phase4
+```
+
+The freestanding gate checks byte streams, integer formatted input and
+output, varargs across the register and stack boundary, and stream flushing
+at exit. The fault cases inject short transfers, `EINTR`, and I/O errors at
+the private syscall boundary. Selected cases run against pinned glibc and
+musl, and the pinned libc-test regressions exercise the shipped stdio
+symbols.
+
+The utility cases use the static binaries from `make apps` after checking
+their reproducibility and matching them to the separately audited test
+links. `cat` is checked byte for byte. The `wc` cases compare line, word, and
+byte counts against fixed inputs and check file and error handling.
+
+The gate requires an independent rejection of the generated stub for each
+Phase 4 public function. It writes `build/evidence/phase4.json`.
+[Stdio and utility oracles](../../tests/phase4/README.md)
+
 ## Phase 3 allocator and environment acceptance
 
 ```sh

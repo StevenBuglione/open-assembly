@@ -109,10 +109,10 @@ bits 64
 default rel
 section .text
 global strlen:function
-extern printf
+extern __al_unknown_fixture_call
 strlen:
     sub rsp, 8
-    call printf
+    call __al_unknown_fixture_call
     add rsp, 8
     ret
 section .note.GNU-stack noalloc noexec nowrite progbits

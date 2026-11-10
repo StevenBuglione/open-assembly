@@ -1,0 +1,17 @@
+name = "fsetpos"
+header = "stdio.h"
+prototype = "int fsetpos(FILE *stream, const fpos_t *pos)"
+standard = ["C17 7.21.9.3"]
+deps = ["fseek"]
+errno = ["EINVAL", "ESPIPE"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:phase4-stdio"]
+provenance = "original"
+semantics = [
+  "Set the position previously saved by fgetpos and clear EOF and pushback on success.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

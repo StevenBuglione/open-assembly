@@ -1,0 +1,1099 @@
+schema = 1
+
+[[case]]
+name = "stream-input"
+sources = ["tests/phase4/streams.c"]
+requires = ["fopen", "fclose", "fgets", "fgetc", "getc", "ungetc", "fread", "feof", "ferror", "clearerr"]
+args = ["input"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["c17:byte-streams"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "stream-output"
+sources = ["tests/phase4/streams.c"]
+requires = ["fopen", "fwrite", "fputc", "putc", "fputs", "fflush", "setvbuf"]
+args = ["output"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["c17:byte-streams"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "stream-buffering"
+sources = ["tests/phase4/streams.c"]
+requires = ["setvbuf", "setbuf", "fflush", "fputs", "fputc"]
+args = ["buffering"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["c17:byte-streams"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The fixture asserts the project-specific stream or formatting contract."
+
+[[case]]
+name = "stream-update"
+sources = ["tests/phase4/streams.c"]
+requires = ["fseek", "ftell", "fgetpos", "fsetpos", "rewind", "fflush", "fread"]
+args = ["update"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["c17:byte-streams"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "stream-append"
+sources = ["tests/phase4/streams.c"]
+requires = ["freopen", "fseek", "fread", "fputs"]
+args = ["append"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["c17:byte-streams"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "stream-open-modes"
+sources = ["tests/phase4/streams.c"]
+requires = ["fopen", "freopen", "feof", "__errno_location"]
+args = ["open-modes"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["c17:byte-streams", "project:stdio-abi"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "A null freopen pathname is intentionally unsupported by the project."
+
+[[case]]
+name = "stream-flush-input"
+sources = ["tests/phase4/streams.c"]
+requires = ["fflush", "ungetc", "ftell", "fgetc"]
+args = ["flush-input"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["posix:fflush-input", "project:stdio-abi"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The probe requires the declared seekable-input pushback and synchronization behavior."
+
+[[case]]
+name = "stream-errors"
+sources = ["tests/phase4/streams.c"]
+requires = ["ferror", "clearerr", "rewind", "fputc", "feof"]
+args = ["errors"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["c17:byte-streams"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "stream-overflow"
+sources = ["tests/phase4/streams.c"]
+requires = ["fread", "fwrite", "ferror"]
+args = ["overflow"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["c17:byte-streams"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The fixture asserts the project-specific stream or formatting contract."
+
+[[case]]
+name = "stream-get"
+sources = ["tests/phase4/streams.c"]
+requires = ["getchar", "stdin", "feof"]
+args = ["get"]
+env = {}
+status = 0
+stdin_hex = "ff59"
+stdout = ""
+stderr = ""
+oracle = ["c17:byte-streams"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "stream-close-pipe"
+sources = ["tests/phase4/streams.c"]
+requires = ["fgetc", "fclose", "stdin", "__al_syscall"]
+args = ["close-pipe"]
+env = {}
+status = 0
+stdin_hex = "4142"
+stdout = ""
+stderr = ""
+oracle = ["c17:byte-streams"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "stream-put"
+sources = ["tests/phase4/streams.c"]
+requires = ["putchar", "puts"]
+args = ["put"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = "AB\n"
+stderr = ""
+oracle = ["c17:byte-streams"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "stream-exit"
+sources = ["tests/phase4/streams.c"]
+requires = ["fputs", "stdout", "atexit"]
+args = ["exit"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = "main|handler"
+stderr = ""
+oracle = ["c17:byte-streams"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "stream-immediate"
+sources = ["tests/phase4/streams.c"]
+requires = ["fputs", "stdout", "_Exit"]
+args = ["immediate"]
+env = {}
+status = 7
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["c17:byte-streams"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "stream-stderr"
+sources = ["tests/phase4/streams.c"]
+requires = ["fputc", "stderr", "_Exit"]
+args = ["stderr"]
+env = {}
+status = 7
+stdin_hex = ""
+stdout = ""
+stderr = "E"
+oracle = ["c17:byte-streams"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "stream-perror"
+sources = ["tests/phase4/streams.c"]
+requires = ["perror", "__errno_location"]
+args = ["perror"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = "unit: No error information\nNo error information\nNo error information\n"
+oracle = ["c17:byte-streams"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The fixture asserts the project-specific stream or formatting contract."
+
+[[case]]
+name = "format-integer"
+sources = ["tests/phase4/format.c"]
+requires = ["snprintf", "vsnprintf"]
+args = ["integer"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["c17:integer-format", "abi:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "format-flags"
+sources = ["tests/phase4/format.c"]
+requires = ["snprintf"]
+args = ["flags"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["c17:integer-format", "abi:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "format-counts"
+sources = ["tests/phase4/format.c"]
+requires = ["snprintf"]
+args = ["counts"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["c17:integer-format", "abi:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "format-truncation"
+sources = ["tests/phase4/format.c"]
+requires = ["snprintf", "vsnprintf"]
+args = ["truncation"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["c17:integer-format", "abi:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "format-variants"
+sources = ["tests/phase4/format.c"]
+requires = ["sprintf", "vsprintf"]
+args = ["variants"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["c17:integer-format", "abi:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "format-stream"
+sources = ["tests/phase4/format.c"]
+requires = ["fprintf", "vfprintf"]
+args = ["stream"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["c17:integer-format", "abi:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "format-guard"
+sources = ["tests/phase4/format.c"]
+requires = ["snprintf", "__al_syscall"]
+args = ["guard"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["c17:integer-format", "abi:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "format-overflow"
+sources = ["tests/phase4/format.c"]
+requires = ["snprintf", "__errno_location"]
+args = ["overflow"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["c17:integer-format", "abi:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The fixture asserts the project-specific stream or formatting contract."
+
+[[case]]
+name = "format-policy"
+sources = ["tests/phase4/format.c"]
+requires = ["snprintf", "__errno_location"]
+args = ["policy"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["c17:integer-format", "abi:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The fixture asserts the project-specific stream or formatting contract."
+
+[[case]]
+name = "format-stdout"
+sources = ["tests/phase4/format.c"]
+requires = ["printf", "vprintf"]
+args = ["stdout"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = "a:7|0x2a|end"
+stderr = ""
+oracle = ["c17:integer-format", "abi:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "scan-integer"
+sources = ["tests/phase4/scan.c"]
+requires = ["sscanf", "vsscanf"]
+args = ["integer"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["c17:integer-scan", "abi:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "scan-text"
+sources = ["tests/phase4/scan.c"]
+requires = ["sscanf"]
+args = ["text"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["c17:integer-scan", "abi:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "scan-counts"
+sources = ["tests/phase4/scan.c"]
+requires = ["sscanf"]
+args = ["counts"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["c17:integer-scan", "abi:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "scan-status"
+sources = ["tests/phase4/scan.c"]
+requires = ["sscanf"]
+args = ["status"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["c17:integer-scan", "abi:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "scan-incomplete"
+sources = ["tests/phase4/scan.c"]
+requires = ["sscanf"]
+args = ["incomplete"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["c17:integer-scan", "abi:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The fixture asserts the project-specific stream or formatting contract."
+
+[[case]]
+name = "scan-stream"
+sources = ["tests/phase4/scan.c"]
+requires = ["fscanf", "vfscanf", "fgetc"]
+args = ["stream"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["c17:integer-scan", "abi:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "scan-prefix"
+sources = ["tests/phase4/scan.c"]
+requires = ["fscanf", "fgetc"]
+args = ["prefix"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["c17:integer-scan", "abi:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The fixture asserts the project-specific stream or formatting contract."
+
+[[case]]
+name = "scan-policy"
+sources = ["tests/phase4/scan.c"]
+requires = ["sscanf", "__errno_location"]
+args = ["policy"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["c17:integer-scan", "abi:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The fixture asserts the project-specific stream or formatting contract."
+
+[[case]]
+name = "scan-stdin"
+sources = ["tests/phase4/scan.c"]
+requires = ["scanf", "vscanf"]
+args = ["stdin"]
+env = {}
+status = 0
+stdin_hex = "3137202020582d3432"
+stdout = ""
+stderr = ""
+oracle = ["c17:integer-scan", "abi:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "fault-read-retry"
+sources = ["tests/phase4/fault.c"]
+requires = ["fread"]
+args = ["read-retry"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["linux:stdio-fault", "project:stdio-abi"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The fault wrapper targets the project private syscall boundary."
+link_wraps = ["__al_syscall"]
+
+[[case]]
+name = "fault-write-retry"
+sources = ["tests/phase4/fault.c"]
+requires = ["fflush"]
+args = ["write-retry"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["linux:stdio-fault", "project:stdio-abi"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The fault wrapper targets the project private syscall boundary."
+link_wraps = ["__al_syscall"]
+
+[[case]]
+name = "fault-recover"
+sources = ["tests/phase4/fault.c"]
+requires = ["fflush", "ferror", "clearerr"]
+args = ["recover"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["linux:stdio-fault", "project:stdio-abi"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The fault wrapper targets the project private syscall boundary."
+link_wraps = ["__al_syscall"]
+
+[[case]]
+name = "fault-close"
+sources = ["tests/phase4/fault.c"]
+requires = ["fclose"]
+args = ["close"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["linux:stdio-fault", "project:stdio-abi"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The fault wrapper targets the project private syscall boundary."
+link_wraps = ["__al_syscall"]
+
+[[case]]
+name = "fault-close-pipe"
+sources = ["tests/phase4/fault.c"]
+requires = ["fclose", "fgetc", "stdin", "__al_syscall"]
+args = ["close-pipe"]
+env = {}
+status = 0
+stdin_hex = "4142"
+stdout = ""
+stderr = ""
+oracle = ["linux:stdio-fault", "project:stdio-abi"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The observation wrapper targets the project private syscall boundary."
+link_wraps = ["__al_syscall"]
+
+[[case]]
+name = "fault-partial-element"
+sources = ["tests/phase4/fault.c"]
+requires = ["fwrite", "ferror"]
+args = ["partial-element"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["linux:stdio-fault", "project:stdio-abi"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The fault wrapper targets the project private syscall boundary."
+link_wraps = ["__al_syscall"]
+
+[[case]]
+name = "fault-flush-all"
+sources = ["tests/phase4/fault.c"]
+requires = ["fflush", "ferror"]
+args = ["flush-all"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["linux:stdio-fault", "project:stdio-abi"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The fault wrapper targets the project private syscall boundary."
+link_wraps = ["__al_syscall"]
+
+[[case]]
+name = "cat-stdin"
+sources = ["apps/cat/main.asm"]
+requires = ["fopen", "fread", "fwrite", "ferror", "fclose", "fflush", "perror", "stdin", "stdout"]
+args = []
+env = {}
+status = 0
+stdin_hex = "6100ff0a"
+stdout = ""
+stderr = ""
+oracle = ["reference:utility-bytes"]
+backends = ["native", "qemu", "valgrind"]
+stdout_hex = "6100ff0a"
+host_skip = "The independent byte/count oracle uses the declared utility output format."
+
+[[case]]
+name = "cat-files"
+sources = ["apps/cat/main.asm"]
+requires = ["fopen", "fread", "fwrite", "ferror", "fclose", "fflush", "perror", "stdin", "stdout"]
+args = ["a", "-", "b"]
+env = {}
+status = 0
+stdin_hex = "ff0a"
+stdout = ""
+stderr = ""
+oracle = ["reference:utility-bytes"]
+backends = ["native", "qemu", "valgrind"]
+stdout_hex = "616200ff0a656e640a"
+host_skip = "The independent byte/count oracle uses the declared utility output format."
+files = { "a" = "616200", "b" = "656e640a" }
+
+[[case]]
+name = "cat-continue"
+sources = ["apps/cat/main.asm"]
+requires = ["fopen", "fread", "fwrite", "ferror", "fclose", "fflush", "perror", "stdin", "stdout"]
+args = ["absent", "a"]
+env = {}
+status = 1
+stdin_hex = ""
+stdout = "ok\n"
+stderr = "absent: File or directory does not exist\n"
+oracle = ["reference:utility-bytes"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The independent byte/count oracle uses the declared utility output format."
+files = { "a" = "6f6b0a" }
+
+[[case]]
+name = "wc-stdin"
+sources = ["apps/wc/main.asm"]
+requires = ["fopen", "fread", "ferror", "fclose", "isspace", "printf", "fflush", "perror", "stdin"]
+args = []
+env = {}
+status = 0
+stdin_hex = "612062620a0963632064640aff00"
+stdout = "2 5 14\n"
+stderr = ""
+oracle = ["reference:utility-bytes"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The independent byte/count oracle uses the declared utility output format."
+
+[[case]]
+name = "wc-totals"
+sources = ["apps/wc/main.asm"]
+requires = ["fopen", "fread", "ferror", "fclose", "isspace", "printf", "fflush", "perror", "stdin"]
+args = ["-cw", "a", "-", "b"]
+env = {}
+status = 0
+stdin_hex = "7468726565"
+stdout = "2 8 a\n1 5 -\n3 13 b\n6 26 total\n"
+stderr = ""
+oracle = ["reference:utility-bytes"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The independent byte/count oracle uses the declared utility output format."
+files = { "a" = "6f6e652074776f0a", "b" = "666f7572206669766520736978" }
+
+[[case]]
+name = "wc-end-options"
+sources = ["apps/wc/main.asm"]
+requires = ["fopen", "fread", "ferror", "fclose", "isspace", "printf", "fflush", "perror", "stdin"]
+args = ["-l", "--", "-dash"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = "1 -dash\n"
+stderr = ""
+oracle = ["reference:utility-bytes"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The independent byte/count oracle uses the declared utility output format."
+files = { "-dash" = "2020610a" }
+
+[[case]]
+name = "wc-invalid-option"
+sources = ["apps/wc/main.asm"]
+requires = ["fopen", "fread", "ferror", "fclose", "isspace", "printf", "fflush", "perror", "stdin"]
+args = ["-x"]
+env = {}
+status = 1
+stdin_hex = ""
+stdout = ""
+stderr = "wc: unsupported option\n"
+oracle = ["reference:utility-bytes"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The independent byte/count oracle uses the declared utility output format."
+
+[[case]]
+name = "wc-missing"
+sources = ["apps/wc/main.asm"]
+requires = ["fopen", "fread", "ferror", "fclose", "isspace", "printf", "fflush", "perror", "stdin"]
+args = ["absent"]
+env = {}
+status = 1
+stdin_hex = ""
+stdout = ""
+stderr = "absent: File or directory does not exist\n"
+oracle = ["reference:utility-bytes"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The independent byte/count oracle uses the declared utility output format."
+
+[[case]]
+name = "format-vstream"
+sources = ["tests/phase4/format.c"]
+requires = ["vfprintf"]
+args = ["vstream"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["c17:integer-format", "abi:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "scan-vstream"
+sources = ["tests/phase4/scan.c"]
+requires = ["vfscanf"]
+args = ["vstream"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["c17:integer-scan", "abi:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "format-vstdout"
+sources = ["tests/phase4/format.c"]
+requires = ["vprintf"]
+args = ["vstdout"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = "0x2a|end"
+stderr = ""
+oracle = ["c17:integer-format", "abi:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "scan-vstdin"
+sources = ["tests/phase4/scan.c"]
+requires = ["vscanf"]
+args = ["vstdin"]
+env = {}
+status = 0
+stdin_hex = "582d3432"
+stdout = ""
+stderr = ""
+oracle = ["c17:integer-scan", "abi:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "format-vinteger"
+sources = ["tests/phase4/format.c"]
+requires = ["vsnprintf"]
+args = ["vinteger"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["c17:integer-format", "abi:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "format-vvariant"
+sources = ["tests/phase4/format.c"]
+requires = ["vsprintf"]
+args = ["vvariant"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["c17:integer-format", "abi:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "scan-vinteger"
+sources = ["tests/phase4/scan.c"]
+requires = ["vsscanf"]
+args = ["vinteger"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["c17:integer-scan", "abi:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[stub]]
+symbol = "clearerr"
+case = "stream-input"
+status = 31
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "fclose"
+case = "stream-close-pipe"
+status = 92
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "feof"
+case = "stream-input"
+status = 28
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "ferror"
+case = "stream-errors"
+status = 80
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "fflush"
+case = "stream-output"
+status = 47
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "fgetc"
+case = "stream-input"
+status = 22
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "fgetpos"
+case = "stream-update"
+status = 64
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "fgets"
+case = "stream-input"
+status = 21
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "fopen"
+case = "stream-input"
+status = 20
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "fprintf"
+case = "format-stream"
+status = 50
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "fputc"
+case = "stream-output"
+status = 42
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "fputs"
+case = "stream-output"
+status = 47
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "fread"
+case = "stream-input"
+status = 27
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "freopen"
+case = "stream-append"
+status = 72
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "fscanf"
+case = "scan-stream"
+status = 50
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "fseek"
+case = "stream-update"
+status = 63
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "fsetpos"
+case = "stream-update"
+status = 64
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "ftell"
+case = "stream-update"
+status = 60
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "fwrite"
+case = "stream-output"
+status = 41
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "getc"
+case = "stream-input"
+status = 23
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "getchar"
+case = "stream-get"
+status = 90
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "perror"
+case = "stream-perror"
+status = 0
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "printf"
+case = "format-stdout"
+status = 76
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "putc"
+case = "stream-output"
+status = 43
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "putchar"
+case = "stream-put"
+status = 93
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "puts"
+case = "stream-put"
+status = 0
+stdout = "A"
+stderr = ""
+
+[[stub]]
+symbol = "rewind"
+case = "stream-errors"
+status = 83
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "scanf"
+case = "scan-stdin"
+status = 70
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "setbuf"
+case = "stream-buffering"
+status = 54
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "setvbuf"
+case = "stream-buffering"
+status = 52
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "snprintf"
+case = "format-integer"
+status = 20
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "sprintf"
+case = "format-variants"
+status = 40
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "sscanf"
+case = "scan-integer"
+status = 20
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "ungetc"
+case = "stream-input"
+status = 24
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "vfprintf"
+case = "format-vstream"
+status = 51
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "vfscanf"
+case = "scan-vstream"
+status = 51
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "vprintf"
+case = "format-vstdout"
+status = 77
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "vscanf"
+case = "scan-vstdin"
+status = 71
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "vsnprintf"
+case = "format-vinteger"
+status = 21
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "vsprintf"
+case = "format-vvariant"
+status = 41
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "vsscanf"
+case = "scan-vinteger"
+status = 21
+stdout = ""
+stderr = ""

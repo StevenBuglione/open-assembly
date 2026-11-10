@@ -1,0 +1,18 @@
+name = "fclose"
+header = "stdio.h"
+prototype = "int fclose(FILE *stream)"
+standard = ["C17 7.21.5.1"]
+deps = ["close", "free"]
+errno = ["EBADF", "EIO"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:phase4-stdio"]
+provenance = "original"
+semantics = [
+  "Flush pending output and close the underlying descriptor, even if the flush fails.",
+  "On success return zero. On error return EOF. Release library-owned stream memory.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

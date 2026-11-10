@@ -7,6 +7,7 @@ global __al_initial_envp:data
 global __al_auxv:data
 extern __al_tls_init:function
 extern __al_env_init:function
+extern __al_stdio_init:function
 extern main:function
 extern exit:function
 
@@ -28,6 +29,7 @@ _start:
     call __al_tls_init
     mov rdi, r14
     call __al_env_init
+    call __al_stdio_init
 
     mov edi, r12d
     mov rsi, r13

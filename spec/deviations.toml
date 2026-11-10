@@ -17,3 +17,15 @@ function = "strerror"
 standard = "C17 7.24.6.2"
 choice = "Use project-authored C-locale wording for Linux errno values."
 reason = "C17 permits implementation-defined wording and callers should not parse the message text."
+
+[[deviations]]
+function = "vfprintf"
+standard = "C17 7.21.6.8"
+choice = "The printf family renders pointers in lowercase hexadecimal with a 0x prefix, including 0x0 for NULL."
+reason = "C17 leaves pointer rendering implementation-defined. The same representation can be read by the scanf family."
+
+[[deviations]]
+function = "freopen"
+standard = "C17 7.21.5.4"
+choice = "Reject a NULL pathname with EINVAL after closing the former association."
+reason = "Mode changes without a pathname are implementation-defined and are outside the initial byte-stream interface."

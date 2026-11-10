@@ -1,0 +1,17 @@
+name = "fgetpos"
+header = "stdio.h"
+prototype = "int fgetpos(FILE *restrict stream, fpos_t *restrict pos)"
+standard = ["C17 7.21.9.1"]
+deps = ["ftell"]
+errno = ["EBADF", "ESPIPE"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:phase4-stdio"]
+provenance = "original"
+semantics = [
+  "Save the logical position of stream in pos. Return zero on success or nonzero on failure.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

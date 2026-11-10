@@ -1,0 +1,17 @@
+name = "ferror"
+header = "stdio.h"
+prototype = "int ferror(FILE *stream)"
+standard = ["C17 7.21.10.3"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:phase4-stdio"]
+provenance = "original"
+semantics = [
+  "Return nonzero if the error indicator is set, or zero otherwise.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

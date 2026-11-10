@@ -1,0 +1,17 @@
+name = "getchar"
+header = "stdio.h"
+prototype = "int getchar(void)"
+standard = ["C17 7.21.7.6"]
+deps = ["fgetc"]
+errno = ["EBADF", "EIO"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:phase4-stdio"]
+provenance = "original"
+semantics = [
+  "Read one byte from stdin with fgetc semantics.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

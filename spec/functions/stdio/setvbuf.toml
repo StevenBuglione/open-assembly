@@ -1,0 +1,18 @@
+name = "setvbuf"
+header = "stdio.h"
+prototype = "int setvbuf(FILE *restrict stream, char *restrict buffer, int mode, size_t size)"
+standard = ["C17 7.21.5.6"]
+deps = ["malloc", "free"]
+errno = ["EINVAL", "ENOMEM"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:phase4-stdio"]
+provenance = "original"
+semantics = [
+  "Set full, line, or unbuffered mode before other stream operations.",
+  "A supplied buffer stays caller-owned. Return zero on success or nonzero on failure.",
+]
+
+[abi]
+narrow_args = ["edx:s32"]
+variadic = false

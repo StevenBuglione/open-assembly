@@ -1,0 +1,17 @@
+name = "ftell"
+header = "stdio.h"
+prototype = "long ftell(FILE *stream)"
+standard = ["C17 7.21.9.4"]
+deps = []
+errno = ["EBADF", "ESPIPE", "EOVERFLOW"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:phase4-stdio"]
+provenance = "original"
+semantics = [
+  "Return the current logical byte offset including buffering, or -1 on failure.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

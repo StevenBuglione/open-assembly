@@ -1,0 +1,17 @@
+name = "fputc"
+header = "stdio.h"
+prototype = "int fputc(int c, FILE *stream)"
+standard = ["C17 7.21.7.3"]
+deps = []
+errno = ["EBADF", "EIO"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:phase4-stdio"]
+provenance = "original"
+semantics = [
+  "Write c converted to unsigned char and return that byte as int, or EOF on error.",
+]
+
+[abi]
+narrow_args = ["edi:s32"]
+variadic = false

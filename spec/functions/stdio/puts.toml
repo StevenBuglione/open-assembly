@@ -1,0 +1,18 @@
+name = "puts"
+header = "stdio.h"
+prototype = "int puts(const char *s)"
+standard = ["C17 7.21.7.9"]
+deps = ["strlen"]
+errno = ["EBADF", "EIO"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:phase4-stdio"]
+provenance = "original"
+semantics = [
+  "Write s without its terminator followed by a newline to stdout.",
+  "Return nonnegative on success or EOF on failure.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

@@ -11,7 +11,7 @@ With Nix and Docker available, run the milestone acceptance checks in the
 pinned toolchain container.
 
 ```sh
-./tools/container make phase0 phase1 phase2 phase3
+./tools/container make phase0 phase1 phase2 phase3 phase4
 ```
 
 Phase 2 covers the C-locale string and character functions, integer
@@ -21,6 +21,10 @@ for one production candidate and `tools/queue status` for its current state.
 Phase 3 adds the allocator family and environment APIs. Its freestanding
 gate exercises allocator and environment models, ABI state, and injected
 mapping failures against the shipped runtime.
+
+Phase 4 adds byte streams, integer formatted I/O, and assembly utilities.
+Use `./tools/container make apps` to build `cat` and `wc` in
+`build/runtime/apps/`.
 
 The gates write evidence to `build/evidence/`. Use
 `./tools/container make runtime` to build `build/runtime/crt1.o` and

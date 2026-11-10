@@ -1,0 +1,17 @@
+name = "putc"
+header = "stdio.h"
+prototype = "int putc(int c, FILE *stream)"
+standard = ["C17 7.21.7.7"]
+deps = ["fputc"]
+errno = ["EBADF", "EIO"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:phase4-stdio"]
+provenance = "original"
+semantics = [
+  "Write one byte with fputc semantics.",
+]
+
+[abi]
+narrow_args = ["edi:s32"]
+variadic = false

@@ -1,0 +1,18 @@
+name = "fopen"
+header = "stdio.h"
+prototype = "FILE * fopen(const char *restrict path, const char *restrict mode)"
+standard = ["C17 7.21.5.3"]
+deps = ["malloc", "free", "close"]
+errno = ["EINVAL", "ENOMEM", "ENOENT", "EACCES"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:phase4-stdio"]
+provenance = "original"
+semantics = [
+  "Open a byte stream with the selected C mode and return it, or return NULL on failure.",
+  "Text and binary modes have the same byte behavior. New streams default to full buffering.",
+]
+
+[abi]
+narrow_args = []
+variadic = false
