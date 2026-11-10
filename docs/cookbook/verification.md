@@ -377,6 +377,30 @@ cases. The reports keep the separate shared math engine coverage and
 mutation proof pending. The full `make gate FUNC=...` requires that
 proof before it can qualify a function.
 
+Run `./tools/container make verify-allocator-wrappers` to check the
+six public allocator entries. The scoped reports include independent
+SysV, allocation and release observations, source-mapped QEMU coverage,
+typed stubs, mutation, and at least 60 seconds of shared glibc and musl
+packets per entry. Mutation substitutes only the fixture's direct calls
+so startup uses the archive allocator. Reports retain the exact raw
+mutation results and the reviewed equivalent alignment boundaries. The
+shared heap engine and its dependent routines remain pending for full
+per-function production verification.
+
+Run `./tools/container make verify-stream-indicators` for the scoped
+`feof`, `ferror`, `clearerr`, and `fileno` checks. The independent
+fixtures use public `fopen` and standard streams, covering indicators,
+buffered data and position, and recursive ownership. Reports bind
+the scalar SysV checks, native/QEMU/Memcheck observations, typed stub
+and mutation controls, and at least 60 seconds of glibc and musl
+packet comparisons per entry. The raw `fileno` trace keeps both
+conditional outcomes and the observed count. The gate separately
+records the descriptorless outcome as unreachable in the reviewed
+public domain while its source fingerprint matches. Changed domain
+inputs return the outcome to pending. [Descriptor domain review](fileno-descriptor-domain.md)
+Full per-function production verification also requires separate
+proof for the shared ownership helpers.
+
 ## Nightly and tagged verification
 
 ```sh

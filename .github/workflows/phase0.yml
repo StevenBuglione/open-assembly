@@ -53,6 +53,55 @@ jobs:
           path: build/evidence/
           if-no-files-found: warn
 
+  process_production:
+    name: Process identity and pipe production gates
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b
+      - name: Run pinned process identity and descriptor proofs
+        timeout-minutes: 20
+        run: ./tools/container make -k production-process-identity production-pipes
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: process-production-evidence
+          path: |
+            build/evidence/getpid.production.json
+            build/evidence/getppid.production.json
+            build/evidence/pipe.production.json
+            build/evidence/pipe2.production.json
+          if-no-files-found: error
+
+  stream_indicators:
+    name: Scoped stdio stream indicator checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b
+      - name: Verify stream indicators with shared ownership pending
+        timeout-minutes: 20
+        run: ./tools/container sh -ec 'python3 tests/tooling/test_fileno_domain.py && make verify-stream-indicators'
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: stream-indicator-wrapper-evidence
+          path: |
+            build/evidence/clearerr.stream-indicator-wrapper.json
+            build/evidence/feof.stream-indicator-wrapper.json
+            build/evidence/ferror.stream-indicator-wrapper.json
+            build/evidence/fileno.stream-indicator-wrapper.json
+            build/evidence/stream-indicator-wrappers.json
+          if-no-files-found: error
+
   mathematics:
     name: Real and complex math gates
     runs-on: ubuntu-24.04
@@ -182,7 +231,7 @@ jobs:
           persist-credentials: false
       - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b
       - name: Run optional static PIE and ELF relocation controls
-        run: ./tools/container make -k phase11-static-pie phase11-copy phase11-vdso phase11-allocator phase11-seccomp
+        run: ./tools/container make -k phase11-static-pie phase11-copy phase11-vdso phase11-allocator phase11-seccomp verify-allocator-wrappers
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
@@ -249,13 +298,15 @@ jobs:
   acceptance:
     name: acceptance
     if: always()
-    needs: [core, integration, mathematics, applications, threads, locale, real_programs, network, platform, extensions, extension_formats]
+    needs: [core, integration, process_production, stream_indicators, mathematics, applications, threads, locale, real_programs, network, platform, extensions, extension_formats]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions: {}
     env:
       CORE_RESULT: ${{ needs.core.result }}
       INTEGRATION_RESULT: ${{ needs.integration.result }}
+      PROCESS_PRODUCTION_RESULT: ${{ needs.process_production.result }}
+      STREAM_INDICATORS_RESULT: ${{ needs.stream_indicators.result }}
       MATH_RESULT: ${{ needs.mathematics.result }}
       APPLICATION_RESULT: ${{ needs.applications.result }}
       THREAD_RESULT: ${{ needs.threads.result }}
@@ -274,6 +325,10 @@ jobs:
             "$CORE_RESULT" "$INTEGRATION_RESULT" "$MATH_RESULT" "$APPLICATION_RESULT" "$THREAD_RESULT" "$LOCALE_RESULT"
           test "$CORE_RESULT" = success
           test "$INTEGRATION_RESULT" = success
+          printf 'Process production: %s\n' "$PROCESS_PRODUCTION_RESULT"
+          test "$PROCESS_PRODUCTION_RESULT" = success
+          printf 'Scoped stream indicators: %s\n' "$STREAM_INDICATORS_RESULT"
+          test "$STREAM_INDICATORS_RESULT" = success
           test "$MATH_RESULT" = success
           test "$APPLICATION_RESULT" = success
           test "$THREAD_RESULT" = success

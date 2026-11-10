@@ -33,12 +33,30 @@ production-linux-files:
 production-linux-io:
 	python3 tools/phase2.py --linux-io
 
+.PHONY: production-process-identity
+production-process-identity:
+	tools/gate getpid
+	tools/gate getppid
+
+.PHONY: production-pipes
+production-pipes:
+	tools/gate pipe
+	tools/gate pipe2
+
 .PHONY: verify-math-wrappers
 verify-math-wrappers:
 	python3 tools/math_production.py --batch
 
 phase3:
 	python3 tools/phase3.py
+
+.PHONY: verify-allocator-wrappers
+verify-allocator-wrappers:
+	python3 tools/runtime_manifest_gate.py --allocator-wrappers
+
+.PHONY: verify-stream-indicators
+verify-stream-indicators:
+	python3 tools/runtime_manifest_gate.py --stream-indicators
 
 phase4:
 	python3 tools/phase4.py

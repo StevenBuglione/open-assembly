@@ -1,0 +1,62 @@
+schema = 1
+stub = []
+
+[[case]]
+name = "identity-getpid-abi"
+sources = ["tests/phase6/process_identity/abi.c", "tests/phase2/abi.asm"]
+requires = ["getpid"]
+args = ["getpid"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-process-abi"]
+backends = ["native", "qemu"]
+host_skip = "The shared SysV register and return probe uses the freestanding runtime."
+[case.skip]
+valgrind = "Shared nondefault x87 ABI probe exceeds Memcheck emulation."
+
+[[case]]
+name = "identity-getpid-fuzz"
+sources = ["tests/phase6/process_identity/packets.c"]
+requires = ["getpid"]
+args = ["getpid"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-process-abi", "diff:glibc", "diff:musl"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "identity-getppid-abi"
+sources = ["tests/phase6/process_identity/abi.c", "tests/phase2/abi.asm"]
+requires = ["getppid"]
+args = ["getppid"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-process-abi"]
+backends = ["native", "qemu"]
+host_skip = "The shared SysV register and return probe uses the freestanding runtime."
+[case.skip]
+valgrind = "Shared nondefault x87 ABI probe exceeds Memcheck emulation."
+
+[[case]]
+name = "identity-getppid-fuzz"
+sources = ["tests/phase6/process_identity/packets.c"]
+requires = ["getppid"]
+args = ["getppid"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-process-abi", "diff:glibc", "diff:musl"]
+backends = ["native", "qemu", "valgrind"]
+host = true
