@@ -1,6 +1,7 @@
 """Run the nightly or tagged release matrix and validate its exact evidence."""
 
 import argparse
+from collections import Counter
 import json
 import math
 import os
@@ -16,7 +17,9 @@ import tempfile
 from time import monotonic, time_ns
 
 from gate import BUILD, EVIDENCE, GateError, checked, identify_tools, verify_setup, write_evidence
-from phase1 import build_runtime, phase1_inputs
+from musl_authorship import ARCHIVE_SHA256 as MUSL_ARCHIVE_SHA, POLICY as AUTHORSHIP_POLICY
+from musl_authorship import inputs as authorship_inputs
+from phase1 import RUNTIME_SRC, build_runtime, phase1_inputs
 from phase2 import phase2_functions
 from spec import ROOT, SpecError, has_runtime_entry, load_project, regular_file, relative_path, sha256_file, snapshot_inputs
 
@@ -33,7 +36,7 @@ PHASES = (
     "phase10-endpoints", "phase10-inet", "phase10-netdb", "phase10-dns", "phase10-http",
     "phase10-terminal", "phase10-libc-test", "phase10-glob", "phase10-regex", "phase11-vdso",
     "phase11-static-pie", "phase11-allocator", "phase11-copy-benchmark", "phase11-allocator-benchmark",
-    "phase11-seccomp", "phase11-old-kernel",
+    "phase11-seccomp", "phase11-old-kernel", "scan-musl-authorship",
 )
 EXTRA = ("fcntl-production", "extension-control")
 FUZZ_SECONDS = 300
@@ -43,7 +46,6 @@ GAPS = {
     "remaining_binary32_domains": "The full remaining binary32 math campaigns need artifact-bound completion and audit.",
     "ltp_gnulib_conformance": "The roadmap's independent LTP and gnulib subsets need pinned executable gates.",
     "remaining_musl_performance": "Copy and allocator benchmarks cover their predeclared workloads. Remaining musl performance criteria need measured gates.",
-    "authorship_similarity": "The compiler-output similarity scan needs a pinned implementation and review policy.",
 }
 
 
@@ -300,6 +302,37 @@ def old_kernel(started, status, record):
     record.update(evidence=path.relative_to(ROOT).as_posix(), evidence_sha256=sha256_file(path))
 
 
+def check_authorship(data, review, scan_hash, expected):
+    classes = {"below-minimum", "clear", "no-matching-musl-symbol",
+               "normalized-exact", "normalized-near", "normalized-containment"}
+    rows = data.get("symbols")
+    if (data.get("musl_archive_sha256") != MUSL_ARCHIVE_SHA
+            or data.get("policy") != AUTHORSHIP_POLICY
+            or type(data.get("candidate_archive_sha256")) is not str
+            or re.fullmatch(r"[0-9a-f]{64}", data["candidate_archive_sha256"]) is None
+            or type(rows) is not list or not rows
+            or any(type(row) is not dict or type(row.get("symbol")) is not str
+                   or type(row.get("classification")) is not str or row["classification"] not in classes
+                   for row in rows)
+            or {row["symbol"] for row in rows} != expected
+            or data.get("counts") != dict(Counter(row["classification"] for row in rows))):
+        raise GateError("musl authorship evidence lacks the pinned scan inventory")
+    controls = data.get("controls", {})
+    copied, distinct = controls.get("copied", {}), controls.get("distinct", {})
+    if (controls.get("symbol") != "strlen" or copied.get("classification") != "normalized-exact"
+            or copied.get("candidate") != copied.get("reference")
+            or copied.get("similarity_per_mille") != 1000
+            or copied.get("object_sha256") == controls.get("reference_member_sha256")
+            or distinct.get("classification") != "clear"
+            or distinct.get("reference") != copied.get("reference")):
+        raise GateError("musl authorship evidence lacks the relocation and distinct controls")
+    findings = [row for row in rows if row["classification"].startswith("normalized-")]
+    if (review.get("scan_sha256") != scan_hash or review.get("scan_outcome") != "pass"
+            or review.get("items") != findings):
+        raise GateError("musl authorship review does not match the exact passing scan")
+    return [row["symbol"] for row in findings]
+
+
 def gate(name, record):
     environment = {**os.environ, "LC_ALL": "C", "OPEN_ASSEMBLY_LIBFUZZER_SECONDS": str(FUZZ_SECONDS)}
     started = time_ns()
@@ -318,6 +351,8 @@ def gate(name, record):
         filename, scope = "fcntl.production.json", "production-runtime-manifest-function"
     elif name == "phase11-copy-benchmark":
         scope = "phase11-native-hot-disjoint-memcpy-benchmark"
+    elif name == "scan-musl-authorship":
+        filename, scope = "musl-authorship.json", "nightly-same-symbol-musl-authorship-scan"
     invoke(command, record, timeout=timeout, environment=environment)
     if name == "phase2":
         path, _ = phase2_report(started)
@@ -329,6 +364,18 @@ def gate(name, record):
             check_allocator_benchmark(data)
         if name == "phase11-seccomp":
             check_seccomp(data)
+        if name == "scan-musl-authorship":
+            if data["inputs"] != authorship_inputs():
+                raise GateError("musl authorship evidence omits source-bound scan inputs")
+            review_path, review = report_file(ROOT, "musl-authorship-review.json", started)
+            symbols = load_project().functions.keys()
+            expected = {source.stem for source in map(Path, data["inputs"])
+                        if source.is_relative_to(RUNTIME_SRC) and source.suffix == ".asm"
+                        and source.stem in symbols}
+            findings = check_authorship(data, review, sha256_file(path), expected)
+            record.update(review_evidence=review_path.relative_to(ROOT).as_posix(),
+                          review_evidence_sha256=sha256_file(review_path),
+                          review_signals=findings)
     record.update(evidence=path.relative_to(ROOT).as_posix(), evidence_sha256=sha256_file(path))
 
 

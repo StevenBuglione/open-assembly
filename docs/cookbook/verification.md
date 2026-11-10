@@ -377,7 +377,10 @@ Its unimplemented, scoped, and production-required reports are archived
 with the main evidence. The host wrapper first starts the separate
 QEMU-system image for the pinned old-kernel boot check. The tier validates
 that report against the current inputs and records the four installed
-seccomp filter observations independently.
+seccomp filter observations independently. The musl authorship scan
+checks the relocated-copy and distinct NASM controls and archives its
+hash-linked review queue. Entries in that queue are similarity signals
+for human review.
 
 The release tier additionally validates the checked-out tag and compares
 two independently built and audited sets of runtime, PIE startup and
@@ -389,7 +392,7 @@ Every listed gate must produce a fresh passing report with matching input
 hashes. Use repeated `--only` selections for focused diagnosis. Such a run
 exits nonzero with a partial report. The current matrix also records unmet
 broader old/current-kernel and restrictive-seccomp coverage, remaining full binary32 domains,
-LTP and gnulib, performance, and authorship similarity requirements. A tier
+LTP and gnulib, and performance requirements. A tier
 with any failure or unmet requirement exits nonzero and cannot qualify
 a release. The platform section records the actual native kernel and
 seccomp mode separately from those matrix requirements.

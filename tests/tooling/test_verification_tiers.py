@@ -1,5 +1,6 @@
 """Exercise fail-closed validation of tier evidence files and budgets."""
 
+from copy import deepcopy
 import json
 import os
 from pathlib import Path
@@ -13,7 +14,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "tools"))
 from gate import GateError
 from production import libfuzzer_seconds
 from spec import snapshot_inputs
-from verify_tiers import check_allocator_benchmark, evidence_json, fresh_report, invoke
+from musl_authorship import ARCHIVE_SHA256, POLICY
+from verify_tiers import check_allocator_benchmark, check_authorship, evidence_json, fresh_report, invoke
 
 
 class TierEvidence(unittest.TestCase):
@@ -116,6 +118,30 @@ class TierEvidence(unittest.TestCase):
         record["geometric_mean"] = 1.25
         with self.assertRaisesRegex(GateError, "geometric mean cap"):
             check_allocator_benchmark(record)
+
+    def test_authorship_scan_binds_controls_inventory_and_review(self):
+        hash_value = "b" * 64
+        fingerprint = {"instructions": 30, "sha256": "c" * 64}
+        copied = {"classification": "normalized-exact", "candidate": fingerprint,
+                  "reference": fingerprint, "similarity_per_mille": 1000, "object_sha256": "d" * 64}
+        distinct = {"classification": "clear", "reference": fingerprint, "object_sha256": "e" * 64}
+        row = {"symbol": "setjmp", "classification": "normalized-near"}
+        scan = {"musl_archive_sha256": ARCHIVE_SHA256, "candidate_archive_sha256": hash_value,
+                "policy": POLICY, "symbols": [row], "counts": {"normalized-near": 1},
+                "controls": {"symbol": "strlen", "copied": copied, "distinct": distinct,
+                             "reference_member_sha256": "f" * 64}}
+        review = {"scan_sha256": hash_value, "scan_outcome": "pass", "items": [row]}
+        self.assertEqual(check_authorship(scan, review, hash_value, {"setjmp"}), ["setjmp"])
+        with self.assertRaisesRegex(GateError, "pinned scan inventory"):
+            check_authorship(scan, review, hash_value, {"setjmp", "_setjmp"})
+        wrong = deepcopy(scan)
+        wrong["controls"]["copied"]["classification"] = "clear"
+        with self.assertRaisesRegex(GateError, "relocation and distinct controls"):
+            check_authorship(wrong, review, hash_value, {"setjmp"})
+        with self.assertRaisesRegex(GateError, "exact passing scan"):
+            check_authorship(scan, {**review, "items": []}, hash_value, {"setjmp"})
+        with self.assertRaisesRegex(GateError, "exact passing scan"):
+            check_authorship(scan, review, "a" * 64, {"setjmp"})
 
     def test_fuzz_budget_cannot_be_reduced(self):
         with patch.dict(os.environ, {"OPEN_ASSEMBLY_LIBFUZZER_SECONDS": "59"}):
