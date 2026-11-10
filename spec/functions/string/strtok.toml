@@ -1,0 +1,20 @@
+name = "strtok"
+header = "string.h"
+prototype = "char *strtok(char *restrict s, const char *restrict delimiters)"
+standard = ["C17 7.24.5.8"]
+deps = ["strspn", "strcspn"]
+errno = []
+mt_safe = false
+as_safe = false
+oracles = ["diff:glibc", "reference:byte-strings"]
+provenance = "original"
+semantics = [
+  "A non-NULL s starts a new writable string, and a NULL s resumes the last scan.",
+  "Skip runs of delimiters and return the next nonempty token, replacing a following delimiter with NUL.",
+  "Delimiter bytes may change between calls. Return NULL when no token remains.",
+  "The continuation is process-wide. The two strings must not overlap.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

@@ -1,0 +1,19 @@
+name = "strxfrm"
+header = "string.h"
+prototype = "size_t strxfrm(char *restrict dest, const char *restrict src, size_t n)"
+standard = ["C17 7.24.4.5"]
+deps = ["strlen", "memcpy"]
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "reference:byte-strings"]
+provenance = "original"
+semantics = [
+  "In the C locale the transformation is the source string unchanged. Return its length excluding NUL.",
+  "If n exceeds the returned length, copy the source and terminator. Otherwise leave dest unchanged.",
+  "Dest may be NULL when n is zero. The regions must not overlap.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

@@ -1,0 +1,18 @@
+name = "strncmp"
+header = "string.h"
+prototype = "int strncmp(const char *a, const char *b, size_t n)"
+standard = ["C17 7.24.4.4"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "reference:byte-strings"]
+provenance = "original"
+semantics = [
+  "Compare up to n bytes as unsigned char, stopping at the first difference or NUL.",
+  "Return the sign of the first difference or zero. With zero length, access neither string.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

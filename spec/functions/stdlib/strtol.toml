@@ -1,0 +1,23 @@
+name = "strtol"
+header = "stdlib.h"
+prototype = "long strtol(const char *restrict s, char **restrict endptr, int base)"
+standard = ["C17 7.22.1.4"]
+deps = ["__errno_location"]
+errno = ["EINVAL", "ERANGE"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "reference:integer-scan"]
+provenance = "original"
+semantics = [
+  "Skip C-locale whitespace and one optional sign, then convert digits in base zero or 2 through 36.",
+  "Base zero selects octal after a leading zero or decimal otherwise. Base zero and base 16 accept 0x or 0X only before a hex digit.",
+  "Digit letters are case insensitive. C17 syntax has no binary prefix.",
+  "On success, store the first unconverted byte through a non-NULL endptr and preserve errno.",
+  "If the base is unsupported or no digits convert, return zero, set EINVAL and store s through a non-NULL endptr.",
+  "On overflow consume the full digit run, store its end through a non-NULL endptr, and set ERANGE.",
+  "Overflow returns the signed minimum for negative input or the signed maximum for positive input.",
+]
+
+[abi]
+narrow_args = ["edx:s32"]
+variadic = false

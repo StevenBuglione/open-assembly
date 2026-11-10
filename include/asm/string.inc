@@ -2,6 +2,27 @@
 %ifndef OPEN_ASSEMBLY_737472696E672E68
 %define OPEN_ASSEMBLY_737472696E672E68
 
+extern memchr
+extern memcmp
+extern memcpy
+extern memmove
+extern memset
+extern strcat
+extern strchr
+extern strcmp
+extern strcoll
+extern strcpy
+extern strcspn
+extern strerror
 extern strlen
+extern strncat
+extern strncmp
+extern strncpy
+extern strpbrk
+extern strrchr
+extern strspn
+extern strstr
+extern strtok
+extern strxfrm
 
 %endif

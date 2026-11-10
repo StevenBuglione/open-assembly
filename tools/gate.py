@@ -13,7 +13,8 @@ import sys
 import tempfile
 
 from spec import (
-    ROOT, SpecError, comment_header, load_project, phase0_input_paths, sha256_file, snapshot_inputs,
+    IDENTIFIER, ROOT, SpecError, comment_header, load_project, phase0_input_paths,
+    sha256_file, snapshot_inputs,
 )
 
 BUILD = Path("build")
@@ -222,7 +223,8 @@ class Harness:
             command.append(self.oracle)
         if mode == "fuzz":
             command.append(duration)
-        result = run(command, timeout=duration + 20)
+        result = run(command, timeout=duration + 20,
+                     environment={**os.environ, "LC_ALL": "C", "OPEN_ASSEMBLY_STRLEN_ORACLE": "glibc"})
         if (result["returncode"] == 0 and result["stdout"].startswith(f"PASS {mode} ")
                 and not result["stderr"]):
             return {**result, "outcome": "pass"}
@@ -433,10 +435,12 @@ def main(default_fixture=None):
             parser.error("--phase0 does not take a function")
     elif args.function is None:
         parser.error("supply a function name, --phase0 or --phase1")
-    if args.production:
-        for key, reason in PENDING.items():
-            print(f"{args.function}: pending {key} ({reason})", file=sys.stderr)
-        return 1
+    if args.function is not None and re.fullmatch(IDENTIFIER, args.function) is None:
+        parser.error("invalid function name")
+    if args.production or (args.function is not None and args.fixture is None
+                           and any(Path("src/x86_64-linux").glob(f"*/{args.function}.asm"))):
+        from production import production
+        return production(args.function, default_fixture)
     if args.function not in (None, "strlen"):
         print(f"{args.function}: no Phase 0 fixture or verification harness", file=sys.stderr)
         return 1

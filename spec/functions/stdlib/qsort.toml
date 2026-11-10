@@ -1,0 +1,20 @@
+name = "qsort"
+header = "stdlib.h"
+prototype = "void qsort(void *base, size_t nmemb, size_t size, int (*compar)(const void *, const void *))"
+standard = ["C17 7.22.5.2"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "reference:sorted-permutation"]
+provenance = "original"
+semantics = [
+  "Sort the array in place in ascending comparator order. Equal elements need not retain their original order.",
+  "Pass only pointers to actual in-array elements to compar and use only the sign of its int result.",
+  "With fewer than two elements or zero element size, return without calling compar or writing the array.",
+  "A comparator that gives inconsistent answers may produce an unspecified permutation. The sort remains bounded and never accesses beyond a valid array.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

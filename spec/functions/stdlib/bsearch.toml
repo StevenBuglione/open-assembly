@@ -1,0 +1,20 @@
+name = "bsearch"
+header = "stdlib.h"
+prototype = "void *bsearch(const void *key, const void *base, size_t nmemb, size_t size, int (*compar)(const void *, const void *))"
+standard = ["C17 7.22.5.1"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "reference:sorted-search"]
+provenance = "original"
+semantics = [
+  "Search an array partitioned into less than, equal to, and greater than the key in that order.",
+  "Pass the key first and an in-array element pointer second to compar. Use only the sign of its int result.",
+  "Return any matching element or NULL if none matches. Zero elements or zero element size return NULL without calling compar.",
+  "The implementation never probes beyond a valid array, even when compar reports inconsistent orderings.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

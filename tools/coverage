@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
-"""Report availability of source-mapped branch coverage."""
+"""Verify source-mapped QEMU branch coverage on a production function."""
 
 import argparse
-import sys
+import os
+import re
+
+from production import production
+from spec import IDENTIFIER, ROOT
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("function")
 args = parser.parse_args()
-print(f"{args.function}: pending source-mapped branch coverage (drcov or a QEMU plugin)",
-      file=sys.stderr)
-raise SystemExit(1)
+if re.fullmatch(IDENTIFIER, args.function) is None:
+    parser.error("invalid function name")
+os.chdir(ROOT)
+raise SystemExit(production(args.function, "coverage"))

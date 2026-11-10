@@ -4,6 +4,15 @@
 
 extern _Exit
 extern atexit
+extern atoi
+extern atol
+extern atoll
+extern bsearch
 extern exit
+extern qsort
+extern strtol
+extern strtoll
+extern strtoul
+extern strtoull
 
 %endif

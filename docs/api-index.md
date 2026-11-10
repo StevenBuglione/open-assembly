@@ -3,7 +3,7 @@
 
 This index lists authored function specifications. For implementation state, run `tools/queue status`.
 
-Specs: 10 of 507 inventoried functions. The inventory covers C17, the named POSIX bootstrap subset, and runtime ABI entries; see [inventory scope](cookbook/specifications.md#inventory-scope).
+Specs: 56 of 507 inventoried functions. The inventory covers C17, the named POSIX bootstrap subset, and runtime ABI entries; see [inventory scope](cookbook/specifications.md#inventory-scope).
 
 | Function | Header | Prototype | Standard |
 | --- | --- | --- | --- |
@@ -12,8 +12,54 @@ Specs: 10 of 507 inventoried functions. The inventory covers C17, the named POSI
 | [`__stack_chk_fail`](../spec/functions/compiler_rt/__stack_chk_fail.toml) | `<compiler_rt.h>` | `_Noreturn void __stack_chk_fail(void)` | Runtime ABI __stack_chk_fail |
 | [`_exit`](../spec/functions/unistd/_exit.toml) | `<unistd.h>` | `_Noreturn void _exit(int status)` | POSIX.1-2024 XSH _exit |
 | [`atexit`](../spec/functions/stdlib/atexit.toml) | `<stdlib.h>` | `int atexit(void (*func)(void))` | C17 7.22.4.2 |
+| [`atoi`](../spec/functions/stdlib/atoi.toml) | `<stdlib.h>` | `int atoi(const char *s)` | C17 7.22.1.2 |
+| [`atol`](../spec/functions/stdlib/atol.toml) | `<stdlib.h>` | `long atol(const char *s)` | C17 7.22.1.2 |
+| [`atoll`](../spec/functions/stdlib/atoll.toml) | `<stdlib.h>` | `long long atoll(const char *s)` | C17 7.22.1.2 |
+| [`bsearch`](../spec/functions/stdlib/bsearch.toml) | `<stdlib.h>` | `void *bsearch(const void *key, const void *base, size_t nmemb, size_t size, int (*compar)(const void *, const void *))` | C17 7.22.5.1 |
 | [`close`](../spec/functions/unistd/close.toml) | `<unistd.h>` | `int close(int fd)` | POSIX.1-2024 XSH close |
 | [`exit`](../spec/functions/stdlib/exit.toml) | `<stdlib.h>` | `_Noreturn void exit(int status)` | C17 7.22.4.4 |
+| [`isalnum`](../spec/functions/ctype/isalnum.toml) | `<ctype.h>` | `int isalnum(int c)` | C17 7.4.1.1 |
+| [`isalpha`](../spec/functions/ctype/isalpha.toml) | `<ctype.h>` | `int isalpha(int c)` | C17 7.4.1.2 |
+| [`isblank`](../spec/functions/ctype/isblank.toml) | `<ctype.h>` | `int isblank(int c)` | C17 7.4.1.3 |
+| [`iscntrl`](../spec/functions/ctype/iscntrl.toml) | `<ctype.h>` | `int iscntrl(int c)` | C17 7.4.1.4 |
+| [`isdigit`](../spec/functions/ctype/isdigit.toml) | `<ctype.h>` | `int isdigit(int c)` | C17 7.4.1.5 |
+| [`isgraph`](../spec/functions/ctype/isgraph.toml) | `<ctype.h>` | `int isgraph(int c)` | C17 7.4.1.6 |
+| [`islower`](../spec/functions/ctype/islower.toml) | `<ctype.h>` | `int islower(int c)` | C17 7.4.1.7 |
+| [`isprint`](../spec/functions/ctype/isprint.toml) | `<ctype.h>` | `int isprint(int c)` | C17 7.4.1.8 |
+| [`ispunct`](../spec/functions/ctype/ispunct.toml) | `<ctype.h>` | `int ispunct(int c)` | C17 7.4.1.9 |
+| [`isspace`](../spec/functions/ctype/isspace.toml) | `<ctype.h>` | `int isspace(int c)` | C17 7.4.1.10 |
+| [`isupper`](../spec/functions/ctype/isupper.toml) | `<ctype.h>` | `int isupper(int c)` | C17 7.4.1.11 |
+| [`isxdigit`](../spec/functions/ctype/isxdigit.toml) | `<ctype.h>` | `int isxdigit(int c)` | C17 7.4.1.12 |
+| [`memchr`](../spec/functions/string/memchr.toml) | `<string.h>` | `void *memchr(const void *s, int c, size_t n)` | C17 7.24.5.1 |
+| [`memcmp`](../spec/functions/string/memcmp.toml) | `<string.h>` | `int memcmp(const void *a, const void *b, size_t n)` | C17 7.24.4.1 |
+| [`memcpy`](../spec/functions/string/memcpy.toml) | `<string.h>` | `void *memcpy(void *restrict dest, const void *restrict src, size_t n)` | C17 7.24.2.1 |
+| [`memmove`](../spec/functions/string/memmove.toml) | `<string.h>` | `void *memmove(void *dest, const void *src, size_t n)` | C17 7.24.2.2 |
+| [`memset`](../spec/functions/string/memset.toml) | `<string.h>` | `void *memset(void *s, int c, size_t n)` | C17 7.24.6.1 |
+| [`qsort`](../spec/functions/stdlib/qsort.toml) | `<stdlib.h>` | `void qsort(void *base, size_t nmemb, size_t size, int (*compar)(const void *, const void *))` | C17 7.22.5.2 |
 | [`read`](../spec/functions/unistd/read.toml) | `<unistd.h>` | `ssize_t read(int fd, void *buf, size_t count)` | POSIX.1-2024 XSH read |
+| [`strcat`](../spec/functions/string/strcat.toml) | `<string.h>` | `char *strcat(char *restrict dest, const char *restrict src)` | C17 7.24.3.1 |
+| [`strchr`](../spec/functions/string/strchr.toml) | `<string.h>` | `char *strchr(const char *s, int c)` | C17 7.24.5.2 |
+| [`strcmp`](../spec/functions/string/strcmp.toml) | `<string.h>` | `int strcmp(const char *a, const char *b)` | C17 7.24.4.2 |
+| [`strcoll`](../spec/functions/string/strcoll.toml) | `<string.h>` | `int strcoll(const char *a, const char *b)` | C17 7.24.4.3 |
+| [`strcpy`](../spec/functions/string/strcpy.toml) | `<string.h>` | `char *strcpy(char *restrict dest, const char *restrict src)` | C17 7.24.2.3 |
+| [`strcspn`](../spec/functions/string/strcspn.toml) | `<string.h>` | `size_t strcspn(const char *s, const char *reject)` | C17 7.24.5.3 |
+| [`strerror`](../spec/functions/string/strerror.toml) | `<string.h>` | `char *strerror(int error)` | C17 7.24.6.2 |
 | [`strlen`](../spec/functions/string/strlen.toml) | `<string.h>` | `size_t strlen(const char *s)` | C17 7.24.6.3 |
+| [`strncat`](../spec/functions/string/strncat.toml) | `<string.h>` | `char *strncat(char *restrict dest, const char *restrict src, size_t n)` | C17 7.24.3.2 |
+| [`strncmp`](../spec/functions/string/strncmp.toml) | `<string.h>` | `int strncmp(const char *a, const char *b, size_t n)` | C17 7.24.4.4 |
+| [`strncpy`](../spec/functions/string/strncpy.toml) | `<string.h>` | `char *strncpy(char *restrict dest, const char *restrict src, size_t n)` | C17 7.24.2.4 |
+| [`strpbrk`](../spec/functions/string/strpbrk.toml) | `<string.h>` | `char *strpbrk(const char *s, const char *accept)` | C17 7.24.5.4 |
+| [`strrchr`](../spec/functions/string/strrchr.toml) | `<string.h>` | `char *strrchr(const char *s, int c)` | C17 7.24.5.5 |
+| [`strspn`](../spec/functions/string/strspn.toml) | `<string.h>` | `size_t strspn(const char *s, const char *accept)` | C17 7.24.5.6 |
+| [`strstr`](../spec/functions/string/strstr.toml) | `<string.h>` | `char *strstr(const char *haystack, const char *needle)` | C17 7.24.5.7 |
+| [`strtoimax`](../spec/functions/inttypes/strtoimax.toml) | `<inttypes.h>` | `intmax_t strtoimax(const char *restrict s, char **restrict endptr, int base)` | C17 7.8.2.3 |
+| [`strtok`](../spec/functions/string/strtok.toml) | `<string.h>` | `char *strtok(char *restrict s, const char *restrict delimiters)` | C17 7.24.5.8 |
+| [`strtol`](../spec/functions/stdlib/strtol.toml) | `<stdlib.h>` | `long strtol(const char *restrict s, char **restrict endptr, int base)` | C17 7.22.1.4 |
+| [`strtoll`](../spec/functions/stdlib/strtoll.toml) | `<stdlib.h>` | `long long strtoll(const char *restrict s, char **restrict endptr, int base)` | C17 7.22.1.4 |
+| [`strtoul`](../spec/functions/stdlib/strtoul.toml) | `<stdlib.h>` | `unsigned long strtoul(const char *restrict s, char **restrict endptr, int base)` | C17 7.22.1.4 |
+| [`strtoull`](../spec/functions/stdlib/strtoull.toml) | `<stdlib.h>` | `unsigned long long strtoull(const char *restrict s, char **restrict endptr, int base)` | C17 7.22.1.4 |
+| [`strtoumax`](../spec/functions/inttypes/strtoumax.toml) | `<inttypes.h>` | `uintmax_t strtoumax(const char *restrict s, char **restrict endptr, int base)` | C17 7.8.2.3 |
+| [`strxfrm`](../spec/functions/string/strxfrm.toml) | `<string.h>` | `size_t strxfrm(char *restrict dest, const char *restrict src, size_t n)` | C17 7.24.4.5 |
+| [`tolower`](../spec/functions/ctype/tolower.toml) | `<ctype.h>` | `int tolower(int c)` | C17 7.4.2.1 |
+| [`toupper`](../spec/functions/ctype/toupper.toml) | `<ctype.h>` | `int toupper(int c)` | C17 7.4.2.2 |
 | [`write`](../spec/functions/unistd/write.toml) | `<unistd.h>` | `ssize_t write(int fd, const void *buf, size_t count)` | POSIX.1-2024 XSH write |

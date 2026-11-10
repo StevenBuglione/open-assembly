@@ -1,0 +1,19 @@
+name = "strncpy"
+header = "string.h"
+prototype = "char *strncpy(char *restrict dest, const char *restrict src, size_t n)"
+standard = ["C17 7.24.2.4"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "reference:byte-strings"]
+provenance = "original"
+semantics = [
+  "Copy at most n source bytes. If a NUL is reached before n bytes, fill all remaining destination bytes with zeros.",
+  "Return dest. Do not access either object for n equal to zero or read beyond an encountered NUL.",
+  "The regions must not overlap. If the source contains no NUL among its first n bytes, the result is not terminated.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

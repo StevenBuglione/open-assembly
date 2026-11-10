@@ -1,0 +1,17 @@
+name = "strrchr"
+header = "string.h"
+prototype = "char *strrchr(const char *s, int c)"
+standard = ["C17 7.24.5.5"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "reference:byte-strings"]
+provenance = "original"
+semantics = [
+  "Return the last position equal to c converted to char, or NULL when absent. The terminating NUL can match.",
+]
+
+[abi]
+narrow_args = ["esi:s32"]
+variadic = false

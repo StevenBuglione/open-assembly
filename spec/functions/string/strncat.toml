@@ -1,0 +1,19 @@
+name = "strncat"
+header = "string.h"
+prototype = "char *strncat(char *restrict dest, const char *restrict src, size_t n)"
+standard = ["C17 7.24.3.2"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "reference:byte-strings"]
+provenance = "original"
+semantics = [
+  "Append at most n nonzero source bytes to the original destination terminator and terminate dest.",
+  "Return dest. For n equal to zero, leave dest unchanged and do not read src.",
+  "The regions must not overlap and dest must have space for the result.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

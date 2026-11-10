@@ -1,0 +1,438 @@
+schema = 1
+
+[[function]]
+name = "strlen"
+id = 1
+sources = ["tests/unit/strlen.c", "tests/abi/strlen.asm"]
+host_symbols = ["strlen"]
+coverage_modes = ["unit", "guard"]
+oracle = ["reference:byte-count", "reference:page-protection", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/fuzz_strlen.c"]
+
+[[function]]
+name = "memcpy"
+id = 2
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/memory.c"]
+host_symbols = ["memcpy"]
+coverage_modes = ["unit", "guard", "differential"]
+oracle = ["c17:byte-operations", "reference:page-protection", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/memory.c"]
+
+[[function]]
+name = "memmove"
+id = 3
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/memory.c"]
+host_symbols = ["memmove"]
+coverage_modes = ["unit", "guard", "differential"]
+oracle = ["c17:byte-operations", "reference:page-protection", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/memory.c"]
+
+[[function]]
+name = "memset"
+id = 4
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/memory.c"]
+host_symbols = ["memset"]
+coverage_modes = ["unit", "guard", "differential"]
+oracle = ["c17:byte-operations", "reference:page-protection", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/memory.c"]
+
+[[function]]
+name = "memcmp"
+id = 5
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/memory.c"]
+host_symbols = ["memcmp"]
+coverage_modes = ["unit", "guard", "differential"]
+oracle = ["c17:byte-operations", "reference:page-protection", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/memory.c"]
+
+[[function]]
+name = "memchr"
+id = 6
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/memory.c"]
+host_symbols = ["memchr"]
+coverage_modes = ["unit", "guard", "differential"]
+oracle = ["c17:byte-operations", "reference:page-protection", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/memory.c"]
+
+[[function]]
+name = "strcpy"
+id = 7
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/strings.c"]
+host_symbols = ["strcpy"]
+coverage_modes = ["unit", "guard", "differential"]
+oracle = ["c17:string-operations", "reference:page-protection", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/strings.c"]
+
+[[function]]
+name = "strncpy"
+id = 8
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/strings.c"]
+host_symbols = ["strncpy"]
+coverage_modes = ["unit", "guard", "differential"]
+oracle = ["c17:string-operations", "reference:page-protection", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/strings.c"]
+
+[[function]]
+name = "strcat"
+id = 9
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/strings.c"]
+host_symbols = ["strcat"]
+coverage_modes = ["unit", "guard", "differential"]
+oracle = ["c17:string-operations", "reference:page-protection", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/strings.c"]
+
+[[function]]
+name = "strncat"
+id = 10
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/strings.c"]
+host_symbols = ["strncat"]
+coverage_modes = ["unit", "guard", "differential"]
+oracle = ["c17:string-operations", "reference:page-protection", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/strings.c"]
+
+[[function]]
+name = "strcmp"
+id = 11
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/strings.c"]
+host_symbols = ["strcmp"]
+coverage_modes = ["unit", "guard", "differential"]
+oracle = ["c17:string-operations", "reference:page-protection", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/strings.c"]
+
+[[function]]
+name = "strncmp"
+id = 12
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/strings.c"]
+host_symbols = ["strncmp"]
+coverage_modes = ["unit", "guard", "differential"]
+oracle = ["c17:string-operations", "reference:page-protection", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/strings.c"]
+
+[[function]]
+name = "strcoll"
+id = 13
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/strings.c"]
+host_symbols = ["strcoll"]
+coverage_modes = ["unit", "guard", "differential"]
+oracle = ["c17:string-operations", "reference:page-protection", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/strings.c"]
+
+[[function]]
+name = "strxfrm"
+id = 14
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/strings.c"]
+host_symbols = ["strxfrm"]
+coverage_modes = ["unit", "guard", "differential"]
+oracle = ["c17:string-operations", "reference:page-protection", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/strings.c"]
+
+[[function]]
+name = "strchr"
+id = 15
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/strings.c"]
+host_symbols = ["strchr"]
+coverage_modes = ["unit", "guard", "differential"]
+oracle = ["c17:string-operations", "reference:page-protection", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/strings.c"]
+
+[[function]]
+name = "strrchr"
+id = 16
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/strings.c"]
+host_symbols = ["strrchr"]
+coverage_modes = ["unit", "guard", "differential"]
+oracle = ["c17:string-operations", "reference:page-protection", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/strings.c"]
+
+[[function]]
+name = "strcspn"
+id = 17
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/strings.c"]
+host_symbols = ["strcspn"]
+coverage_modes = ["unit", "guard", "differential"]
+oracle = ["c17:string-operations", "reference:page-protection", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/strings.c"]
+
+[[function]]
+name = "strpbrk"
+id = 18
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/strings.c"]
+host_symbols = ["strpbrk"]
+coverage_modes = ["unit", "guard", "differential"]
+oracle = ["c17:string-operations", "reference:page-protection", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/strings.c"]
+
+[[function]]
+name = "strspn"
+id = 19
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/strings.c"]
+host_symbols = ["strspn"]
+coverage_modes = ["unit", "guard", "differential"]
+oracle = ["c17:string-operations", "reference:page-protection", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/strings.c"]
+
+[[function]]
+name = "strstr"
+id = 20
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/strings.c"]
+host_symbols = ["strstr"]
+coverage_modes = ["unit", "guard", "differential"]
+oracle = ["c17:string-operations", "reference:page-protection", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/strings.c"]
+
+[[function]]
+name = "strtok"
+id = 21
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/tokens.c"]
+host_symbols = ["strtok"]
+coverage_modes = ["unit", "guard", "differential"]
+oracle = ["c17:tokenization", "reference:page-protection", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/tokens.c"]
+
+[[function]]
+name = "strerror"
+id = 22
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/errors.c"]
+host_symbols = ["strerror"]
+coverage_modes = ["unit", "guard", "differential"]
+oracle = ["project:strerror-messages", "abi:sysv-amd64"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/errors.c"]
+
+[[function]]
+name = "isalnum"
+id = 23
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/ctype.c"]
+host_symbols = ["isalnum"]
+coverage_modes = ["unit", "differential"]
+guard_skip = "The scalar interface has no caller-supplied memory range to guard."
+oracle = ["c17:c-locale-ctype", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/ctype.c"]
+
+[[function]]
+name = "isalpha"
+id = 24
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/ctype.c"]
+host_symbols = ["isalpha"]
+coverage_modes = ["unit", "differential"]
+guard_skip = "The scalar interface has no caller-supplied memory range to guard."
+oracle = ["c17:c-locale-ctype", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/ctype.c"]
+
+[[function]]
+name = "isblank"
+id = 25
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/ctype.c"]
+host_symbols = ["isblank"]
+coverage_modes = ["unit", "differential"]
+guard_skip = "The scalar interface has no caller-supplied memory range to guard."
+oracle = ["c17:c-locale-ctype", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/ctype.c"]
+
+[[function]]
+name = "iscntrl"
+id = 26
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/ctype.c"]
+host_symbols = ["iscntrl"]
+coverage_modes = ["unit", "differential"]
+guard_skip = "The scalar interface has no caller-supplied memory range to guard."
+oracle = ["c17:c-locale-ctype", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/ctype.c"]
+
+[[function]]
+name = "isdigit"
+id = 27
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/ctype.c"]
+host_symbols = ["isdigit"]
+coverage_modes = ["unit", "differential"]
+guard_skip = "The scalar interface has no caller-supplied memory range to guard."
+oracle = ["c17:c-locale-ctype", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/ctype.c"]
+
+[[function]]
+name = "isgraph"
+id = 28
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/ctype.c"]
+host_symbols = ["isgraph"]
+coverage_modes = ["unit", "differential"]
+guard_skip = "The scalar interface has no caller-supplied memory range to guard."
+oracle = ["c17:c-locale-ctype", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/ctype.c"]
+
+[[function]]
+name = "islower"
+id = 29
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/ctype.c"]
+host_symbols = ["islower"]
+coverage_modes = ["unit", "differential"]
+guard_skip = "The scalar interface has no caller-supplied memory range to guard."
+oracle = ["c17:c-locale-ctype", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/ctype.c"]
+
+[[function]]
+name = "isprint"
+id = 30
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/ctype.c"]
+host_symbols = ["isprint"]
+coverage_modes = ["unit", "differential"]
+guard_skip = "The scalar interface has no caller-supplied memory range to guard."
+oracle = ["c17:c-locale-ctype", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/ctype.c"]
+
+[[function]]
+name = "ispunct"
+id = 31
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/ctype.c"]
+host_symbols = ["ispunct"]
+coverage_modes = ["unit", "differential"]
+guard_skip = "The scalar interface has no caller-supplied memory range to guard."
+oracle = ["c17:c-locale-ctype", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/ctype.c"]
+
+[[function]]
+name = "isspace"
+id = 32
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/ctype.c"]
+host_symbols = ["isspace"]
+coverage_modes = ["unit", "differential"]
+guard_skip = "The scalar interface has no caller-supplied memory range to guard."
+oracle = ["c17:c-locale-ctype", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/ctype.c"]
+
+[[function]]
+name = "isupper"
+id = 33
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/ctype.c"]
+host_symbols = ["isupper"]
+coverage_modes = ["unit", "differential"]
+guard_skip = "The scalar interface has no caller-supplied memory range to guard."
+oracle = ["c17:c-locale-ctype", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/ctype.c"]
+
+[[function]]
+name = "isxdigit"
+id = 34
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/ctype.c"]
+host_symbols = ["isxdigit"]
+coverage_modes = ["unit", "differential"]
+guard_skip = "The scalar interface has no caller-supplied memory range to guard."
+oracle = ["c17:c-locale-ctype", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/ctype.c"]
+
+[[function]]
+name = "tolower"
+id = 35
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/ctype.c"]
+host_symbols = ["tolower"]
+coverage_modes = ["unit", "differential"]
+guard_skip = "The scalar interface has no caller-supplied memory range to guard."
+oracle = ["c17:c-locale-ctype", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/ctype.c"]
+
+[[function]]
+name = "toupper"
+id = 36
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/ctype.c"]
+host_symbols = ["toupper"]
+coverage_modes = ["unit", "differential"]
+guard_skip = "The scalar interface has no caller-supplied memory range to guard."
+oracle = ["c17:c-locale-ctype", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/ctype.c"]
+
+[[function]]
+name = "atoi"
+id = 37
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/integers.c"]
+host_symbols = ["atoi"]
+coverage_modes = ["unit", "guard", "differential"]
+oracle = ["reference:integer-construction", "reference:page-protection", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/integers.c"]
+
+[[function]]
+name = "atol"
+id = 38
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/integers.c"]
+host_symbols = ["atol"]
+coverage_modes = ["unit", "guard", "differential"]
+oracle = ["reference:integer-construction", "reference:page-protection", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/integers.c"]
+
+[[function]]
+name = "atoll"
+id = 39
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/integers.c"]
+host_symbols = ["atoll"]
+coverage_modes = ["unit", "guard", "differential"]
+oracle = ["reference:integer-construction", "reference:page-protection", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/integers.c"]
+
+[[function]]
+name = "strtol"
+id = 40
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/integers.c"]
+host_symbols = ["strtol"]
+coverage_modes = ["unit", "guard", "differential"]
+oracle = ["reference:integer-construction", "reference:page-protection", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/integers.c"]
+
+[[function]]
+name = "strtoll"
+id = 41
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/integers.c"]
+host_symbols = ["strtoll"]
+coverage_modes = ["unit", "guard", "differential"]
+oracle = ["reference:integer-construction", "reference:page-protection", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/integers.c"]
+
+[[function]]
+name = "strtoul"
+id = 42
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/integers.c"]
+host_symbols = ["strtoul"]
+coverage_modes = ["unit", "guard", "differential"]
+oracle = ["reference:integer-construction", "reference:page-protection", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/integers.c"]
+
+[[function]]
+name = "strtoull"
+id = 43
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/integers.c"]
+host_symbols = ["strtoull"]
+coverage_modes = ["unit", "guard", "differential"]
+oracle = ["reference:integer-construction", "reference:page-protection", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/integers.c"]
+
+[[function]]
+name = "strtoimax"
+id = 44
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/integers.c"]
+host_symbols = ["strtoimax"]
+coverage_modes = ["unit", "guard", "differential"]
+oracle = ["reference:integer-construction", "reference:page-protection", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/integers.c"]
+
+[[function]]
+name = "strtoumax"
+id = 45
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/integers.c"]
+host_symbols = ["strtoumax"]
+coverage_modes = ["unit", "guard", "differential"]
+oracle = ["reference:integer-construction", "reference:page-protection", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/integers.c"]
+
+[[function]]
+name = "qsort"
+id = 46
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/algorithms.c"]
+host_symbols = ["qsort"]
+coverage_modes = ["unit", "guard", "differential"]
+oracle = ["reference:sorted-permutation", "reference:page-protection", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/algorithms.c"]
+
+[[function]]
+name = "bsearch"
+id = 47
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/algorithms.c"]
+host_symbols = ["bsearch"]
+coverage_modes = ["unit", "guard", "differential"]
+oracle = ["reference:sorted-search", "reference:page-protection", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/algorithms.c"]
