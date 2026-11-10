@@ -21,7 +21,9 @@ extern _exit
 extern close
 extern dup
 extern dup2
+extern execv
 extern execve
+extern execvp
 extern fork
 extern getcwd
 extern getopt

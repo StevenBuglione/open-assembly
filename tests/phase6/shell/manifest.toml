@@ -1,0 +1,122 @@
+schema = 1
+
+[[case]]
+name = "shell-system"
+sources = ["tests/phase6/shell/shell.c"]
+requires = ["system"]
+args = ["system"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-shell-process"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "shell-popen"
+sources = ["tests/phase6/shell/shell.c"]
+requires = ["popen"]
+args = ["popen"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-shell-process"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "shell-pclose"
+sources = ["tests/phase6/shell/shell.c"]
+requires = ["pclose"]
+args = ["pclose"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-shell-process"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "shell-prior-pipes"
+sources = ["tests/phase6/shell/shell.c"]
+requires = ["popen"]
+args = ["prior-pipes"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-shell-process"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "shell-invalid-stream"
+sources = ["tests/phase6/shell/shell.c"]
+requires = ["pclose"]
+args = ["invalid-stream"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-shell-process"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The project explicitly preserves an unrelated FILE on pclose error."
+
+[[case]]
+name = "shell-fault-fork"
+sources = ["tests/phase6/shell/fault.c"]
+requires = ["system", "popen"]
+args = ["fork"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-shell-process", "project:shell-private-boundary"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The fixture wraps the private Linux syscall boundary."
+link_wraps = ["__al_syscall"]
+
+[[case]]
+name = "shell-fault-wait"
+sources = ["tests/phase6/shell/fault.c"]
+requires = ["system", "pclose"]
+args = ["wait"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-shell-process", "project:shell-private-boundary"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The fixture wraps the private Linux syscall boundary."
+link_wraps = ["__al_syscall"]
+
+[[stub]]
+symbol = "system"
+case = "shell-system"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "popen"
+case = "shell-popen"
+status = 21
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "pclose"
+case = "shell-pclose"
+status = 41
+stdout = ""
+stderr = ""

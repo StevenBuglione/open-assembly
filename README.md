@@ -35,11 +35,12 @@ freestanding runtime archive. The initial process gate covers process IDs,
 fork, execve, wait, and atomic pipe flags. Signal and non-local jump gates
 exercise real handlers, saved masks, and register restoration. The next
 scopes cover time64 clocks, Gregorian UTC, temporary files, and explicit
-path spawning. PATH search, shell streams, and local time remain separate
-Phase 6 work. [Phase 6 ABI](docs/adr/0007-linux-files-process-signal-time.md)
+path spawning. The shell slice covers command execution and pipe streams.
+The PATH slice exercises caller PATH search and child environments. Local
+time remains separate Phase 6 work. [Phase 6 ABI](docs/adr/0007-linux-files-process-signal-time.md)
 
 ```sh
-./tools/container make phase6-time phase6-calendar phase6-luafiles phase6-spawn
+./tools/container make phase6-time phase6-calendar phase6-luafiles phase6-spawn phase6-shell phase6-path
 ```
 
 The gates write evidence to `build/evidence/`. Use

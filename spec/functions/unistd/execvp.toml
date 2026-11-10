@@ -1,0 +1,21 @@
+name = "execvp"
+header = "unistd.h"
+prototype = "int execvp(const char *file, char *const argv[])"
+standard = ["POSIX.1-2024 XSH execvp"]
+deps = ["getenv", "malloc", "free", "__errno_location"]
+errno = ["E2BIG", "EACCES", "EFAULT", "EINVAL", "EIO", "EISDIR", "ELIBBAD", "ELOOP", "EMFILE", "ENAMETOOLONG", "ENFILE", "ENOENT", "ENOEXEC", "ENOMEM", "ENOTDIR", "EPERM", "ETXTBSY"]
+mt_safe = false
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:linux-exec-path"]
+provenance = "original"
+semantics = [
+  "Use current environ and search its PATH from left to right when file contains no slash.",
+  "An empty PATH element means the current directory. Use /bin:/usr/bin when PATH is unset.",
+  "Continue past missing paths and non-directories. Remember permission denial across the search.",
+  "On ENOEXEC invoke /bin/sh with the candidate path and the arguments after argv[0].",
+  "A successful replacement does not return. A returned error is -1 and sets errno.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

@@ -54,7 +54,7 @@ SPAWN_FLAGS = {"POSIX_SPAWN_RESETIDS", "POSIX_SPAWN_SETPGROUP", "POSIX_SPAWN_SET
 SIGNAL_MASK_OPERATIONS = {"SIG_BLOCK", "SIG_UNBLOCK", "SIG_SETMASK"}
 SIGNAL_ACTION_FLAGS = {"SA_NOCLDSTOP", "SA_NOCLDWAIT", "SA_SIGINFO", "SA_ONSTACK", "SA_RESTART", "SA_NODEFER", "SA_RESETHAND"}
 POSIX_SCOPE = {
-    "unistd.h": {"functions": {"_exit", "close", "dup", "dup2", "execve", "fork", "getcwd", "getopt",
+    "unistd.h": {"functions": {"_exit", "close", "dup", "dup2", "execv", "execve", "execvp", "fork", "getcwd", "getopt",
                                "getpid", "getppid", "isatty", "lseek", "pipe", "pipe2", "read", "readlink",
                                "rmdir", "unlink", "write"},
                  "types": {"size_t", "ssize_t", "off_t", "pid_t"}, "macros": set(POSIX_FDS) | SEEK_ORIGINS,
@@ -70,7 +70,7 @@ POSIX_SCOPE = {
     "sys/wait.h": {"functions": {"wait", "waitpid"}, "types": {"pid_t"},
                    "macros": {"WNOHANG", "WUNTRACED", "WCONTINUED", "WIFEXITED", "WEXITSTATUS",
                               "WIFSIGNALED", "WTERMSIG", "WIFSTOPPED", "WSTOPSIG", "WIFCONTINUED"}},
-    "spawn.h": {"functions": {"posix_spawn", "posix_spawn_file_actions_init", "posix_spawn_file_actions_destroy",
+    "spawn.h": {"functions": {"posix_spawn", "posix_spawnp", "posix_spawn_file_actions_init", "posix_spawn_file_actions_destroy",
                              "posix_spawn_file_actions_addclose", "posix_spawn_file_actions_adddup2",
                              "posix_spawn_file_actions_addopen", "posix_spawnattr_init", "posix_spawnattr_destroy",
                              "posix_spawnattr_getflags", "posix_spawnattr_setflags", "posix_spawnattr_getpgroup",
@@ -85,7 +85,7 @@ POSIX_SCOPE = {
                  "types": {"pid_t", "siginfo_t", "sigset_t", "struct sigaction"},
                  "macros": SIGNAL_MASK_OPERATIONS | SIGNAL_ACTION_FLAGS | {"SIGRTMIN", "SIGRTMAX"}},
     "libgen.h": {"functions": {"dirname"}},
-    "stdio.h": {"functions": {"getc_unlocked", "putchar_unlocked"}},
+    "stdio.h": {"functions": {"getc_unlocked", "pclose", "popen", "putchar_unlocked"}},
     "string.h": {"functions": {"strdup"}},
 }
 EXTENSION_SCOPE = {
@@ -233,7 +233,7 @@ def load_process_abi(root):
     version_one(document["schema_version"], path)
     if document["types"] != {"pid_t": "int"}:
         fail(path, "process IDs must use the selected signed 32-bit type")
-    keys(document["syscalls"], {"getpid", "fork", "execve", "wait4", "getrlimit", "getuid", "getgid",
+    keys(document["syscalls"], {"access", "getpid", "fork", "execve", "wait4", "getrlimit", "getuid", "getgid",
                                 "setpgid", "getppid", "setresuid", "setresgid", "pipe2"}, path)
     keys(document["wait_flags"], {"WNOHANG", "WUNTRACED", "WCONTINUED"}, path)
     keys(document["spawn_flags"], SPAWN_FLAGS, path)

@@ -84,11 +84,15 @@ PRIVATE_FUNCTIONS = {
     "internal/__al_fcntl", "internal/__al_stat_query", "internal/__al_sigset_publish", "internal/__al_clock_parts", "internal/__al_mktemp",
     "spawn/__al_spawn_check_fd", "spawn/__al_spawn_append", "spawn/__al_spawn_actions",
     "spawn/__al_spawn_attrs", "spawn/__al_spawn_reserve", "spawn/__al_spawn_reap",
-    "spawn/__al_spawn_child", "spawn/__al_spawn_run",
+    "spawn/__al_spawn_child", "spawn/__al_spawn_entry", "spawn/__al_spawn_run",
+    "internal/__al_execve_raw", "internal/__al_exec_path_env",
+    "internal/__al_exec_search", "internal/__al_exec_script",
+    "internal/__al_shell_exec", "stdlib/__al_system_restore", "stdio/__al_popen_child",
     "internal/__al_lock", "internal/__al_unlock", "rt/_start", "rt/__al_tls_init",
     "rt/__al_panic", "rt/__al_abort", "rt/__al_diagnostic", "stdlib/__al_strtox",
 }
-PRIVATE_NORETURN = {"_start", "__al_rt_sigreturn", "__al_panic", "__al_abort", "__al_heap_bad", "__al_big_bad", "__al_spawn_child"}
+PRIVATE_NORETURN = {"_start", "__al_rt_sigreturn", "__al_panic", "__al_abort", "__al_heap_bad", "__al_big_bad", "__al_spawn_child",
+                    "__al_shell_exec", "__al_popen_child"}
 COMPARATOR_ARGUMENTS = {"bsearch": "r8", "qsort": "rcx"}
 
 
@@ -123,12 +127,19 @@ KERNEL_STACK_RECORDS = {
     "spawn/__al_spawn_check_fd": {
         ("rdx", "rsp + 8"): KernelStackRecord(16, (("mov", ("edi", "97")),)),
     },
+    "internal/__al_shell_exec": {
+        ("rdx", "rsp + 8"): KernelStackRecord(40, (("mov", ("edi", "59")),)),
+    },
+    "stdio/pclose": {
+        ("rdx", "rsp + 8"): KernelStackRecord(4, (("mov", ("edi", "61")),)),
+    },
 }
 PRIVATE_DATA = {
     "stdin": "rt/__al_stdio_init", "stdout": "rt/__al_stdio_init", "stderr": "rt/__al_stdio_init",
     "__al_stdio_lock": "rt/__al_stdio_init", "__al_streams": "rt/__al_stdio_init",
     "__al_heap_seed": "stdlib/__al_heap",
     "environ": "rt/__al_env_init",
+    "__al_shell_path": "internal/__al_shell_exec",
     "optarg": "posix/getopt", "opterr": "posix/getopt", "optind": "posix/getopt", "optopt": "posix/getopt",
     "__al_env_lock": "rt/__al_env_init",
     "__al_env_owned": "stdlib/__al_env_change",
@@ -953,7 +964,7 @@ def check_file(path, function, fixture_syscall):
     program.noreturn = frozenset(noreturn)
     program.process_entry = relative_runtime == "rt/_start"
     program.signal_restorer = relative_runtime == "internal/__al_rt_sigreturn"
-    program.caller_stack_arg = relative_runtime == "internal/__al_syscall"
+    program.caller_stack_arg = relative_runtime in {"internal/__al_syscall", "spawn/__al_spawn_entry"}
     program.tls_self = relative_runtime == "rt/__errno_location"
     program.callback_table = relative_runtime == "stdlib/exit"
     program.comparator_argument = COMPARATOR_ARGUMENTS.get(function)
@@ -1001,6 +1012,19 @@ def check_file(path, function, fixture_syscall):
         if [(ins.opcode, ins.operands) for ins in program.instructions] != expected:
             reject(1, "STACK_ACCESS", "variadic wrapper must pass its bounded SysV register-save record")
         program.varargs_frame = True
+    if "__al_spawn_entry" in program.externs:
+        spawn_mode = {"spawn/posix_spawn": "0", "spawn/posix_spawnp": "1"}.get(relative_runtime)
+        expected = [
+            ("sub", ("rsp", "8")), ("mov", ("qword [rsp]", spawn_mode)),
+            ("call", ("__al_spawn_entry",)), ("add", ("rsp", "8")), ("ret", ()),
+        ]
+        if (spawn_mode is None or list(program.labels.values()) != [0]
+                or [(ins.opcode, ins.operands) for ins in program.instructions] != expected):
+            reject(1, "STACK_ACCESS", "spawn wrapper must initialize its seventh SysV argument")
+    if relative_runtime == "spawn/__al_spawn_entry":
+        first = program.instructions[0]
+        if first.opcode != "mov" or first.operands != ("r10", "[rsp + 8]"):
+            reject(first.line, "STACK_ACCESS", "spawn entry must capture the seventh SysV argument")
     if program.process_entry:
         program.external_signatures.add("main")
     if program.external_data - (PRIVATE_DATA.keys() if runtime or app else set()):

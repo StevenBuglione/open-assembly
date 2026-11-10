@@ -29,6 +29,8 @@ JUMP = {"setjmp", "longjmp", "sigsetjmp", "siglongjmp"}
 TIME = {"clock", "clock_gettime", "clock_getres", "clock_nanosleep", "nanosleep", "time", "timespec_get"}
 CALENDAR = {"difftime", "gmtime", "gmtime_r"}
 LUAFILES = {"mkstemp", "remove", "rename", "tmpfile"}
+SHELL = {"system", "popen", "pclose"}
+PATH_EXEC = {"execv", "execvp", "posix_spawnp"}
 SPAWN = {
     "posix_spawn", "posix_spawn_file_actions_init", "posix_spawn_file_actions_destroy",
     "posix_spawn_file_actions_addclose", "posix_spawn_file_actions_adddup2", "posix_spawn_file_actions_addopen",
@@ -94,7 +96,8 @@ def execute_phase6(suite_name):
     scope = f"phase6-{suite_name}"
     suite = SUITE if suite_name == "files" else SUITE / suite_name
     public = {"files": PUBLIC, "compat": COMPAT, "process": PROCESS, "signal": SIGNAL, "jump": JUMP,
-              "time": TIME, "calendar": CALENDAR, "luafiles": LUAFILES, "spawn": SPAWN}[suite_name]
+              "time": TIME, "calendar": CALENDAR, "luafiles": LUAFILES, "spawn": SPAWN,
+              "shell": SHELL, "path": PATH_EXEC}[suite_name]
     fault_wrappers = {
         SUITE / "fault.c": ("__al_syscall",),
         SUITE / "compat/vasprintf_fault.c": ("realloc", "free"),
@@ -102,10 +105,11 @@ def execute_phase6(suite_name):
         SUITE / "time/clock_fault.c": ("__al_syscall",),
         SUITE / "luafiles/fault.c": ("__al_syscall",),
         SUITE / "spawn/lifetime.c": ("malloc", "calloc", "realloc", "free"),
+        SUITE / "shell/fault.c": ("__al_syscall",),
     }
     evidence = {"schema_version": 1, "scope": scope, "production_verified": False,
                 "outcome": "fail", "checks": {},
-                "pending_phase6": ["PATH exec and spawn search", "local time and TZif", "shell process APIs"]}
+                "pending_phase6": ["local time and TZif", "remaining spawn attributes and file actions"]}
     checks = evidence["checks"]
     try:
         evidence["toolchain"] = identify_tools("ar", "make", "qemu-x86_64", "musl-gcc")
@@ -167,5 +171,9 @@ if __name__ == "__main__":
                       help="run the pathname and temporary file API probes")
     mode.add_argument("--spawn", dest="suite", action="store_const", const="spawn",
                       help="run the process spawn API probes")
+    mode.add_argument("--shell", dest="suite", action="store_const", const="shell",
+                      help="run the shell and pipe-stream API probes")
+    mode.add_argument("--path", dest="suite", action="store_const", const="path",
+                      help="run the PATH execution and spawn probes")
     parser.set_defaults(suite="files")
     raise SystemExit(execute_phase6(parser.parse_args().suite))

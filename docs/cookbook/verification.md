@@ -37,11 +37,13 @@ Their manifests record exact stub outcomes and measured host or backend
 differences.
 
 The next scoped targets are `phase6-time`, `phase6-calendar`,
-`phase6-luafiles`, and `phase6-spawn`. They cover real and injected clock
+`phase6-luafiles`, `phase6-spawn`, `phase6-shell`, and `phase6-path`.
+They cover real and injected clock
 results, UTC boundaries and rounding, exclusive temporary file operations,
-and spawn attributes and ordered descriptor actions. Each records separate
-backend, host, and stub observations. PATH-based spawning, shell streams,
-local time, and per-function production checks have separate requirements.
+spawn attributes and ordered descriptor actions, shell and pipe-stream
+lifecycle, and PATH search with exec and spawn. Each records separate
+backend, host, and stub observations. Local time and per-function
+production checks have separate requirements.
 
 ## Phase 4 streams and utilities
 
