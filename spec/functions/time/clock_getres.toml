@@ -1,0 +1,18 @@
+name = "clock_getres"
+header = "time.h"
+prototype = "int clock_getres(clockid_t clock_id, struct timespec *res)"
+standard = ["POSIX.1-2024 XSH clock_getres"]
+deps = ["__errno_location"]
+errno = ["EFAULT", "EINVAL", "ENODEV", "ENOTSUP"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-time64"]
+provenance = "original"
+semantics = [
+  "Read the selected clock resolution. A null res validates the clock without storing a result.",
+  "Return zero and preserve errno on success. Return -1 and set errno on kernel failure.",
+]
+
+[abi]
+narrow_args = ["edi:s32"]
+variadic = false

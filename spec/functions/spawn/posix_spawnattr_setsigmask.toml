@@ -1,0 +1,18 @@
+name = "posix_spawnattr_setsigmask"
+header = "spawn.h"
+prototype = "int posix_spawnattr_setsigmask(posix_spawnattr_t *restrict attr, const sigset_t *restrict value)"
+standard = ["POSIX.1-2024 XSH posix_spawnattr_setsigmask"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:linux-spawn-abi"]
+provenance = "original"
+semantics = [
+  "Store the selected child signal mask in an initialized attribute object.",
+  "Return zero on success or a positive error number on failure. Preserve errno.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

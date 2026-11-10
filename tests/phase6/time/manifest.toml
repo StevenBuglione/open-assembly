@@ -1,0 +1,205 @@
+schema = 1
+
+[[case]]
+name = "time-clock"
+sources = ["tests/phase6/time/clock_probe.c"]
+requires = ["clock"]
+args = ["clock"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-time64", "posix:clock"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "time-time"
+sources = ["tests/phase6/time/clock_probe.c"]
+requires = ["time"]
+args = ["time"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-time64", "posix:time"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "time-timespec-get"
+sources = ["tests/phase6/time/clock_probe.c"]
+requires = ["timespec_get"]
+args = ["timespec-get"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-time64", "posix:timespec_get"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "time-gettime"
+sources = ["tests/phase6/time/clock_probe.c"]
+requires = ["clock_gettime"]
+args = ["gettime"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-time64", "posix:clock_gettime"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "time-getres"
+sources = ["tests/phase6/time/clock_probe.c"]
+requires = ["clock_getres"]
+args = ["getres"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-time64", "posix:clock_getres"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "time-nanosleep"
+sources = ["tests/phase6/time/clock_probe.c"]
+requires = ["nanosleep"]
+args = ["nanosleep"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-time64", "posix:nanosleep"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "time-clock-nanosleep"
+sources = ["tests/phase6/time/clock_probe.c"]
+requires = ["clock_nanosleep"]
+args = ["clock-nanosleep"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-time64", "posix:clock_nanosleep"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "time-interrupt-nanosleep"
+sources = ["tests/phase6/time/clock_probe.c"]
+requires = ["nanosleep"]
+args = ["interrupt-nanosleep"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-time64", "posix:nanosleep"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "time-interrupt-clock-relative"
+sources = ["tests/phase6/time/clock_probe.c"]
+requires = ["clock_nanosleep"]
+args = ["interrupt-clock-relative"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-time64", "posix:clock_nanosleep"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "time-interrupt-clock-absolute"
+sources = ["tests/phase6/time/clock_probe.c"]
+requires = ["clock_nanosleep"]
+args = ["interrupt-clock-absolute"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-time64", "posix:clock_nanosleep"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "time-clock-faults"
+sources = ["tests/phase6/time/clock_fault.c"]
+requires = ["clock", "time", "timespec_get"]
+args = []
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-time64", "project:clock-arithmetic"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The deterministic fault probe wraps the private Linux time64 call."
+link_wraps = ["__al_syscall"]
+
+[[stub]]
+symbol = "clock"
+case = "time-clock"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "time"
+case = "time-time"
+status = 21
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "timespec_get"
+case = "time-timespec-get"
+status = 31
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "clock_gettime"
+case = "time-gettime"
+status = 42
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "clock_getres"
+case = "time-getres"
+status = 51
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "nanosleep"
+case = "time-nanosleep"
+status = 61
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "clock_nanosleep"
+case = "time-clock-nanosleep"
+status = 71
+stdout = ""
+stderr = ""

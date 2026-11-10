@@ -3,7 +3,7 @@
 
 This index lists authored function specifications. For implementation state, run `tools/queue status`.
 
-Specs: 178 of 564 inventoried functions. The inventory covers C17, the named POSIX subset, runtime ABI entries, and Linux compatibility extensions. see [inventory scope](cookbook/specifications.md#inventory-scope).
+Specs: 208 of 586 inventoried functions. The inventory covers C17, the named POSIX subset, runtime ABI entries, and Linux compatibility extensions. see [inventory scope](cookbook/specifications.md#inventory-scope).
 
 | Function | Header | Prototype | Standard |
 | --- | --- | --- | --- |
@@ -21,9 +21,14 @@ Specs: 178 of 564 inventoried functions. The inventory covers C17, the named POS
 | [`calloc`](../spec/functions/stdlib/calloc.toml) | `<stdlib.h>` | `void *calloc(size_t nmemb, size_t size)` | C17 7.22.3.2 |
 | [`chmod`](../spec/functions/sys/stat/chmod.toml) | `<sys/stat.h>` | `int chmod(const char *path, mode_t mode)` | POSIX.1-2024 XSH chmod |
 | [`clearerr`](../spec/functions/stdio/clearerr.toml) | `<stdio.h>` | `void clearerr(FILE *stream)` | C17 7.21.10.1 |
+| [`clock`](../spec/functions/time/clock.toml) | `<time.h>` | `clock_t clock(void)` | C17 7.27.2.1 |
+| [`clock_getres`](../spec/functions/time/clock_getres.toml) | `<time.h>` | `int clock_getres(clockid_t clock_id, struct timespec *res)` | POSIX.1-2024 XSH clock_getres |
+| [`clock_gettime`](../spec/functions/time/clock_gettime.toml) | `<time.h>` | `int clock_gettime(clockid_t clock_id, struct timespec *tp)` | POSIX.1-2024 XSH clock_gettime |
+| [`clock_nanosleep`](../spec/functions/time/clock_nanosleep.toml) | `<time.h>` | `int clock_nanosleep(clockid_t clock_id, int flags, const struct timespec *request, struct timespec *remaining)` | POSIX.1-2024 XSH clock_nanosleep |
 | [`close`](../spec/functions/unistd/close.toml) | `<unistd.h>` | `int close(int fd)` | POSIX.1-2024 XSH close |
 | [`closedir`](../spec/functions/dirent/closedir.toml) | `<dirent.h>` | `int closedir(DIR *dirp)` | POSIX.1-2024 XSH closedir |
 | [`creat`](../spec/functions/fcntl/creat.toml) | `<fcntl.h>` | `int creat(const char *path, mode_t mode)` | POSIX.1-2024 XSH creat |
+| [`difftime`](../spec/functions/time/difftime.toml) | `<time.h>` | `double difftime(time_t later, time_t earlier)` | C17 7.27.2.2 |
 | [`dirfd`](../spec/functions/dirent/dirfd.toml) | `<dirent.h>` | `int dirfd(DIR *dirp)` | POSIX.1-2024 XSH dirfd |
 | [`dirname`](../spec/functions/libgen/dirname.toml) | `<libgen.h>` | `char *dirname(char *path)` | POSIX.1-2024 XSH dirname |
 | [`dup`](../spec/functions/unistd/dup.toml) | `<unistd.h>` | `int dup(int oldfd)` | POSIX.1-2024 XSH dup |
@@ -74,6 +79,8 @@ Specs: 178 of 564 inventoried functions. The inventory covers C17, the named POS
 | [`getopt`](../spec/functions/unistd/getopt.toml) | `<unistd.h>` | `int getopt(int argc, char *const argv[], const char *optstring)` | POSIX.1-2024 XSH getopt |
 | [`getpid`](../spec/functions/unistd/getpid.toml) | `<unistd.h>` | `pid_t getpid(void)` | POSIX.1-2024 XSH getpid |
 | [`getppid`](../spec/functions/unistd/getppid.toml) | `<unistd.h>` | `pid_t getppid(void)` | POSIX.1-2024 XSH getppid |
+| [`gmtime`](../spec/functions/time/gmtime.toml) | `<time.h>` | `struct tm *gmtime(const time_t *timer)` | C17 7.27.3.3 |
+| [`gmtime_r`](../spec/functions/time/gmtime_r.toml) | `<time.h>` | `struct tm *gmtime_r(const time_t *restrict timer, struct tm *restrict result)` | POSIX.1-2024 XSH gmtime_r |
 | [`ioctl`](../spec/functions/sys/ioctl/ioctl.toml) | `<sys/ioctl.h>` | `int ioctl(int fd, unsigned long request, ...)` | Extension ABI ioctl |
 | [`isalnum`](../spec/functions/ctype/isalnum.toml) | `<ctype.h>` | `int isalnum(int c)` | C17 7.4.1.1 |
 | [`isalpha`](../spec/functions/ctype/isalpha.toml) | `<ctype.h>` | `int isalpha(int c)` | C17 7.4.1.2 |
@@ -99,6 +106,8 @@ Specs: 178 of 564 inventoried functions. The inventory covers C17, the named POS
 | [`memmove`](../spec/functions/string/memmove.toml) | `<string.h>` | `void *memmove(void *dest, const void *src, size_t n)` | C17 7.24.2.2 |
 | [`memset`](../spec/functions/string/memset.toml) | `<string.h>` | `void *memset(void *s, int c, size_t n)` | C17 7.24.6.1 |
 | [`mkdir`](../spec/functions/sys/stat/mkdir.toml) | `<sys/stat.h>` | `int mkdir(const char *path, mode_t mode)` | POSIX.1-2024 XSH mkdir |
+| [`mkstemp`](../spec/functions/stdlib/mkstemp.toml) | `<stdlib.h>` | `int mkstemp(char *template)` | POSIX.1-2024 XSH mkstemp |
+| [`nanosleep`](../spec/functions/time/nanosleep.toml) | `<time.h>` | `int nanosleep(const struct timespec *request, struct timespec *remaining)` | POSIX.1-2024 XSH nanosleep |
 | [`open`](../spec/functions/fcntl/open.toml) | `<fcntl.h>` | `int open(const char *path, int flags, ...)` | POSIX.1-2024 XSH open |
 | [`openat`](../spec/functions/fcntl/openat.toml) | `<fcntl.h>` | `int openat(int dirfd, const char *path, int flags, ...)` | POSIX.1-2024 XSH openat |
 | [`opendir`](../spec/functions/dirent/opendir.toml) | `<dirent.h>` | `DIR *opendir(const char *name)` | POSIX.1-2024 XSH opendir |
@@ -106,6 +115,22 @@ Specs: 178 of 564 inventoried functions. The inventory covers C17, the named POS
 | [`pipe`](../spec/functions/unistd/pipe.toml) | `<unistd.h>` | `int pipe(int fildes[2])` | POSIX.1-2024 XSH pipe |
 | [`pipe2`](../spec/functions/unistd/pipe2.toml) | `<unistd.h>` | `int pipe2(int fildes[2], int flags)` | POSIX.1-2024 XSH pipe2 |
 | [`posix_memalign`](../spec/functions/stdlib/posix_memalign.toml) | `<stdlib.h>` | `int posix_memalign(void **out, size_t alignment, size_t size)` | POSIX.1-2024 XSH posix_memalign |
+| [`posix_spawn`](../spec/functions/spawn/posix_spawn.toml) | `<spawn.h>` | `int posix_spawn(pid_t *restrict pid, const char *restrict path, const posix_spawn_file_actions_t *restrict actions, const posix_spawnattr_t *restrict attr, char *const argv[restrict], char *const envp[restrict])` | POSIX.1-2024 XSH posix_spawn |
+| [`posix_spawn_file_actions_addclose`](../spec/functions/spawn/posix_spawn_file_actions_addclose.toml) | `<spawn.h>` | `int posix_spawn_file_actions_addclose(posix_spawn_file_actions_t *actions, int fd)` | POSIX.1-2024 XSH posix_spawn_file_actions_addclose |
+| [`posix_spawn_file_actions_adddup2`](../spec/functions/spawn/posix_spawn_file_actions_adddup2.toml) | `<spawn.h>` | `int posix_spawn_file_actions_adddup2(posix_spawn_file_actions_t *actions, int fd, int newfd)` | POSIX.1-2024 XSH posix_spawn_file_actions_adddup2 |
+| [`posix_spawn_file_actions_addopen`](../spec/functions/spawn/posix_spawn_file_actions_addopen.toml) | `<spawn.h>` | `int posix_spawn_file_actions_addopen(posix_spawn_file_actions_t *restrict actions, int fd, const char *restrict path, int oflag, mode_t mode)` | POSIX.1-2024 XSH posix_spawn_file_actions_addopen |
+| [`posix_spawn_file_actions_destroy`](../spec/functions/spawn/posix_spawn_file_actions_destroy.toml) | `<spawn.h>` | `int posix_spawn_file_actions_destroy(posix_spawn_file_actions_t *actions)` | POSIX.1-2024 XSH posix_spawn_file_actions_destroy |
+| [`posix_spawn_file_actions_init`](../spec/functions/spawn/posix_spawn_file_actions_init.toml) | `<spawn.h>` | `int posix_spawn_file_actions_init(posix_spawn_file_actions_t *actions)` | POSIX.1-2024 XSH posix_spawn_file_actions_init |
+| [`posix_spawnattr_destroy`](../spec/functions/spawn/posix_spawnattr_destroy.toml) | `<spawn.h>` | `int posix_spawnattr_destroy(posix_spawnattr_t *attr)` | POSIX.1-2024 XSH posix_spawnattr_destroy |
+| [`posix_spawnattr_getflags`](../spec/functions/spawn/posix_spawnattr_getflags.toml) | `<spawn.h>` | `int posix_spawnattr_getflags(const posix_spawnattr_t *restrict attr, short *restrict value)` | POSIX.1-2024 XSH posix_spawnattr_getflags |
+| [`posix_spawnattr_getpgroup`](../spec/functions/spawn/posix_spawnattr_getpgroup.toml) | `<spawn.h>` | `int posix_spawnattr_getpgroup(const posix_spawnattr_t *restrict attr, pid_t *restrict value)` | POSIX.1-2024 XSH posix_spawnattr_getpgroup |
+| [`posix_spawnattr_getsigdefault`](../spec/functions/spawn/posix_spawnattr_getsigdefault.toml) | `<spawn.h>` | `int posix_spawnattr_getsigdefault(const posix_spawnattr_t *restrict attr, sigset_t *restrict value)` | POSIX.1-2024 XSH posix_spawnattr_getsigdefault |
+| [`posix_spawnattr_getsigmask`](../spec/functions/spawn/posix_spawnattr_getsigmask.toml) | `<spawn.h>` | `int posix_spawnattr_getsigmask(const posix_spawnattr_t *restrict attr, sigset_t *restrict value)` | POSIX.1-2024 XSH posix_spawnattr_getsigmask |
+| [`posix_spawnattr_init`](../spec/functions/spawn/posix_spawnattr_init.toml) | `<spawn.h>` | `int posix_spawnattr_init(posix_spawnattr_t *attr)` | POSIX.1-2024 XSH posix_spawnattr_init |
+| [`posix_spawnattr_setflags`](../spec/functions/spawn/posix_spawnattr_setflags.toml) | `<spawn.h>` | `int posix_spawnattr_setflags(posix_spawnattr_t *restrict attr, short value)` | POSIX.1-2024 XSH posix_spawnattr_setflags |
+| [`posix_spawnattr_setpgroup`](../spec/functions/spawn/posix_spawnattr_setpgroup.toml) | `<spawn.h>` | `int posix_spawnattr_setpgroup(posix_spawnattr_t *restrict attr, pid_t value)` | POSIX.1-2024 XSH posix_spawnattr_setpgroup |
+| [`posix_spawnattr_setsigdefault`](../spec/functions/spawn/posix_spawnattr_setsigdefault.toml) | `<spawn.h>` | `int posix_spawnattr_setsigdefault(posix_spawnattr_t *restrict attr, const sigset_t *restrict value)` | POSIX.1-2024 XSH posix_spawnattr_setsigdefault |
+| [`posix_spawnattr_setsigmask`](../spec/functions/spawn/posix_spawnattr_setsigmask.toml) | `<spawn.h>` | `int posix_spawnattr_setsigmask(posix_spawnattr_t *restrict attr, const sigset_t *restrict value)` | POSIX.1-2024 XSH posix_spawnattr_setsigmask |
 | [`printf`](../spec/functions/stdio/printf.toml) | `<stdio.h>` | `int printf(const char *restrict format, ...)` | C17 7.21.6.3 |
 | [`putc`](../spec/functions/stdio/putc.toml) | `<stdio.h>` | `int putc(int c, FILE *stream)` | C17 7.21.7.7 |
 | [`putchar`](../spec/functions/stdio/putchar.toml) | `<stdio.h>` | `int putchar(int c)` | C17 7.21.7.8 |
@@ -118,6 +143,8 @@ Specs: 178 of 564 inventoried functions. The inventory covers C17, the named POS
 | [`readdir`](../spec/functions/dirent/readdir.toml) | `<dirent.h>` | `struct dirent *readdir(DIR *dirp)` | POSIX.1-2024 XSH readdir |
 | [`readlink`](../spec/functions/unistd/readlink.toml) | `<unistd.h>` | `ssize_t readlink(const char *restrict path, char *restrict buf, size_t size)` | POSIX.1-2024 XSH readlink |
 | [`realloc`](../spec/functions/stdlib/realloc.toml) | `<stdlib.h>` | `void *realloc(void *ptr, size_t size)` | C17 7.22.3.5 |
+| [`remove`](../spec/functions/stdio/remove.toml) | `<stdio.h>` | `int remove(const char *path)` | C17 7.21.4.1 |
+| [`rename`](../spec/functions/stdio/rename.toml) | `<stdio.h>` | `int rename(const char *oldpath, const char *newpath)` | C17 7.21.4.2 |
 | [`rewind`](../spec/functions/stdio/rewind.toml) | `<stdio.h>` | `void rewind(FILE *stream)` | C17 7.21.9.5 |
 | [`rmdir`](../spec/functions/unistd/rmdir.toml) | `<unistd.h>` | `int rmdir(const char *path)` | POSIX.1-2024 XSH rmdir |
 | [`scanf`](../spec/functions/stdio/scanf.toml) | `<stdio.h>` | `int scanf(const char *restrict format, ...)` | C17 7.21.6.4 |
@@ -168,6 +195,9 @@ Specs: 178 of 564 inventoried functions. The inventory covers C17, the named POS
 | [`strtoull`](../spec/functions/stdlib/strtoull.toml) | `<stdlib.h>` | `unsigned long long strtoull(const char *restrict s, char **restrict endptr, int base)` | C17 7.22.1.4 |
 | [`strtoumax`](../spec/functions/inttypes/strtoumax.toml) | `<inttypes.h>` | `uintmax_t strtoumax(const char *restrict s, char **restrict endptr, int base)` | C17 7.8.2.3 |
 | [`strxfrm`](../spec/functions/string/strxfrm.toml) | `<string.h>` | `size_t strxfrm(char *restrict dest, const char *restrict src, size_t n)` | C17 7.24.4.5 |
+| [`time`](../spec/functions/time/time.toml) | `<time.h>` | `time_t time(time_t *out)` | C17 7.27.2.4 |
+| [`timespec_get`](../spec/functions/time/timespec_get.toml) | `<time.h>` | `int timespec_get(struct timespec *ts, int base)` | C17 7.27.2.5 |
+| [`tmpfile`](../spec/functions/stdio/tmpfile.toml) | `<stdio.h>` | `FILE *tmpfile(void)` | C17 7.21.4.3 |
 | [`tolower`](../spec/functions/ctype/tolower.toml) | `<ctype.h>` | `int tolower(int c)` | C17 7.4.2.1 |
 | [`toupper`](../spec/functions/ctype/toupper.toml) | `<ctype.h>` | `int toupper(int c)` | C17 7.4.2.2 |
 | [`umask`](../spec/functions/sys/stat/umask.toml) | `<sys/stat.h>` | `mode_t umask(mode_t mask)` | POSIX.1-2024 XSH umask |

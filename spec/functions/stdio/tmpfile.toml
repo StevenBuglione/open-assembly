@@ -1,0 +1,20 @@
+name = "tmpfile"
+header = "stdio.h"
+prototype = "FILE *tmpfile(void)"
+standard = ["C17 7.21.4.3"]
+deps = ["malloc", "free", "memcpy", "strlen", "close", "unlink", "__errno_location"]
+errno = ["EACCES", "EEXIST", "EIO", "EMFILE", "ENOENT", "ENOMEM", "ENOSPC", "EROFS"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:linux-temporary-file-abi"]
+provenance = "original"
+semantics = [
+  "Return a new fully buffered binary update stream backed by an anonymous file in /tmp.",
+  "Prefer an anonymous Linux temporary inode and fall back to an exclusive file immediately unlinked.",
+  "Use close-on-exec descriptors. Release temporary memory and descriptors on any setup error.",
+  "Return null and set errno on failure. Preserve errno on success.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

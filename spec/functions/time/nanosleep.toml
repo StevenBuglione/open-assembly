@@ -1,0 +1,19 @@
+name = "nanosleep"
+header = "time.h"
+prototype = "int nanosleep(const struct timespec *request, struct timespec *remaining)"
+standard = ["POSIX.1-2024 XSH nanosleep"]
+deps = ["__errno_location"]
+errno = ["EFAULT", "EINTR", "EINVAL"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-time64"]
+provenance = "original"
+semantics = [
+  "Suspend execution for the specified relative interval using Linux time64 fields.",
+  "An interrupting handler causes a return of -1 with EINTR and a remaining interval when requested.",
+  "Return zero and preserve errno on success. Report other kernel errors without restarting.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

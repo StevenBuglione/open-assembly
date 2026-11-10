@@ -137,7 +137,8 @@ def load_probes(manifest, public, parse, required_sources=()):
 
 def load_manifest():
     public = {spec.name for spec in load_project().functions.values()
-              if spec.header == "stdio.h" and any(standard.startswith("C17 ") for standard in spec.standard)}
+              if spec.header == "stdio.h" and any(standard.startswith("C17 ")
+                  and not standard.startswith("C17 7.21.4.") for standard in spec.standard)}
     return load_probes(MANIFEST, public, parse_probe, APPS)
 
 

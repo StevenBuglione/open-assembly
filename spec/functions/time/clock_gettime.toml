@@ -1,0 +1,18 @@
+name = "clock_gettime"
+header = "time.h"
+prototype = "int clock_gettime(clockid_t clock_id, struct timespec *tp)"
+standard = ["POSIX.1-2024 XSH clock_gettime"]
+deps = ["__errno_location"]
+errno = ["EFAULT", "EINVAL", "ENODEV", "ENOTSUP"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-time64"]
+provenance = "original"
+semantics = [
+  "Read the selected Linux clock into the public 64-bit seconds and nanoseconds record.",
+  "Return zero and preserve errno on success. Return -1 and set errno on kernel failure.",
+]
+
+[abi]
+narrow_args = ["edi:s32"]
+variadic = false

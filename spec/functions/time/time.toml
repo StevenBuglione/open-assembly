@@ -1,0 +1,19 @@
+name = "time"
+header = "time.h"
+prototype = "time_t time(time_t *out)"
+standard = ["C17 7.27.2.4"]
+deps = ["__errno_location"]
+errno = ["EFAULT", "EINVAL", "EOVERFLOW"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-time64"]
+provenance = "original"
+semantics = [
+  "Read the realtime clock and return its whole signed seconds since the Unix epoch.",
+  "Store the same value through out when present. Leave out unchanged on error.",
+  "Preserve errno on success. Return time_t -1 and set errno when the clock query fails.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

@@ -40,10 +40,10 @@ ARITH = frozenset(("add", "sub", "adc", "sbb", "and", "or", "xor", "shl",
                    "sal", "shr", "sar", "rol", "ror", "imul"))
 UNARY = frozenset(("inc", "dec", "not", "neg", "bswap"))
 SSE_MOVE = frozenset(("movd", "movq", "movdqa", "movdqu", "movapd", "movaps",
-                      "movupd", "movups", "movsd", "movss", "pmovmskb"))
+                      "movupd", "movups", "movsd", "movss", "pmovmskb", "cvtsi2sd"))
 SSE_ALU = frozenset(("pxor", "pand", "pandn", "por", "pcmpeqb", "pcmpeqw",
                      "pcmpeqd", "paddb", "paddw", "paddd", "paddq", "psubb",
-                     "psubw", "psubd", "psubq", "pslldq", "psrldq", "divsd", "mulsd"))
+                     "psubw", "psubd", "psubq", "pslldq", "psrldq", "divsd", "mulsd", "addsd"))
 AFTER_SSE2 = frozenset(("addsubpd", "addsubps", "haddpd", "haddps", "hsubpd",
                         "hsubps", "lddqu", "movddup", "movshdup", "movsldup",
                         "palignr", "pabsb", "pabsd", "pabsw", "pshufb",
@@ -81,11 +81,14 @@ PRIVATE_FUNCTIONS = {
     "stdlib/__al_env_change", "stdlib/__al_env_match", "stdlib/__al_env_name",
     "stdlib/__al_env_collect",
     "internal/__al_syscall", "internal/__al_syscall_result", "internal/__al_rt_sigreturn",
-    "internal/__al_fcntl", "internal/__al_stat_query", "internal/__al_sigset_publish",
+    "internal/__al_fcntl", "internal/__al_stat_query", "internal/__al_sigset_publish", "internal/__al_clock_parts", "internal/__al_mktemp",
+    "spawn/__al_spawn_check_fd", "spawn/__al_spawn_append", "spawn/__al_spawn_actions",
+    "spawn/__al_spawn_attrs", "spawn/__al_spawn_reserve", "spawn/__al_spawn_reap",
+    "spawn/__al_spawn_child", "spawn/__al_spawn_run",
     "internal/__al_lock", "internal/__al_unlock", "rt/_start", "rt/__al_tls_init",
     "rt/__al_panic", "rt/__al_abort", "rt/__al_diagnostic", "stdlib/__al_strtox",
 }
-PRIVATE_NORETURN = {"_start", "__al_rt_sigreturn", "__al_panic", "__al_abort", "__al_heap_bad", "__al_big_bad"}
+PRIVATE_NORETURN = {"_start", "__al_rt_sigreturn", "__al_panic", "__al_abort", "__al_heap_bad", "__al_big_bad", "__al_spawn_child"}
 COMPARATOR_ARGUMENTS = {"bsearch": "r8", "qsort": "rcx"}
 
 
@@ -111,6 +114,15 @@ KERNEL_STACK_RECORDS = {
     },
     "signal/sigaction": SIGACTION_STACK_RECORDS,
     "signal/signal": SIGACTION_STACK_RECORDS,
+    "internal/__al_clock_parts": {
+        ("rdx", "rsp + 8"): KernelStackRecord(16, (("mov", ("edi", "228")),)),
+    },
+    "internal/__al_mktemp": {
+        ("rsi", "rsp + 8"): KernelStackRecord(8, (("mov", ("edi", "318")), ("mov", ("edx", "8")))),
+    },
+    "spawn/__al_spawn_check_fd": {
+        ("rdx", "rsp + 8"): KernelStackRecord(16, (("mov", ("edi", "97")),)),
+    },
 }
 PRIVATE_DATA = {
     "stdin": "rt/__al_stdio_init", "stdout": "rt/__al_stdio_init", "stderr": "rt/__al_stdio_init",
@@ -726,10 +738,14 @@ def transfer(state, program, ins, syscall_boundary, x87_return):
         reject(line, "ISA_BASELINE", f"{opcode} exceeds the SSE2 baseline")
     if opcode in MOVES | ARITH | UNARY | SSE_MOVE | SSE_ALU | {"cmp", "test"}:
         return transfer_data(state, program, ins)
-    if opcode == "div":
+    if opcode == "cqo":
+        check_operands(ins, {0})
+        read_registers(state, ("rax",), line)
+        return write_gpr(state, operand("rdx", line), line)
+    if opcode in {"div", "idiv"}:
         (divisor,) = check_operands(ins, {1})
         if divisor.kind != "gpr" or divisor.width != 64:
-            reject(line, "INSTRUCTION", "only unsigned division by a full-width GPR is modeled")
+            reject(line, "INSTRUCTION", "division requires a full-width GPR divisor")
         read_registers(state, ("rax", "rdx", divisor.base), line)
         state = write_gpr(state, operand("rax", line), line)
         return write_gpr(state, operand("rdx", line), line)

@@ -33,8 +33,14 @@ The Phase 6 file and directory slice adds filesystem and descriptor APIs.
 Its compatibility slice runs six pinned BusyBox applets against the same
 freestanding runtime archive. The initial process gate covers process IDs,
 fork, execve, wait, and atomic pipe flags. Signal and non-local jump gates
-exercise real handlers, saved masks, and register restoration. Spawn, PATH
-search, and time remain separate Phase 6 work. [Phase 6 ABI](docs/adr/0007-linux-files-process-signal-time.md)
+exercise real handlers, saved masks, and register restoration. The next
+scopes cover time64 clocks, Gregorian UTC, temporary files, and explicit
+path spawning. PATH search, shell streams, and local time remain separate
+Phase 6 work. [Phase 6 ABI](docs/adr/0007-linux-files-process-signal-time.md)
+
+```sh
+./tools/container make phase6-time phase6-calendar phase6-luafiles phase6-spawn
+```
 
 The gates write evidence to `build/evidence/`. Use
 `./tools/container make runtime` to build `build/runtime/crt1.o` and

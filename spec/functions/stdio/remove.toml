@@ -1,0 +1,19 @@
+name = "remove"
+header = "stdio.h"
+prototype = "int remove(const char *path)"
+standard = ["C17 7.21.4.1"]
+deps = ["__errno_location"]
+errno = ["EACCES", "EBUSY", "EFAULT", "ELOOP", "ENAMETOOLONG", "ENOENT", "ENOTDIR", "ENOTEMPTY", "EPERM", "EROFS"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-temporary-file-abi"]
+provenance = "original"
+semantics = [
+  "Remove a file or symbolic-link name, or remove a directory when empty.",
+  "Preserve open file descriptions after removing their last name.",
+  "Return zero and preserve errno on success. Return -1 and set errno on failure.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

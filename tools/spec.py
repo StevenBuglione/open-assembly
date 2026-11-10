@@ -48,6 +48,9 @@ SIGNAL_NAMES = {
     "SIGTSTP", "SIGTTIN", "SIGTTOU", "SIGURG", "SIGXCPU", "SIGXFSZ", "SIGVTALRM", "SIGPROF", "SIGWINCH",
     "SIGIO", "SIGPWR", "SIGSYS", "SIGRTMIN", "SIGRTMAX",
 }
+CLOCK_POSIX = {"CLOCK_REALTIME", "CLOCK_MONOTONIC", "CLOCK_PROCESS_CPUTIME_ID", "CLOCK_THREAD_CPUTIME_ID",
+               "TIMER_ABSTIME"}
+SPAWN_FLAGS = {"POSIX_SPAWN_RESETIDS", "POSIX_SPAWN_SETPGROUP", "POSIX_SPAWN_SETSIGDEF", "POSIX_SPAWN_SETSIGMASK"}
 SIGNAL_MASK_OPERATIONS = {"SIG_BLOCK", "SIG_UNBLOCK", "SIG_SETMASK"}
 SIGNAL_ACTION_FLAGS = {"SA_NOCLDSTOP", "SA_NOCLDWAIT", "SA_SIGINFO", "SA_ONSTACK", "SA_RESTART", "SA_NODEFER", "SA_RESETHAND"}
 POSIX_SCOPE = {
@@ -56,7 +59,7 @@ POSIX_SCOPE = {
                                "rmdir", "unlink", "write"},
                  "types": {"size_t", "ssize_t", "off_t", "pid_t"}, "macros": set(POSIX_FDS) | SEEK_ORIGINS,
                  "objects": {"environ", "optarg", "opterr", "optind", "optopt"}},
-    "stdlib.h": {"functions": {"posix_memalign", "putenv", "setenv", "unsetenv"}},
+    "stdlib.h": {"functions": {"mkstemp", "posix_memalign", "putenv", "setenv", "unsetenv"}},
     "fcntl.h": {"functions": {"creat", "open", "openat"}, "types": {"mode_t"},
                 "macros": OPEN_FLAGS},
     "sys/stat.h": {"functions": {"chmod", "fstat", "fstatat", "lstat", "mkdir", "stat", "umask"},
@@ -67,7 +70,16 @@ POSIX_SCOPE = {
     "sys/wait.h": {"functions": {"wait", "waitpid"}, "types": {"pid_t"},
                    "macros": {"WNOHANG", "WUNTRACED", "WCONTINUED", "WIFEXITED", "WEXITSTATUS",
                               "WIFSIGNALED", "WTERMSIG", "WIFSTOPPED", "WSTOPSIG", "WIFCONTINUED"}},
+    "spawn.h": {"functions": {"posix_spawn", "posix_spawn_file_actions_init", "posix_spawn_file_actions_destroy",
+                             "posix_spawn_file_actions_addclose", "posix_spawn_file_actions_adddup2",
+                             "posix_spawn_file_actions_addopen", "posix_spawnattr_init", "posix_spawnattr_destroy",
+                             "posix_spawnattr_getflags", "posix_spawnattr_setflags", "posix_spawnattr_getpgroup",
+                             "posix_spawnattr_setpgroup", "posix_spawnattr_getsigmask", "posix_spawnattr_setsigmask",
+                             "posix_spawnattr_getsigdefault", "posix_spawnattr_setsigdefault"},
+                "types": {"posix_spawnattr_t", "posix_spawn_file_actions_t"}, "macros": SPAWN_FLAGS},
     "setjmp.h": {"functions": {"sigsetjmp", "siglongjmp"}, "types": {"sigjmp_buf"}},
+    "time.h": {"functions": {"clock_gettime", "clock_getres", "clock_nanosleep", "gmtime_r", "nanosleep"},
+               "types": {"clockid_t"}, "macros": CLOCK_POSIX},
     "signal.h": {"functions": {"kill", "sigaction", "sigaddset", "sigdelset", "sigemptyset", "sigfillset",
                                "sigismember", "sigpending", "sigprocmask", "sigsuspend"},
                  "types": {"pid_t", "siginfo_t", "sigset_t", "struct sigaction"},
@@ -197,13 +209,13 @@ def load_file_abi(root):
     if document["types"] != FILE_TYPES:
         fail(path, "file ABI types must match the selected Linux LP64 types")
     groups = {
-        "syscalls": {"fstat", "lseek", "ioctl", "pipe", "dup", "dup2", "fcntl", "getcwd", "mkdir", "rmdir",
-                     "unlink", "readlink", "chmod", "umask", "getdents64", "openat", "newfstatat"},
+        "syscalls": {"fstat", "lseek", "ioctl", "pipe", "dup", "dup2", "fcntl", "getcwd", "rename", "mkdir", "rmdir",
+                     "unlink", "readlink", "chmod", "umask", "getdents64", "openat", "newfstatat", "getrandom"},
         "seek": SEEK_ORIGINS | {"SEEK_DATA", "SEEK_HOLE"},
         "open_flags": OPEN_FLAGS | {"AT_EMPTY_PATH", "O_PATH", "O_TMPFILE"},
         "mode_bits": MODE_BITS | STAT_MODE_BITS,
         "dirent_types": DIRENT_TYPES,
-        "descriptor_flags": {"F_GETFD", "F_SETFD", "F_GETFL", "FD_CLOEXEC"},
+        "descriptor_flags": {"F_GETFD", "F_SETFD", "F_GETFL", "F_DUPFD_CLOEXEC", "FD_CLOEXEC"},
     }
     for name, expected in groups.items():
         constants = document[name]
@@ -217,14 +229,16 @@ def load_file_abi(root):
 def load_process_abi(root):
     path = regular_file(root, "spec/types/linux-x86_64-process.toml", "process ABI")
     document = read_toml(path)
-    keys(document, {"schema_version", "types", "syscalls", "wait_flags"}, path)
+    keys(document, {"schema_version", "types", "syscalls", "wait_flags", "spawn_flags"}, path)
     version_one(document["schema_version"], path)
     if document["types"] != {"pid_t": "int"}:
         fail(path, "process IDs must use the selected signed 32-bit type")
-    keys(document["syscalls"], {"getpid", "fork", "execve", "wait4", "getppid", "pipe2"}, path)
+    keys(document["syscalls"], {"getpid", "fork", "execve", "wait4", "getrlimit", "getuid", "getgid",
+                                "setpgid", "getppid", "setresuid", "setresgid", "pipe2"}, path)
     keys(document["wait_flags"], {"WNOHANG", "WUNTRACED", "WCONTINUED"}, path)
+    keys(document["spawn_flags"], SPAWN_FLAGS, path)
     if any(type(value) is not int or not 0 <= value < 1 << 31
-           for group in ("syscalls", "wait_flags") for value in document[group].values()):
+           for group in ("syscalls", "wait_flags", "spawn_flags") for value in document[group].values()):
         fail(path, "process ABI constants must be nonnegative signed 32-bit integers")
     return document
 
@@ -241,6 +255,23 @@ def load_signal_abi(root):
         keys(document[group], names, path)
         if any(type(value) is not int or not -(1 << 31) <= value < 1 << 32 for value in document[group].values()):
             fail(path, f"{group} values must fit in 32 bits")
+    return document
+
+
+def load_time_abi(root):
+    path = regular_file(root, "spec/types/linux-x86_64-time.toml", "time64 ABI")
+    document = read_toml(path)
+    keys(document, {"schema_version", "types", "syscalls", "constants"}, path)
+    version_one(document["schema_version"], path)
+    if document["types"] != {"time_t": "long", "clock_t": "long", "clockid_t": "int"}:
+        fail(path, "time ABI types must match Linux x86-64 time64")
+    keys(document["syscalls"], {"nanosleep", "clock_gettime", "clock_getres", "clock_nanosleep"}, path)
+    keys(document["constants"], CLOCK_POSIX | {"CLOCKS_PER_SEC", "TIME_UTC", "CLOCK_MONOTONIC_RAW",
+         "CLOCK_REALTIME_COARSE", "CLOCK_MONOTONIC_COARSE", "CLOCK_BOOTTIME", "CLOCK_REALTIME_ALARM",
+         "CLOCK_BOOTTIME_ALARM", "CLOCK_TAI"}, path)
+    if any(type(value) is not int or not 0 <= value < 1 << 31
+           for group in ("syscalls", "constants") for value in document[group].values()):
+        fail(path, "time ABI constants must be nonnegative signed 32-bit integers")
     return document
 
 
@@ -426,11 +457,11 @@ def builtin_abi_class(declaration):
     words = [word for word in declaration.split() if word not in qualifiers]
     if len(words) > 1 and words[-1] not in type_words:
         words.pop()
-    if words in (["off_t"], ["__al_sighandler_t"], ["jmp_buf"], ["sigjmp_buf"]):
+    if words in (["off_t"], ["time_t"], ["clock_t"], ["__al_sighandler_t"], ["jmp_buf"], ["sigjmp_buf"]):
         return "wide", ()
     if words == ["mode_t"]:
         return "narrow", ("u32",)
-    if words == ["pid_t"]:
+    if words in (["pid_t"], ["clockid_t"]):
         return "narrow", ("s32",)
     counts = {word: words.count(word) for word in set(words)}
     if not words or counts.keys() - type_words:

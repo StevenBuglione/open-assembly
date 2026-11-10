@@ -1,0 +1,19 @@
+name = "posix_spawn_file_actions_adddup2"
+header = "spawn.h"
+prototype = "int posix_spawn_file_actions_adddup2(posix_spawn_file_actions_t *actions, int fd, int newfd)"
+standard = ["POSIX.1-2024 XSH posix_spawn_file_actions_adddup2"]
+deps = ["malloc", "__errno_location"]
+errno = ["EBADF", "ENOMEM"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:linux-spawn-abi"]
+provenance = "original"
+semantics = [
+  "Append duplication from fd onto newfd in the child. Same-descriptor duplication clears close-on-exec.",
+  "Both descriptor numbers must be nonnegative and below the current open descriptor limit.",
+  "Return zero on success or a positive error number on failure. Preserve errno.",
+]
+
+[abi]
+narrow_args = ["esi:s32", "edx:s32"]
+variadic = false

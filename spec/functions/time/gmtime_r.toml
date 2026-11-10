@@ -1,0 +1,21 @@
+name = "gmtime_r"
+header = "time.h"
+prototype = "struct tm *gmtime_r(const time_t *restrict timer, struct tm *restrict result)"
+standard = ["POSIX.1-2024 XSH gmtime_r"]
+deps = ["__errno_location"]
+errno = ["EOVERFLOW"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:gregorian-utc"]
+provenance = "original"
+semantics = [
+  "Convert signed seconds since the Unix epoch into UTC using a proleptic Gregorian calendar.",
+  "Produce seconds, minutes, hours, day, zero-based month, year since 1900, weekday, and year day.",
+  "Set DST and offset to zero and the zone abbreviation to UTC.",
+  "Return result and preserve errno on success.",
+  "If the year does not fit in tm_year, leave result unchanged and return null with EOVERFLOW.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

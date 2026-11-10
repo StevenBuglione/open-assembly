@@ -1,0 +1,20 @@
+name = "clock_nanosleep"
+header = "time.h"
+prototype = "int clock_nanosleep(clockid_t clock_id, int flags, const struct timespec *request, struct timespec *remaining)"
+standard = ["POSIX.1-2024 XSH clock_nanosleep"]
+deps = []
+errno = ["EFAULT", "EINTR", "EINVAL", "ENOTSUP"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-time64"]
+provenance = "original"
+semantics = [
+  "Use the selected Linux clock and a relative request or a TIMER_ABSTIME deadline.",
+  "For an interrupted relative request, store the remaining interval when requested.",
+  "An absolute request does not store a remaining interval.",
+  "Return zero on success or a positive Linux error number on failure. Preserve errno in either case.",
+]
+
+[abi]
+narrow_args = ["edi:s32", "esi:s32"]
+variadic = false

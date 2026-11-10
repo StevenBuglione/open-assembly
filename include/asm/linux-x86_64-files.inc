@@ -10,6 +10,7 @@
 %define __AL_NR_DUP2 33
 %define __AL_NR_FCNTL 72
 %define __AL_NR_GETCWD 79
+%define __AL_NR_RENAME 82
 %define __AL_NR_MKDIR 83
 %define __AL_NR_RMDIR 84
 %define __AL_NR_UNLINK 87
@@ -19,5 +20,6 @@
 %define __AL_NR_GETDENTS64 217
 %define __AL_NR_OPENAT 257
 %define __AL_NR_NEWFSTATAT 262
+%define __AL_NR_GETRANDOM 318
 
 %endif

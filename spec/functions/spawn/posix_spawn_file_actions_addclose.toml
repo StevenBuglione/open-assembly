@@ -1,0 +1,18 @@
+name = "posix_spawn_file_actions_addclose"
+header = "spawn.h"
+prototype = "int posix_spawn_file_actions_addclose(posix_spawn_file_actions_t *actions, int fd)"
+standard = ["POSIX.1-2024 XSH posix_spawn_file_actions_addclose"]
+deps = ["malloc", "__errno_location"]
+errno = ["EBADF", "ENOMEM"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:linux-spawn-abi"]
+provenance = "original"
+semantics = [
+  "Append a close of the nonnegative descriptor. The descriptor need not be open at registration.",
+  "Return zero on success or a positive error number on failure. Preserve errno.",
+]
+
+[abi]
+narrow_args = ["esi:s32"]
+variadic = false

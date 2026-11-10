@@ -13,6 +13,7 @@ dup = 32
 dup2 = 33
 fcntl = 72
 getcwd = 79
+rename = 82
 mkdir = 83
 rmdir = 84
 unlink = 87
@@ -22,6 +23,7 @@ umask = 95
 getdents64 = 217
 openat = 257
 newfstatat = 262
+getrandom = 318
 
 [seek]
 SEEK_SET = 0
@@ -91,4 +93,5 @@ DT_SOCK = 12
 F_GETFD = 1
 F_SETFD = 2
 F_GETFL = 3
+F_DUPFD_CLOEXEC = 1030
 FD_CLOEXEC = 1

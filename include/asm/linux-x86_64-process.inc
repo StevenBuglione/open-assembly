@@ -6,7 +6,13 @@
 %define __AL_NR_FORK 57
 %define __AL_NR_EXECVE 59
 %define __AL_NR_WAIT4 61
+%define __AL_NR_GETRLIMIT 97
+%define __AL_NR_GETUID 102
+%define __AL_NR_GETGID 104
+%define __AL_NR_SETPGID 109
 %define __AL_NR_GETPPID 110
+%define __AL_NR_SETRESUID 117
+%define __AL_NR_SETRESGID 119
 %define __AL_NR_PIPE2 293
 
 %endif
