@@ -73,7 +73,7 @@ jobs:
           if-no-files-found: warn
 
   applications:
-    name: Calendar formatting and Lua gates
+    name: Calendar, time zone, and Lua gates
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
@@ -82,8 +82,8 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b
-      - name: Run date-formatting and Lua suites
-        run: ./tools/container make -k phase6-strftime phase6-lua
+      - name: Run date-formatting, time-zone, and Lua suites
+        run: ./tools/container make -k phase6-strftime phase6-zone phase6-lua
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
