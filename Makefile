@@ -6,7 +6,7 @@ RUNTIME_OBJECTS := $(patsubst $(RUNTIME_SRC)/%.asm,$(RUNTIME_BUILD)/obj/%.o,$(RU
 ASM_INCLUDES := $(wildcard include/asm/*.inc include/asm/*/*.inc)
 RUNTIME_APPS := $(addprefix $(RUNTIME_BUILD)/apps/,cat wc)
 
-.PHONY: phase0 phase1 phase2 phase3 phase4 phase5 phase6-files phase6-compat phase6-busybox phase6-process phase6-signal phase6-jump phase6-time phase6-calendar phase6-luafiles phase6-spawn phase6-shell phase6-path runtime apps gate FORCE phase7-exact phase7-transcendental phase7-complex phase6-lua phase6-strftime phase6-zone
+.PHONY: phase0 phase1 phase2 phase3 phase4 phase5 phase6-files phase6-compat phase6-busybox phase6-process phase6-signal phase6-jump phase6-time phase6-calendar phase6-luafiles phase6-spawn phase6-shell phase6-path runtime apps gate FORCE phase7-exact phase7-transcendental phase7-complex phase6-lua phase6-strftime phase6-zone phase8-lifecycle phase8-openposix phase8-detectors phase8-sync phase8-c11
 
 phase0:
 	tools/gate --phase0
@@ -80,6 +80,21 @@ phase7-transcendental:
 
 phase7-complex:
 	python3 tools/phase7_complex.py
+
+phase8-lifecycle:
+	python3 tools/phase8.py
+
+phase8-sync:
+	python3 tools/phase8.py --sync
+
+phase8-c11:
+	python3 tools/phase8.py --c11
+
+phase8-openposix:
+	python3 tools/phase8_openposix.py
+
+phase8-detectors:
+	python3 tools/phase8_detectors.py
 
 runtime: $(RUNTIME_BUILD)/crt1.o $(RUNTIME_BUILD)/libopenasm.a
 

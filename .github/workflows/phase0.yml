@@ -91,10 +91,29 @@ jobs:
           path: build/evidence/
           if-no-files-found: warn
 
+  threads:
+    name: POSIX and C11 thread gates
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b
+      - name: Run lifecycle, synchronization, C11, and detector gates
+        run: ./tools/container make -k phase8-lifecycle phase8-sync phase8-c11 phase8-openposix phase8-detectors
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: thread-verification-evidence
+          path: build/evidence/
+          if-no-files-found: warn
+
   acceptance:
     name: acceptance
     if: always()
-    needs: [core, integration, mathematics, applications]
+    needs: [core, integration, mathematics, applications, threads]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions: {}
@@ -103,14 +122,16 @@ jobs:
       INTEGRATION_RESULT: ${{ needs.integration.result }}
       MATH_RESULT: ${{ needs.mathematics.result }}
       APPLICATION_RESULT: ${{ needs.applications.result }}
+      THREAD_RESULT: ${{ needs.threads.result }}
     steps:
       - name: Require all verification jobs
         shell: bash
         run: |
           set -euo pipefail
-          printf 'Core: %s\nIntegration: %s\nMathematics: %s\nApplications: %s\n' \
-            "$CORE_RESULT" "$INTEGRATION_RESULT" "$MATH_RESULT" "$APPLICATION_RESULT"
+          printf 'Core: %s\nIntegration: %s\nMathematics: %s\nApplications: %s\nThreads: %s\n' \
+            "$CORE_RESULT" "$INTEGRATION_RESULT" "$MATH_RESULT" "$APPLICATION_RESULT" "$THREAD_RESULT"
           test "$CORE_RESULT" = success
           test "$INTEGRATION_RESULT" = success
           test "$MATH_RESULT" = success
           test "$APPLICATION_RESULT" = success
+          test "$THREAD_RESULT" = success

@@ -1,0 +1,15 @@
+name = "mtx_timedlock"
+header = "threads.h"
+prototype = "int mtx_timedlock(mtx_t *restrict mutex, const struct timespec *restrict deadline)"
+standard = ["C17 7.26.4.4"]
+deps = ["pthread_mutex_timedlock"]
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:c17-threads"]
+provenance = "original"
+semantics = ["Acquire the mutex until the absolute TIME_UTC deadline and report thrd_timedout on expiration."]
+
+[abi]
+narrow_args = []
+variadic = false

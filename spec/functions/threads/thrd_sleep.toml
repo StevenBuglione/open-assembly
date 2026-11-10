@@ -1,0 +1,15 @@
+name = "thrd_sleep"
+header = "threads.h"
+prototype = "int thrd_sleep(const struct timespec *duration, struct timespec *remaining)"
+standard = ["C17 7.26.5.7"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:c17-threads"]
+provenance = "original"
+semantics = ["Sleep for the relative duration. Return -1 with any requested remainder on interruption, or -2 on another error.", "Publish the remainder only on interruption and allow duration and remaining to alias."]
+
+[abi]
+narrow_args = []
+variadic = false

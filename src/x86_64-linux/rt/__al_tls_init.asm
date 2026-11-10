@@ -3,19 +3,23 @@ bits 64
 default rel
 
 global __al_tls_init:function
+global __al_tls_template:data
 extern __al_syscall:function
+extern __al_tls_new:function
 extern __al_panic:function
 
 section .text.__al_tls_init alloc exec nowrite progbits
 __al_tls_init:
     push rbp
     mov rbp, rsp
-    sub rsp, 48
+    push rbx
+    sub rsp, 24
     mov qword [rsp], 0             ; arg6 for __al_syscall
     xor r8d, r8d                   ; AT_PHDR
     xor r9d, r9d                   ; AT_PHENT
     xor r10d, r10d                 ; AT_PHNUM
     xor r11d, r11d                 ; AT_RANDOM
+    xor ebx, ebx                   ; AT_PAGESZ
 
 .scan_auxv:
     mov rax, [rdi]
@@ -29,6 +33,8 @@ __al_tls_init:
     je .save_phent
     cmp rax, 5                     ; AT_PHNUM
     je .save_phnum
+    cmp rax, 6                     ; AT_PAGESZ
+    je .save_pagesz
     cmp rax, 25                    ; AT_RANDOM
     jne .scan_auxv
     mov r11, rdx
@@ -43,10 +49,26 @@ __al_tls_init:
     mov r10, rdx
     jmp .scan_auxv
 
+.save_pagesz:
+    mov rbx, rdx
+    jmp .scan_auxv
+
 .auxv_done:
     test r11, r11
     jz .fail
-    mov [rsp + 8], r11             ; AT_RANDOM address
+    cmp rbx, 4096
+    jb .fail
+    cmp rbx, 1048576
+    ja .fail
+    lea rax, [rbx - 1]
+    test rbx, rax
+    jnz .fail
+    mov [rel __al_tls_template + 48], rbx
+    mov rax, [r11]
+    and rax, -256
+    mov [rel __al_tls_template + 32], rax
+    mov rax, [r11 + 8]
+    mov [rel __al_tls_template + 40], rax
     test r8, r8
     jz .fail
     cmp r9, 56                     ; sizeof(Elf64_Phdr)
@@ -63,17 +85,15 @@ __al_tls_init:
     dec r10
     jnz .scan_phdr
 
-    mov qword [rsp + 16], 0        ; no TLS source image
-    mov qword [rsp + 24], 0        ; no image bytes to copy
     xor ecx, ecx                   ; distance from thread pointer
     mov eax, 16                    ; thread pointer alignment
     jmp .allocate
 
 .have_tls:
     mov rsi, [r8 + 16]             ; p_vaddr (ET_EXEC has zero load bias)
-    mov [rsp + 16], rsi
+    mov [rel __al_tls_template], rsi
     mov rdx, [r8 + 32]             ; p_filesz
-    mov [rsp + 24], rdx
+    mov [rel __al_tls_template + 8], rdx
     mov rcx, [r8 + 40]             ; p_memsz
     cmp rdx, rcx
     ja .fail
@@ -100,53 +120,12 @@ __al_tls_init:
     mov eax, 16
 
 .allocate:
-    mov [rsp + 32], rcx            ; thread pointer to image distance
-    mov [rsp + 40], rax            ; thread pointer alignment
-    lea rdx, [rax - 1]
-    add rdx, rcx
-    jc .fail
-    add rdx, 80                    ; TCB storage after the thread pointer
-    jc .fail
-    mov edi, 9                     ; __NR_mmap
-    xor esi, esi                   ; address hint: NULL
-    mov ecx, 3                     ; PROT_READ | PROT_WRITE
-    mov r8d, 34                    ; MAP_PRIVATE | MAP_ANONYMOUS
-    mov r9, -1                     ; anonymous fd
-    call __al_syscall
-    cmp rax, -4095
-    jae .fail
-
-    mov rdx, [rsp + 40]
-    lea rcx, [rdx - 1]
-    add rax, [rsp + 32]
-    add rax, rcx
-    neg rdx
-    and rax, rdx                   ; thread pointer, aligned up
-    mov [rax], rax                 ; FS:0 self pointer
-    mov [rax + 0x10], rax
-    mov rdi, [rsp + 8]
-    mov rdx, [rdi]
-    and rdx, -256
-    mov [rax + 0x28], rdx          ; stack guard
-    mov rdx, [rdi + 8]
-    mov [rax + 0x30], rdx          ; pointer guard
-
-    ; The anonymous mapping already zeroed .tbss, padding, and errno.
-    mov rdi, rax
-    sub rdi, [rsp + 32]            ; image begins below the thread pointer
-    mov rsi, [rsp + 16]
-    mov rcx, [rsp + 24]
-    test rcx, rcx
-    jz .install
-.copy_image:
-    mov dl, [rsi]
-    mov [rdi], dl
-    inc rsi
-    inc rdi
-    dec rcx
-    jnz .copy_image
-
-.install:
+    mov [rel __al_tls_template + 16], rcx
+    mov [rel __al_tls_template + 24], rax
+    call __al_tls_new
+    test rax, rax
+    jz .fail
+    mov rbx, rax
     mov edi, 158                   ; __NR_arch_prctl
     mov esi, 0x1002                ; ARCH_SET_FS
     mov rdx, rax
@@ -156,7 +135,18 @@ __al_tls_init:
     call __al_syscall
     test rax, rax
     jnz .fail
-    add rsp, 48
+    mov edi, 218                   ; __NR_set_tid_address
+    lea rsi, [rbx + 0x70]
+    xor edx, edx
+    xor ecx, ecx
+    xor r8d, r8d
+    xor r9d, r9d
+    call __al_syscall
+    test rax, rax
+    jle .fail
+    mov [rbx + 0x70], eax
+    add rsp, 24
+    pop rbx
     pop rbp
     ret
 
@@ -169,5 +159,9 @@ __al_tls_init:
 section .rodata.__al_tls_init alloc noexec nowrite progbits
 tls_error:
     db "open-assembly: cannot initialize TLS", 10
+
+section .bss.__al_tls_init alloc noexec write nobits align=8
+__al_tls_template:
+    resq 7                         ; image, size, displacement, alignment, guards, page
 
 section .note.GNU-stack noalloc noexec nowrite progbits

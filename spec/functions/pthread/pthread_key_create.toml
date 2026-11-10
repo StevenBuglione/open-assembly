@@ -1,0 +1,19 @@
+name = "pthread_key_create"
+header = "pthread.h"
+prototype = "int pthread_key_create(pthread_key_t *key, void (*destructor)(void *))"
+standard = ["POSIX.1-2024 XSH pthread_key_create"]
+deps = []
+errno = ["EAGAIN"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:thread-specific-data"]
+provenance = "original"
+semantics = [
+  "Allocate a process-visible key with a null initial value in all threads.",
+  "Associate the optional destructor and publish the key only on success.",
+  "Return EAGAIN when the fixed capacity is exhausted. Preserve errno.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

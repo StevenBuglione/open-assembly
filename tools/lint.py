@@ -151,12 +151,64 @@ PRIVATE_FUNCTIONS = {
     "time/__al_tz_rule_instant", "time/__al_tz_rule_lookup",
     "time/__al_tzif_scale", "time/__al_tzif_leaps", "time/__al_zone_load",
     "time/__al_zone_acquire", "time/__al_zone_lookup", "time/__al_zone_publish", "time/__al_mktime_pick",
-    "internal/__al_lock", "internal/__al_unlock", "rt/_start", "rt/__al_tls_init",
+    "internal/__al_lock", "internal/__al_unlock", "internal/__al_futex", "rt/_start", "rt/__al_tls_init", "rt/__al_tls_new",
+    "internal/__al_thread_clone", "internal/__al_thread_unmap_exit",
+    "pthread/__al_thread_start", "pthread/__al_thread_stack_new",
+    "pthread/__al_thread_dispose", "pthread/__al_thread_reap", "pthread/__al_mutex_acquire",
+    "pthread/__al_thread_create", "pthread/__al_thread_join", "pthread/__al_mutex_init",
+    "pthread/__al_cond_wait", "pthread/__al_cond_wake", "pthread/__al_tsd_destruct",
+    "pthread/__al_once_reset", "pthread/__al_once_wake", "pthread/__al_mutex_timed_wait",
     "rt/__al_panic", "rt/__al_abort", "rt/__al_diagnostic", "stdlib/__al_strtox",
 }
 PRIVATE_NORETURN = {"_start", "__al_rt_sigreturn", "__al_panic", "__al_abort", "__al_heap_bad", "__al_big_bad", "__al_spawn_child",
-                    "__al_shell_exec", "__al_popen_child"}
-COMPARATOR_ARGUMENTS = {"bsearch": "r8", "qsort": "rcx"}
+                    "__al_shell_exec", "__al_popen_child", "__al_thread_start", "__al_thread_unmap_exit"}
+CALLBACK_ARGUMENTS = {"bsearch": "r8", "qsort": "rcx", "pthread_once": "rsi"}
+ONCE_FRAME = (
+    ("call", ("pthread_self",)), ("mov", ("r13", "rax")),
+    ("mov", ("rax", "[r13 + 0x910]")), ("mov", ("[rsp]", "rax")),
+    ("mov", ("[rsp + 8]", "rbx")), ("lea", ("rax", "[rsp]")),
+    ("mov", ("[r13 + 0x910]", "rax")), ("mov", ("rax", "r12")), ("call", ("rax",)),
+    ("mov", ("rax", "[rsp]")), ("mov", ("[r13 + 0x910]", "rax")),
+)
+CALLBACK_TABLES = {
+    "stdlib/exit": ("__al_atexit_state", r"(\w+)\s*\+\s*rax\s*\*\s*8\s*\+\s*8"),
+    "pthread/__al_tsd_destruct": ("__al_tsd_keys", r"(\w+)\s*\+\s*r12\s*\+\s*8"),
+}
+
+RUNTIME_ATOMICS = {
+    "pthread/pthread_once": {
+        ("lock", ("cmpxchg dword [rbx]", "edx")): ("eax", ("rbx", "rdx", "rax")),
+    },
+    "internal/__al_lock": {
+        ("lock", ("cmpxchg dword [rdi]", "edx")): ("eax", ("rdi", "rdx", "rax")),
+        ("xchg", ("dword [rbx]", "eax")): ("eax", ("rbx", "rax")),
+    },
+    "internal/__al_unlock": {
+        ("xchg", ("dword [rdi]", "eax")): ("eax", ("rdi", "rax")),
+    },
+    "rt/__al_tls_new": {
+        ("lock", ("xadd qword [rel next_owner_token]", "rdx")): ("rdx", ("rdx",)),
+    },
+    "pthread/__al_mutex_timed_wait": {
+        ("xchg", ("dword [rbx]", "eax")): ("eax", ("rbx", "rax")),
+    },
+    "pthread/__al_mutex_acquire": {
+        ("lock", ("cmpxchg dword [rbx]", "edx")): ("eax", ("rbx", "rax", "rdx")),
+    },
+    "pthread/__al_thread_create": {
+        ("lock", ("xadd dword [rel __al_thread_count]", "eax")): ("eax", ("rax",)),
+    },
+    "pthread/__al_thread_join": {
+        ("lock", ("cmpxchg dword [rbx + 0x74]", "edx")): ("eax", ("rbx", "rax", "rdx")),
+    },
+    "pthread/pthread_detach": {
+        ("lock", ("cmpxchg dword [rdi + 0x74]", "edx")): ("eax", ("rdi", "rax", "rdx")),
+    },
+    "pthread/pthread_exit": {
+        ("lock", ("xadd dword [rel __al_thread_count]", "eax")): ("eax", ("rax",)),
+        ("lock", ("cmpxchg dword [rbx + 0x74]", "edx")): ("eax", ("rbx", "rax", "rdx")),
+    },
+}
 
 
 @dataclass(frozen=True)
@@ -174,6 +226,12 @@ SIGACTION_STACK_RECORDS = {
 KERNEL_STACK_RECORDS = {
     "stdlib/abort": {
         ("rdx", "rsp + 8"): KernelStackRecord(8, (("mov", ("edi", "14")),)),
+    },
+    "threads/thrd_sleep": {
+        ("rdx", "rsp + 8"): KernelStackRecord(
+            16, (("mov", ("edi", "35")),),
+            ((("xor", ("ecx", "ecx")), ("xor", ("r8d", "r8d")), ("xor", ("r9d", "r9d"))),),
+        ),
     },
     "internal/__al_stat_query": {
         ("rdx", "rsp + 8"): KernelStackRecord(144, (("mov", ("edi", "5")),)),
@@ -204,6 +262,11 @@ KERNEL_STACK_RECORDS = {
                                                ((("xor", ("ecx", "ecx")), ("xor", ("r8d", "r8d")),
                                                  ("xor", ("r9d", "r9d"))),)),
     },
+    "pthread/pthread_exit": {
+        ("rdx", "rsp + 8"): KernelStackRecord(8, (("mov", ("edi", "14")), ("mov", ("esi", "2"))),
+                                               ((("xor", ("ecx", "ecx")), ("mov", ("r8d", "8")),
+                                                 ("xor", ("r9d", "r9d"))),)),
+    },
 }
 PRIVATE_DATA = {
     "stdin": "rt/__al_stdio_init", "stdout": "rt/__al_stdio_init", "stderr": "rt/__al_stdio_init",
@@ -217,7 +280,29 @@ PRIVATE_DATA = {
     "__al_env_owned": "stdlib/__al_env_change",
     "__al_initial_envp": "rt/_start",
     "__al_auxv": "rt/_start",
+    "__al_tls_template": "rt/__al_tls_init",
+    "__al_thread_count": "pthread/pthread_exit",
     "__al_atexit_state": "stdlib/atexit",
+    "__al_tsd_keys": "pthread/pthread_key_create", "__al_tsd_lock": "pthread/pthread_key_create",
+}
+THREAD_KERNEL_BOUNDARIES = {
+    "internal/__al_thread_clone": (
+        (("mov", ("r8", "rdi")), ("mov", ("r10", "rdx")),
+         ("mov", ("edi", "0x3d0f00")), ("mov", ("eax", "56")), ("syscall", ()),
+         ("test", ("rax", "rax")), ("jz", (".child",)), ("ret", ()),
+         ("xor", ("ebp", "ebp")), ("mov", ("rdi", "[rsp]")), ("mov", ("rsi", "[rsp + 8]")),
+         ("call", ("__al_thread_start",)), ("ud2", ())),
+        {"__al_thread_clone": 0, "__al_thread_clone.child": 8},
+        {"__al_thread_start"},
+    ),
+    "internal/__al_thread_unmap_exit": (
+        (("mov", ("r8", "rdx")), ("mov", ("r9", "rcx")), ("mov", ("eax", "11")),
+         ("syscall", ()), ("test", ("r8", "r8")), ("jz", (".exit",)),
+         ("mov", ("rdi", "r8")), ("mov", ("rsi", "r9")), ("mov", ("eax", "11")),
+         ("syscall", ()), ("xor", ("edi", "edi")), ("mov", ("eax", "60")), ("syscall", ()), ("ud2", ())),
+        {"__al_thread_unmap_exit": 0, "__al_thread_unmap_exit.exit": 10},
+        set(),
+    ),
 }
 JUMP_SAVED_REGISTERS = ("rbx", "rbp", "r12", "r13", "r14", "r15")
 JUMP_REGISTER_SLOTS = ("[rdi]", *(f"[rdi + {offset}]" for offset in range(8, 48, 8)))
@@ -354,10 +439,12 @@ class Program:
     signal_restorer: bool = False
     caller_stack_arg: bool = False
     extended_arguments: int = 0
+    atomic_instructions: dict | None = None
     tls_self: bool = False
+    once_frame_line: int | None = None
     callback_dispatch: bool = False
-    callback_table: bool = False
-    comparator_argument: str | None = None
+    callback_table: tuple[str, str] | None = None
+    callback_argument: str | None = None
     varargs_frame: bool = False
     fenv_access: bool = False
     fenv_controls: bool = False
@@ -709,11 +796,13 @@ def transfer_data(state, program, ins):
                 record = (program.kernel_stack_records or {}).get((dest.value, src.value))
                 context_stack_address = (state.context_save and state.rsp == 0
                                          and dest.value == "rax" and src.value == "rsp + 8")
-                modeled_frame_address = process_stack_address or context_stack_address or program.varargs_frame or record
+                once_frame = program.once_frame_line == line
+                modeled_frame_address = (process_stack_address or context_stack_address or program.varargs_frame
+                                         or once_frame or record)
                 if set(src.address) & {"rsp", "rbp"} and not modeled_frame_address:
                     reject(line, "STACK_ACCESS", "stack address escape is unsupported")
-                if record:
-                    state, _ = access_memory(state, src, record.extent, line, write=True)
+                if record or once_frame:
+                    state, _ = access_memory(state, src, record.extent if record else 16, line, write=True)
                 read_registers(state, src.address, line, allow_stack_register=bool(modeled_frame_address))
             else:
                 src_width = src.size if opcode in ("movzx", "movsx") else width(src) or width(dest)
@@ -754,12 +843,11 @@ def transfer_data(state, program, ins):
     # movzx/movsx into 32- or 64-bit destinations also overwrites all high bits.
     updated = write_gpr(state, dest, line, al=al)
     if program.callback_dispatch and dest.width == 64:
-        if (program.callback_table and opcode == "lea" and src.kind == "mem"
-                and src.value == "__al_atexit_state"):
+        table = program.callback_table
+        if table and opcode == "lea" and src.kind == "mem" and src.value == table[0]:
             updated = replace(updated, callback_table_registers=updated.callback_table_registers | {dest.base})
         if opcode == "mov":
-            slot = (src.kind == "mem" and re.fullmatch(
-                r"(\w+)\s*\+\s*rax\s*\*\s*8\s*\+\s*8", src.value))
+            slot = table and src.kind == "mem" and re.fullmatch(table[1], src.value)
             if ((slot and slot[1] in state.callback_table_registers) or
                     (src.kind == "gpr" and src.width == 64 and src.base in state.callback_registers)):
                 updated = replace(updated, callback_registers=updated.callback_registers | {dest.base})
@@ -826,6 +914,13 @@ def transfer(state, program, ins, syscall_boundary, x87_return):
         reject(line, "ISA_BASELINE", f"{opcode} exceeds the SSE2 baseline")
     if opcode in MOVES | ARITH | UNARY | SSE_MOVE | SSE_ALU | {"cmp", "test"}:
         return transfer_data(state, program, ins)
+    if opcode in {"lock", "xchg"}:
+        recipe = (program.atomic_instructions or {}).get((opcode, ins.operands))
+        if recipe is None:
+            reject(line, "INSTRUCTION", "atomic instruction needs a modeled runtime word")
+        result, registers = recipe
+        read_registers(state, registers, line)
+        return write_gpr(state, operand(result, line), line)
     if opcode == "cqo":
         check_operands(ins, {0})
         read_registers(state, ("rax",), line)
@@ -953,8 +1048,8 @@ def verify(program, syscall_boundary, x87_return):
                                process_entry=program.process_entry,
                                caller_stack_arg=program.caller_stack_arg,
                                extended_arguments=program.extended_arguments, tls_self=program.tls_self,
-                               context_save=program.context_save, callback_registers=(frozenset({program.comparator_argument})
-                                                   if program.comparator_argument else frozenset()))}
+                               context_save=program.context_save, callback_registers=(frozenset({program.callback_argument})
+                                                   if program.callback_argument else frozenset()))}
         work = deque([start])
         terminal = False
         while work:
@@ -1072,14 +1167,24 @@ def check_file(path, function, fixture_syscall, functions_snapshot=project_funct
         program.extended_arguments = EXTENDED_ARGUMENTS.get(path.stem, 0)
     elif relative_runtime == f"complex/{path.stem}":
         program.extended_arguments = COMPLEX_EXTENDED_ARGUMENTS.get(path.stem, 0)
-    program.tls_self = relative_runtime in {"rt/__errno_location", "rt/__al_stream_owner"}
-    program.callback_table = relative_runtime == "stdlib/exit"
-    program.comparator_argument = COMPARATOR_ARGUMENTS.get(function)
-    program.callback_dispatch = program.callback_table or program.comparator_argument is not None
+    program.atomic_instructions = RUNTIME_ATOMICS.get(relative_runtime)
+    program.tls_self = relative_runtime in {"rt/__errno_location", "rt/__al_stream_owner", "pthread/pthread_self"}
+    program.callback_table = CALLBACK_TABLES.get(relative_runtime)
+    program.callback_argument = ("rdi" if relative_runtime == "pthread/__al_thread_start"
+                                   else CALLBACK_ARGUMENTS.get(function))
+    program.callback_dispatch = program.callback_table is not None or program.callback_argument is not None
     program.fenv_access = relative_runtime in {
         f"fenv/{name}" for name in ("feclearexcept", "fegetenv", "feholdexcept", "fesetenv", "fetestexcept")
     }
     program.fenv_controls = relative_runtime in {"fenv/feholdexcept", "fenv/fesetenv", "fenv/fesetround"}
+    if relative_runtime == "pthread/pthread_once":
+        shape = [(ins.opcode, ins.operands) for ins in program.instructions]
+        frames = [index for index in range(len(shape))
+                  if tuple(shape[index:index + len(ONCE_FRAME)]) == ONCE_FRAME]
+        if len(frames) != 1 or any(frames[0] < target < frames[0] + len(ONCE_FRAME)
+                                   for target in program.labels.values()):
+            reject(1, "STACK_ACCESS", "once record must link one bounded frame during the typed callback")
+        program.once_frame_line = program.instructions[frames[0] + 5].line
     program.kernel_stack_records = KERNEL_STACK_RECORDS.get(relative_runtime)
     if program.kernel_stack_records:
         instructions = program.instructions
@@ -1155,7 +1260,12 @@ def check_file(path, function, fixture_syscall, functions_snapshot=project_funct
                 or any(0 < label < len(prefix) for label in program.labels.values())):
             reject(1, "CONTROL_FLOW", "context save must capture the caller registers and return point at entry")
         program.context_save = True
-    if relative_runtime == "setjmp/longjmp":
+    if relative_runtime in THREAD_KERNEL_BOUNDARIES:
+        expected, labels, externs = THREAD_KERNEL_BOUNDARIES[relative_runtime]
+        actual = tuple((ins.opcode, ins.operands) for ins in program.instructions)
+        if actual != expected or program.labels != labels or program.externs != externs:
+            reject(1, "CONTROL_FLOW", "thread boundary must preserve the checked kernel stack transition")
+    elif relative_runtime == "setjmp/longjmp":
         sequence = tuple((ins.opcode, ins.operands) for ins in program.instructions)
         if sequence != JUMP_RESTORE or program.labels != {"longjmp": 0, "longjmp.restore": 4}:
             reject(1, "CONTROL_FLOW", "context resume must restore the exact saved registers and transfer to the saved PC")

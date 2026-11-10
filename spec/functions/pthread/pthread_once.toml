@@ -1,0 +1,20 @@
+name = "pthread_once"
+header = "pthread.h"
+prototype = "int pthread_once(pthread_once_t *control, void (*initialize)(void))"
+standard = ["POSIX.1-2024 XSH pthread_once"]
+deps = ["pthread_self"]
+errno = ["EINVAL"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:thread-once"]
+provenance = "original"
+semantics = [
+  "Run one initialization routine for each properly initialized control.",
+  "Publish the effects of the completed callback before successful return of any caller.",
+  "Retry wait interruptions inside the operation. Preserve errno on paths that do not invoke the callback.",
+  "Allow a new caller to initialize the control if the current initializer leaves through pthread_exit.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

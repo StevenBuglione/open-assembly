@@ -1,0 +1,17 @@
+name = "pthread_equal"
+header = "pthread.h"
+prototype = "int pthread_equal(pthread_t left, pthread_t right)"
+standard = ["POSIX.1-2024 XSH pthread_equal"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:linux-thread-lifecycle"]
+provenance = "original"
+semantics = [
+  "Return nonzero if the two valid handles identify the same thread. Preserve errno.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

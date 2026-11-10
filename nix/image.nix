@@ -15,6 +15,8 @@ let
       ln -s "${environment.OPEN_ASSEMBLY_BUSYBOX_SOURCE}" "$out/share/open-assembly/busybox.tar.bz2"
       ln -s "${environment.OPEN_ASSEMBLY_LIBC_TEST}" "$out/share/open-assembly/libc-test"
       ln -s "${environment.OPEN_ASSEMBLY_FLOAT_VECTORS}" "$out/share/open-assembly/float-vectors"
+      ln -s "${environment.OPEN_ASSEMBLY_OPEN_POSIX}" "$out/share/open-assembly/open-posix.tar.gz"
+      ln -s "${environment.OPEN_ASSEMBLY_VALGRIND_HEADERS}" "$out/share/open-assembly/valgrind-headers"
       ln -s "${environment.OPEN_ASSEMBLY_MPFR}" "$out/share/open-assembly/libmpfr.so.6"
     '';
   };

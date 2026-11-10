@@ -56,6 +56,31 @@ The `phase6-strftime` gate checks C-locale directives and modifiers,
 exact buffer limits, and the ISO week-year across a full 400-year cycle.
 Its manifest records the host comparison scope for custom zone names.
 
+## Phase 8 thread lifecycle
+
+`./tools/container make phase8-sync phase8-c11` checks the independently
+authored synchronization and C11 fixtures. The reports bind the same
+freestanding archive to native, QEMU, and Memcheck runs, hosted comparison
+cases, and exact per-symbol stub rejections. The C11 fault fixture wraps
+only the runtime syscall boundary for selected mmap, nanosleep, and
+scheduler-yield operations. Cancellation, process-shared and robust
+mutexes, and full detector stress remain separate scopes.
+[POSIX synchronization fixtures](../../tests/phase8/sync/README.md) ·
+[C11 thread fixtures](../../tests/phase8/c11/README.md)
+
+`./tools/container make phase8-lifecycle` runs the six initial pthread
+APIs against archive-only links. The suite measures compiler TLS and
+errno isolation, guarded stacks, lifecycle claims, detached cleanup,
+initial-thread exit, and allocator and stream stress. Glibc and musl
+comparisons, backend observations, and generated stub controls are
+recorded separately. `phase8-openposix` compiles six selected cases
+unmodified from the pinned LTP release and runs the resulting archive-only
+programs on the same backends. `phase8-detectors` calibrates Helgrind
+and DRD on the real private futex lock with test-only annotations,
+a deliberate unprotected race, and a Helgrind lock-order control.
+Full detector stress and broader POSIX coverage remain separate.
+[Thread lifecycle contract](../adr/0010-thread-lifecycle-locks.md)
+
 ## Phase 4 streams and utilities
 
 ```sh

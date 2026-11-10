@@ -1,0 +1,18 @@
+name = "pthread_key_delete"
+header = "pthread.h"
+prototype = "int pthread_key_delete(pthread_key_t key)"
+standard = ["POSIX.1-2024 XSH pthread_key_delete"]
+deps = []
+errno = ["EINVAL"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:thread-specific-data"]
+provenance = "original"
+semantics = [
+  "Invalidate the key generation without invoking a destructor.",
+  "Return EINVAL for an unavailable key. Preserve errno.",
+]
+
+[abi]
+narrow_args = ["edi:u32"]
+variadic = false

@@ -1,0 +1,15 @@
+name = "mtx_init"
+header = "threads.h"
+prototype = "int mtx_init(mtx_t *mutex, int type)"
+standard = ["C17 7.26.4.2"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:c17-threads"]
+provenance = "original"
+semantics = ["Initialize a plain or recursive process-private mutex with the specified C thread type."]
+
+[abi]
+narrow_args = ["esi:s32"]
+variadic = false

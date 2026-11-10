@@ -1,0 +1,15 @@
+name = "thrd_detach"
+header = "threads.h"
+prototype = "int thrd_detach(thrd_t thread)"
+standard = ["C17 7.26.5.3"]
+deps = ["pthread_detach"]
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:c17-threads"]
+provenance = "original"
+semantics = ["Detach the thread so the runtime reclaims it without a join."]
+
+[abi]
+narrow_args = []
+variadic = false

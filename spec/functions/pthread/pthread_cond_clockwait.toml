@@ -1,0 +1,18 @@
+name = "pthread_cond_clockwait"
+header = "pthread.h"
+prototype = "int pthread_cond_clockwait(pthread_cond_t *restrict cond, pthread_mutex_t *restrict mutex, clockid_t clock_id, const struct timespec *restrict abstime)"
+standard = ["POSIX.1-2024 XSH pthread_cond_clockwait"]
+deps = ["pthread_mutex_lock", "pthread_mutex_unlock", "__errno_location"]
+errno = ["EAGAIN", "EINVAL", "EPERM", "ETIMEDOUT"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:linux-thread-condition"]
+provenance = "original"
+semantics = [
+  "Wait using an explicit realtime or monotonic absolute deadline, then reacquire the singly held mutex.",
+  "Return zero on success or a positive error number. Preserve errno.",
+]
+
+[abi]
+narrow_args = ["edx:s32"]
+variadic = false

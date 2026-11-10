@@ -1,0 +1,15 @@
+name = "tss_create"
+header = "threads.h"
+prototype = "int tss_create(tss_t *key, tss_dtor_t destructor)"
+standard = ["C17 7.26.6.1"]
+deps = ["pthread_key_create"]
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:c17-threads"]
+provenance = "original"
+semantics = ["Create a thread-specific key with an optional destructor and null initial values."]
+
+[abi]
+narrow_args = []
+variadic = false

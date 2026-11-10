@@ -1,0 +1,21 @@
+name = "pthread_exit"
+header = "pthread.h"
+prototype = "_Noreturn void pthread_exit(void *result)"
+standard = ["POSIX.1-2024 XSH pthread_exit"]
+deps = ["pthread_self", "exit"]
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:linux-thread-lifecycle"]
+provenance = "original"
+semantics = [
+  "Terminate the calling thread and publish result to any valid joining thread.",
+  "Release unfinished one-time initialization controls before cleanup.",
+  "Run the current thread's thread-specific destructors before result publication.",
+  "Preserve other live threads. When this is the last thread, run process exit with status zero.",
+]
+
+[abi]
+narrow_args = []
+variadic = false
+noreturn = true

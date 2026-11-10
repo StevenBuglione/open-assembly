@@ -1,0 +1,287 @@
+schema = 1
+
+[[case]]
+name = "lifecycle-tls"
+sources = ["tests/phase8/lifecycle/lifecycle.c"]
+requires = ["pthread_create", "pthread_self", "pthread_equal", "pthread_join"]
+args = ["tls"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-lifecycle"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "lifecycle-create"
+sources = ["tests/phase8/lifecycle/lifecycle.c"]
+requires = ["pthread_create"]
+args = ["create"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-lifecycle"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "lifecycle-self"
+sources = ["tests/phase8/lifecycle/lifecycle.c"]
+requires = ["pthread_self"]
+args = ["self"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-lifecycle"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "lifecycle-equal"
+sources = ["tests/phase8/lifecycle/lifecycle.c"]
+requires = ["pthread_equal"]
+args = ["equal"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-lifecycle"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "lifecycle-join"
+sources = ["tests/phase8/lifecycle/lifecycle.c"]
+requires = ["pthread_join"]
+args = ["join"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-lifecycle"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "lifecycle-join-self"
+sources = ["tests/phase8/lifecycle/lifecycle.c"]
+requires = ["pthread_join"]
+args = ["join-self"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-lifecycle"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Pinned musl waits on a self-join. Pinned glibc independently reports EDEADLK."
+
+[[case]]
+name = "lifecycle-exit-survivor"
+sources = ["tests/phase8/lifecycle/lifecycle.c"]
+requires = ["pthread_exit"]
+args = ["exit-survivor"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = "worker result\n"
+stderr = ""
+oracle = ["reference:linux-thread-lifecycle"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "lifecycle-exit-initial"
+sources = ["tests/phase8/lifecycle/lifecycle.c"]
+requires = ["pthread_exit", "pthread_join"]
+args = ["exit-initial"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = "initial joined\nlast exit\n"
+stderr = ""
+oracle = ["reference:linux-thread-lifecycle"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "lifecycle-detach-live"
+sources = ["tests/phase8/lifecycle/mappings.c"]
+requires = ["pthread_detach"]
+args = ["detach-live"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-lifecycle"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Project FS descriptor and Linux mapping observations are private ABI."
+
+[[case]]
+name = "lifecycle-detach-exited"
+sources = ["tests/phase8/lifecycle/mappings.c"]
+requires = ["pthread_detach"]
+args = ["detach-exited"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-lifecycle"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Project clear-TID and mapping observations are private ABI."
+
+[[case]]
+name = "lifecycle-guard"
+sources = ["tests/phase8/lifecycle/mappings.c"]
+requires = ["pthread_create", "pthread_join"]
+args = ["guard"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-lifecycle"]
+backends = ["native", "qemu"]
+host_skip = "Project guard mapping shape and private descriptor are runtime-specific."
+[case.skip]
+valgrind = "The intentional Linux write EFAULT uses a PROT_NONE source. Memcheck diagnoses that syscall buffer and exits 99."
+
+[[case]]
+name = "lifecycle-stress"
+sources = ["tests/phase8/lifecycle/stress.c"]
+requires = ["pthread_create", "pthread_join", "malloc", "realloc", "free", "fwrite"]
+args = []
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-lifecycle"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "lifecycle-first-map"
+sources = ["tests/phase8/lifecycle/fault.c"]
+requires = ["pthread_create"]
+args = ["first-map"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-lifecycle"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Fault injection intercepts the project raw syscall boundary."
+link_wraps = ["__al_syscall"]
+
+[[case]]
+name = "lifecycle-second-map"
+sources = ["tests/phase8/lifecycle/fault.c"]
+requires = ["pthread_create"]
+args = ["second-map"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-lifecycle"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Fault injection intercepts the project raw syscall boundary."
+link_wraps = ["__al_syscall"]
+
+[[case]]
+name = "lifecycle-protect"
+sources = ["tests/phase8/lifecycle/fault.c"]
+requires = ["pthread_create"]
+args = ["protect"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-lifecycle"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Fault injection intercepts the project raw syscall boundary."
+link_wraps = ["__al_syscall"]
+
+[[case]]
+name = "lifecycle-detach"
+sources = ["tests/phase8/lifecycle/lifecycle.c"]
+requires = ["pthread_detach"]
+args = ["detach"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-lifecycle", "posix:pthread_detach"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "lifecycle-interrupted-join"
+sources = ["tests/phase8/lifecycle/fault.c"]
+requires = ["pthread_join"]
+args = ["interrupted-join"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-lifecycle", "posix:pthread_join"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Fault injection targets the project clear-TID futex wait."
+link_wraps = ["__al_syscall"]
+
+[[stub]]
+symbol = "pthread_create"
+case = "lifecycle-create"
+status = 22
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "pthread_self"
+case = "lifecycle-self"
+status = 31
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "pthread_equal"
+case = "lifecycle-equal"
+status = 35
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "pthread_join"
+case = "lifecycle-join"
+status = 41
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "pthread_exit"
+case = "lifecycle-exit-survivor"
+status = 0
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "pthread_detach"
+case = "lifecycle-detach-live"
+status = 63
+stdout = ""
+stderr = ""

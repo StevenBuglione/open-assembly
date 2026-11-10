@@ -1,0 +1,15 @@
+name = "cnd_destroy"
+header = "threads.h"
+prototype = "void cnd_destroy(cnd_t *cond)"
+standard = ["C17 7.26.3.2"]
+deps = ["pthread_cond_destroy"]
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:c17-threads"]
+provenance = "original"
+semantics = ["Destroy an initialized condition with no waiters."]
+
+[abi]
+narrow_args = []
+variadic = false
