@@ -84,6 +84,13 @@ phase6-path:
 phase6-strftime:
 	python3 tools/phase6.py --strftime
 
+.PHONY: phase11-seccomp phase11-old-kernel
+phase11-seccomp:
+	python3 tools/phase11_platform.py seccomp
+
+phase11-old-kernel:
+	python3 tools/phase11_platform.py old-kernel
+
 phase11-copy:
 	python3 tools/phase11_copy.py
 
