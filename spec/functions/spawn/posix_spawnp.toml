@@ -1,0 +1,21 @@
+name = "posix_spawnp"
+header = "spawn.h"
+prototype = "int posix_spawnp(pid_t *restrict pid, const char *restrict file, const posix_spawn_file_actions_t *restrict actions, const posix_spawnattr_t *restrict attr, char *const argv[restrict], char *const envp[restrict])"
+standard = ["POSIX.1-2024 XSH posix_spawnp"]
+deps = ["getenv", "malloc", "free", "__errno_location"]
+errno = ["EACCES", "EAGAIN", "EBADF", "EINTR", "EINVAL", "EIO", "EMFILE", "ENAMETOOLONG", "ENFILE", "ENOENT", "ENOEXEC", "ENOMEM", "ENOTDIR", "EPERM"]
+mt_safe = false
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:linux-exec-path"]
+provenance = "original"
+semantics = [
+  "Apply attributes and file actions in the child before executing the path.",
+  "Use the caller PATH when file has no slash and pass the supplied envp to the new image.",
+  "Use /bin:/usr/bin when the caller PATH is unset. An empty PATH element means the current directory.",
+  "Report ENOEXEC directly for an executable whose format the kernel cannot load.",
+  "Publish the child ID only on success. Return positive errors and preserve errno.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

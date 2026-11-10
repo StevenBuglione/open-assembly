@@ -23,5 +23,6 @@ extern posix_spawnattr_setflags
 extern posix_spawnattr_setpgroup
 extern posix_spawnattr_setsigdefault
 extern posix_spawnattr_setsigmask
+extern posix_spawnp
 
 %endif

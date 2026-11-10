@@ -1,0 +1,20 @@
+name = "popen"
+header = "stdio.h"
+prototype = "FILE *popen(const char *command, const char *mode)"
+standard = ["POSIX.1-2024 XSH popen"]
+deps = ["malloc", "free", "pipe2", "fork", "close", "_exit", "__errno_location"]
+errno = ["EAGAIN", "EINVAL", "EMFILE", "ENFILE", "ENOMEM"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:linux-shell-process"]
+provenance = "original"
+semantics = [
+  "Run the command with /bin/sh -c and return a one-way byte stream for mode r or w.",
+  "An optional e suffix keeps the returned descriptor close-on-exec.",
+  "The shell child closes previously established popen descriptors before executing.",
+  "Associate exactly one child with the returned stream. Report setup errors as null and errno.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

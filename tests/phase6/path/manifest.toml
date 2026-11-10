@@ -1,0 +1,232 @@
+schema = 1
+
+[[case]]
+name = "path-execv"
+sources = ["tests/phase6/path/path.c"]
+requires = ["execv"]
+args = ["execv"]
+env = { OA_ENV = "parent" }
+status = 0
+stdin_hex = ""
+stdout = "first runtime-env [a b] [-x] 2\n"
+stderr = ""
+oracle = ["reference:linux-exec-path", "posix:execv"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "path-execv-missing"
+sources = ["tests/phase6/path/path.c"]
+requires = ["execv"]
+args = ["execv-missing"]
+env = { OA_ENV = "parent" }
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-exec-path", "posix:execv"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "path-execvp-order"
+sources = ["tests/phase6/path/path.c"]
+requires = ["execvp"]
+args = ["execvp-order"]
+env = { OA_ENV = "parent" }
+status = 0
+stdin_hex = ""
+stdout = "first parent [a b] [-x] 2\n"
+stderr = ""
+oracle = ["reference:linux-exec-path", "posix:execvp"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "path-execvp-denied"
+sources = ["tests/phase6/path/path.c"]
+requires = ["execvp"]
+args = ["execvp-denied"]
+env = { OA_ENV = "parent" }
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-exec-path", "posix:execvp"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "path-execvp-default"
+sources = ["tests/phase6/path/path.c"]
+requires = ["execvp"]
+args = ["execvp-default"]
+env = { OA_ENV = "parent" }
+status = 0
+stdin_hex = ""
+stdout = "default shell\n"
+stderr = ""
+oracle = ["reference:linux-exec-path", "posix:execvp"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "path-execvp-fallback"
+sources = ["tests/phase6/path/path.c"]
+requires = ["execvp"]
+args = ["execvp-fallback"]
+env = { OA_ENV = "parent" }
+status = 0
+stdin_hex = ""
+stdout = "script first/plain [a b] [-x] 2\n"
+stderr = ""
+oracle = ["reference:linux-exec-path", "posix:execvp"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Pinned musl returns ENOEXEC instead of invoking sh. The pinned glibc run passes this fixture separately."
+
+[[case]]
+name = "path-execvp-empty"
+sources = ["tests/phase6/path/path.c"]
+requires = ["execvp"]
+args = ["execvp-empty"]
+env = { OA_ENV = "parent" }
+status = 0
+stdin_hex = ""
+stdout = "current\n"
+stderr = ""
+oracle = ["reference:linux-exec-path", "posix:execvp"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "path-execvp-empty-element"
+sources = ["tests/phase6/path/path.c"]
+requires = ["execvp"]
+args = ["execvp-empty-element"]
+env = { OA_ENV = "parent" }
+status = 0
+stdin_hex = ""
+stdout = "current\n"
+stderr = ""
+oracle = ["reference:linux-exec-path", "posix:execvp"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "path-execvp-slash"
+sources = ["tests/phase6/path/path.c"]
+requires = ["execvp"]
+args = ["execvp-slash"]
+env = { OA_ENV = "parent" }
+status = 0
+stdin_hex = ""
+stdout = "later\n"
+stderr = ""
+oracle = ["reference:linux-exec-path", "posix:execvp"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "path-execvp-long"
+sources = ["tests/phase6/path/path.c"]
+requires = ["execvp"]
+args = ["execvp-long"]
+env = { OA_ENV = "parent" }
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-exec-path", "posix:execvp"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The project specifies ENAMETOOLONG when all candidates exceed 4095 pathname bytes. Both pinned host probes return a different result."
+
+[[case]]
+name = "path-execvp-long-then-valid"
+sources = ["tests/phase6/path/path.c"]
+requires = ["execvp"]
+args = ["execvp-long-then-valid"]
+env = { OA_ENV = "parent" }
+status = 0
+stdin_hex = ""
+stdout = "first parent [a b] [-x] 2\n"
+stderr = ""
+oracle = ["reference:linux-exec-path", "posix:execvp"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The project skips the oversized component and searches first. Pinned glibc resolves the current-directory tool. Pinned musl passes this fixture separately."
+
+[[case]]
+name = "path-spawnp"
+sources = ["tests/phase6/path/path.c"]
+requires = ["posix_spawnp"]
+args = ["spawnp"]
+env = { OA_ENV = "parent" }
+status = 0
+stdin_hex = ""
+stdout = "first child [a b] [-x] 2\n"
+stderr = ""
+oracle = ["reference:linux-exec-path", "posix:posix_spawnp"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "path-spawnp-format"
+sources = ["tests/phase6/path/path.c"]
+requires = ["posix_spawnp"]
+args = ["spawnp-format"]
+env = { OA_ENV = "parent" }
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-exec-path", "posix:posix_spawnp"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "path-spawnp-empty-element"
+sources = ["tests/phase6/path/path.c"]
+requires = ["posix_spawnp"]
+args = ["spawnp-empty-element"]
+env = { OA_ENV = "parent" }
+status = 0
+stdin_hex = ""
+stdout = "current\n"
+stderr = ""
+oracle = ["reference:linux-exec-path", "posix:posix_spawnp"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "path-spawnp-denied"
+sources = ["tests/phase6/path/path.c"]
+requires = ["posix_spawnp"]
+args = ["spawnp-denied"]
+env = { OA_ENV = "parent" }
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-exec-path", "posix:posix_spawnp"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[stub]]
+symbol = "execv"
+case = "path-execv-missing"
+status = 41
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "execvp"
+case = "path-execvp-denied"
+status = 53
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "posix_spawnp"
+case = "path-spawnp-format"
+status = 72
+stdout = ""
+stderr = ""

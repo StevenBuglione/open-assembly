@@ -1,0 +1,18 @@
+name = "execv"
+header = "unistd.h"
+prototype = "int execv(const char *path, char *const argv[])"
+standard = ["POSIX.1-2024 XSH execv"]
+deps = ["execve"]
+errno = ["E2BIG", "EACCES", "EFAULT", "EINVAL", "EIO", "EISDIR", "ELIBBAD", "ELOOP", "EMFILE", "ENAMETOOLONG", "ENFILE", "ENOENT", "ENOEXEC", "ENOMEM", "ENOTDIR", "EPERM", "ETXTBSY"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-exec-path"]
+provenance = "original"
+semantics = [
+  "Execute the explicit path with the supplied argument vector and current environ.",
+  "A successful replacement does not return. A returned error is -1 and sets errno.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

@@ -1,0 +1,22 @@
+name = "system"
+header = "stdlib.h"
+prototype = "int system(const char *command)"
+standard = ["C17 7.22.4.8"]
+deps = ["malloc", "free", "__errno_location", "_exit"]
+errno = ["EAGAIN", "ECHILD", "EINVAL", "ENOMEM"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:linux-shell-process"]
+provenance = "original"
+semantics = [
+  "For a null command, return a nonzero value when /bin/sh is executable and preserve errno.",
+  "Execute a command with /bin/sh -c and wait for that specific child.",
+  "While waiting, the parent ignores SIGINT and SIGQUIT and blocks SIGCHLD, then restores its state.",
+  "The shell child inherits the original signal mask and disposition behavior.",
+  "Return the raw wait status. Failed shell execution gives exit status 127 in the wait encoding.",
+  "Return -1 with errno when the child cannot be created or its status cannot be collected.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

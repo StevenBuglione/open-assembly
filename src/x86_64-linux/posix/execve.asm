@@ -20,26 +20,16 @@ bits 64
 default rel
 
 global execve:function
-extern __al_syscall:function
+extern __al_execve_raw:function
 extern __al_syscall_result:function
 
 section .text.execve alloc exec nowrite progbits
 execve:
-    push rbp
-    mov rbp, rsp
-    sub rsp, 16
-    mov qword [rsp], 0
-    mov rcx, rdx
-    mov rdx, rsi
-    mov rsi, rdi
-    mov edi, 59                  ; __NR_execve
-    xor r8d, r8d
-    xor r9d, r9d
-    call __al_syscall
+    sub rsp, 8
+    call __al_execve_raw
     mov rdi, rax
     call __al_syscall_result
-    add rsp, 16
-    pop rbp
+    add rsp, 8
     ret
 
 section .note.GNU-stack noalloc noexec nowrite progbits
