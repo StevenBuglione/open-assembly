@@ -268,3 +268,10 @@ FORCE:
 .PHONY: scan-musl-authorship
 scan-musl-authorship:
 	python3 tools/musl_authorship.py
+
+.PHONY: phase10-gnulib phase10-native-ltp
+phase10-gnulib:
+	python3 tools/upstream_conformance.py gnulib
+
+phase10-native-ltp:
+	python3 tools/upstream_conformance.py native-ltp
