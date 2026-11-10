@@ -1,0 +1,15 @@
+name = "tss_delete"
+header = "threads.h"
+prototype = "void tss_delete(tss_t key)"
+standard = ["C17 7.26.6.2"]
+deps = ["pthread_key_delete"]
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:c17-threads"]
+provenance = "original"
+semantics = ["Invalidate a key without running its destructors."]
+
+[abi]
+narrow_args = ["edi:u32"]
+variadic = false

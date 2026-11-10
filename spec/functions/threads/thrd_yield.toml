@@ -1,0 +1,15 @@
+name = "thrd_yield"
+header = "threads.h"
+prototype = "void thrd_yield(void)"
+standard = ["C17 7.26.5.8"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:c17-threads"]
+provenance = "original"
+semantics = ["Allow another runnable thread to proceed using Linux scheduler yield."]
+
+[abi]
+narrow_args = []
+variadic = false

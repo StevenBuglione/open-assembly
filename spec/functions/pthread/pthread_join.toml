@@ -1,0 +1,19 @@
+name = "pthread_join"
+header = "pthread.h"
+prototype = "int pthread_join(pthread_t thread, void **result)"
+standard = ["POSIX.1-2024 XSH pthread_join"]
+deps = ["pthread_self"]
+errno = ["EDEADLK", "EINVAL"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:linux-thread-lifecycle"]
+provenance = "original"
+semantics = [
+  "Wait for a valid joinable target to terminate, then reclaim its runtime storage.",
+  "If result is nonnull, publish the target pointer result only after termination.",
+  "Reject self-join with EDEADLK. Retry signal interruption internally and preserve errno.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

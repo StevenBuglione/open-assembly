@@ -1,0 +1,15 @@
+name = "thrd_current"
+header = "threads.h"
+prototype = "thrd_t thrd_current(void)"
+standard = ["C17 7.26.5.2"]
+deps = ["pthread_self"]
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:c17-threads"]
+provenance = "original"
+semantics = ["Return the calling thread identifier."]
+
+[abi]
+narrow_args = []
+variadic = false

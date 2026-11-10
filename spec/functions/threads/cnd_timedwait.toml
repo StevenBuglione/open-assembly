@@ -1,0 +1,15 @@
+name = "cnd_timedwait"
+header = "threads.h"
+prototype = "int cnd_timedwait(cnd_t *restrict cond, mtx_t *restrict mutex, const struct timespec *restrict deadline)"
+standard = ["C17 7.26.3.5"]
+deps = ["pthread_cond_timedwait"]
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:c17-threads"]
+provenance = "original"
+semantics = ["Release the mutex while waiting until the absolute TIME_UTC deadline. Reacquire it before return."]
+
+[abi]
+narrow_args = []
+variadic = false

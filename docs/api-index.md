@@ -3,7 +3,7 @@
 
 This index lists authored function specifications. For implementation state, run `tools/queue status`.
 
-Specs: 464 of 598 inventoried functions. The inventory covers C17, the named POSIX subset, runtime ABI entries, and Linux compatibility extensions. see [inventory scope](cookbook/specifications.md#inventory-scope).
+Specs: 530 of 639 inventoried functions. The inventory covers C17, the named POSIX subset, runtime ABI entries, and Linux compatibility extensions. see [inventory scope](cookbook/specifications.md#inventory-scope).
 
 | Function | Header | Prototype | Standard |
 | --- | --- | --- | --- |
@@ -52,6 +52,7 @@ Specs: 464 of 598 inventoried functions. The inventory covers C17, the named POS
 | [`cacoshf`](../spec/functions/complex/cacoshf.toml) | `<complex.h>` | `float _Complex cacoshf(float _Complex z)` | C17 7.3.6.1 |
 | [`cacoshl`](../spec/functions/complex/cacoshl.toml) | `<complex.h>` | `long double _Complex cacoshl(long double _Complex z)` | C17 7.3.6.1 |
 | [`cacosl`](../spec/functions/complex/cacosl.toml) | `<complex.h>` | `long double _Complex cacosl(long double _Complex z)` | C17 7.3.5.1 |
+| [`call_once`](../spec/functions/threads/call_once.toml) | `<threads.h>` | `void call_once(once_flag *flag, void (*initialize)(void))` | C17 7.26.2.1 |
 | [`calloc`](../spec/functions/stdlib/calloc.toml) | `<stdlib.h>` | `void *calloc(size_t nmemb, size_t size)` | C17 7.22.3.2 |
 | [`carg`](../spec/functions/complex/carg.toml) | `<complex.h>` | `double carg(double _Complex z)` | C17 7.3.9.1 |
 | [`cargf`](../spec/functions/complex/cargf.toml) | `<complex.h>` | `float cargf(float _Complex z)` | C17 7.3.9.1 |
@@ -97,6 +98,12 @@ Specs: 464 of 598 inventoried functions. The inventory covers C17, the named POS
 | [`clogl`](../spec/functions/complex/clogl.toml) | `<complex.h>` | `long double _Complex clogl(long double _Complex z)` | C17 7.3.7.2 |
 | [`close`](../spec/functions/unistd/close.toml) | `<unistd.h>` | `int close(int fd)` | POSIX.1-2024 XSH close |
 | [`closedir`](../spec/functions/dirent/closedir.toml) | `<dirent.h>` | `int closedir(DIR *dirp)` | POSIX.1-2024 XSH closedir |
+| [`cnd_broadcast`](../spec/functions/threads/cnd_broadcast.toml) | `<threads.h>` | `int cnd_broadcast(cnd_t *cond)` | C17 7.26.3.1 |
+| [`cnd_destroy`](../spec/functions/threads/cnd_destroy.toml) | `<threads.h>` | `void cnd_destroy(cnd_t *cond)` | C17 7.26.3.2 |
+| [`cnd_init`](../spec/functions/threads/cnd_init.toml) | `<threads.h>` | `int cnd_init(cnd_t *cond)` | C17 7.26.3.3 |
+| [`cnd_signal`](../spec/functions/threads/cnd_signal.toml) | `<threads.h>` | `int cnd_signal(cnd_t *cond)` | C17 7.26.3.4 |
+| [`cnd_timedwait`](../spec/functions/threads/cnd_timedwait.toml) | `<threads.h>` | `int cnd_timedwait(cnd_t *restrict cond, mtx_t *restrict mutex, const struct timespec *restrict deadline)` | C17 7.26.3.5 |
+| [`cnd_wait`](../spec/functions/threads/cnd_wait.toml) | `<threads.h>` | `int cnd_wait(cnd_t *cond, mtx_t *mutex)` | C17 7.26.3.6 |
 | [`conj`](../spec/functions/complex/conj.toml) | `<complex.h>` | `double _Complex conj(double _Complex z)` | C17 7.3.9.4 |
 | [`conjf`](../spec/functions/complex/conjf.toml) | `<complex.h>` | `float _Complex conjf(float _Complex z)` | C17 7.3.9.4 |
 | [`conjl`](../spec/functions/complex/conjl.toml) | `<complex.h>` | `long double _Complex conjl(long double _Complex z)` | C17 7.3.9.4 |
@@ -303,6 +310,12 @@ Specs: 464 of 598 inventoried functions. The inventory covers C17, the named POS
 | [`modf`](../spec/functions/math/modf.toml) | `<math.h>` | `double modf(double x, double *iptr)` | C17 7.12.6.12 |
 | [`modff`](../spec/functions/math/modff.toml) | `<math.h>` | `float modff(float x, float *iptr)` | C17 7.12.6.12 |
 | [`modfl`](../spec/functions/math/modfl.toml) | `<math.h>` | `long double modfl(long double x, long double *iptr)` | C17 7.12.6.12 |
+| [`mtx_destroy`](../spec/functions/threads/mtx_destroy.toml) | `<threads.h>` | `void mtx_destroy(mtx_t *mutex)` | C17 7.26.4.1 |
+| [`mtx_init`](../spec/functions/threads/mtx_init.toml) | `<threads.h>` | `int mtx_init(mtx_t *mutex, int type)` | C17 7.26.4.2 |
+| [`mtx_lock`](../spec/functions/threads/mtx_lock.toml) | `<threads.h>` | `int mtx_lock(mtx_t *mutex)` | C17 7.26.4.3 |
+| [`mtx_timedlock`](../spec/functions/threads/mtx_timedlock.toml) | `<threads.h>` | `int mtx_timedlock(mtx_t *restrict mutex, const struct timespec *restrict deadline)` | C17 7.26.4.4 |
+| [`mtx_trylock`](../spec/functions/threads/mtx_trylock.toml) | `<threads.h>` | `int mtx_trylock(mtx_t *mutex)` | C17 7.26.4.5 |
+| [`mtx_unlock`](../spec/functions/threads/mtx_unlock.toml) | `<threads.h>` | `int mtx_unlock(mtx_t *mutex)` | C17 7.26.4.6 |
 | [`nan`](../spec/functions/math/nan.toml) | `<math.h>` | `double nan(const char *tagp)` | C17 7.12.11.2 |
 | [`nanf`](../spec/functions/math/nanf.toml) | `<math.h>` | `float nanf(const char *tagp)` | C17 7.12.11.2 |
 | [`nanl`](../spec/functions/math/nanl.toml) | `<math.h>` | `long double nanl(const char *tagp)` | C17 7.12.11.2 |
@@ -346,6 +359,47 @@ Specs: 464 of 598 inventoried functions. The inventory covers C17, the named POS
 | [`powf`](../spec/functions/math/powf.toml) | `<math.h>` | `float powf(float x, float y)` | C17 7.12.7.4 |
 | [`powl`](../spec/functions/math/powl.toml) | `<math.h>` | `long double powl(long double x, long double y)` | C17 7.12.7.4 |
 | [`printf`](../spec/functions/stdio/printf.toml) | `<stdio.h>` | `int printf(const char *restrict format, ...)` | C17 7.21.6.3 |
+| [`pthread_attr_destroy`](../spec/functions/pthread/pthread_attr_destroy.toml) | `<pthread.h>` | `int pthread_attr_destroy(pthread_attr_t *attr)` | POSIX.1-2024 XSH pthread_attr_destroy |
+| [`pthread_attr_getdetachstate`](../spec/functions/pthread/pthread_attr_getdetachstate.toml) | `<pthread.h>` | `int pthread_attr_getdetachstate(const pthread_attr_t *attr, int *detachstate)` | POSIX.1-2024 XSH pthread_attr_getdetachstate |
+| [`pthread_attr_getguardsize`](../spec/functions/pthread/pthread_attr_getguardsize.toml) | `<pthread.h>` | `int pthread_attr_getguardsize(const pthread_attr_t *restrict attr, size_t *restrict guardsize)` | POSIX.1-2024 XSH pthread_attr_getguardsize |
+| [`pthread_attr_getstacksize`](../spec/functions/pthread/pthread_attr_getstacksize.toml) | `<pthread.h>` | `int pthread_attr_getstacksize(const pthread_attr_t *restrict attr, size_t *restrict stacksize)` | POSIX.1-2024 XSH pthread_attr_getstacksize |
+| [`pthread_attr_init`](../spec/functions/pthread/pthread_attr_init.toml) | `<pthread.h>` | `int pthread_attr_init(pthread_attr_t *attr)` | POSIX.1-2024 XSH pthread_attr_init |
+| [`pthread_attr_setdetachstate`](../spec/functions/pthread/pthread_attr_setdetachstate.toml) | `<pthread.h>` | `int pthread_attr_setdetachstate(pthread_attr_t *attr, int detachstate)` | POSIX.1-2024 XSH pthread_attr_setdetachstate |
+| [`pthread_attr_setguardsize`](../spec/functions/pthread/pthread_attr_setguardsize.toml) | `<pthread.h>` | `int pthread_attr_setguardsize(pthread_attr_t *attr, size_t guardsize)` | POSIX.1-2024 XSH pthread_attr_setguardsize |
+| [`pthread_attr_setstacksize`](../spec/functions/pthread/pthread_attr_setstacksize.toml) | `<pthread.h>` | `int pthread_attr_setstacksize(pthread_attr_t *attr, size_t stacksize)` | POSIX.1-2024 XSH pthread_attr_setstacksize |
+| [`pthread_cond_broadcast`](../spec/functions/pthread/pthread_cond_broadcast.toml) | `<pthread.h>` | `int pthread_cond_broadcast(pthread_cond_t *cond)` | POSIX.1-2024 XSH pthread_cond_broadcast |
+| [`pthread_cond_clockwait`](../spec/functions/pthread/pthread_cond_clockwait.toml) | `<pthread.h>` | `int pthread_cond_clockwait(pthread_cond_t *restrict cond, pthread_mutex_t *restrict mutex, clockid_t clock_id, const struct timespec *restrict abstime)` | POSIX.1-2024 XSH pthread_cond_clockwait |
+| [`pthread_cond_destroy`](../spec/functions/pthread/pthread_cond_destroy.toml) | `<pthread.h>` | `int pthread_cond_destroy(pthread_cond_t *cond)` | POSIX.1-2024 XSH pthread_cond_destroy |
+| [`pthread_cond_init`](../spec/functions/pthread/pthread_cond_init.toml) | `<pthread.h>` | `int pthread_cond_init(pthread_cond_t *restrict cond, const pthread_condattr_t *restrict attr)` | POSIX.1-2024 XSH pthread_cond_init |
+| [`pthread_cond_signal`](../spec/functions/pthread/pthread_cond_signal.toml) | `<pthread.h>` | `int pthread_cond_signal(pthread_cond_t *cond)` | POSIX.1-2024 XSH pthread_cond_signal |
+| [`pthread_cond_timedwait`](../spec/functions/pthread/pthread_cond_timedwait.toml) | `<pthread.h>` | `int pthread_cond_timedwait(pthread_cond_t *restrict cond, pthread_mutex_t *restrict mutex, const struct timespec *restrict abstime)` | POSIX.1-2024 XSH pthread_cond_timedwait |
+| [`pthread_cond_wait`](../spec/functions/pthread/pthread_cond_wait.toml) | `<pthread.h>` | `int pthread_cond_wait(pthread_cond_t *restrict cond, pthread_mutex_t *restrict mutex)` | POSIX.1-2024 XSH pthread_cond_wait |
+| [`pthread_condattr_destroy`](../spec/functions/pthread/pthread_condattr_destroy.toml) | `<pthread.h>` | `int pthread_condattr_destroy(pthread_condattr_t *attr)` | POSIX.1-2024 XSH pthread_condattr_destroy |
+| [`pthread_condattr_getclock`](../spec/functions/pthread/pthread_condattr_getclock.toml) | `<pthread.h>` | `int pthread_condattr_getclock(const pthread_condattr_t *restrict attr, clockid_t *restrict clock_id)` | POSIX.1-2024 XSH pthread_condattr_getclock |
+| [`pthread_condattr_init`](../spec/functions/pthread/pthread_condattr_init.toml) | `<pthread.h>` | `int pthread_condattr_init(pthread_condattr_t *attr)` | POSIX.1-2024 XSH pthread_condattr_init |
+| [`pthread_condattr_setclock`](../spec/functions/pthread/pthread_condattr_setclock.toml) | `<pthread.h>` | `int pthread_condattr_setclock(pthread_condattr_t *attr, clockid_t clock_id)` | POSIX.1-2024 XSH pthread_condattr_setclock |
+| [`pthread_create`](../spec/functions/pthread/pthread_create.toml) | `<pthread.h>` | `int pthread_create(pthread_t *restrict thread, const pthread_attr_t *restrict attr, void *(*start)(void *), void *restrict arg)` | POSIX.1-2024 XSH pthread_create |
+| [`pthread_detach`](../spec/functions/pthread/pthread_detach.toml) | `<pthread.h>` | `int pthread_detach(pthread_t thread)` | POSIX.1-2024 XSH pthread_detach |
+| [`pthread_equal`](../spec/functions/pthread/pthread_equal.toml) | `<pthread.h>` | `int pthread_equal(pthread_t left, pthread_t right)` | POSIX.1-2024 XSH pthread_equal |
+| [`pthread_exit`](../spec/functions/pthread/pthread_exit.toml) | `<pthread.h>` | `_Noreturn void pthread_exit(void *result)` | POSIX.1-2024 XSH pthread_exit |
+| [`pthread_getspecific`](../spec/functions/pthread/pthread_getspecific.toml) | `<pthread.h>` | `void *pthread_getspecific(pthread_key_t key)` | POSIX.1-2024 XSH pthread_getspecific |
+| [`pthread_join`](../spec/functions/pthread/pthread_join.toml) | `<pthread.h>` | `int pthread_join(pthread_t thread, void **result)` | POSIX.1-2024 XSH pthread_join |
+| [`pthread_key_create`](../spec/functions/pthread/pthread_key_create.toml) | `<pthread.h>` | `int pthread_key_create(pthread_key_t *key, void (*destructor)(void *))` | POSIX.1-2024 XSH pthread_key_create |
+| [`pthread_key_delete`](../spec/functions/pthread/pthread_key_delete.toml) | `<pthread.h>` | `int pthread_key_delete(pthread_key_t key)` | POSIX.1-2024 XSH pthread_key_delete |
+| [`pthread_mutex_clocklock`](../spec/functions/pthread/pthread_mutex_clocklock.toml) | `<pthread.h>` | `int pthread_mutex_clocklock(pthread_mutex_t *restrict mutex, clockid_t clock, const struct timespec *restrict abstime)` | POSIX.1-2024 XSH pthread_mutex_clocklock |
+| [`pthread_mutex_destroy`](../spec/functions/pthread/pthread_mutex_destroy.toml) | `<pthread.h>` | `int pthread_mutex_destroy(pthread_mutex_t *mutex)` | POSIX.1-2024 XSH pthread_mutex_destroy |
+| [`pthread_mutex_init`](../spec/functions/pthread/pthread_mutex_init.toml) | `<pthread.h>` | `int pthread_mutex_init(pthread_mutex_t *restrict mutex, const pthread_mutexattr_t *restrict attr)` | POSIX.1-2024 XSH pthread_mutex_init |
+| [`pthread_mutex_lock`](../spec/functions/pthread/pthread_mutex_lock.toml) | `<pthread.h>` | `int pthread_mutex_lock(pthread_mutex_t *mutex)` | POSIX.1-2024 XSH pthread_mutex_lock |
+| [`pthread_mutex_timedlock`](../spec/functions/pthread/pthread_mutex_timedlock.toml) | `<pthread.h>` | `int pthread_mutex_timedlock(pthread_mutex_t *restrict mutex, const struct timespec *restrict abstime)` | POSIX.1-2024 XSH pthread_mutex_timedlock |
+| [`pthread_mutex_trylock`](../spec/functions/pthread/pthread_mutex_trylock.toml) | `<pthread.h>` | `int pthread_mutex_trylock(pthread_mutex_t *mutex)` | POSIX.1-2024 XSH pthread_mutex_trylock |
+| [`pthread_mutex_unlock`](../spec/functions/pthread/pthread_mutex_unlock.toml) | `<pthread.h>` | `int pthread_mutex_unlock(pthread_mutex_t *mutex)` | POSIX.1-2024 XSH pthread_mutex_unlock |
+| [`pthread_mutexattr_destroy`](../spec/functions/pthread/pthread_mutexattr_destroy.toml) | `<pthread.h>` | `int pthread_mutexattr_destroy(pthread_mutexattr_t *attr)` | POSIX.1-2024 XSH pthread_mutexattr_destroy |
+| [`pthread_mutexattr_gettype`](../spec/functions/pthread/pthread_mutexattr_gettype.toml) | `<pthread.h>` | `int pthread_mutexattr_gettype(const pthread_mutexattr_t *restrict attr, int *restrict type)` | POSIX.1-2024 XSH pthread_mutexattr_gettype |
+| [`pthread_mutexattr_init`](../spec/functions/pthread/pthread_mutexattr_init.toml) | `<pthread.h>` | `int pthread_mutexattr_init(pthread_mutexattr_t *attr)` | POSIX.1-2024 XSH pthread_mutexattr_init |
+| [`pthread_mutexattr_settype`](../spec/functions/pthread/pthread_mutexattr_settype.toml) | `<pthread.h>` | `int pthread_mutexattr_settype(pthread_mutexattr_t *attr, int type)` | POSIX.1-2024 XSH pthread_mutexattr_settype |
+| [`pthread_once`](../spec/functions/pthread/pthread_once.toml) | `<pthread.h>` | `int pthread_once(pthread_once_t *control, void (*initialize)(void))` | POSIX.1-2024 XSH pthread_once |
+| [`pthread_self`](../spec/functions/pthread/pthread_self.toml) | `<pthread.h>` | `pthread_t pthread_self(void)` | POSIX.1-2024 XSH pthread_self |
+| [`pthread_setspecific`](../spec/functions/pthread/pthread_setspecific.toml) | `<pthread.h>` | `int pthread_setspecific(pthread_key_t key, const void *value)` | POSIX.1-2024 XSH pthread_setspecific |
 | [`putc`](../spec/functions/stdio/putc.toml) | `<stdio.h>` | `int putc(int c, FILE *stream)` | C17 7.21.7.7 |
 | [`putchar`](../spec/functions/stdio/putchar.toml) | `<stdio.h>` | `int putchar(int c)` | C17 7.21.7.8 |
 | [`putchar_unlocked`](../spec/functions/stdio/putchar_unlocked.toml) | `<stdio.h>` | `int putchar_unlocked(int c)` | POSIX.1-2024 XSH putchar_unlocked |
@@ -448,6 +502,14 @@ Specs: 464 of 598 inventoried functions. The inventory covers C17, the named POS
 | [`tgamma`](../spec/functions/math/tgamma.toml) | `<math.h>` | `double tgamma(double x)` | C17 7.12.8.4 |
 | [`tgammaf`](../spec/functions/math/tgammaf.toml) | `<math.h>` | `float tgammaf(float x)` | C17 7.12.8.4 |
 | [`tgammal`](../spec/functions/math/tgammal.toml) | `<math.h>` | `long double tgammal(long double x)` | C17 7.12.8.4 |
+| [`thrd_create`](../spec/functions/threads/thrd_create.toml) | `<threads.h>` | `int thrd_create(thrd_t *thread, thrd_start_t start, void *arg)` | C17 7.26.5.1 |
+| [`thrd_current`](../spec/functions/threads/thrd_current.toml) | `<threads.h>` | `thrd_t thrd_current(void)` | C17 7.26.5.2 |
+| [`thrd_detach`](../spec/functions/threads/thrd_detach.toml) | `<threads.h>` | `int thrd_detach(thrd_t thread)` | C17 7.26.5.3 |
+| [`thrd_equal`](../spec/functions/threads/thrd_equal.toml) | `<threads.h>` | `int thrd_equal(thrd_t left, thrd_t right)` | C17 7.26.5.4 |
+| [`thrd_exit`](../spec/functions/threads/thrd_exit.toml) | `<threads.h>` | `_Noreturn void thrd_exit(int result)` | C17 7.26.5.5 |
+| [`thrd_join`](../spec/functions/threads/thrd_join.toml) | `<threads.h>` | `int thrd_join(thrd_t thread, int *result)` | C17 7.26.5.6 |
+| [`thrd_sleep`](../spec/functions/threads/thrd_sleep.toml) | `<threads.h>` | `int thrd_sleep(const struct timespec *duration, struct timespec *remaining)` | C17 7.26.5.7 |
+| [`thrd_yield`](../spec/functions/threads/thrd_yield.toml) | `<threads.h>` | `void thrd_yield(void)` | C17 7.26.5.8 |
 | [`time`](../spec/functions/time/time.toml) | `<time.h>` | `time_t time(time_t *out)` | C17 7.27.2.4 |
 | [`timespec_get`](../spec/functions/time/timespec_get.toml) | `<time.h>` | `int timespec_get(struct timespec *ts, int base)` | C17 7.27.2.5 |
 | [`tmpfile`](../spec/functions/stdio/tmpfile.toml) | `<stdio.h>` | `FILE *tmpfile(void)` | C17 7.21.4.3 |
@@ -456,6 +518,10 @@ Specs: 464 of 598 inventoried functions. The inventory covers C17, the named POS
 | [`trunc`](../spec/functions/math/trunc.toml) | `<math.h>` | `double trunc(double x)` | C17 7.12.9.8 |
 | [`truncf`](../spec/functions/math/truncf.toml) | `<math.h>` | `float truncf(float x)` | C17 7.12.9.8 |
 | [`truncl`](../spec/functions/math/truncl.toml) | `<math.h>` | `long double truncl(long double x)` | C17 7.12.9.8 |
+| [`tss_create`](../spec/functions/threads/tss_create.toml) | `<threads.h>` | `int tss_create(tss_t *key, tss_dtor_t destructor)` | C17 7.26.6.1 |
+| [`tss_delete`](../spec/functions/threads/tss_delete.toml) | `<threads.h>` | `void tss_delete(tss_t key)` | C17 7.26.6.2 |
+| [`tss_get`](../spec/functions/threads/tss_get.toml) | `<threads.h>` | `void *tss_get(tss_t key)` | C17 7.26.6.3 |
+| [`tss_set`](../spec/functions/threads/tss_set.toml) | `<threads.h>` | `int tss_set(tss_t key, void *value)` | C17 7.26.6.4 |
 | [`umask`](../spec/functions/sys/stat/umask.toml) | `<sys/stat.h>` | `mode_t umask(mode_t mask)` | POSIX.1-2024 XSH umask |
 | [`ungetc`](../spec/functions/stdio/ungetc.toml) | `<stdio.h>` | `int ungetc(int c, FILE *stream)` | C17 7.21.7.10 |
 | [`unlink`](../spec/functions/unistd/unlink.toml) | `<unistd.h>` | `int unlink(const char *path)` | POSIX.1-2024 XSH unlink |

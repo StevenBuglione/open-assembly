@@ -1,0 +1,15 @@
+name = "thrd_equal"
+header = "threads.h"
+prototype = "int thrd_equal(thrd_t left, thrd_t right)"
+standard = ["C17 7.26.5.4"]
+deps = ["pthread_equal"]
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:c17-threads"]
+provenance = "original"
+semantics = ["Compare two thread identifiers."]
+
+[abi]
+narrow_args = []
+variadic = false

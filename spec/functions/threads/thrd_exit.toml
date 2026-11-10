@@ -1,0 +1,16 @@
+name = "thrd_exit"
+header = "threads.h"
+prototype = "_Noreturn void thrd_exit(int result)"
+standard = ["C17 7.26.5.5"]
+deps = ["pthread_exit"]
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:c17-threads"]
+provenance = "original"
+semantics = ["Terminate the calling thread and publish its signed int result."]
+
+[abi]
+narrow_args = ["edi:s32"]
+variadic = false
+noreturn = true

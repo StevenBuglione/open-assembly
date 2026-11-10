@@ -50,6 +50,11 @@ SIGNAL_NAMES = {
 }
 CLOCK_POSIX = {"CLOCK_REALTIME", "CLOCK_MONOTONIC", "CLOCK_PROCESS_CPUTIME_ID", "CLOCK_THREAD_CPUTIME_ID",
                "TIMER_ABSTIME"}
+PTHREAD_CREATION = {"PTHREAD_CREATE_JOINABLE": 0, "PTHREAD_CREATE_DETACHED": 1, "PTHREAD_STACK_MIN": 16384}
+PTHREAD_MUTEX_TYPES = {"PTHREAD_MUTEX_DEFAULT": 0, "PTHREAD_MUTEX_NORMAL": 0,
+                       "PTHREAD_MUTEX_ERRORCHECK": 1, "PTHREAD_MUTEX_RECURSIVE": 2}
+PTHREAD_ONCE_CONSTANTS = {"PTHREAD_ONCE_INIT": 0}
+PTHREAD_TSD_LIMITS = {"PTHREAD_KEYS_MAX": 128, "PTHREAD_DESTRUCTOR_ITERATIONS": 4}
 SPAWN_FLAGS = {"POSIX_SPAWN_RESETIDS", "POSIX_SPAWN_SETPGROUP", "POSIX_SPAWN_SETSIGDEF", "POSIX_SPAWN_SETSIGMASK"}
 SIGNAL_MASK_OPERATIONS = {"SIG_BLOCK", "SIG_UNBLOCK", "SIG_SETMASK"}
 SIGNAL_ACTION_FLAGS = {"SA_NOCLDSTOP", "SA_NOCLDWAIT", "SA_SIGINFO", "SA_ONSTACK", "SA_RESTART", "SA_NODEFER", "SA_RESETHAND"}
@@ -70,6 +75,25 @@ POSIX_SCOPE = {
     "sys/wait.h": {"functions": {"wait", "waitpid"}, "types": {"pid_t"},
                    "macros": {"WNOHANG", "WUNTRACED", "WCONTINUED", "WIFEXITED", "WEXITSTATUS",
                               "WIFSIGNALED", "WTERMSIG", "WIFSTOPPED", "WSTOPSIG", "WIFCONTINUED"}},
+    "pthread.h": {"functions": {"pthread_attr_destroy", "pthread_attr_getdetachstate", "pthread_attr_getguardsize",
+                               "pthread_attr_getstacksize", "pthread_attr_init", "pthread_attr_setdetachstate",
+                               "pthread_attr_setguardsize", "pthread_attr_setstacksize", "pthread_create",
+                               "pthread_detach", "pthread_equal", "pthread_exit", "pthread_join", "pthread_self",
+                               "pthread_mutexattr_init", "pthread_mutexattr_destroy", "pthread_mutexattr_gettype",
+                               "pthread_mutexattr_settype", "pthread_mutex_init", "pthread_mutex_destroy",
+                               "pthread_mutex_lock", "pthread_mutex_trylock", "pthread_mutex_unlock",
+                               "pthread_mutex_timedlock", "pthread_mutex_clocklock",
+                               "pthread_cond_init", "pthread_cond_destroy", "pthread_cond_wait",
+                               "pthread_cond_timedwait", "pthread_cond_clockwait", "pthread_cond_signal",
+                               "pthread_cond_broadcast", "pthread_condattr_init", "pthread_condattr_destroy",
+                               "pthread_condattr_getclock", "pthread_condattr_setclock",
+                               "pthread_key_create", "pthread_key_delete", "pthread_getspecific", "pthread_setspecific",
+                               "pthread_once"},
+                  "types": {"pthread_attr_t", "pthread_cond_t", "pthread_condattr_t", "pthread_key_t",
+                            "pthread_mutex_t", "pthread_mutexattr_t", "pthread_once_t", "pthread_t"},
+                  "macros": set(PTHREAD_CREATION) | set(PTHREAD_MUTEX_TYPES) | set(PTHREAD_ONCE_CONSTANTS)
+                            | {"PTHREAD_COND_INITIALIZER", "PTHREAD_MUTEX_INITIALIZER"}},
+    "limits.h": {"macros": set(PTHREAD_TSD_LIMITS)},
     "spawn.h": {"functions": {"posix_spawn", "posix_spawnp", "posix_spawn_file_actions_init", "posix_spawn_file_actions_destroy",
                              "posix_spawn_file_actions_addclose", "posix_spawn_file_actions_adddup2",
                              "posix_spawn_file_actions_addopen", "posix_spawnattr_init", "posix_spawnattr_destroy",

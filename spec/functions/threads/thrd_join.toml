@@ -1,0 +1,15 @@
+name = "thrd_join"
+header = "threads.h"
+prototype = "int thrd_join(thrd_t thread, int *result)"
+standard = ["C17 7.26.5.6"]
+deps = ["pthread_self"]
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:c17-threads"]
+provenance = "original"
+semantics = ["Join and reclaim the thread. On success, store its int result only if requested."]
+
+[abi]
+narrow_args = []
+variadic = false

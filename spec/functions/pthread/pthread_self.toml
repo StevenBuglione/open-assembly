@@ -1,0 +1,18 @@
+name = "pthread_self"
+header = "pthread.h"
+prototype = "pthread_t pthread_self(void)"
+standard = ["POSIX.1-2024 XSH pthread_self"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:linux-thread-lifecycle"]
+provenance = "original"
+semantics = [
+  "Return the current thread's opaque handle, including for the initial thread.",
+  "Preserve errno.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

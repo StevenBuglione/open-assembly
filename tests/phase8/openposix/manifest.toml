@@ -1,0 +1,42 @@
+schema = 1
+release = "20260930"
+revision = "2279d708c817db657611a30c427c7d06c4360049"
+archive_sha256 = "35146cb1d0e82517aac8dbefbd88bd96300ce383736aae069e435fd991ea50bb"
+notice_sha256 = "7cef39d6b101447712cc848d3a1459b88e0b3b1a1d63ed8503f2852192030ff0"
+header_sha256 = "3df57cef9cddb9242e9ccde823e9ee391f23814b5b6fc32c8cd713b75ba6de89"
+
+[[case]]
+path = "conformance/interfaces/pthread_create/1-1.c"
+sha256 = "9f3d902ed033387fab6e75b8dfd099a3a8d3a0938367f212ef27d358b80609b5"
+requires = ["pthread_create", "pthread_equal", "pthread_join", "pthread_self"]
+stdout = "Test PASSED\n"
+
+[[case]]
+path = "conformance/interfaces/pthread_create/2-1.c"
+sha256 = "6ef64396ef7776163b45604c01417d43256601984924419070c2e43e926ca86f"
+requires = ["pthread_create", "pthread_join"]
+stdout = "Test PASSED\n"
+
+[[case]]
+path = "conformance/interfaces/pthread_create/5-1.c"
+sha256 = "13480e37b8ac290d4df2d56ca1074ddcaf20176e099de6b25e2cc1d2783952b6"
+requires = ["pthread_create", "pthread_join"]
+stdout = "arg = 1\narg = 2\narg = 3\narg = 4\narg = 5\nTest PASSED\n"
+
+[[case]]
+path = "conformance/interfaces/pthread_join/5-1.c"
+sha256 = "30bb3f33c7c2dbe81f477fd32f934218972697364e68d01d2f3c8c0cb236cea6"
+requires = ["pthread_create", "pthread_exit", "pthread_join"]
+stdout = "Test PASSED\n"
+
+[[case]]
+path = "conformance/interfaces/pthread_equal/1-1.c"
+sha256 = "90b3e402f0684336cb770d26543ab94340ba773234e0f5b2c0333dce71bef33d"
+requires = ["pthread_create", "pthread_equal", "pthread_exit"]
+stdout = "Test PASSED\n"
+
+[[case]]
+path = "conformance/interfaces/pthread_equal/1-2.c"
+sha256 = "d54208c7668b5af75fc65fe87f6d9a72566e37696f13f5a50e42044bc9868005"
+requires = ["pthread_create", "pthread_equal", "pthread_exit"]
+stdout = "Test PASSED\n"

@@ -48,7 +48,7 @@ def phase6_inputs():
     return dict(sorted(hashes.items()))
 
 
-def run_cases(probes, directory, first, second, runners, checks):
+def run_cases(probes, directory, first, second, runners, checks, host_macro):
     hosts = directory / "host"
     hosts.mkdir()
     for probe in probes:
@@ -72,7 +72,7 @@ def run_cases(probes, directory, first, second, runners, checks):
             execute_probe(probe, binary, work / backend, item["runs"], {backend: runners[backend]})
         if probe.host_skip is None:
             for compiler, oracle in (("gcc", "diff:glibc"), ("musl-gcc", "diff:musl")):
-                host = host_binary(compiler, case.sources, hosts, item["commands"], host_macro="OA_PHASE6_HOST")
+                host = host_binary(compiler, case.sources, hosts, item["commands"], host_macro=host_macro)
                 execute_probe(probe, host, work / compiler, item["host_runs"], {oracle: []})
                 item["host_runs"][oracle]["artifact_sha256"] = sha256_file(host)
         item["outcome"] = "pass"
@@ -109,17 +109,23 @@ def execute_phase6(suite_name):
         SUITE / "spawn/lifetime.c": ("malloc", "calloc", "realloc", "free"),
         SUITE / "shell/fault.c": ("__al_syscall",),
     }
+    assembly = {"files": ABI_FIXTURES, "jump": (SUITE / "jump/registers.asm",)}.get(suite_name, ())
+    return execute_manifest_gate(
+        scope, suite, public, fault_wrappers, assembly, phase6_inputs, "OA_PHASE6_HOST",
+        {"pending_phase6": ["additional per-function coverage and mutation"]},
+    )
+
+
+def execute_manifest_gate(scope, suite, public, fault_wrappers, assembly, inputs, host_macro, metadata):
     evidence = {"schema_version": 1, "scope": scope, "production_verified": False,
-                "outcome": "fail", "checks": {},
-                "pending_phase6": ["remaining spawn attributes and file actions"]}
+                "outcome": "fail", "checks": {}, **metadata}
     checks = evidence["checks"]
     try:
         evidence["toolchain"] = identify_tools("ar", "make", "qemu-x86_64", "musl-gcc")
-        evidence["inputs"] = verify_setup(checks, False, snapshot=phase6_inputs)
+        evidence["inputs"] = verify_setup(checks, False, snapshot=inputs)
         project = load_project()
         if not public <= project.functions.keys():
             raise GateError(f"missing {scope} specifications")
-        assembly = {"files": ABI_FIXTURES, "jump": (SUITE / "jump/registers.asm",)}.get(suite_name, ())
         parse = partial(parse_probe, suite=suite, programs=(), asm_fixtures=assembly,
                         fault_wrappers=fault_wrappers, allow_fixture_files=True)
         probes, controls = load_probes(suite / "manifest.toml", public, parse)
@@ -137,13 +143,13 @@ def execute_phase6(suite_name):
             second = build_runtime(directory / "second", runtime["commands"])
             runtime["artifacts"] = {"first": first[3], "second": second[3]}
             if first[3] != second[3]:
-                raise GateError("two isolated Phase 6 runtime builds differ")
+                raise GateError(f"two isolated {scope} runtime builds differ")
             runtime["outcome"] = "pass"
             checks["cases"] = {}
-            run_cases(probes, directory, first, second, runners, checks["cases"])
+            run_cases(probes, directory, first, second, runners, checks["cases"], host_macro)
             checks["stub_controls"] = {"outcome": "fail", "symbols": {}}
             run_stubs(controls, project, directory, first, checks["stub_controls"])
-        if evidence["inputs"] != phase6_inputs():
+        if evidence["inputs"] != inputs():
             raise GateError(f"inputs changed during {scope} verification")
         evidence["outcome"] = "pass"
     except (GateError, KeyError, OSError, SpecError, ValueError) as error:

@@ -1,0 +1,15 @@
+name = "mtx_trylock"
+header = "threads.h"
+prototype = "int mtx_trylock(mtx_t *mutex)"
+standard = ["C17 7.26.4.5"]
+deps = ["pthread_mutex_trylock"]
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:c17-threads"]
+provenance = "original"
+semantics = ["Attempt acquisition without waiting. Report thrd_busy for a held nonrecursive mutex."]
+
+[abi]
+narrow_args = []
+variadic = false

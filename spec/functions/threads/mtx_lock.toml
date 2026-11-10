@@ -1,0 +1,15 @@
+name = "mtx_lock"
+header = "threads.h"
+prototype = "int mtx_lock(mtx_t *mutex)"
+standard = ["C17 7.26.4.3"]
+deps = ["pthread_mutex_lock"]
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:c17-threads"]
+provenance = "original"
+semantics = ["Acquire the mutex and return a C thread status."]
+
+[abi]
+narrow_args = []
+variadic = false

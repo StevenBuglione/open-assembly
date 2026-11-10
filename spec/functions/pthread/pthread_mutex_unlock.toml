@@ -1,0 +1,18 @@
+name = "pthread_mutex_unlock"
+header = "pthread.h"
+prototype = "int pthread_mutex_unlock(pthread_mutex_t *mutex)"
+standard = ["POSIX.1-2024 XSH pthread_mutex_unlock"]
+deps = ["__errno_location"]
+errno = ["EINVAL", "EPERM"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:linux-thread-mutex"]
+provenance = "original"
+semantics = [
+  "Release one level of ownership. The final release makes the mutex available and wakes a waiter.",
+  "Return zero on success or a positive error number. Preserve errno.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

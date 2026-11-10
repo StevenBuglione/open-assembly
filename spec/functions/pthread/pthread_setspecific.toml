@@ -1,0 +1,18 @@
+name = "pthread_setspecific"
+header = "pthread.h"
+prototype = "int pthread_setspecific(pthread_key_t key, const void *value)"
+standard = ["POSIX.1-2024 XSH pthread_setspecific"]
+deps = ["pthread_self"]
+errno = ["EINVAL"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:thread-specific-data"]
+provenance = "original"
+semantics = [
+  "Associate the value with the current key generation for the calling thread.",
+  "Return EINVAL for an unavailable key. Preserve errno.",
+]
+
+[abi]
+narrow_args = ["edi:u32"]
+variadic = false

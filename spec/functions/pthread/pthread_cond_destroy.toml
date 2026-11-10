@@ -1,0 +1,18 @@
+name = "pthread_cond_destroy"
+header = "pthread.h"
+prototype = "int pthread_cond_destroy(pthread_cond_t *cond)"
+standard = ["POSIX.1-2024 XSH pthread_cond_destroy"]
+deps = []
+errno = ["EBUSY", "EINVAL"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:linux-thread-condition"]
+provenance = "original"
+semantics = [
+  "Invalidate an unused condition variable. Report EBUSY while a registered waiter remains.",
+  "Return zero on success or a positive error number. Preserve errno.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

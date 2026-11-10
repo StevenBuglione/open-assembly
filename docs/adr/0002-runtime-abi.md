@@ -75,8 +75,9 @@ callback; the running callback's slot has already been freed and the new
 registration participates in LIFO order. An `exit` call from a callback is
 outside the C17 contract. The registry calls the private lock hooks around
 updates and releases the lock before user code. The hooks take a pointer to
-the zero-initialized, four-byte lock word and are no-ops until the threading
-phase. Stdio flushing and temporary file cleanup await those subsystems.
+a zero-initialized, four-byte lock word. The threading contract makes
+them live for the initial thread as well as workers.
+[Thread lifecycle and locks](0010-thread-lifecycle-locks.md)
 
 `__al_panic(const char *message, size_t length)` makes a best-effort write of
 the supplied bytes to standard error and exits with status 127. It requires
