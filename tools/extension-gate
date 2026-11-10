@@ -6,9 +6,11 @@ from dataclasses import replace
 from functools import partial
 from pathlib import Path
 import shutil
+import subprocess
 import sys
 import tempfile
 
+from extension_production import production_plans, verify_dependencies, verify_production
 from extensions import NAME, extension_functions, extension_sources, load_packages
 from gate import BUILD, GateError, checked, identify_tools, nm_symbols, source_policy, verify_setup, write_evidence
 from phase1 import NASM, build_runtime, phase1_inputs
@@ -97,9 +99,13 @@ def execute(name, require_production):
             if probe.case.oracle != (package.oracle,) or probe.host_skip is None:
                 raise GateError(f"{probe.case.name}: expected the package's named independent oracle")
         if require_production:
-            raise GateError(checks["full_production"]["reason"])
-        evidence["toolchain"] = identify_tools("ar", "make", "qemu-x86_64")
+            plans, probe_by_name = production_plans(package, probes)
+            checks["full_production"] = {"outcome": "fail"}
+        additional = ("objdump",) if require_production else ()
+        evidence["toolchain"] = identify_tools("ar", "make", "qemu-x86_64", *additional)
         evidence["inputs"] = verify_setup(checks, False, snapshot=phase1_inputs)
+        if require_production:
+            verify_dependencies(project, closure, evidence["inputs"])
         workspace = BUILD / scope
         workspace.mkdir(parents=True, exist_ok=True)
         runners = {"native": [], "qemu": [shutil.which("qemu-x86_64")],
@@ -118,11 +124,13 @@ def execute(name, require_production):
             run_cases(probes, directory, first, second, runners, cases, "OA_EXTENSION_HOST")
             stubs = checks["stub_controls"] = {"outcome": "fail", "symbols": {}}
             run_stubs(controls, replace(project, functions=project.functions | functions), directory, first, stubs)
+            if require_production:
+                verify_production(package, plans, probe_by_name, directory, first, checks["full_production"])
         if evidence["inputs"] != phase1_inputs():
             raise GateError("inputs changed during extension verification")
-        evidence["outcome"] = "pass"
-        print(f"PASS {scope} scoped checks", flush=True)
-    except (GateError, OSError, SpecError, ValueError) as error:
+        evidence.update(outcome="pass", production_verified=require_production)
+        print(f"PASS {scope} {'production' if require_production else 'scoped'} checks", flush=True)
+    except (GateError, OSError, SpecError, ValueError, subprocess.SubprocessError) as error:
         evidence["error"] = str(error)
         print(f"extension-gate: {error}", file=sys.stderr)
     report = write_evidence(scope, evidence)

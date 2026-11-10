@@ -160,10 +160,15 @@ an external suite or an independent model under the protected oracle path.
 Run `./tools/container tools/extension-gate word_math` after writing the
 implementation and tests. The scope uses reproducible static links, ABI and
 source checks, native/QEMU/Memcheck cases, and the generated stub controls.
-An empty scaffold cannot pass. Package reports keep full per-function
-coverage, mutation and timed fuzzing pending until those checks are
-available. Use `--require-production` to require that broader result.
-A stable package declaration records its intended API and layout stability.
+An empty scaffold cannot pass. Use `--require-production` with
+`tests/ext/<package>/production.toml` to require direct SysV ABI, all
+conditional edges observed under QEMU, at least 90 percent NASM mutation
+rejection, and at least 60 seconds of differential packets. Each function
+names a Python model under `tests/oracle/<package>/` and declares the fixed
+request and result record sizes. The evidence binds the model and exact
+candidate bytes. See the disposable word_math production fixture for the
+manifest format. Pinned suite adapters and stable ABI layout baselines
+remain explicit pending requirements.
 A full smoke control is available in a disposable checkout through
 `./tools/container tests/tooling/extensions/setup.sh`. It exercises both
 rejections and an independently tested scalar package.

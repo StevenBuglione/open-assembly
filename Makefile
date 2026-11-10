@@ -166,6 +166,9 @@ phase10-netdb:
 phase10-libc-test:
 	python3 tools/phase10_libc_test.py
 
+phase10-glob:
+	python3 tools/phase10_glob.py
+
 phase10-terminal:
 	python3 tools/phase10.py --suite terminal
 

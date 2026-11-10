@@ -1,0 +1,14 @@
+
+[[case]]
+name = "word-math-packets"
+sources = ["tests/ext/word_math/packets.c"]
+requires = ["word_math_clamp_u32"]
+args = []
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:unsigned-minimum"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The protected Python model supplies the packet oracle."

@@ -132,12 +132,11 @@ def mutate_function(name, spec, source, original, probes, plan, directory, runti
     print(f"PASS {name} mutation {killed}/{total} killed", flush=True)
 
 
-def fuzz_observation(binary, probe, payload, work, output_size):
-    command = [str(binary.resolve()), *probe.case.args]
-    result = subprocess.run(command, input=payload, cwd=work, env=probe.case.env,
+def fuzz_observation(command, probe, payload, work, output_size):
+    result = subprocess.run([*command, *probe.case.args], input=payload, cwd=work, env=probe.case.env,
                             capture_output=True, timeout=15)
     if result.returncode or result.stderr or len(result.stdout) != output_size:
-        raise GateError(f"{binary.name}: bad differential packet result "
+        raise GateError(f"{command[-1]}: bad differential packet result "
                         f"({result.returncode}, {len(result.stdout)}, {result.stderr[:256]!r})")
     return result.stdout
 
@@ -159,18 +158,26 @@ def timed_fuzz(name, probe, plan, directory, runtime, record):
         checked(log, ["tools/elf-audit", binary])
         artifacts.update({path.name: sha256_file(path) for path in (obj, binary)})
         binaries[label] = binary
-    record.update(artifacts=artifacts, seed=FUZZ_SEED, runs=list(binaries))
-    seed_size, result_size = plan.record_sizes
+    record["artifacts"] = artifacts
+    commands = {label: [str(binary.resolve())] for label, binary in binaries.items()}
+    timed_packets(name, probe, plan.record_sizes, directory, commands, record)
+
+
+def timed_packets(name, probe, record_sizes, directory, commands, record):
+    if "candidate" not in commands or len(commands) < 2:
+        raise GateError("timed differential requires a candidate and independent oracle")
+    record.update(seed=FUZZ_SEED, runs=list(commands))
+    seed_size, result_size = record_sizes
     rng = random.Random(FUZZ_SEED)
     start = time.monotonic()
     count = 0
-    digests = {label: sha256() for label in ["input", *binaries]}
+    digests = {label: sha256() for label in ["input", *commands]}
     while time.monotonic() - start < FUZZ_SECONDS:
         payload = rng.randbytes(seed_size * 512)
         digests["input"].update(payload)
-        results = {label: fuzz_observation(binary, probe, payload, directory, result_size * 512)
-                   for label, binary in binaries.items()}
-        if results["candidate"] != results["glibc"] or results["candidate"] != results["musl"]:
+        results = {label: fuzz_observation(command, probe, payload, directory, result_size * 512)
+                   for label, command in commands.items()}
+        if len(set(results.values())) != 1:
             for i in range(512):
                 row = {label: data[i * result_size:(i + 1) * result_size].hex()
                        for label, data in results.items()}

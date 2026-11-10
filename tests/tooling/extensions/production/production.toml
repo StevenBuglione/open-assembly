@@ -1,0 +1,11 @@
+schema = 1
+
+[[function]]
+symbol = "word_math_clamp_u32"
+abi = "word-math-abi"
+trace = "word-math-model"
+mutations = { word-math-model = [11, 13, 14] }
+fuzz = "word-math-packets"
+model = "tests/oracle/word_math/model.py"
+record_size = 8
+result_size = 4
