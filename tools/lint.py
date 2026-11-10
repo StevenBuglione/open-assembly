@@ -43,7 +43,7 @@ SSE_MOVE = frozenset(("movd", "movq", "movdqa", "movdqu", "movapd", "movaps",
                       "movupd", "movups", "movsd", "movss", "pmovmskb"))
 SSE_ALU = frozenset(("pxor", "pand", "pandn", "por", "pcmpeqb", "pcmpeqw",
                      "pcmpeqd", "paddb", "paddw", "paddd", "paddq", "psubb",
-                     "psubw", "psubd", "psubq", "pslldq", "psrldq"))
+                     "psubw", "psubd", "psubq", "pslldq", "psrldq", "divsd", "mulsd"))
 AFTER_SSE2 = frozenset(("addsubpd", "addsubps", "haddpd", "haddps", "hsubpd",
                         "hsubps", "lddqu", "movddup", "movshdup", "movsldup",
                         "palignr", "pabsb", "pabsd", "pabsw", "pshufb",
@@ -58,6 +58,14 @@ DATA = frozenset(("db", "dw", "dd", "dq", "dt", "do", "dy", "dz", "resb",
 SIZE = {"byte": 1, "word": 2, "dword": 4, "qword": 8, "tword": 10, "oword": 16}
 RUNTIME = ("src", "x86_64-linux")
 PRIVATE_FUNCTIONS = {
+    "math/__al_big_muladd", "math/__al_big_left", "math/__al_big_right1",
+    "math/__al_big_cmp", "math/__al_big_sub", "math/__al_big_bits", "math/__al_big_copy",
+    "math/__al_float_lex", "math/__al_float_round", "math/__al_strtof_core",
+    "math/__al_big_bad", "math/__al_float_keyword",
+    "stdio/__al_scan_float", "stdio/__al_va_double", "stdio/__al_va_extended",
+    "math/__al_big_divsmall", "math/__al_float_decimal", "math/__al_round_decimal",
+    "stdio/__al_fmt_float", "stdio/__al_fmt_dec_body", "stdio/__al_fmt_hex_body",
+    "stdio/__al_fmt_fp_output", "stdio/__al_fmt_exponent",
     "rt/__al_stdio_init", "stdio/__al_stdio_isatty", "stdio/__al_stdio_io",
     "stdio/__al_stdio_seek", "stdio/__al_stdio_open", "stdio/__al_stdio_errno",
     "stdio/__al_stream_flush", "stdio/__al_stream_read", "stdio/__al_stream_write",
@@ -76,7 +84,7 @@ PRIVATE_FUNCTIONS = {
     "internal/__al_lock", "internal/__al_unlock", "rt/_start", "rt/__al_tls_init",
     "rt/__al_panic", "rt/__al_abort", "rt/__al_diagnostic", "stdlib/__al_strtox",
 }
-PRIVATE_NORETURN = {"_start", "__al_rt_sigreturn", "__al_panic", "__al_abort", "__al_heap_bad"}
+PRIVATE_NORETURN = {"_start", "__al_rt_sigreturn", "__al_panic", "__al_abort", "__al_heap_bad", "__al_big_bad"}
 COMPARATOR_ARGUMENTS = {"bsearch": "r8", "qsort": "rcx"}
 PRIVATE_DATA = {
     "stdin": "rt/__al_stdio_init", "stdout": "rt/__al_stdio_init", "stderr": "rt/__al_stdio_init",
@@ -214,6 +222,8 @@ class Program:
     callback_table: bool = False
     comparator_argument: str | None = None
     varargs_frame: bool = False
+    fenv_access: bool = False
+    fenv_controls: bool = False
 
 
 def parse(source, narrow, variadic, allow_seed_metadata):
@@ -561,7 +571,17 @@ def transfer_data(state, program, ins):
             size = 4
         elif opcode in {"movsd", "movq"}:
             size = 8
-        state, _ = access_memory(state, dest, size, line, write=not is_comparison)
+        # An immediate AND/OR confined to the six MXCSR status bits leaves
+        # the saved control bits intact. All other writes invalidate the slot.
+        preserve = False
+        if size == 4 and opcode in {"and", "or"} and src.kind == "imm":
+            value = integer(src.value) & 0xffff_ffff
+            preserve = ((value & 0xffff_ffc0) == 0xffff_ffc0 if opcode == "and"
+                        else (value & 0xffff_ffc0) == 0)
+        original_slots = state.slots
+        state, address = access_memory(state, dest, size, line, write=not is_comparison)
+        if preserve and (address, "mxcsr") in original_slots:
+            state = replace(state, slots=state.slots | {(address, "mxcsr")})
         return state
     if dest.kind == "xmm":
         return state
@@ -605,7 +625,7 @@ def transfer_control(state, program, ins, syscall_boundary, x87_return):
         if state.x87_depth != x87_return:
             reject(line, "X87_RETURN", "unexpected live x87 values on return")
         for kind, rule in (("mxcsr", "MXCSR"), ("x87", "X87_CONTROL")):
-            if kind in state.control_dirty:
+            if kind in state.control_dirty and not program.fenv_controls:
                 reject(line, rule, f"{kind} control state may be modified on return")
         return state
     if opcode == "call":
@@ -708,6 +728,27 @@ def transfer(state, program, ins, syscall_boundary, x87_return):
         if not 0 <= depth <= 8:
             reject(line, "X87_RETURN", "x87 stack underflow or overflow")
         return replace(state, x87_depth=depth)
+    if opcode in {"fnstenv", "fldenv", "fnstsw"}:
+        if not program.fenv_access:
+            reject(line, "X87_CONTROL", f"{opcode} is reserved for the floating environment API")
+        (op,) = check_operands(ins, {1})
+        if opcode == "fnstsw":
+            if op.kind != "gpr" or op.value != "ax":
+                reject(line, "INSTRUCTION", "floating status is read through AX")
+            return write_gpr(state, op, line)
+        if op.kind != "mem":
+            reject(line, "INSTRUCTION", "x87 environment requires a 28-byte memory object")
+        store = opcode == "fnstenv"
+        state, address = access_memory(state, op, 28, line, write=store)
+        dirty = state.control_dirty | {"x87"}
+        if store:
+            slots = state.slots
+            if address is not None and "x87" not in state.control_dirty:
+                slots |= {(address, "x87")}
+            return replace(state, control_dirty=dirty, slots=slots)
+        if (address, "x87") in state.slots:
+            dirty -= {"x87"}
+        return replace(state, control_dirty=dirty)
     if opcode in {"ldmxcsr", "stmxcsr", "fldcw", "fstcw", "fnstcw"}:
         (op,) = check_operands(ins, {1})
         if op.kind != "mem":
@@ -846,11 +887,18 @@ def check_file(path, function, fixture_syscall):
     program.callback_table = relative_runtime == "stdlib/exit"
     program.comparator_argument = COMPARATOR_ARGUMENTS.get(function)
     program.callback_dispatch = program.callback_table or program.comparator_argument is not None
+    program.fenv_access = relative_runtime in {
+        f"fenv/{name}" for name in ("feclearexcept", "fegetenv", "feholdexcept", "fesetenv", "fetestexcept")
+    }
+    program.fenv_controls = relative_runtime in {"fenv/feholdexcept", "fenv/fesetenv", "fenv/fesetround"}
     if relative_runtime in VARARGS_WRAPPERS:
         target, fixed, register = VARARGS_WRAPPERS[relative_runtime]
         expected = [("push", ("rbp",)), ("mov", ("rbp", "rsp")), ("sub", ("rsp", "208"))]
         expected += [("mov", (f"[rsp + {32 + index * 8}]", argument))
                      for index, argument in enumerate(("rdi", "rsi", "rdx", "rcx", "r8", "r9"))]
+        if target in {"vprintf", "vfprintf", "vsprintf", "vsnprintf"}:
+            expected += [("movdqa", (f"[rsp + {80 + index * 16}]", f"xmm{index}"))
+                         for index in range(8)]
         expected += [
             ("mov", ("dword [rsp]", str(fixed * 8))),
             ("mov", ("dword [rsp + 4]", "48")),

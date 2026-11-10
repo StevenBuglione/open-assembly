@@ -1,0 +1,18 @@
+name = "fesetexceptflag"
+header = "fenv.h"
+prototype = "int fesetexceptflag(const fexcept_t *flagp, int excepts)"
+standard = ["C17 7.6.2.4"]
+deps = ["feclearexcept"]
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "reference:fenv-hardware"]
+provenance = "original"
+semantics = [
+  "Restore the requested saved status flags without raising exceptions.",
+  "Preserve unselected flags and control state. Return zero.",
+]
+
+[abi]
+narrow_args = ["esi:s32"]
+variadic = false

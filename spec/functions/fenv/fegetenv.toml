@@ -1,0 +1,17 @@
+name = "fegetenv"
+header = "fenv.h"
+prototype = "int fegetenv(fenv_t *envp)"
+standard = ["C17 7.6.4.1"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "reference:fenv-hardware"]
+provenance = "original"
+semantics = [
+  "Save the current x87 environment and MXCSR. Preserve the active environment. Return zero.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

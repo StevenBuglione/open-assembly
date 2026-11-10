@@ -11,9 +11,9 @@
 ; provenance: original
 ; narrow_args: -
 ; variadic: true
-; semantics: Interpret the Phase 4 integer, string, byte, pointer, count, and percent conversions.
+; semantics: Interpret the integer, floating, string, byte, pointer, count, and percent conversions.
 ; semantics: Return the byte count excluding the terminator on success, or a negative result on error.
-; semantics: Unsupported floating or wide conversions report EINVAL. Count overflow reports EOVERFLOW.
+; semantics: Unsupported wide conversions report EINVAL. Count overflow reports EOVERFLOW.
 ; semantics: Write at most size-1 bytes and terminate when size is nonzero. Return the full untruncated count. With size zero dest may be NULL.
 ; END OPEN ASSEMBLY GENERATED SPEC
 
@@ -34,6 +34,14 @@ snprintf:
     mov [rsp + 56], rcx
     mov [rsp + 64], r8
     mov [rsp + 72], r9
+    movdqa [rsp + 80], xmm0
+    movdqa [rsp + 96], xmm1
+    movdqa [rsp + 112], xmm2
+    movdqa [rsp + 128], xmm3
+    movdqa [rsp + 144], xmm4
+    movdqa [rsp + 160], xmm5
+    movdqa [rsp + 176], xmm6
+    movdqa [rsp + 192], xmm7
     mov dword [rsp], 24
     mov dword [rsp + 4], 48
     lea rax, [rbp + 16]

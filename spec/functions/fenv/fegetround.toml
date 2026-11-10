@@ -1,0 +1,17 @@
+name = "fegetround"
+header = "fenv.h"
+prototype = "int fegetround(void)"
+standard = ["C17 7.6.3.1"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "reference:fenv-hardware"]
+provenance = "original"
+semantics = [
+  "Return the current rounding-mode constant.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

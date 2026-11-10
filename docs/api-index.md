@@ -3,7 +3,7 @@
 
 This index lists authored function specifications. For implementation state, run `tools/queue status`.
 
-Specs: 107 of 511 inventoried functions. The inventory covers C17, the named POSIX subset, and runtime ABI entries; see [inventory scope](cookbook/specifications.md#inventory-scope).
+Specs: 122 of 511 inventoried functions. The inventory covers C17, the named POSIX subset, and runtime ABI entries; see [inventory scope](cookbook/specifications.md#inventory-scope).
 
 | Function | Header | Prototype | Standard |
 | --- | --- | --- | --- |
@@ -13,6 +13,7 @@ Specs: 107 of 511 inventoried functions. The inventory covers C17, the named POS
 | [`_exit`](../spec/functions/unistd/_exit.toml) | `<unistd.h>` | `_Noreturn void _exit(int status)` | POSIX.1-2024 XSH _exit |
 | [`aligned_alloc`](../spec/functions/stdlib/aligned_alloc.toml) | `<stdlib.h>` | `void *aligned_alloc(size_t alignment, size_t size)` | C17 7.22.3.1 |
 | [`atexit`](../spec/functions/stdlib/atexit.toml) | `<stdlib.h>` | `int atexit(void (*func)(void))` | C17 7.22.4.2 |
+| [`atof`](../spec/functions/stdlib/atof.toml) | `<stdlib.h>` | `double atof(const char *s)` | C17 7.22.1.1 |
 | [`atoi`](../spec/functions/stdlib/atoi.toml) | `<stdlib.h>` | `int atoi(const char *s)` | C17 7.22.1.2 |
 | [`atol`](../spec/functions/stdlib/atol.toml) | `<stdlib.h>` | `long atol(const char *s)` | C17 7.22.1.2 |
 | [`atoll`](../spec/functions/stdlib/atoll.toml) | `<stdlib.h>` | `long long atoll(const char *s)` | C17 7.22.1.2 |
@@ -22,8 +23,19 @@ Specs: 107 of 511 inventoried functions. The inventory covers C17, the named POS
 | [`close`](../spec/functions/unistd/close.toml) | `<unistd.h>` | `int close(int fd)` | POSIX.1-2024 XSH close |
 | [`exit`](../spec/functions/stdlib/exit.toml) | `<stdlib.h>` | `_Noreturn void exit(int status)` | C17 7.22.4.4 |
 | [`fclose`](../spec/functions/stdio/fclose.toml) | `<stdio.h>` | `int fclose(FILE *stream)` | C17 7.21.5.1 |
+| [`feclearexcept`](../spec/functions/fenv/feclearexcept.toml) | `<fenv.h>` | `int feclearexcept(int excepts)` | C17 7.6.2.1 |
+| [`fegetenv`](../spec/functions/fenv/fegetenv.toml) | `<fenv.h>` | `int fegetenv(fenv_t *envp)` | C17 7.6.4.1 |
+| [`fegetexceptflag`](../spec/functions/fenv/fegetexceptflag.toml) | `<fenv.h>` | `int fegetexceptflag(fexcept_t *flagp, int excepts)` | C17 7.6.2.2 |
+| [`fegetround`](../spec/functions/fenv/fegetround.toml) | `<fenv.h>` | `int fegetround(void)` | C17 7.6.3.1 |
+| [`feholdexcept`](../spec/functions/fenv/feholdexcept.toml) | `<fenv.h>` | `int feholdexcept(fenv_t *envp)` | C17 7.6.4.2 |
 | [`feof`](../spec/functions/stdio/feof.toml) | `<stdio.h>` | `int feof(FILE *stream)` | C17 7.21.10.2 |
+| [`feraiseexcept`](../spec/functions/fenv/feraiseexcept.toml) | `<fenv.h>` | `int feraiseexcept(int excepts)` | C17 7.6.2.3 |
 | [`ferror`](../spec/functions/stdio/ferror.toml) | `<stdio.h>` | `int ferror(FILE *stream)` | C17 7.21.10.3 |
+| [`fesetenv`](../spec/functions/fenv/fesetenv.toml) | `<fenv.h>` | `int fesetenv(const fenv_t *envp)` | C17 7.6.4.3 |
+| [`fesetexceptflag`](../spec/functions/fenv/fesetexceptflag.toml) | `<fenv.h>` | `int fesetexceptflag(const fexcept_t *flagp, int excepts)` | C17 7.6.2.4 |
+| [`fesetround`](../spec/functions/fenv/fesetround.toml) | `<fenv.h>` | `int fesetround(int mode)` | C17 7.6.3.2 |
+| [`fetestexcept`](../spec/functions/fenv/fetestexcept.toml) | `<fenv.h>` | `int fetestexcept(int excepts)` | C17 7.6.2.5 |
+| [`feupdateenv`](../spec/functions/fenv/feupdateenv.toml) | `<fenv.h>` | `int feupdateenv(const fenv_t *envp)` | C17 7.6.4.4 |
 | [`fflush`](../spec/functions/stdio/fflush.toml) | `<stdio.h>` | `int fflush(FILE *stream)` | C17 7.21.5.2 |
 | [`fgetc`](../spec/functions/stdio/fgetc.toml) | `<stdio.h>` | `int fgetc(FILE *stream)` | C17 7.21.7.1 |
 | [`fgetpos`](../spec/functions/stdio/fgetpos.toml) | `<stdio.h>` | `int fgetpos(FILE *restrict stream, fpos_t *restrict pos)` | C17 7.21.9.1 |
@@ -94,9 +106,12 @@ Specs: 107 of 511 inventoried functions. The inventory covers C17, the named POS
 | [`strrchr`](../spec/functions/string/strrchr.toml) | `<string.h>` | `char *strrchr(const char *s, int c)` | C17 7.24.5.5 |
 | [`strspn`](../spec/functions/string/strspn.toml) | `<string.h>` | `size_t strspn(const char *s, const char *accept)` | C17 7.24.5.6 |
 | [`strstr`](../spec/functions/string/strstr.toml) | `<string.h>` | `char *strstr(const char *haystack, const char *needle)` | C17 7.24.5.7 |
+| [`strtod`](../spec/functions/stdlib/strtod.toml) | `<stdlib.h>` | `double strtod(const char *restrict s, char **restrict endptr)` | C17 7.22.1.3 |
+| [`strtof`](../spec/functions/stdlib/strtof.toml) | `<stdlib.h>` | `float strtof(const char *restrict s, char **restrict endptr)` | C17 7.22.1.3 |
 | [`strtoimax`](../spec/functions/inttypes/strtoimax.toml) | `<inttypes.h>` | `intmax_t strtoimax(const char *restrict s, char **restrict endptr, int base)` | C17 7.8.2.3 |
 | [`strtok`](../spec/functions/string/strtok.toml) | `<string.h>` | `char *strtok(char *restrict s, const char *restrict delimiters)` | C17 7.24.5.8 |
 | [`strtol`](../spec/functions/stdlib/strtol.toml) | `<stdlib.h>` | `long strtol(const char *restrict s, char **restrict endptr, int base)` | C17 7.22.1.4 |
+| [`strtold`](../spec/functions/stdlib/strtold.toml) | `<stdlib.h>` | `long double strtold(const char *restrict s, char **restrict endptr)` | C17 7.22.1.3 |
 | [`strtoll`](../spec/functions/stdlib/strtoll.toml) | `<stdlib.h>` | `long long strtoll(const char *restrict s, char **restrict endptr, int base)` | C17 7.22.1.4 |
 | [`strtoul`](../spec/functions/stdlib/strtoul.toml) | `<stdlib.h>` | `unsigned long strtoul(const char *restrict s, char **restrict endptr, int base)` | C17 7.22.1.4 |
 | [`strtoull`](../spec/functions/stdlib/strtoull.toml) | `<stdlib.h>` | `unsigned long long strtoull(const char *restrict s, char **restrict endptr, int base)` | C17 7.22.1.4 |

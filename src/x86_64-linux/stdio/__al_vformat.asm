@@ -12,6 +12,9 @@ extern __al_va_next:function
 extern __al_fmt_decimal:function
 extern __al_fmt_emit:function
 extern __al_fmt_integer:function
+extern __al_fmt_float:function
+extern __al_va_double:function
+extern __al_va_extended:function
 extern __al_fmt_text:function
 extern __al_stdio_errno:function
 extern strlen:function
@@ -161,6 +164,12 @@ __al_vformat:
     je .one_long
     cmp eax, 116                  ; t
     je .one_long
+    cmp eax, 76                   ; L
+    je .extended
+    jmp .specifier
+.extended:
+    inc rbx
+    mov qword [r15 + 24], 16
     jmp .specifier
 .short:
     inc rbx
@@ -203,14 +212,49 @@ __al_vformat:
     cmp eax, 88
     je .integer
     cmp eax, 112
-    jne .invalid
+    jne .check_float
 .integer:
+    cmp qword [r15 + 24], 16
+    je .invalid
     mov rdi, r12
     call __al_va_next
     mov rdi, r13
     mov rsi, r15
     mov rdx, rax
     call __al_fmt_integer
+    test eax, eax
+    jz .next
+    jmp .failure
+.check_float:
+    or eax, 32
+    cmp eax, 97                   ; a/A
+    je .float
+    cmp eax, 101                  ; e/E
+    je .float
+    cmp eax, 102                  ; f/F
+    je .float
+    cmp eax, 103                  ; g/G
+    jne .invalid
+.float:
+    mov rdi, r12
+    cmp qword [r15 + 24], 16
+    je .take_extended
+    cmp qword [r15 + 24], 4
+    je .take_double
+    cmp qword [r15 + 24], 8
+    jne .invalid
+.take_double:
+    call __al_va_double
+    xor ecx, ecx
+    jmp .render_float
+.take_extended:
+    call __al_va_extended
+    mov ecx, edx
+.render_float:
+    mov rdi, r13
+    mov rsi, r15
+    mov rdx, rax
+    call __al_fmt_float
     test eax, eax
     jz .next
     jmp .failure
@@ -259,6 +303,8 @@ __al_vformat:
     jz .next
     jmp .failure
 .store_count:
+    cmp qword [r15 + 24], 16
+    je .invalid
     mov rdi, r12
     call __al_va_next
     mov rcx, [r13 + 16]

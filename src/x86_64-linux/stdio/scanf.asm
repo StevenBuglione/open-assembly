@@ -11,10 +11,10 @@
 ; provenance: original
 ; narrow_args: -
 ; variadic: true
-; semantics: Interpret the Phase 4 integer, byte, string, pointer, count, percent and bracket-set conversions.
+; semantics: Interpret the integer, floating, byte, string, pointer, count, percent and bracket-set conversions.
 ; semantics: Apply widths and assignment suppression. Preserve the first input byte after a matching item.
 ; semantics: Return the number of assignments, or EOF if input fails before the first completed conversion.
-; semantics: Unsupported floating or wide conversions report EINVAL.
+; semantics: Unsupported wide conversions report EINVAL.
 ; END OPEN ASSEMBLY GENERATED SPEC
 
 bits 64

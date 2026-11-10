@@ -1,0 +1,17 @@
+name = "atof"
+header = "stdlib.h"
+prototype = "double atof(const char *s)"
+standard = ["C17 7.22.1.1"]
+deps = ["strtod"]
+errno = ["ERANGE"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "reference:mpfr"]
+provenance = "original"
+semantics = [
+  "Convert using the same C-locale syntax and binary64 rounding as strtod without an end pointer.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

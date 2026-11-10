@@ -16,6 +16,7 @@ extern __al_scan_set:function
 extern __al_scan_chars:function
 extern __al_scan_number:function
 extern __al_scan_store:function
+extern __al_scan_float:function
 extern __al_va_next:function
 extern isspace:function
 extern malloc:function
@@ -109,6 +110,12 @@ __al_vscan:
     je .one_long
     cmp eax, 116
     je .one_long
+    cmp eax, 76                  ; L selects extended precision
+    je .extended
+    jmp .specifier
+.extended:
+    inc rbx
+    mov qword [rsp + 32], 16
     jmp .specifier
 .short:
     inc rbx
@@ -152,7 +159,7 @@ __al_vscan:
     cmp eax, 100
     je .decimal
     cmp eax, 117
-    jne .invalid
+    jne .check_float
 .decimal:
     mov qword [rsp + 40], 10
     jmp .number
@@ -167,6 +174,8 @@ __al_vscan:
 .hex:
     mov qword [rsp + 40], 16
 .number:
+    cmp qword [rsp + 32], 16
+    je .invalid
     mov rdi, r13
     call __al_scan_space
     mov rdi, r13
@@ -190,7 +199,54 @@ __al_vscan:
     cmp edx, 2
     je .input_failure
     jmp .finish
+.check_float:
+    or eax, 32
+    cmp eax, 97                  ; a/A
+    je .float
+    cmp eax, 101                 ; e/E
+    je .float
+    cmp eax, 102                 ; f/F
+    je .float
+    cmp eax, 103                 ; g/G
+    jne .invalid
+.float:
+    mov qword [rsp + 40], 0      ; binary32
+    mov rax, [rsp + 32]
+    cmp rax, 4
+    je .float_input
+    cmp rax, 8
+    je .double_input
+    cmp rax, 16
+    jne .invalid
+    mov qword [rsp + 40], 2      ; extended
+    jmp .float_input
+.double_input:
+    mov qword [rsp + 40], 1
+.float_input:
+    mov rdi, r13
+    call __al_scan_space
+    xor ecx, ecx
+    cmp qword [rsp + 24], 0
+    jne .scan_float
+    mov rdi, r12
+    call __al_va_next
+    mov rcx, rax
+.scan_float:
+    mov rdi, r13
+    mov rsi, [rsp + 16]
+    mov rdx, [rsp + 40]
+    call __al_scan_float
+    cmp eax, 2
+    je .input_failure
+    test eax, eax
+    jnz .finish
+    cmp qword [rsp + 24], 0
+    jne .completed
+    inc r14d
+    jmp .completed
 .count:
+    cmp qword [rsp + 32], 16
+    je .invalid
     cmp qword [rsp + 24], 0
     jne .completed
     mov rdi, r12
