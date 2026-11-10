@@ -21,8 +21,9 @@ ARTIFACTS = ("crt1.o", "libopenasm.a", "trans-f32.o", "trans-f32")
 VERIFY = Path("tests/phase7/transcendental/verify.py")
 OPERATIONS = Path("tests/phase7/transcendental/operations.def")
 NATIVE = Path("tests/phase7/campaign")
-NATIVE_ARTIFACTS = ("native-exp2", "mpfr.h", "gmp.h")
-NATIVE_BACKEND = "native-mpfr-exp2"
+NATIVE_ARTIFACTS = ("native-unary", "mpfr.h", "gmp.h")
+NATIVE_BACKEND = "native-mpfr-unary"
+NATIVE_OPERATIONS = {"exp2", "log2"}
 
 
 def digest(path):
@@ -82,7 +83,7 @@ def oracle_identity(root, backend):
             "mpfr_sha256": digest(library), "mpfr": gmpy2.mpfr_version(), "gmpy2": gmpy2.version()}
     if backend == NATIVE_BACKEND:
         identity.update({name: digest(root / NATIVE / name)
-                         for name in ("native_exp2.c", "native_oracle.py")})
+                         for name in ("native_unary.c", "native_oracle.py")})
     elif backend != "python":
         raise ValueError(f"unknown oracle backend: {backend}")
     return identity
@@ -93,7 +94,7 @@ def build_native(folder, headers, root):
         shutil.copyfile(headers / name, folder / name)
     library = Path(os.environ["OPEN_ASSEMBLY_MPFR"]).resolve(strict=True)
     command = ["gcc", "-O2", "-Wall", "-Wextra", "-Werror", f"-I{folder}",
-               root / NATIVE / "native_exp2.c", library, f"-Wl,-rpath,{library.parent}"]
+               root / NATIVE / "native_unary.c", library, f"-Wl,-rpath,{library.parent}"]
     helper = folder / NATIVE_ARTIFACTS[0]
     with tempfile.TemporaryDirectory(dir=folder, prefix=".native-build-") as second:
         replay = Path(second) / helper.name
@@ -131,8 +132,8 @@ def prepare(args, root):
             raise ValueError(f"artifact differs from source-bound gate: {name}")
     backend = "python"
     if args.native_headers is not None:
-        if args.operation != "exp2" or args.second is not None:
-            raise ValueError("native MPFR oracle supports unary exp2 only")
+        if args.operation not in NATIVE_OPERATIONS or args.second is not None:
+            raise ValueError("native MPFR oracle supports only unary exp2 and log2")
         backend = NATIVE_BACKEND
     folder = args.campaign.resolve()
     folder.mkdir(parents=True, exist_ok=False)
@@ -255,9 +256,9 @@ def run_native_shard(folder, root, campaign, start, count):
     try:
         hashes = {str(path): digest(path) for path in tracked}
         with tempfile.TemporaryDirectory(dir=folder / "attempts", prefix=f"shard-{start:08x}-") as name:
-            request, expected, actual = evaluate(helper, candidate, Path(name), start, count,
-                                                 settings["mode_index"])
-        maximum = compare_native(actual, expected, start, count)
+            request, expected, actual = evaluate(helper, candidate, Path(name), settings["operation"],
+                                                 start, count, settings["mode_index"])
+        maximum = compare_native(actual, expected, settings["operation"], start, count)
         if hashes != {str(path): digest(path) for path in tracked}:
             raise ValueError("candidate or native oracle changed during shard")
         hashes.update({str(artifacts / name): expected_hash for name, expected_hash in
@@ -397,7 +398,7 @@ def main():
     setup.add_argument("--width", type=parse_int, default=65536)
     setup.add_argument("--second", type=parse_int)
     setup.add_argument("--native-headers", type=Path,
-                       help="build the native exp2f oracle with pinned MPFR and GMP headers")
+                       help="build the native binary32 oracle with pinned MPFR and GMP headers")
 
     run = commands.add_parser("run", help="validate completed shards and continue")
     run.add_argument("campaign", type=Path)
