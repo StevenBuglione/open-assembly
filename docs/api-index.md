@@ -747,3 +747,8 @@ Specs: 729 of 729 inventoried functions. The inventory covers C17, the named POS
 | [`slice_find_byte`](../ext/slice/spec/functions/slice_find_byte.toml) | `<slice.h>` | `int slice_find_byte(const unsigned char *bytes, size_t length, unsigned int needle, size_t *restrict offset)` | Extension ABI slice |
 | [`slice_load_u32be`](../ext/slice/spec/functions/slice_load_u32be.toml) | `<slice.h>` | `int slice_load_u32be(const unsigned char *bytes, size_t length, unsigned int *restrict result)` | Extension ABI slice |
 | [`slice_take`](../ext/slice/spec/functions/slice_take.toml) | `<slice.h>` | `int slice_take(const unsigned char **restrict cursor, size_t *restrict available, size_t length, const unsigned char **restrict result)` | Extension ABI slice |
+| [`vector_at`](../ext/vector/spec/functions/vector_at.toml) | `<vector.h>` | `int vector_at(const size_t *restrict state, size_t index, void **restrict result)` | Extension ABI vector |
+| [`vector_init`](../ext/vector/spec/functions/vector_init.toml) | `<vector.h>` | `int vector_init(size_t state[5], size_t element_size, size_t alignment)` | Extension ABI vector |
+| [`vector_pop`](../ext/vector/spec/functions/vector_pop.toml) | `<vector.h>` | `int vector_pop(size_t *restrict state, void *result)` | Extension ABI vector |
+| [`vector_push`](../ext/vector/spec/functions/vector_push.toml) | `<vector.h>` | `int vector_push(size_t *restrict state, size_t *restrict arena_state, const void *element)` | Extension ABI vector |
+| [`vector_reserve`](../ext/vector/spec/functions/vector_reserve.toml) | `<vector.h>` | `int vector_reserve(size_t *restrict state, size_t *restrict arena_state, size_t capacity)` | Extension ABI vector |

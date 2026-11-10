@@ -1,0 +1,16 @@
+name = "vector_reserve"
+header = "vector.h"
+prototype = "int vector_reserve(size_t *restrict state, size_t *restrict arena_state, size_t capacity)"
+standard = ["Extension ABI vector"]
+deps = ["arena_alloc", "memmove"]
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:arena-vector-model"]
+provenance = "original"
+semantics = ["Reserve at least the requested element capacity in the caller-owned arena, preserving current elements.", "Return a negative error for invalid state, wrapping extent or arena exhaustion. Preserve both states on failure and preserve errno."]
+
+[abi]
+narrow_args = []
+variadic = false
+noreturn = false
