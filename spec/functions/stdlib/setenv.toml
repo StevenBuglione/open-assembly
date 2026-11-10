@@ -1,0 +1,20 @@
+name = "setenv"
+header = "stdlib.h"
+prototype = "int setenv(const char *name, const char *value, int overwrite)"
+standard = ["POSIX.1-2024 XSH setenv"]
+deps = ["malloc", "free", "memcpy", "strlen", "__errno_location"]
+errno = ["EINVAL", "ENOMEM"]
+mt_safe = false
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:phase3-contract"]
+provenance = "original"
+semantics = [
+  "Copy name and value into the environment. If overwrite is zero, keep an existing value unchanged.",
+  "Accept empty values and equals signs in values. Reject NULL or empty names and names containing equals with EINVAL.",
+  "A NULL value is invalid and is rejected with EINVAL.",
+  "Return zero and preserve errno on success. On failure return -1 and leave the environment unchanged.",
+]
+
+[abi]
+narrow_args = ["edx:s32"]
+variadic = false

@@ -67,14 +67,14 @@ availability. The catalog excludes Annex K, decimal extensions, compiler
 predefines, reserved or implementation-defined names that the standard
 does not enumerate, and future library directions.
 
-The initial POSIX target is the
-[POSIX.1-2024 `<unistd.h>` bootstrap subset](https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/unistd.h.html):
-`_exit`, `close`, `read`, `write`, `size_t`, `ssize_t`, and the three
-standard file descriptor macros. Additional POSIX APIs must be scoped and
-added in later milestones. The runtime ABI entries `__errno_location` and
-`__stack_chk_fail` are cataloged separately from standards interfaces. See
-the [API index](../api-index.md) for authored specifications. Cataloging a
-name does not implement the function or establish conformance.
+The named POSIX subset covers `_exit`, `close`, `read`, `write`, `size_t`,
+`ssize_t`, the three standard file descriptor macros, and the `environ`
+object. [POSIX.1-2024 unistd.h](https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/unistd.h.html)
+
+The allocator and environment milestone adds `posix_memalign`, `putenv`,
+`setenv`, and `unsetenv`. The runtime ABI entries `__errno_location` and
+`__stack_chk_fail` have separate inventory groups. The API index lists
+authored function specifications. [POSIX.1-2024 stdlib.h](https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/stdlib.h.html) · [API index](../api-index.md)
 
 ## Generated files
 
@@ -112,18 +112,13 @@ the record and any matching production source header. Maintainers still
 review the upstream file and license and check authorship. An execution
 oracle such as glibc is not an algorithm source.
 
-`tools/queue status [FUNCTION]` reports `todo` for inventoried functions
-without a production source and `implemented` for a function with a
-matching source and generated header under `src/x86_64-linux/`.
+`tools/queue status [FUNCTION]` reports `todo` when a function has no
+production source, `implemented` when a source and generated header are
+present, and `verified` after a fresh production-function pass.
 `tools/queue next` selects the first authored `todo` with all function
-dependencies verified. In Phase 0 only a dependency-free function can be
-eligible. The queue is advisory; starting a production implementation
-still requires the next milestone.
+dependencies verified.
 
-A `build/evidence/<function>.json` Phase 0 fixture manifest records input
-hashes, tool identity, and individual outcomes. The queue reports stale
-and malformed evidence separately. Even a passing and current fixture
-cannot verify a production function or unlock its dependents. The complete
-production evidence producer and the failed-attempt history for computed
-`blocked` status are pending. Phase 1 has a separate runtime gate; its
-evidence does not verify individual functions or unlock the queue.
+The queue reports stale and malformed evidence separately. Phase 0 fixture
+reports and Phase 1 and Phase 3 milestone reports have separate scopes.
+Only per-function production reports can unlock dependencies. Computed
+failure history and `blocked` status are pending.

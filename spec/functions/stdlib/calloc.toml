@@ -1,0 +1,20 @@
+name = "calloc"
+header = "stdlib.h"
+prototype = "void *calloc(size_t nmemb, size_t size)"
+standard = ["C17 7.22.3.2"]
+deps = ["__errno_location", "memset"]
+errno = ["ENOMEM"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:phase3-contract"]
+provenance = "original"
+semantics = [
+  "Return new storage for nmemb objects of size bytes each and initialize every requested byte to zero.",
+  "Check the product before allocating. If either factor is zero, treat it as a zero-byte request.",
+  "A zero-byte request can succeed with a distinct freeable pointer. No byte is accessible through that zero-size allocation.",
+  "On exhaustion or an unrepresentable allocation size, return NULL and set ENOMEM. Preserve errno on success.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

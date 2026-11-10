@@ -1,0 +1,21 @@
+name = "aligned_alloc"
+header = "stdlib.h"
+prototype = "void *aligned_alloc(size_t alignment, size_t size)"
+standard = ["C17 7.22.3.1"]
+deps = ["__errno_location"]
+errno = ["EINVAL", "ENOMEM"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:phase3-contract"]
+provenance = "original"
+semantics = [
+  "Require nonzero power-of-two alignment. Return NULL with EINVAL for other alignments.",
+  "Return storage aligned to at least 16 and to alignment, with exactly size requested bytes.",
+  "Sizes need not be multiples of alignment. The return value can be released with free.",
+  "A zero-byte request can succeed with a distinct freeable pointer. No byte is accessible through that zero-size allocation.",
+  "On exhaustion or an unrepresentable allocation size, return NULL and set ENOMEM. Preserve errno on success.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

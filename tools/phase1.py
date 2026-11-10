@@ -176,7 +176,7 @@ def build_runtime(directory, log):
     return startup, archive, exports, hashes
 
 
-def build_case(case, directory, runtime, log, stub=None):
+def build_case(case, directory, runtime, log, stub=None, *, link_wraps=()):
     startup, archive, exports, _ = runtime
     directory.mkdir()
     objects = []
@@ -195,12 +195,20 @@ def build_case(case, directory, runtime, log, stub=None):
     for symbol in case.requires:
         if symbol not in references or symbol not in exports:
             raise GateError(f"{case.name}: test objects do not reference runtime symbol {symbol}")
+    test_definitions = {}
     for obj in objects:
-        overridden = exports.keys() & nm_symbols(log, obj, ["-g", "--defined-only"]).keys()
+        defined = nm_symbols(log, obj, ["-g", "--defined-only"])
+        overridden = exports.keys() & defined.keys()
         if overridden:
             raise GateError(f"{case.name}: test object defines runtime symbols {', '.join(sorted(overridden))}")
+        test_definitions.update(defined)
     binary = directory / case.name
     wrap_options = []
+    for wrapped in link_wraps:
+        if (exports.get(wrapped) != "T" or test_definitions.get(f"__wrap_{wrapped}") != "T"
+                or f"__real_{wrapped}" not in references or (stub and stub[0] == wrapped)):
+            raise GateError(f"{case.name}: missing real runtime call or test wrapper for {wrapped}")
+        wrap_options.append(f"--wrap={wrapped}")
     symbol = wrapper = None
     if stub:
         symbol, obj = stub
@@ -212,6 +220,9 @@ def build_case(case, directory, runtime, log, stub=None):
     defined = nm_symbols(log, binary, ["-g", "--defined-only"])
     if defined.get("_start") != "T" or defined.get("main") != "T":
         raise GateError(f"{case.name}: executable is missing _start or main")
+    for wrapped in link_wraps:
+        if defined.get(wrapped) != "T" or defined.get(f"__wrap_{wrapped}") != "T":
+            raise GateError(f"{case.name}: executable is missing real and wrapped symbols for {wrapped}")
     for symbol in case.requires:
         target = wrapper if stub and symbol == stub[0] else symbol
         if defined.get(target) != exports[symbol]:

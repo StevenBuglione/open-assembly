@@ -1,0 +1,384 @@
+schema = 1
+
+[[case]]
+name = "alloc-malloc"
+sources = ["tests/phase3/allocator.c"]
+requires = ["malloc", "free", "__errno_location"]
+args = ["malloc"]
+env = {  }
+status = 0
+stdout = ""
+stderr = ""
+oracle = ["reference:phase3-contract", "c17:allocator"]
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "alloc-calloc"
+sources = ["tests/phase3/allocator.c"]
+requires = ["calloc", "free", "__errno_location"]
+args = ["calloc"]
+env = {  }
+status = 0
+stdout = ""
+stderr = ""
+oracle = ["reference:phase3-contract", "c17:allocator"]
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "alloc-realloc"
+sources = ["tests/phase3/allocator.c"]
+requires = ["realloc", "free", "__errno_location"]
+args = ["realloc"]
+env = {  }
+status = 0
+stdout = ""
+stderr = ""
+oracle = ["reference:phase3-contract", "c17:allocator"]
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "alloc-aligned"
+sources = ["tests/phase3/allocator.c"]
+requires = ["aligned_alloc", "free", "__errno_location"]
+args = ["aligned"]
+env = {  }
+status = 0
+stdout = ""
+stderr = ""
+oracle = ["reference:phase3-contract", "c17:allocator"]
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "alloc-posix"
+sources = ["tests/phase3/allocator.c"]
+requires = ["posix_memalign", "free", "__errno_location"]
+args = ["posix"]
+env = {  }
+status = 0
+stdout = ""
+stderr = ""
+oracle = ["reference:phase3-contract", "posix:alignment"]
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "alloc-model"
+sources = ["tests/phase3/allocator.c"]
+requires = ["malloc", "calloc", "realloc", "free", "aligned_alloc", "posix_memalign", "__errno_location"]
+args = ["model"]
+env = {  }
+status = 0
+stdout = ""
+stderr = ""
+oracle = ["reference:live-object-model", "c17:allocator", "posix:alignment"]
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "alloc-slab-churn"
+sources = ["tests/phase3/allocator.c"]
+requires = ["malloc", "calloc", "free"]
+args = ["slab-churn"]
+env = {}
+status = 0
+stdout = ""
+stderr = ""
+oracle = ["reference:live-object-model", "c17:allocator"]
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "environment-initial"
+sources = ["tests/phase3/environment.c"]
+requires = ["getenv", "unsetenv", "environ", "__al_initial_envp", "__al_auxv"]
+args = ["initial"]
+env = { AL_STAGE3 = "one two", AL_STAGE3_EMPTY = "" }
+status = 0
+stdout = ""
+stderr = ""
+oracle = ["reference:phase3-contract", "abi:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "environment-lookup"
+sources = ["tests/phase3/environment.c"]
+requires = ["getenv", "environ"]
+args = ["lookup"]
+env = {  }
+status = 0
+stdout = ""
+stderr = ""
+oracle = ["reference:phase3-contract", "posix:environment"]
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "environment-insert"
+sources = ["tests/phase3/environment.c"]
+requires = ["setenv", "getenv", "environ"]
+args = ["insert"]
+env = {  }
+status = 0
+stdout = ""
+stderr = ""
+oracle = ["reference:phase3-contract", "posix:environment"]
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "environment-remove"
+sources = ["tests/phase3/environment.c"]
+requires = ["unsetenv", "getenv", "environ"]
+args = ["remove"]
+env = {  }
+status = 0
+stdout = ""
+stderr = ""
+oracle = ["reference:phase3-contract", "posix:environment"]
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "environment-borrow"
+sources = ["tests/phase3/environment.c"]
+requires = ["putenv", "getenv", "environ"]
+args = ["borrow"]
+env = {  }
+status = 0
+stdout = ""
+stderr = ""
+oracle = ["reference:phase3-contract", "posix:environment"]
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "environment-ownership"
+sources = ["tests/phase3/environment.c"]
+requires = ["setenv", "unsetenv", "getenv", "environ"]
+args = ["ownership"]
+env = {  }
+status = 0
+stdout = ""
+stderr = ""
+oracle = ["reference:phase3-contract", "posix:environment"]
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "environment-model"
+sources = ["tests/phase3/environment.c"]
+requires = ["getenv", "setenv", "unsetenv", "putenv", "environ"]
+args = ["model"]
+env = {  }
+status = 0
+stdout = ""
+stderr = ""
+oracle = ["reference:phase3-contract", "posix:environment"]
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "phase3-abi"
+sources = ["tests/phase3/abi.c", "tests/phase2/abi.asm"]
+requires = ["malloc", "calloc", "realloc", "free", "aligned_alloc", "posix_memalign", "getenv", "setenv", "unsetenv", "putenv"]
+args = []
+env = {  }
+status = 0
+stdout = ""
+stderr = ""
+oracle = ["abi:sysv-amd64"]
+backends = ["native"]
+[case.skip]
+qemu = "The callee-state probe measures native CPU state."
+valgrind = "Memcheck reports different x87 and MXCSR control state for this probe."
+
+[[case]]
+name = "fault-malloc"
+sources = ["tests/phase3/fault.c"]
+requires = ["malloc", "write", "__errno_location"]
+args = ["malloc"]
+env = {  }
+status = 0
+stdout = "injected=1 mmap=0 munmap=0\n"
+stderr = ""
+oracle = ["reference:phase3-contract", "linux:mmap-fault-control"]
+backends = ["native", "qemu", "valgrind"]
+link_wraps = ["__al_syscall"]
+
+[[case]]
+name = "fault-calloc"
+sources = ["tests/phase3/fault.c"]
+requires = ["calloc", "write", "__errno_location"]
+args = ["calloc"]
+env = {  }
+status = 0
+stdout = "injected=1 mmap=0 munmap=0\n"
+stderr = ""
+oracle = ["reference:phase3-contract", "linux:mmap-fault-control"]
+backends = ["native", "qemu", "valgrind"]
+link_wraps = ["__al_syscall"]
+
+[[case]]
+name = "fault-realloc"
+sources = ["tests/phase3/fault.c"]
+requires = ["realloc", "write", "__errno_location"]
+args = ["realloc"]
+env = {  }
+status = 0
+stdout = "injected=1 mmap=0 munmap=0\n"
+stderr = ""
+oracle = ["reference:phase3-contract", "linux:mmap-fault-control"]
+backends = ["native", "qemu", "valgrind"]
+link_wraps = ["__al_syscall"]
+
+[[case]]
+name = "fault-aligned"
+sources = ["tests/phase3/fault.c"]
+requires = ["aligned_alloc", "write", "__errno_location"]
+args = ["aligned"]
+env = {  }
+status = 0
+stdout = "injected=1 mmap=0 munmap=0\n"
+stderr = ""
+oracle = ["reference:phase3-contract", "linux:mmap-fault-control"]
+backends = ["native", "qemu", "valgrind"]
+link_wraps = ["__al_syscall"]
+
+[[case]]
+name = "fault-posix"
+sources = ["tests/phase3/fault.c"]
+requires = ["posix_memalign", "write", "__errno_location"]
+args = ["posix"]
+env = {  }
+status = 0
+stdout = "injected=1 mmap=0 munmap=0\n"
+stderr = ""
+oracle = ["reference:phase3-contract", "linux:mmap-fault-control"]
+backends = ["native", "qemu", "valgrind"]
+link_wraps = ["__al_syscall"]
+
+[[case]]
+name = "fault-env-string"
+sources = ["tests/phase3/fault.c"]
+requires = ["setenv", "write", "__errno_location"]
+args = ["env-string"]
+env = {  }
+status = 0
+stdout = "injected=1 mmap=0 munmap=0\n"
+stderr = ""
+oracle = ["reference:phase3-contract", "linux:mmap-fault-control"]
+backends = ["native", "qemu", "valgrind"]
+link_wraps = ["__al_syscall"]
+
+[[case]]
+name = "fault-env-vector-set"
+sources = ["tests/phase3/fault.c"]
+requires = ["setenv", "write", "__errno_location"]
+args = ["env-vector-set"]
+env = {  }
+status = 0
+stdout = "injected=1 mmap=0 munmap=0\n"
+stderr = ""
+oracle = ["reference:phase3-contract", "linux:mmap-fault-control"]
+backends = ["native", "qemu", "valgrind"]
+link_wraps = ["__al_syscall"]
+
+[[case]]
+name = "fault-env-vector-put"
+sources = ["tests/phase3/fault.c"]
+requires = ["putenv", "write", "__errno_location"]
+args = ["env-vector-put"]
+env = {  }
+status = 0
+stdout = "injected=1 mmap=0 munmap=0\n"
+stderr = ""
+oracle = ["reference:phase3-contract", "linux:mmap-fault-control"]
+backends = ["native", "qemu", "valgrind"]
+link_wraps = ["__al_syscall"]
+
+[[case]]
+name = "fault-release"
+sources = ["tests/phase3/fault.c"]
+requires = ["free", "write", "__errno_location"]
+args = ["release"]
+env = {  }
+status = 0
+stdout = "injected=0 mmap=1 munmap=1\n"
+stderr = ""
+oracle = ["reference:phase3-contract", "linux:mmap-fault-control"]
+backends = ["native", "qemu", "valgrind"]
+link_wraps = ["__al_syscall"]
+
+[[case]]
+name = "fault-env-churn"
+sources = ["tests/phase3/fault.c"]
+requires = ["setenv", "write", "__errno_location"]
+args = ["env-churn"]
+env = {  }
+status = 0
+stdout = "injected=0 mmap=48 munmap=48\n"
+stderr = ""
+oracle = ["reference:phase3-contract", "linux:mmap-fault-control"]
+backends = ["native", "qemu", "valgrind"]
+link_wraps = ["__al_syscall"]
+
+[[stub]]
+symbol = "malloc"
+case = "alloc-malloc"
+status = 20
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "calloc"
+case = "alloc-calloc"
+status = 30
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "realloc"
+case = "alloc-realloc"
+status = 40
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "free"
+case = "fault-release"
+status = 81
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "aligned_alloc"
+case = "alloc-aligned"
+status = 50
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "posix_memalign"
+case = "alloc-posix"
+status = 60
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "getenv"
+case = "environment-lookup"
+status = 30
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "setenv"
+case = "environment-insert"
+status = 40
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "unsetenv"
+case = "environment-remove"
+status = 50
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "putenv"
+case = "environment-borrow"
+status = 60
+stdout = ""
+stderr = ""

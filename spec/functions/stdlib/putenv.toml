@@ -1,0 +1,20 @@
+name = "putenv"
+header = "stdlib.h"
+prototype = "int putenv(char *string)"
+standard = ["POSIX.1-2024 XSH putenv"]
+deps = ["malloc", "free", "__errno_location"]
+errno = ["EINVAL", "ENOMEM"]
+mt_safe = false
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:phase3-contract"]
+provenance = "original"
+semantics = [
+  "Install the actual writable name=value string pointer. Later edits to that string are visible.",
+  "A nonempty string without equals removes the named variable. Empty names and NULL strings are invalid.",
+  "Return zero and preserve errno on success. Return -1 and leave the environment unchanged on failure.",
+  "The caller retains ownership and must keep installed strings alive until removed.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

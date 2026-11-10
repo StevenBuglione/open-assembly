@@ -1,0 +1,19 @@
+name = "unsetenv"
+header = "stdlib.h"
+prototype = "int unsetenv(const char *name)"
+standard = ["POSIX.1-2024 XSH unsetenv"]
+deps = ["free", "__errno_location"]
+errno = ["EINVAL"]
+mt_safe = false
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:phase3-contract"]
+provenance = "original"
+semantics = [
+  "Remove all entries matching the exact name and keep the array NULL-terminated.",
+  "Removing an absent name succeeds. Invalid names are NULL, empty or contain equals.",
+  "Return zero and preserve errno on success. Return -1 with EINVAL on an invalid name.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

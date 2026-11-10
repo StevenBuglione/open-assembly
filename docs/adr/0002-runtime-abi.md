@@ -17,6 +17,12 @@ original vector addresses. Only startup writes the objects; they do not serve
 as mutable environment variables. The stack strings and vectors retain their
 initial lifetimes. Initialization and finalization arrays are deferred.
 
+Phase 3 initializes the public `environ` variable after TLS and before `main`.
+It starts with a shallow copy of the `envp` pointer vector. The original
+stack vector and its following auxiliary vector remain available through
+the established private pointers. See [the allocator and environment
+contract](0004-allocator-environment.md).
+
 The first thread has one anonymous writable allocation for the thread control
 block and optional executable `PT_TLS` image. FS base is the thread pointer,
 installed using [Linux `ARCH_SET_FS`](https://docs.kernel.org/6.6/arch/x86/x86_64/fsgs.html).

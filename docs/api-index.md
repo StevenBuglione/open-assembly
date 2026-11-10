@@ -3,7 +3,7 @@
 
 This index lists authored function specifications. For implementation state, run `tools/queue status`.
 
-Specs: 56 of 507 inventoried functions. The inventory covers C17, the named POSIX bootstrap subset, and runtime ABI entries; see [inventory scope](cookbook/specifications.md#inventory-scope).
+Specs: 66 of 511 inventoried functions. The inventory covers C17, the named POSIX subset, and runtime ABI entries; see [inventory scope](cookbook/specifications.md#inventory-scope).
 
 | Function | Header | Prototype | Standard |
 | --- | --- | --- | --- |
@@ -11,13 +11,17 @@ Specs: 56 of 507 inventoried functions. The inventory covers C17, the named POSI
 | [`__errno_location`](../spec/functions/errno/__errno_location.toml) | `<errno.h>` | `int *__errno_location(void)` | Runtime ABI __errno_location, C17 7.5 |
 | [`__stack_chk_fail`](../spec/functions/compiler_rt/__stack_chk_fail.toml) | `<compiler_rt.h>` | `_Noreturn void __stack_chk_fail(void)` | Runtime ABI __stack_chk_fail |
 | [`_exit`](../spec/functions/unistd/_exit.toml) | `<unistd.h>` | `_Noreturn void _exit(int status)` | POSIX.1-2024 XSH _exit |
+| [`aligned_alloc`](../spec/functions/stdlib/aligned_alloc.toml) | `<stdlib.h>` | `void *aligned_alloc(size_t alignment, size_t size)` | C17 7.22.3.1 |
 | [`atexit`](../spec/functions/stdlib/atexit.toml) | `<stdlib.h>` | `int atexit(void (*func)(void))` | C17 7.22.4.2 |
 | [`atoi`](../spec/functions/stdlib/atoi.toml) | `<stdlib.h>` | `int atoi(const char *s)` | C17 7.22.1.2 |
 | [`atol`](../spec/functions/stdlib/atol.toml) | `<stdlib.h>` | `long atol(const char *s)` | C17 7.22.1.2 |
 | [`atoll`](../spec/functions/stdlib/atoll.toml) | `<stdlib.h>` | `long long atoll(const char *s)` | C17 7.22.1.2 |
 | [`bsearch`](../spec/functions/stdlib/bsearch.toml) | `<stdlib.h>` | `void *bsearch(const void *key, const void *base, size_t nmemb, size_t size, int (*compar)(const void *, const void *))` | C17 7.22.5.1 |
+| [`calloc`](../spec/functions/stdlib/calloc.toml) | `<stdlib.h>` | `void *calloc(size_t nmemb, size_t size)` | C17 7.22.3.2 |
 | [`close`](../spec/functions/unistd/close.toml) | `<unistd.h>` | `int close(int fd)` | POSIX.1-2024 XSH close |
 | [`exit`](../spec/functions/stdlib/exit.toml) | `<stdlib.h>` | `_Noreturn void exit(int status)` | C17 7.22.4.4 |
+| [`free`](../spec/functions/stdlib/free.toml) | `<stdlib.h>` | `void free(void *ptr)` | C17 7.22.3.3 |
+| [`getenv`](../spec/functions/stdlib/getenv.toml) | `<stdlib.h>` | `char *getenv(const char *name)` | C17 7.22.4.6 |
 | [`isalnum`](../spec/functions/ctype/isalnum.toml) | `<ctype.h>` | `int isalnum(int c)` | C17 7.4.1.1 |
 | [`isalpha`](../spec/functions/ctype/isalpha.toml) | `<ctype.h>` | `int isalpha(int c)` | C17 7.4.1.2 |
 | [`isblank`](../spec/functions/ctype/isblank.toml) | `<ctype.h>` | `int isblank(int c)` | C17 7.4.1.3 |
@@ -30,13 +34,18 @@ Specs: 56 of 507 inventoried functions. The inventory covers C17, the named POSI
 | [`isspace`](../spec/functions/ctype/isspace.toml) | `<ctype.h>` | `int isspace(int c)` | C17 7.4.1.10 |
 | [`isupper`](../spec/functions/ctype/isupper.toml) | `<ctype.h>` | `int isupper(int c)` | C17 7.4.1.11 |
 | [`isxdigit`](../spec/functions/ctype/isxdigit.toml) | `<ctype.h>` | `int isxdigit(int c)` | C17 7.4.1.12 |
+| [`malloc`](../spec/functions/stdlib/malloc.toml) | `<stdlib.h>` | `void *malloc(size_t size)` | C17 7.22.3.4 |
 | [`memchr`](../spec/functions/string/memchr.toml) | `<string.h>` | `void *memchr(const void *s, int c, size_t n)` | C17 7.24.5.1 |
 | [`memcmp`](../spec/functions/string/memcmp.toml) | `<string.h>` | `int memcmp(const void *a, const void *b, size_t n)` | C17 7.24.4.1 |
 | [`memcpy`](../spec/functions/string/memcpy.toml) | `<string.h>` | `void *memcpy(void *restrict dest, const void *restrict src, size_t n)` | C17 7.24.2.1 |
 | [`memmove`](../spec/functions/string/memmove.toml) | `<string.h>` | `void *memmove(void *dest, const void *src, size_t n)` | C17 7.24.2.2 |
 | [`memset`](../spec/functions/string/memset.toml) | `<string.h>` | `void *memset(void *s, int c, size_t n)` | C17 7.24.6.1 |
+| [`posix_memalign`](../spec/functions/stdlib/posix_memalign.toml) | `<stdlib.h>` | `int posix_memalign(void **out, size_t alignment, size_t size)` | POSIX.1-2024 XSH posix_memalign |
+| [`putenv`](../spec/functions/stdlib/putenv.toml) | `<stdlib.h>` | `int putenv(char *string)` | POSIX.1-2024 XSH putenv |
 | [`qsort`](../spec/functions/stdlib/qsort.toml) | `<stdlib.h>` | `void qsort(void *base, size_t nmemb, size_t size, int (*compar)(const void *, const void *))` | C17 7.22.5.2 |
 | [`read`](../spec/functions/unistd/read.toml) | `<unistd.h>` | `ssize_t read(int fd, void *buf, size_t count)` | POSIX.1-2024 XSH read |
+| [`realloc`](../spec/functions/stdlib/realloc.toml) | `<stdlib.h>` | `void *realloc(void *ptr, size_t size)` | C17 7.22.3.5 |
+| [`setenv`](../spec/functions/stdlib/setenv.toml) | `<stdlib.h>` | `int setenv(const char *name, const char *value, int overwrite)` | POSIX.1-2024 XSH setenv |
 | [`strcat`](../spec/functions/string/strcat.toml) | `<string.h>` | `char *strcat(char *restrict dest, const char *restrict src)` | C17 7.24.3.1 |
 | [`strchr`](../spec/functions/string/strchr.toml) | `<string.h>` | `char *strchr(const char *s, int c)` | C17 7.24.5.2 |
 | [`strcmp`](../spec/functions/string/strcmp.toml) | `<string.h>` | `int strcmp(const char *a, const char *b)` | C17 7.24.4.2 |
@@ -62,4 +71,5 @@ Specs: 56 of 507 inventoried functions. The inventory covers C17, the named POSI
 | [`strxfrm`](../spec/functions/string/strxfrm.toml) | `<string.h>` | `size_t strxfrm(char *restrict dest, const char *restrict src, size_t n)` | C17 7.24.4.5 |
 | [`tolower`](../spec/functions/ctype/tolower.toml) | `<ctype.h>` | `int tolower(int c)` | C17 7.4.2.1 |
 | [`toupper`](../spec/functions/ctype/toupper.toml) | `<ctype.h>` | `int toupper(int c)` | C17 7.4.2.2 |
+| [`unsetenv`](../spec/functions/stdlib/unsetenv.toml) | `<stdlib.h>` | `int unsetenv(const char *name)` | POSIX.1-2024 XSH unsetenv |
 | [`write`](../spec/functions/unistd/write.toml) | `<unistd.h>` | `ssize_t write(int fd, const void *buf, size_t count)` | POSIX.1-2024 XSH write |

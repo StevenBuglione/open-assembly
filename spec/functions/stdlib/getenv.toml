@@ -1,0 +1,20 @@
+name = "getenv"
+header = "stdlib.h"
+prototype = "char *getenv(const char *name)"
+standard = ["C17 7.22.4.6"]
+deps = []
+errno = []
+mt_safe = false
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:phase3-contract"]
+provenance = "original"
+semantics = [
+  "Search the active environ array for an exact case-sensitive name followed by equals.",
+  "Return a borrowed pointer to the value of the first matching entry, or NULL if absent.",
+  "An empty name, a name containing equals, or a NULL name is treated as no match.",
+  "Preserve errno. An environment mutation can invalidate a previously returned pointer.",
+]
+
+[abi]
+narrow_args = []
+variadic = false
