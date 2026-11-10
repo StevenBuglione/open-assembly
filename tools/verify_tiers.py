@@ -2,12 +2,14 @@
 
 import argparse
 import json
+import math
 import os
 from pathlib import Path
 import re
 import runpy
 import shutil
 import signal
+from statistics import median
 import subprocess
 import sys
 import tempfile
@@ -25,11 +27,12 @@ PHASES = (
     "phase6-zone", "phase6-luafiles", "phase6-spawn", "phase6-shell", "phase6-path", "phase6-strftime",
     "phase7-exact", "phase7-transcendental", "phase7-complex",
     "phase8-lifecycle", "phase8-sync", "phase8-c11", "phase8-openposix", "phase8-detectors",
+    "phase8-compiler-atomics",
     "phase9-multibyte", "phase9-bulk", "phase9-worker", "phase9-worker-sync", "phase9-wide",
     "phase9-libc-test", "phase9-stdio", "phase9-narrow-wide", "phase9-wctype",
     "phase10-endpoints", "phase10-inet", "phase10-netdb", "phase10-dns", "phase10-http",
-    "phase10-terminal", "phase10-libc-test", "phase10-glob", "phase11-vdso", "phase11-static-pie",
-    "phase11-allocator", "phase11-copy-benchmark",
+    "phase10-terminal", "phase10-libc-test", "phase10-glob", "phase10-regex", "phase11-vdso",
+    "phase11-static-pie", "phase11-allocator", "phase11-copy-benchmark", "phase11-allocator-benchmark",
 )
 EXTRA = ("fcntl-production", "extension-control")
 FUZZ_SECONDS = 300
@@ -38,7 +41,7 @@ GAPS = {
     "restricted_seccomp_matrix": "A separately selected restrictive seccomp policy needs its own runtime observations.",
     "remaining_binary32_domains": "The full remaining binary32 math campaigns need artifact-bound completion and audit.",
     "ltp_gnulib_conformance": "The roadmap's independent LTP and gnulib subsets need pinned executable gates.",
-    "remaining_musl_performance": "The existing memcpy benchmark covers one workload. Other musl performance criteria need measured gates.",
+    "remaining_musl_performance": "Copy and allocator benchmarks cover their predeclared workloads. Remaining musl performance criteria need measured gates.",
     "authorship_similarity": "The compiler-output similarity scan needs a pinned implementation and review policy.",
 }
 
@@ -177,6 +180,64 @@ def extension_control(commit, record):
             evidence[name] = {"path": archived.resolve().relative_to(ROOT).as_posix(), "sha256": digest}
 
 
+def check_allocator_benchmark(data):
+    workload = {"pairs": 9, "min_preflight_idle": 0.9, "geometric_mean_limit": 1.25,
+                "per_workload_limit": 1.5, "max_rss_excess_kib": 8192}
+    measurements = data.get("measurements")
+    if data.get("workload") != workload or type(measurements) is not dict or set(measurements) != {
+            "small", "mixed", "growth", "rss"}:
+        raise GateError("allocator benchmark did not use the declared workload and thresholds")
+
+    ratios = []
+    for name, result in measurements.items():
+        samples = result.get("samples", {}) if type(result) is dict else {}
+        if type(samples) is not dict or set(samples) != {"openasm", "musl"}:
+            raise GateError(f"allocator benchmark {name} is missing paired observations")
+        checksums = set()
+        observations = {}
+        for kind, rows in samples.items():
+            if type(rows) is not list or len(rows) != workload["pairs"]:
+                raise GateError(f"allocator benchmark {name} is missing paired observations")
+            observations[kind] = []
+            for pair, row in enumerate(rows, 1):
+                if type(row) is not dict or row.get("pair") != pair or type(row.get("checksum")) is not int:
+                    raise GateError(f"allocator benchmark {name} has an invalid pair")
+                checksums.add(row["checksum"])
+                if name == "rss":
+                    fields = ("baseline_kib", "peak_kib", "retained_kib", "released_kib")
+                    if any(type(row.get(key)) is not int or row[key] <= 0 for key in fields):
+                        raise GateError("allocator benchmark has invalid RSS samples")
+                    baseline, peak, retained, released = (row[key] for key in fields)
+                    if peak <= baseline:
+                        raise GateError("allocator benchmark has no RSS growth")
+                    observations[kind].append((retained - baseline, released - baseline))
+                else:
+                    elapsed, cpu = (row.get(key) for key in ("nanoseconds", "cpu_nanoseconds"))
+                    if (type(elapsed) is not int or type(cpu) is not int or min(elapsed, cpu) <= 0
+                            or elapsed - cpu > max(50_000, elapsed * (1 - workload["min_preflight_idle"]))):
+                        raise GateError(f"allocator benchmark {name} has invalid timing samples")
+                    observations[kind].append(elapsed)
+        if len(checksums) != 1:
+            raise GateError(f"allocator benchmark {name} checksum mismatch")
+        if name == "rss":
+            keys = ("retained_delta_kib", "released_delta_kib")
+            excess = {key: median(point[i] for point in observations["openasm"]) -
+                      median(point[i] for point in observations["musl"]) for i, key in enumerate(keys)}
+            if result.get("openasm_excess_kib") != excess or max(excess.values()) > workload["max_rss_excess_kib"]:
+                raise GateError("allocator benchmark exceeds or omits its RSS cap")
+        else:
+            ratio = median(observations["openasm"]) / median(observations["musl"])
+            stated = result.get("ratio")
+            if type(stated) not in (int, float) or stated != ratio or ratio > workload["per_workload_limit"]:
+                raise GateError(f"allocator benchmark {name} exceeds or omits its timing cap")
+            ratios.append(ratio)
+    observed = data.get("geometric_mean")
+    expected = math.exp(sum(math.log(ratio) for ratio in ratios) / len(ratios))
+    if (type(observed) not in (int, float) or not 0 < observed <= workload["geometric_mean_limit"]
+            or not math.isclose(observed, expected, rel_tol=1e-12)):
+        raise GateError("allocator benchmark exceeds or omits its geometric mean cap")
+
+
 def gate(name, record):
     environment = {**os.environ, "LC_ALL": "C", "OPEN_ASSEMBLY_LIBFUZZER_SECONDS": str(FUZZ_SECONDS)}
     started = time_ns()
@@ -202,6 +263,8 @@ def gate(name, record):
         path, data = fresh_report(ROOT, filename, scope, started)
         if name == "fcntl-production" and data.get("production_verified") is not True:
             raise GateError("fcntl production evidence is incomplete")
+        if name == "phase11-allocator-benchmark":
+            check_allocator_benchmark(data)
     record.update(evidence=path.relative_to(ROOT).as_posix(), evidence_sha256=sha256_file(path))
 
 

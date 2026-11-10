@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "tools"))
 from gate import GateError
 from production import libfuzzer_seconds
 from spec import snapshot_inputs
-from verify_tiers import evidence_json, fresh_report, invoke
+from verify_tiers import check_allocator_benchmark, evidence_json, fresh_report, invoke
 
 
 class TierEvidence(unittest.TestCase):
@@ -92,6 +92,30 @@ class TierEvidence(unittest.TestCase):
         with self.assertRaisesRegex(GateError, "exceeded"):
             invoke([sys.executable, "-c", "import time; time.sleep(10)"], result, timeout=0.1)
         self.assertTrue(result["timed_out"])
+
+    def test_allocator_benchmark_caps(self):
+        timing = [{"pair": i, "checksum": 3, "nanoseconds": 100000, "cpu_nanoseconds": 100000}
+                  for i in range(1, 10)]
+        samples = {"openasm": timing, "musl": timing}
+        measurements = {name: {"samples": samples, "ratio": 1.0} for name in ("small", "mixed", "growth")}
+        rss = {}
+        for kind, excess in (("openasm", 8192), ("musl", 0)):
+            rss[kind] = [{"pair": i, "checksum": 3, "baseline_kib": 1, "peak_kib": 9999,
+                          "retained_kib": 2 + excess, "released_kib": 2} for i in range(1, 10)]
+        measurements["rss"] = {"samples": rss, "openasm_excess_kib": {
+            "retained_delta_kib": 8192, "released_delta_kib": 0,
+        }}
+        record = {"measurements": measurements, "geometric_mean": 1.0,
+                  "workload": {"pairs": 9, "min_preflight_idle": 0.9, "geometric_mean_limit": 1.25,
+                               "per_workload_limit": 1.5, "max_rss_excess_kib": 8192}}
+        check_allocator_benchmark(record)
+        measurements["rss"]["openasm_excess_kib"]["retained_delta_kib"] = 8193
+        with self.assertRaisesRegex(GateError, "RSS cap"):
+            check_allocator_benchmark(record)
+        measurements["rss"]["openasm_excess_kib"]["retained_delta_kib"] = 8192
+        record["geometric_mean"] = 1.25
+        with self.assertRaisesRegex(GateError, "geometric mean cap"):
+            check_allocator_benchmark(record)
 
     def test_fuzz_budget_cannot_be_reduced(self):
         with patch.dict(os.environ, {"OPEN_ASSEMBLY_LIBFUZZER_SECONDS": "59"}):
