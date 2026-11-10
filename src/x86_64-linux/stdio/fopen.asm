@@ -38,8 +38,6 @@ fopen:
     push r14
     mov rbx, rdi
     mov r12, rsi
-    lea rdi, [rel __al_stdio_lock]
-    call __al_lock
     mov rdi, rbx
     mov rsi, r12
     call __al_stdio_open
@@ -52,13 +50,17 @@ fopen:
     test rax, rax
     jz .no_memory
     mov rbx, rax
-    mov rdi, rax
+    lea rdi, [rel __al_stdio_lock]
+    call __al_lock
+    mov rdi, rbx
     mov rsi, r13
     mov rdx, r14
     or edx, 8                    ; heap-owned stream
     call __al_stream_init
+    lea rdi, [rel __al_stdio_lock]
+    call __al_unlock
     mov r13, rbx
-    jmp .unlock
+    jmp .done
 .no_memory:
     mov rdi, r13
     call close
@@ -66,9 +68,7 @@ fopen:
     call __al_stdio_errno
 .failure:
     xor r13d, r13d
-.unlock:
-    lea rdi, [rel __al_stdio_lock]
-    call __al_unlock
+.done:
     mov rax, r13
     pop r14
     pop r13

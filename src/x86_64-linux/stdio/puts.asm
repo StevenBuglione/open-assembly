@@ -19,9 +19,8 @@ bits 64
 default rel
 
 global puts:function
-extern __al_stdio_lock:data
-extern __al_lock:function
-extern __al_unlock:function
+extern __al_stream_lock:function
+extern __al_stream_unlock:function
 extern strlen:function
 extern __al_stream_write:function
 extern stdout:data
@@ -34,8 +33,8 @@ puts:
     push r12
     mov rbx, [rel stdout]
     mov r12, rdi
-    lea rdi, [rel __al_stdio_lock]
-    call __al_lock
+    mov rdi, rbx
+    call __al_stream_lock
     mov rdi, r12
     call strlen
     mov rdi, rbx
@@ -54,8 +53,8 @@ puts:
     jz .unlock
     mov r12d, -1
 .unlock:
-    lea rdi, [rel __al_stdio_lock]
-    call __al_unlock
+    mov rdi, rbx
+    call __al_stream_unlock
     mov eax, r12d
     pop r12
     pop rbx

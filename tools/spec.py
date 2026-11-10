@@ -78,17 +78,18 @@ POSIX_SCOPE = {
                              "posix_spawnattr_getsigdefault", "posix_spawnattr_setsigdefault"},
                 "types": {"posix_spawnattr_t", "posix_spawn_file_actions_t"}, "macros": SPAWN_FLAGS},
     "setjmp.h": {"functions": {"sigsetjmp", "siglongjmp"}, "types": {"sigjmp_buf"}},
-    "time.h": {"functions": {"clock_gettime", "clock_getres", "clock_nanosleep", "gmtime_r", "nanosleep"},
+    "time.h": {"functions": {"clock_gettime", "clock_getres", "clock_nanosleep", "gmtime_r", "localtime_r", "nanosleep"},
                "types": {"clockid_t"}, "macros": CLOCK_POSIX},
     "signal.h": {"functions": {"kill", "sigaction", "sigaddset", "sigdelset", "sigemptyset", "sigfillset",
                                "sigismember", "sigpending", "sigprocmask", "sigsuspend"},
                  "types": {"pid_t", "siginfo_t", "sigset_t", "struct sigaction"},
                  "macros": SIGNAL_MASK_OPERATIONS | SIGNAL_ACTION_FLAGS | {"SIGRTMIN", "SIGRTMAX"}},
     "libgen.h": {"functions": {"dirname"}},
-    "stdio.h": {"functions": {"getc_unlocked", "pclose", "popen", "putchar_unlocked"}},
+    "stdio.h": {"functions": {"flockfile", "fseeko", "ftello", "funlockfile", "getc_unlocked", "pclose", "popen", "putchar_unlocked"}},
     "string.h": {"functions": {"strdup"}},
 }
 EXTENSION_SCOPE = {
+    "setjmp.h": {"_longjmp", "_setjmp"},
     "stdio.h": {"ferror_unlocked", "fputs_unlocked", "vasprintf"},
     "sys/ioctl.h": {"ioctl"},
 }
@@ -650,8 +651,8 @@ def load_project(root=ROOT):
 
 
 def nasm_name(name):
-    # WAIT is an x87 mnemonic. NASM strips the identifier escape in ELF.
-    return "$wait" if name == "wait" else name
+    # NASM strips the identifier escape for reserved words in ELF.
+    return "$" + name if name in {"abs", "wait"} else name
 
 
 def comment_header(spec):

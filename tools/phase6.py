@@ -31,6 +31,7 @@ CALENDAR = {"difftime", "gmtime", "gmtime_r"}
 LUAFILES = {"mkstemp", "remove", "rename", "tmpfile"}
 SHELL = {"system", "popen", "pclose"}
 PATH_EXEC = {"execv", "execvp", "posix_spawnp"}
+STRFTIME = {"strftime"}
 SPAWN = {
     "posix_spawn", "posix_spawn_file_actions_init", "posix_spawn_file_actions_destroy",
     "posix_spawn_file_actions_addclose", "posix_spawn_file_actions_adddup2", "posix_spawn_file_actions_addopen",
@@ -97,7 +98,7 @@ def execute_phase6(suite_name):
     suite = SUITE if suite_name == "files" else SUITE / suite_name
     public = {"files": PUBLIC, "compat": COMPAT, "process": PROCESS, "signal": SIGNAL, "jump": JUMP,
               "time": TIME, "calendar": CALENDAR, "luafiles": LUAFILES, "spawn": SPAWN,
-              "shell": SHELL, "path": PATH_EXEC}[suite_name]
+              "shell": SHELL, "path": PATH_EXEC, "strftime": STRFTIME}[suite_name]
     fault_wrappers = {
         SUITE / "fault.c": ("__al_syscall",),
         SUITE / "compat/vasprintf_fault.c": ("realloc", "free"),
@@ -175,5 +176,7 @@ if __name__ == "__main__":
                       help="run the shell and pipe-stream API probes")
     mode.add_argument("--path", dest="suite", action="store_const", const="path",
                       help="run the PATH execution and spawn probes")
+    mode.add_argument("--strftime", dest="suite", action="store_const", const="strftime",
+                      help="run the C-locale date-formatting probes")
     parser.set_defaults(suite="files")
     raise SystemExit(execute_phase6(parser.parse_args().suite))

@@ -1,0 +1,19 @@
+name = "atan2f"
+header = "math.h"
+prototype = "float atan2f(float y, float x)"
+standard = ["C17 7.12.4.4"]
+deps = ["fegetround", "feraiseexcept", "__errno_location"]
+errno = ["ERANGE"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:mpfr", "reference:fixed-point-interval", "diff:glibc"]
+provenance = "original"
+semantics = [
+  "Compute the inverse tangent in radians and use the active rounding mode.",
+  "Use both signs to select the quadrant, including for signed zeros and infinities.",
+  "Quiet signaling NaNs and raise FE_INVALID. An inexact tiny result raises FE_UNDERFLOW and FE_INEXACT with ERANGE.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

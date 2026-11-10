@@ -1,0 +1,18 @@
+name = "logbf"
+header = "math.h"
+prototype = "float logbf(float x)"
+standard = ["C17 7.12.6.11"]
+deps = ["feraiseexcept", "__errno_location"]
+errno = ["ERANGE"]
+mt_safe = true
+as_safe = true
+oracles = ["reference:mpfr", "reference:ieee-bits", "diff:glibc"]
+provenance = "original"
+semantics = [
+  "Return the base-two exponent of the leading bit as a floating value for finite nonzero x.",
+  "For zero return negative infinity and set ERANGE with FE_DIVBYZERO. For infinity return positive infinity.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

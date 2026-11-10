@@ -1,0 +1,18 @@
+name = "rintl"
+header = "math.h"
+prototype = "long double rintl(long double x)"
+standard = ["C17 7.12.9.4"]
+deps = ["feraiseexcept", "fegetround"]
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:mpfr", "reference:ieee-bits", "diff:glibc"]
+provenance = "original"
+semantics = [
+  "Round x to an integral value in the active rounding mode. Preserve zero sign.",
+  "Raise FE_INEXACT if a nonzero fraction is discarded.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

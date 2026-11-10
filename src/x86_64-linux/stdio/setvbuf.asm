@@ -19,9 +19,8 @@ bits 64
 default rel
 
 global setvbuf:function
-extern __al_stdio_lock:data
-extern __al_lock:function
-extern __al_unlock:function
+extern __al_stream_lock:function
+extern __al_stream_unlock:function
 extern malloc:function
 extern free:function
 extern __al_stdio_errno:function
@@ -41,8 +40,8 @@ setvbuf:
     movsxd r13, edx               ; buffering mode
     mov r14, rcx                  ; requested capacity
     xor r15d, r15d                ; new buffer ownership flag
-    lea rdi, [rel __al_stdio_lock]
-    call __al_lock
+    mov rdi, rbx
+    call __al_stream_lock
     cmp r13, 2
     ja .invalid
     cmp qword [rbx], 0
@@ -100,8 +99,8 @@ setvbuf:
 .failure:
     mov r15d, -1
 .unlock:
-    lea rdi, [rel __al_stdio_lock]
-    call __al_unlock
+    mov rdi, rbx
+    call __al_stream_unlock
     mov eax, r15d
     add rsp, 8
     pop r15

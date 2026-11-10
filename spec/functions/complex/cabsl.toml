@@ -1,0 +1,17 @@
+name = "cabsl"
+header = "complex.h"
+prototype = "long double cabsl(long double _Complex z)"
+standard = ["C17 7.3.8.1"]
+deps = ["hypotl"]
+errno = ["ERANGE"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:ieee-bits", "reference:mpfr", "diff:glibc"]
+provenance = "original"
+semantics = [
+  "Return the magnitude using the exact sum of squares and final square-root rounding. Follow the corresponding hypot range and floating exception contract.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

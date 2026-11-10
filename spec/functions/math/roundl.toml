@@ -1,0 +1,18 @@
+name = "roundl"
+header = "math.h"
+prototype = "long double roundl(long double x)"
+standard = ["C17 7.12.9.6"]
+deps = ["feraiseexcept"]
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:mpfr", "reference:ieee-bits", "diff:glibc"]
+provenance = "original"
+semantics = [
+  "Round to nearest integral value with ties away from zero, independently of the active mode.",
+  "Preserve zero sign. Do not raise FE_INEXACT merely for a discarded fraction.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

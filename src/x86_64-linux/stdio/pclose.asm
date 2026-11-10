@@ -20,9 +20,10 @@ bits 64
 default rel
 
 global pclose:function
-extern __al_stdio_lock:data
-extern __al_lock:function
-extern __al_unlock:function
+extern __al_stream_lock:function
+extern __al_stream_unlock:function
+extern __al_stream_unlock_all:function
+extern __al_stream_unpin:function
 extern __al_stream_close:function
 extern __al_syscall:function
 extern __al_syscall_result:function
@@ -39,8 +40,7 @@ pclose:
     mov rbx, rdi
     test rbx, rbx
     jz .invalid
-    lea rdi, [rel __al_stdio_lock]
-    call __al_lock
+    call __al_stream_lock
     mov r12, [rbx + 88]
     test r12, r12
     jle .unrelated
@@ -54,8 +54,11 @@ pclose:
     call __errno_location
     mov r13d, [rax]               ; keep the stream error through wait
 .unlock:
-    lea rdi, [rel __al_stdio_lock]
-    call __al_unlock
+    mov rdi, rbx
+    call __al_stream_unlock_all
+    mov rdi, rbx
+    mov esi, 1
+    call __al_stream_unpin
     mov qword [rsp], 0
 .wait:
     mov rsi, r12
@@ -78,8 +81,8 @@ pclose:
     neg rax
     jmp .error
 .unrelated:
-    lea rdi, [rel __al_stdio_lock]
-    call __al_unlock
+    mov rdi, rbx
+    call __al_stream_unlock
 .invalid:
     mov rax, -22                  ; EINVAL
 .error:

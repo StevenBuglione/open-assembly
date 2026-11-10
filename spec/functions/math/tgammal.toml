@@ -1,0 +1,19 @@
+name = "tgammal"
+header = "math.h"
+prototype = "long double tgammal(long double x)"
+standard = ["C17 7.12.8.4"]
+deps = ["fegetround", "feraiseexcept", "__errno_location"]
+errno = ["EDOM", "ERANGE"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:mpfr", "reference:fixed-point-interval", "diff:glibc"]
+provenance = "original"
+semantics = [
+  "Compute the gamma value, including its sign on the negative real intervals. Use the active rounding mode.",
+  "Signed zero gives signed infinity with ERANGE and FE_DIVBYZERO. Negative integers and negative infinity report EDOM and FE_INVALID with a quiet NaN.",
+  "Quiet signaling NaNs with FE_INVALID. Overflow or a tiny inexact result reports ERANGE with the corresponding flags.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

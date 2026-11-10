@@ -1,0 +1,21 @@
+name = "localtime_r"
+header = "time.h"
+prototype = "struct tm *localtime_r(const time_t *restrict timer, struct tm *restrict result)"
+standard = ["POSIX.1-2024 XSH localtime_r"]
+deps = ["getenv", "calloc", "malloc", "free", "strlen", "strcmp", "memcpy", "close", "__errno_location"]
+errno = ["EOVERFLOW"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:rfc9636"]
+provenance = "original"
+semantics = [
+  "Convert signed epoch seconds using the selected time zone and the proleptic Gregorian calendar.",
+  "Select UTC for empty TZ or an unavailable or invalid zone. Use /etc/localtime when TZ is absent.",
+  "Read the authoritative 64-bit TZif block when present and apply its trailing rule at and after the last transition.",
+  "Publish local calendar fields, the DST indicator, the signed UTC offset, and the zone abbreviation.",
+  "Return result and preserve errno on success. On overflow return null with EOVERFLOW and leave result unchanged.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

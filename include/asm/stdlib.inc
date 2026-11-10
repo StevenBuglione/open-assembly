@@ -2,7 +2,12 @@
 %ifndef OPEN_ASSEMBLY_7374646C69622E68
 %define OPEN_ASSEMBLY_7374646C69622E68
 
+%define EXIT_SUCCESS 0
+%define EXIT_FAILURE 1
+
 extern _Exit
+extern abort
+extern $abs
 extern aligned_alloc
 extern atexit
 extern atof

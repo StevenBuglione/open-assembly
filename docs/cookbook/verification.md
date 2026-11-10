@@ -45,6 +45,10 @@ lifecycle, and PATH search with exec and spawn. Each records separate
 backend, host, and stub observations. Local time and per-function
 production checks have separate requirements.
 
+The `phase6-strftime` gate checks C-locale directives and modifiers,
+exact buffer limits, and the ISO week-year across a full 400-year cycle.
+Its manifest records the host comparison scope for custom zone names.
+
 ## Phase 4 streams and utilities
 
 ```sh

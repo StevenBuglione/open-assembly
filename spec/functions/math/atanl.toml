@@ -1,0 +1,19 @@
+name = "atanl"
+header = "math.h"
+prototype = "long double atanl(long double x)"
+standard = ["C17 7.12.4.3"]
+deps = ["fegetround", "feraiseexcept", "__errno_location"]
+errno = ["ERANGE"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:mpfr", "reference:fixed-point-interval", "diff:glibc"]
+provenance = "original"
+semantics = [
+  "Compute the inverse tangent in radians and use the active rounding mode.",
+  "Preserve signed zero. Infinite operands produce the signed half-pi result.",
+  "Quiet signaling NaNs and raise FE_INVALID. An inexact tiny result raises FE_UNDERFLOW and FE_INEXACT with ERANGE.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

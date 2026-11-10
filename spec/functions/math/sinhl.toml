@@ -1,0 +1,19 @@
+name = "sinhl"
+header = "math.h"
+prototype = "long double sinhl(long double x)"
+standard = ["C17 7.12.5.5"]
+deps = ["fegetround", "feraiseexcept", "__errno_location"]
+errno = ["ERANGE"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:mpfr", "reference:fixed-point-interval", "diff:glibc"]
+provenance = "original"
+semantics = [
+  "Compute the hyperbolic sine of x in the active rounding mode.",
+  "Preserve the sign of zero and infinity.",
+  "Quiet signaling NaNs and raise FE_INVALID. Overflow or an inexact tiny result reports ERANGE with the corresponding flags.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

@@ -1,0 +1,68 @@
+#!/usr/bin/env python3
+"""Check or emit certified fixed-point constants for complex power."""
+
+import argparse
+from pathlib import Path
+import sys
+
+import gmpy2
+
+BITS = 17408
+SOURCE = (Path(__file__).resolve().parent.parent /
+          "src/x86_64-linux/complex/__al_complex_power_constant.asm")
+
+
+def enclosures():
+    with gmpy2.context(precision=BITS + 256, round=gmpy2.RoundDown):
+        ln2_lo = gmpy2.log(2)
+        quarter_pi_lo = gmpy2.const_pi() / 4
+    with gmpy2.context(precision=BITS + 256, round=gmpy2.RoundUp):
+        ln2_hi = gmpy2.log(2)
+        quarter_pi_hi = gmpy2.const_pi() / 4
+        inverse_hi = 1 / ln2_lo
+    with gmpy2.context(precision=BITS + 256, round=gmpy2.RoundDown):
+        inverse_lo = 1 / ln2_hi
+    return (
+        ("half_ln2", ln2_lo, ln2_hi, BITS - 1),
+        ("quarter_pi", quarter_pi_lo, quarter_pi_hi, BITS),
+        ("inverse_ln2", inverse_lo, inverse_hi, BITS),
+    )
+
+
+def emit():
+    lines = []
+    for name, low, high, power in enclosures():
+        with gmpy2.context(precision=BITS + 256):
+            lower = int(gmpy2.floor(gmpy2.mul_2exp(low, power)))
+            upper = int(gmpy2.floor(gmpy2.mul_2exp(high, power)))
+        if lower != upper:
+            raise ValueError(f"insufficient enclosure precision for {name}")
+        words = []
+        while lower:
+            words.append(lower & 0xFFFFFFFF)
+            lower >>= 32
+        lines.extend((f"{name}:", f"    dq {len(words)}"))
+        for start in range(0, len(words), 6):
+            words_line = ", ".join(f"0x{word:08x}" for word in words[start:start + 6])
+            lines.append(f"    dd {words_line}")
+    return "\n".join(lines) + "\n"
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--emit", action="store_true")
+    args = parser.parse_args()
+    expected = emit()
+    if args.emit:
+        sys.stdout.write(expected)
+    else:
+        source = SOURCE.read_text()
+        start = source.index("half_ln2:")
+        end = source.index("\nsection .note.GNU-stack", start)
+        if source[start:end] != expected:
+            raise SystemExit("complex power constants differ from the directed MPFR enclosure")
+        print(f"certified {BITS}-bit floors for ln(2)/2, pi/4 and 1/ln(2)")
+
+
+if __name__ == "__main__":
+    main()

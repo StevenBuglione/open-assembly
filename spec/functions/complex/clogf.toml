@@ -1,0 +1,17 @@
+name = "clogf"
+header = "complex.h"
+prototype = "float _Complex clogf(float _Complex z)"
+standard = ["C17 7.3.7.2"]
+deps = ["fegetround", "feraiseexcept", "__errno_location"]
+errno = ["ERANGE"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:mpfr", "reference:complex-branch-cut", "diff:glibc"]
+provenance = "original"
+semantics = [
+  "Return the natural logarithm with real part log of the magnitude and imaginary part the signed argument. The branch cut is the negative real axis.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

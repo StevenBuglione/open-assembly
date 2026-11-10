@@ -1,0 +1,17 @@
+name = "cprojf"
+header = "complex.h"
+prototype = "float _Complex cprojf(float _Complex z)"
+standard = ["C17 7.3.9.5"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:ieee-bits", "reference:mpfr", "diff:glibc"]
+provenance = "original"
+semantics = [
+  "If either component is infinite, return positive real infinity and imaginary zero with the original imaginary sign. Otherwise preserve both components.",
+]
+
+[abi]
+narrow_args = []
+variadic = false
