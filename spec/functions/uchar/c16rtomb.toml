@@ -1,0 +1,18 @@
+name = "c16rtomb"
+header = "uchar.h"
+prototype = "size_t c16rtomb(char *restrict s, char16_t c16, mbstate_t *restrict ps)"
+standard = ["C17 7.28.1.2"]
+deps = ["__errno_location"]
+errno = ["EILSEQ"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:unicode-scalar", "reference:mbstate-transition", "diff:glibc"]
+provenance = "original"
+semantics = [
+  "Encode a UTF-16 code unit or a completed surrogate pair. Queue a high surrogate in C.UTF-8 and return zero without writing.",
+  "Clear the affected state on an encoding error. Preserve errno for successful or incomplete conversions.",
+]
+
+[abi]
+narrow_args = ["si:u16"]
+variadic = false

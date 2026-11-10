@@ -1,0 +1,18 @@
+name = "iswctype"
+header = "wctype.h"
+prototype = "int iswctype(wint_t wc, wctype_t desc)"
+standard = ["C17 7.30.2.2.1"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:unicode-16.0.0", "diff:glibc", "diff:musl"]
+provenance = "original"
+semantics = [
+  "Test the class described by a wctype descriptor. Zero yields false.",
+  "Preserve errno.",
+]
+
+[abi]
+narrow_args = ["edi:u32"]
+variadic = false

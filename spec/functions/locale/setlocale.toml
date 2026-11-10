@@ -2,16 +2,17 @@ name = "setlocale"
 header = "locale.h"
 prototype = "char *setlocale(int category, const char *locale)"
 standard = ["C17 7.11.1.1"]
-deps = ["getenv", "strcmp"]
+deps = ["getenv", "strlen", "strncmp"]
 errno = []
 mt_safe = false
 as_safe = false
 oracles = ["reference:c-locale", "reference:locale-environment", "diff:glibc", "diff:musl"]
 provenance = "original"
 semantics = [
-  "Query or select the C locale for a supported category. Accept the C and POSIX names and return C.",
+  "Query or select C or C.UTF-8 for one category or for every category. Accept POSIX and C.utf8 aliases.",
+  "Return the canonical category name, or an LC_ALL assignment string that can restore a mixed selection.",
   "For an empty name, consult LC_ALL, the category variable, and LANG in that order, ignoring empty values and defaulting to C.",
-  "An invalid category or unsupported selection returns null without changing the locale or errno.",
+  "An invalid category or unsupported selection returns null with the previous locale and errno intact.",
 ]
 
 [abi]

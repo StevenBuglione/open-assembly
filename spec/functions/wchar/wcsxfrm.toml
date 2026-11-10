@@ -1,0 +1,18 @@
+name = "wcsxfrm"
+header = "wchar.h"
+prototype = "size_t wcsxfrm(wchar_t *restrict dst, const wchar_t *restrict src, size_t n)"
+standard = ["C17 7.29.4.4.4"]
+deps = ["wcslen", "wmemcpy"]
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:wide-object-bounds", "diff:glibc", "diff:musl"]
+provenance = "original"
+semantics = [
+  "Return the source length. Write the identity collation key including its null only when it fits.",
+  "Preserve errno.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

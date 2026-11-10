@@ -1,5 +1,6 @@
-; Original integer scanf interpreter.
-; rdi = input, rsi = format, rdx = va_list, rcx = 0 string / 1 FILE.
+; Original byte and wide scanf interpreter. rdi = input, rsi = format,
+; rdx = va_list. Source kind rcx is 0 byte string, 1 byte stream,
+; 2 wide string or 3 wide stream.
 bits 64
 default rel
 
@@ -20,6 +21,11 @@ extern __al_scan_store:function
 extern __al_scan_float:function
 extern __al_va_next:function
 extern isspace:function
+extern iswspace:function
+extern __al_fmt_unit:function
+extern __al_stream_orient:function
+extern __al_scan_wset:function
+extern __al_scan_wchars:function
 extern malloc:function
 extern free:function
 extern memcpy:function
@@ -33,16 +39,39 @@ __al_vscan:
     push r13
     push r14
     push r15
-    sub rsp, 72
+    sub rsp, 104
     mov [rsp], rdi
     mov [rsp + 8], rcx
     mov rbx, rsi
     mov r12, rdx
     xor r14d, r14d                ; assignments
     xor r15d, r15d                ; completed conversion
+    mov qword [rsp + 72], 1    ; format stride
+    cmp rcx, 2
+    jb .select_source
+    mov qword [rsp + 72], 4
+.select_source:
     cmp qword [rsp + 8], 1
+    je .lock_stream
+    cmp qword [rsp + 8], 3
     jne .scratch_lock
+.lock_stream:
     call __al_stream_lock
+    mov rdi, [rsp]
+    cmp qword [rsp + 8], 3
+    je .wide_orientation
+    cmp dword [rdi + 128], 1
+    je .wrong_orientation
+    mov dword [rdi + 128], -1
+    jmp .scratch_lock
+.wide_orientation:
+    mov esi, 1
+    call __al_stream_orient
+    test eax, eax
+    jg .scratch_lock
+.wrong_orientation:
+    mov r14d, -1
+    jmp .stream_unlock
 .scratch_lock:
     lea rdi, [rel scan_lock]
     call __al_lock
@@ -51,19 +80,29 @@ __al_vscan:
     mov [r13], rax
     mov rax, [rsp + 8]
     mov [r13 + 8], rax
-    mov qword [r13 + 16], 0       ; bytes consumed
-    mov qword [r13 + 24], -2      ; no peeked byte
+    mov qword [r13 + 16], 0       ; input units consumed
+    mov qword [r13 + 24], -2      ; no peeked unit
+    mov dword [r13 + 48], 0       ; byte source read error
 
 .next:
-    movzx edi, byte [rbx]
-    test edi, edi
+    mov rdi, rbx
+    mov rsi, [rsp + 72]
+    call __al_fmt_unit
+    test eax, eax
     jz .finish
-    cmp edi, 37
+    cmp eax, 37
     je .conversion
+    mov edi, eax
+    cmp qword [rsp + 72], 4
+    je .wide_space
     call isspace
+    jmp .format_space
+.wide_space:
+    call iswspace
+.format_space:
     test eax, eax
     jz .literal
-    inc rbx
+    add rbx, [rsp + 72]
     mov rdi, r13
     call __al_scan_space
     jmp .next
@@ -72,16 +111,23 @@ __al_vscan:
     call __al_scan_peek
     test rax, rax
     js .input_failure
-    cmp al, [rbx]
+    mov [rsp + 88], eax
+    mov rdi, rbx
+    mov rsi, [rsp + 72]
+    call __al_fmt_unit
+    cmp eax, [rsp + 88]
     jne .finish
-    inc rbx
+    add rbx, [rsp + 72]
     mov rdi, r13
     call __al_scan_take
     jmp .next
 
 .conversion:
-    inc rbx
-    cmp byte [rbx], 37
+    add rbx, [rsp + 72]
+    mov rdi, rbx
+    mov rsi, [rsp + 72]
+    call __al_fmt_unit
+    cmp eax, 37
     jne .fields
     mov rdi, r13
     call __al_scan_space
@@ -90,12 +136,14 @@ __al_vscan:
     mov qword [rsp + 16], -1      ; unlimited width
     mov qword [rsp + 24], 0       ; suppression
     mov qword [rsp + 32], 4       ; integer destination width
-    cmp byte [rbx], 42
+    mov qword [rsp + 80], 0
+    cmp eax, 42
     jne .width
-    inc rbx
+    add rbx, [rsp + 72]
     mov qword [rsp + 24], 1
 .width:
     mov rdi, rbx
+    mov rsi, [rsp + 72]
     call __al_fmt_decimal
     cmp rdx, rbx
     je .length
@@ -104,7 +152,9 @@ __al_vscan:
     mov [rsp + 16], rax
     mov rbx, rdx
 .length:
-    movzx eax, byte [rbx]
+    mov rdi, rbx
+    mov rsi, [rsp + 72]
+    call __al_fmt_unit
     cmp eax, 104
     je .short
     cmp eax, 108
@@ -119,30 +169,40 @@ __al_vscan:
     je .extended
     jmp .specifier
 .extended:
-    inc rbx
+    add rbx, [rsp + 72]
     mov qword [rsp + 32], 16
     jmp .specifier
 .short:
-    inc rbx
+    add rbx, [rsp + 72]
     mov qword [rsp + 32], 2
-    cmp byte [rbx], 104
+    mov rdi, rbx
+    mov rsi, [rsp + 72]
+    call __al_fmt_unit
+    cmp eax, 104
     jne .specifier
-    inc rbx
+    add rbx, [rsp + 72]
     mov qword [rsp + 32], 1
     jmp .specifier
 .long:
-    inc rbx
-    cmp byte [rbx], 108
+    add rbx, [rsp + 72]
+    mov rdi, rbx
+    mov rsi, [rsp + 72]
+    call __al_fmt_unit
+    cmp eax, 108
     jne .long_size
 .one_long:
-    inc rbx
+    add rbx, [rsp + 72]
 .long_size:
     mov qword [rsp + 32], 8
 .specifier:
-    movzx eax, byte [rbx]
+    mov rdi, rbx
+    mov rsi, [rsp + 72]
+    call __al_fmt_unit
     test eax, eax
     jz .invalid
-    inc rbx
+    cmp eax, 127
+    ja .invalid
+    add rbx, [rsp + 72]
     cmp eax, 110
     je .count
     cmp eax, 99
@@ -276,14 +336,28 @@ __al_vscan:
 .brackets:
     mov qword [rsp + 40], 2
     mov rdi, rbx
+    cmp qword [rsp + 72], 4
+    je .wide_brackets
     lea rsi, [rel scan_set]
     call __al_scan_set
     test rax, rax
     jz .invalid
     mov rbx, rax
+    jmp .byte_field
+.wide_brackets:
+    mov [rsp + 80], rbx
+    call __al_scan_wset
+    test rax, rax
+    jz .invalid
+    mov rbx, rax
 .byte_field:
+    cmp qword [rsp + 72], 4
+    je .wide_field
+    cmp qword [rsp + 32], 8
+    je .byte_destination_init
     cmp qword [rsp + 32], 4
     jne .invalid
+.byte_destination_init:
     mov qword [rsp + 48], 0       ; destination or suppressed
     mov qword [rsp + 56], 0       ; optional temporary %c array
     cmp qword [rsp + 24], 0
@@ -296,6 +370,10 @@ __al_vscan:
     cmp qword [rsp + 16], 1
     je .scan_bytes
     mov rdi, [rsp + 16]
+    cmp qword [rsp + 32], 8
+    jne .allocate_byte_field
+    shl rdi, 2
+.allocate_byte_field:
     call malloc
     test rax, rax
     jz .input_failure
@@ -310,6 +388,11 @@ __al_vscan:
     mov rdx, [rsp + 16]
     mov rcx, [rsp + 40]
     lea r8, [rel scan_set]
+    xor r9d, r9d
+    cmp qword [rsp + 32], 8
+    jne .scan_chars_ready
+    inc r9d
+.scan_chars_ready:
     call __al_scan_chars
     mov [rsp + 64], eax
     mov rsi, [rsp + 56]
@@ -318,9 +401,59 @@ __al_vscan:
     test eax, eax
     jnz .release_temp
     mov rdi, [rsp + 48]
-    mov rdx, [rsp + 16]
     call memcpy
 .release_temp:
+    mov rdi, [rsp + 56]
+    call free
+    jmp .byte_result
+.wide_field:
+    cmp qword [rsp + 32], 4
+    je .wide_destination
+    cmp qword [rsp + 32], 8
+    jne .invalid
+.wide_destination:
+    mov qword [rsp + 48], 0     ; destination or suppressed
+    mov qword [rsp + 56], 0     ; optional atomic c output
+    cmp qword [rsp + 24], 0
+    jne .scan_wide
+    mov rdi, r12
+    call __al_va_next
+    mov [rsp + 48], rax
+    cmp qword [rsp + 40], 0
+    jne .scan_wide
+    cmp qword [rsp + 16], 1
+    je .scan_wide
+    mov rdi, [rsp + 16]
+    shl rdi, 2                  ; wchar_t or up to four encoded bytes
+    call malloc
+    test rax, rax
+    jz .input_failure
+    mov [rsp + 56], rax
+.scan_wide:
+    mov rsi, [rsp + 56]
+    test rsi, rsi
+    jnz .wide_output
+    mov rsi, [rsp + 48]
+.wide_output:
+    mov rdi, r13
+    mov rdx, [rsp + 16]
+    mov rcx, [rsp + 40]
+    mov r8, [rsp + 80]
+    mov r9d, 1
+    cmp qword [rsp + 32], 8
+    jne .wide_units
+    mov r9d, 4
+.wide_units:
+    call __al_scan_wchars
+    mov [rsp + 64], eax
+    mov rsi, [rsp + 56]
+    test rsi, rsi
+    jz .byte_result
+    test eax, eax
+    jnz .wide_release
+    mov rdi, [rsp + 48]
+    call memcpy
+.wide_release:
     mov rdi, [rsp + 56]
     call free
 .byte_result:
@@ -344,24 +477,45 @@ __al_vscan:
     jnz .finish
     mov r14d, -1
 .finish:
-    cmp qword [r13 + 8], 0
-    je .unlock
+    cmp qword [r13 + 8], 1
+    je .preserve_peek
+    cmp qword [r13 + 8], 3
+    jne .unlock
+.preserve_peek:
     mov rax, [r13 + 24]
     test rax, rax
     js .unlock
     mov rdi, [r13]
-    mov [rdi + 72], rax           ; preserve one nonmatching lookahead byte
+    cmp qword [r13 + 8], 3
+    je .wide_peek
+    mov [rdi + 72], rax
+    jmp .clear_eof
+.wide_peek:
+    cmp dword [r13 + 52], 0
+    je .wide_physical_peek
+    mov [rdi + 144], eax        ; restore the caller’s synthetic pushback
+    jmp .clear_eof
+.wide_physical_peek:
+    mov [rdi + 148], eax
+    mov eax, [r13 + 48]
+    mov [rdi + 160], eax
+    mov rax, [r13 + 56]
+    mov [rdi + 168], rax
+.clear_eof:
     and qword [rdi + 8], -17
 .unlock:
     lea rdi, [rel scan_lock]
     call __al_unlock
     cmp qword [rsp + 8], 1
+    je .stream_unlock
+    cmp qword [rsp + 8], 3
     jne .result
+.stream_unlock:
     mov rdi, [rsp]
     call __al_stream_unlock
 .result:
     mov eax, r14d
-    add rsp, 72
+    add rsp, 104
     pop r15
     pop r14
     pop r13
@@ -372,7 +526,7 @@ __al_vscan:
 
 section .bss.__al_vscan alloc noexec write nobits align=8
 input:
-    resq 5
+    resq 8
 scan_set:
     resb 256
 

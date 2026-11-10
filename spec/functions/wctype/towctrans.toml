@@ -1,0 +1,18 @@
+name = "towctrans"
+header = "wctype.h"
+prototype = "wint_t towctrans(wint_t wc, wctrans_t desc)"
+standard = ["C17 7.30.3.2.1"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:unicode-16.0.0", "diff:glibc", "diff:musl"]
+provenance = "original"
+semantics = [
+  "Apply the selected case mapping. A zero descriptor leaves the input unchanged.",
+  "Preserve errno.",
+]
+
+[abi]
+narrow_args = ["edi:u32"]
+variadic = false

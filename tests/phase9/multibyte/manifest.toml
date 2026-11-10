@@ -1,0 +1,365 @@
+schema = 1
+
+[[case]]
+name = "multibyte-names"
+sources = ["tests/phase9/multibyte/locale.c"]
+requires = ["setlocale"]
+args = ["names"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Project canonical names, category values, and MB_CUR_MAX are runtime-specific."
+
+[[case]]
+name = "multibyte-environment"
+sources = ["tests/phase9/multibyte/locale.c"]
+requires = ["setlocale"]
+args = ["environment"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Project category assignment serialization and rejection are runtime-specific."
+
+[[case]]
+name = "multibyte-record"
+sources = ["tests/phase9/multibyte/locale.c"]
+requires = ["localeconv"]
+args = ["record"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "multibyte-scalar32"
+sources = ["tests/phase9/multibyte/convert.c"]
+requires = ["mbrtoc32", "c32rtomb"]
+args = ["scalar32"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "multibyte-scalar16"
+sources = ["tests/phase9/multibyte/convert.c"]
+requires = ["mbrtoc16", "c16rtomb"]
+args = ["scalar16"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "multibyte-scalar-wide"
+sources = ["tests/phase9/multibyte/convert.c"]
+requires = ["mbrtowc", "wcrtomb"]
+args = ["scalar-wide"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "multibyte-split"
+sources = ["tests/phase9/multibyte/convert.c"]
+requires = ["mbrtowc", "mbrlen", "wcrtomb", "mbsinit"]
+args = ["split"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "multibyte-defaults"
+sources = ["tests/phase9/multibyte/convert.c"]
+requires = ["mbrtoc16", "c16rtomb", "mbrtoc32", "c32rtomb", "mbrtowc", "wcrtomb", "mbrlen"]
+args = ["defaults"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "multibyte-invalid"
+sources = ["tests/phase9/multibyte/convert.c"]
+requires = ["mbrtoc32", "c32rtomb", "wcrtomb", "c16rtomb", "mbsinit"]
+args = ["invalid"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The project resets erroneous states and enforces strict RFC 3629 and ASCII C locale rules."
+
+[[case]]
+name = "multibyte-guard"
+sources = ["tests/phase9/multibyte/guard.c"]
+requires = ["mbrtoc32", "mbrtoc16", "c32rtomb", "c16rtomb"]
+args = []
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The guard fixture uses the project startup auxv and raw Linux syscall ABI."
+
+[[case]]
+name = "multibyte-btowc"
+sources = ["tests/phase9/multibyte/convert.c"]
+requires = ["btowc"]
+args = ["btowc"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "multibyte-wctob"
+sources = ["tests/phase9/multibyte/convert.c"]
+requires = ["wctob"]
+args = ["wctob"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "multibyte-mbsinit"
+sources = ["tests/phase9/multibyte/convert.c"]
+requires = ["mbsinit"]
+args = ["mbsinit"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "multibyte-mbrlen"
+sources = ["tests/phase9/multibyte/convert.c"]
+requires = ["mbrlen"]
+args = ["mbrlen"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "multibyte-mbrtowc"
+sources = ["tests/phase9/multibyte/convert.c"]
+requires = ["mbrtowc"]
+args = ["mbrtowc"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "multibyte-wcrtomb"
+sources = ["tests/phase9/multibyte/convert.c"]
+requires = ["wcrtomb"]
+args = ["wcrtomb"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "multibyte-mbrtoc16"
+sources = ["tests/phase9/multibyte/convert.c"]
+requires = ["mbrtoc16"]
+args = ["mbrtoc16"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "multibyte-c16rtomb"
+sources = ["tests/phase9/multibyte/convert.c"]
+requires = ["c16rtomb"]
+args = ["c16rtomb"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "multibyte-mbrtoc32"
+sources = ["tests/phase9/multibyte/convert.c"]
+requires = ["mbrtoc32"]
+args = ["mbrtoc32"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "multibyte-c32rtomb"
+sources = ["tests/phase9/multibyte/convert.c"]
+requires = ["c32rtomb"]
+args = ["c32rtomb"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[stub]]
+symbol = "setlocale"
+case = "multibyte-names"
+status = 10
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "localeconv"
+case = "multibyte-record"
+status = 30
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "btowc"
+case = "multibyte-btowc"
+status = 51
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "wctob"
+case = "multibyte-wctob"
+status = 52
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "mbsinit"
+case = "multibyte-mbsinit"
+status = 53
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "mbrlen"
+case = "multibyte-mbrlen"
+status = 54
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "mbrtowc"
+case = "multibyte-mbrtowc"
+status = 55
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "wcrtomb"
+case = "multibyte-wcrtomb"
+status = 56
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "mbrtoc16"
+case = "multibyte-mbrtoc16"
+status = 57
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "c16rtomb"
+case = "multibyte-c16rtomb"
+status = 58
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "mbrtoc32"
+case = "multibyte-mbrtoc32"
+status = 59
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "c32rtomb"
+case = "multibyte-c32rtomb"
+status = 60
+stdout = ""
+stderr = ""

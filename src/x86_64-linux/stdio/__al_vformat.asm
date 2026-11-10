@@ -1,6 +1,7 @@
-; Original byte, integer, and floating format interpreter.
+; Original byte and wide format interpreter.
 ; rdi = sink, rsi = size for string output, rdx = format, rcx = va_list.
-; r8 = 0 for a string sink, 1 for a FILE sink, or 2 for an allocated string sink.
+; Sink kind r8 is 0 byte buffer, 1 byte stream, 2 allocated byte buffer,
+; 3 wide buffer, or 4 wide stream.
 ; The allocated sink receives a char ** in rdi.
 bits 64
 default rel
@@ -18,6 +19,11 @@ extern __al_fmt_float:function
 extern __al_va_double:function
 extern __al_va_extended:function
 extern __al_fmt_text:function
+extern __al_fmt_unit:function
+extern __al_fmt_wemit:function
+extern __al_fmt_wtext:function
+extern __al_fmt_nwide:function
+extern __al_stream_orient:function
 extern __al_stdio_errno:function
 extern strlen:function
 extern malloc:function
@@ -32,15 +38,44 @@ __al_vformat:
     push r13
     push r14
     push r15
-    sub rsp, 24
+    sub rsp, 40
     mov [rsp], rdi
     mov [rsp + 8], rsi
     mov [rsp + 16], r8
     mov rbx, rdx                  ; format cursor
     mov r12, rcx                  ; variadic cursor
+    mov qword [rsp + 24], 1    ; format stride
+    cmp r8, 3
+    jb .select_sink
+    mov qword [rsp + 24], 4
+    cmp r8, 3
+    jne .select_sink
+    test rsi, rsi
+    jnz .select_sink
+    mov r14d, -1               ; no room even for the terminal wide null
+    jmp .result
+.select_sink:
     cmp qword [rsp + 16], 1
+    je .lock_stream
+    cmp qword [rsp + 16], 4
     jne .scratch_lock
+.lock_stream:
     call __al_stream_lock
+    mov rdi, [rsp]
+    cmp qword [rsp + 16], 4
+    je .wide_orientation
+    cmp dword [rdi + 128], 1
+    je .wrong_orientation
+    mov dword [rdi + 128], -1
+    jmp .scratch_lock
+.wide_orientation:
+    mov esi, 1
+    call __al_stream_orient
+    test eax, eax
+    jg .scratch_lock
+.wrong_orientation:
+    mov r14d, -1
+    jmp .stream_unlock
 .scratch_lock:
     lea rdi, [rel format_lock]
     call __al_lock
@@ -65,6 +100,8 @@ __al_vformat:
     mov qword [r13], 0
 
 .next:
+    cmp qword [rsp + 24], 4
+    je .wide_next
     cmp byte [rbx], 0
     je .success
     cmp byte [rbx], 37
@@ -81,25 +118,55 @@ __al_vformat:
 .emit:
     mov rdi, r13
     xor ecx, ecx
+.call_emit:
     call __al_fmt_emit
+    test eax, eax
+    jz .next
+    jmp .failure
+.wide_next:
+    cmp dword [rbx], 0
+    je .success
+    cmp dword [rbx], 37
+    je .conversion
+    mov rsi, rbx
+    xor edx, edx
+.wide_literal:
+    add rbx, 4
+    inc rdx
+    cmp dword [rbx], 0
+    je .wide_literal_emit
+    cmp dword [rbx], 37
+    jne .wide_literal
+.wide_literal_emit:
+    mov rdi, r13
+    xor ecx, ecx
+    mov r8d, 4
+    call __al_fmt_wemit
     test eax, eax
     jz .next
     jmp .failure
 
 .conversion:
-    inc rbx
-    cmp byte [rbx], 37
+    add rbx, [rsp + 24]
+    mov rdi, rbx
+    mov rsi, [rsp + 24]
+    call __al_fmt_unit
+    cmp eax, 37
     jne .start_fields
-    mov rsi, rbx
-    inc rbx
+    add rbx, [rsp + 24]
+    mov rdi, r13
+    xor esi, esi
     mov edx, 1
-    jmp .emit
+    mov ecx, 37
+    jmp .call_emit
 .start_fields:
     mov qword [r15], 0            ; flags
     mov qword [r15 + 16], -1      ; absent precision
     mov qword [r15 + 24], 4       ; default promoted integer size
 .flags:
-    movzx eax, byte [rbx]
+    mov rdi, rbx
+    mov rsi, [rsp + 24]
+    call __al_fmt_unit
     cmp eax, 45
     je .left
     cmp eax, 43
@@ -124,13 +191,13 @@ __al_vformat:
 .alternate:
     or qword [r15], 8
 .flag_next:
-    inc rbx
+    add rbx, [rsp + 24]
     jmp .flags
 
 .width:
-    cmp byte [rbx], 42
+    cmp eax, 42
     jne .literal_width
-    inc rbx
+    add rbx, [rsp + 24]
     mov rdi, r12
     call __al_va_next
     movsxd rax, eax
@@ -141,18 +208,25 @@ __al_vformat:
     jmp .width_ready
 .literal_width:
     mov rdi, rbx
+    mov rsi, [rsp + 24]
     call __al_fmt_decimal
     mov rbx, rdx
 .width_ready:
     cmp rax, 2147483647
     ja .overflow
     mov [r15 + 8], rax
-    cmp byte [rbx], 46
+    mov rdi, rbx
+    mov rsi, [rsp + 24]
+    call __al_fmt_unit
+    cmp eax, 46
     jne .length
-    inc rbx
-    cmp byte [rbx], 42
+    add rbx, [rsp + 24]
+    mov rdi, rbx
+    mov rsi, [rsp + 24]
+    call __al_fmt_unit
+    cmp eax, 42
     jne .literal_precision
-    inc rbx
+    add rbx, [rsp + 24]
     mov rdi, r12
     call __al_va_next
     movsxd rax, eax
@@ -161,12 +235,15 @@ __al_vformat:
     jmp .save_precision
 .literal_precision:
     mov rdi, rbx
+    mov rsi, [rsp + 24]
     call __al_fmt_decimal
     mov rbx, rdx
 .save_precision:
     mov [r15 + 16], rax
 .length:
-    movzx eax, byte [rbx]
+    mov rdi, rbx
+    mov rsi, [rsp + 24]
+    call __al_fmt_unit
     cmp eax, 104                  ; h or hh
     je .short
     cmp eax, 108                  ; l or ll
@@ -181,31 +258,41 @@ __al_vformat:
     je .extended
     jmp .specifier
 .extended:
-    inc rbx
+    add rbx, [rsp + 24]
     mov qword [r15 + 24], 16
     jmp .specifier
 .short:
-    inc rbx
+    add rbx, [rsp + 24]
     mov qword [r15 + 24], 2
-    cmp byte [rbx], 104
+    mov rdi, rbx
+    mov rsi, [rsp + 24]
+    call __al_fmt_unit
+    cmp eax, 104
     jne .specifier
-    inc rbx
+    add rbx, [rsp + 24]
     mov qword [r15 + 24], 1
     jmp .specifier
 .long:
-    inc rbx
-    cmp byte [rbx], 108
+    add rbx, [rsp + 24]
+    mov rdi, rbx
+    mov rsi, [rsp + 24]
+    call __al_fmt_unit
+    cmp eax, 108
     jne .long_size
 .one_long:
-    inc rbx
+    add rbx, [rsp + 24]
 .long_size:
     mov qword [r15 + 24], 8
 .specifier:
-    movzx eax, byte [rbx]
+    mov rdi, rbx
+    mov rsi, [rsp + 24]
+    call __al_fmt_unit
     mov [r15 + 32], rax
     test eax, eax
     jz .invalid
-    inc rbx
+    cmp eax, 127
+    ja .invalid
+    add rbx, [rsp + 24]
     cmp eax, 99
     je .character
     cmp eax, 115
@@ -273,6 +360,10 @@ __al_vformat:
     jmp .failure
 
 .character:
+    cmp qword [rsp + 16], 3
+    jae .wide_text
+    cmp qword [r15 + 24], 8
+    je .narrow_wide_text
     cmp qword [r15 + 24], 4
     jne .invalid
     mov rdi, r12
@@ -282,6 +373,10 @@ __al_vformat:
     mov ecx, 1
     jmp .emit_text
 .string:
+    cmp qword [rsp + 16], 3
+    jae .wide_text
+    cmp qword [r15 + 24], 8
+    je .narrow_wide_text
     cmp qword [r15 + 24], 4
     jne .invalid
     mov rdi, r12
@@ -312,6 +407,26 @@ __al_vformat:
     mov rdi, r13
     mov rsi, r15
     call __al_fmt_text
+    test eax, eax
+    jz .next
+    jmp .failure
+.narrow_wide_text:
+    mov rdi, r12
+    call __al_va_next
+    mov rdi, r13
+    mov rsi, r15
+    mov rdx, rax
+    call __al_fmt_nwide
+    test eax, eax
+    jz .next
+    jmp .failure
+.wide_text:
+    mov rdi, r12
+    call __al_va_next
+    mov rdi, r13
+    mov rsi, r15
+    mov rdx, rax
+    call __al_fmt_wtext
     test eax, eax
     jz .next
     jmp .failure
@@ -352,6 +467,8 @@ __al_vformat:
 .success:
     mov r14d, [r13 + 16]
 .terminate:
+    cmp qword [r13 + 24], 3
+    je .wide_terminate
     cmp qword [r13 + 24], 2
     je .dynamic_finish
     cmp qword [r13 + 24], 0
@@ -365,6 +482,11 @@ __al_vformat:
 .nul:
     mov rcx, [r13]
     mov byte [rcx + rax], 0
+    jmp .unlock
+.wide_terminate:
+    mov rax, [r13 + 16]
+    mov rcx, [r13]
+    mov dword [rcx + rax * 4], 0
     jmp .unlock
 .dynamic_finish:
     mov rax, [r13]
@@ -392,12 +514,15 @@ __al_vformat:
     lea rdi, [rel format_lock]
     call __al_unlock
     cmp qword [rsp + 16], 1
+    je .stream_unlock
+    cmp qword [rsp + 16], 4
     jne .result
+.stream_unlock:
     mov rdi, [rsp]
     call __al_stream_unlock
 .result:
     mov eax, r14d
-    add rsp, 24
+    add rsp, 40
     pop r15
     pop r14
     pop r13

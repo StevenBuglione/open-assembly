@@ -1,0 +1,18 @@
+name = "wcscmp"
+header = "wchar.h"
+prototype = "int wcscmp(const wchar_t *a, const wchar_t *b)"
+standard = ["C17 7.29.4.4.1"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:wide-object-bounds", "diff:glibc", "diff:musl"]
+provenance = "original"
+semantics = [
+  "Compare two wide strings by their first unequal signed wchar_t values.",
+  "Preserve errno.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

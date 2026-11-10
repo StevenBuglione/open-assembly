@@ -58,6 +58,8 @@ fseek:
     jne .seek
     mov rax, [rbx + 48]
     sub rax, [rbx + 40]
+    mov ecx, [rbx + 160]
+    add rax, rcx
     cmp qword [rbx + 72], -1
     je .relative
     inc rax
@@ -76,6 +78,9 @@ fseek:
     mov qword [rbx + 48], 0
     mov qword [rbx + 56], 0
     mov qword [rbx + 72], -1
+    mov qword [rbx + 136], 0
+    mov qword [rbx + 144], -1
+    mov dword [rbx + 160], 0
     xor r14d, r14d
     jmp .unlock
 .invalid:

@@ -1,4 +1,5 @@
-; Original bounded format renderer. Inputs: cursor, reserved end, format, tm.
+; Original bounded format renderer. Inputs: cursor, reserved end, format, tm,
+; and mode. Bit 0 selects wide output and bit 1 selects a wide format.
 ; Return the next cursor or null. Compound formats use the same renderer.
 bits 64
 default rel
@@ -14,48 +15,82 @@ __al_strftime_render:
     push r12
     push r13
     push r14
+    push r15
+    sub rsp, 8
     mov rbx, rdi
     mov r12, rsi
     mov r13, rdx
     mov r14, rcx
+    mov r15d, r8d
 .next:
+    test r15d, 2
+    jnz .wide_next
     movzx edx, byte [r13]
     inc r13
-    test dl, dl
+    jmp .next_ready
+.wide_next:
+    mov edx, [r13]
+    add r13, 4
+.next_ready:
+    test edx, edx
     jz .success
-    cmp dl, 37                   ; %
+    cmp edx, 37                   ; %
     je .conversion
     cmp rbx, r12
     jae .failure
+    test r15d, 1
+    jnz .wide_literal
     mov [rbx], dl
     inc rbx
     jmp .next
+.wide_literal:
+    mov [rbx], edx
+    add rbx, 4
+    jmp .next
 .conversion:
+    test r15d, 2
+    jnz .wide_conversion
     movzx edx, byte [r13]
     inc r13
-    cmp dl, 69                   ; E
+    jmp .conversion_ready
+.wide_conversion:
+    mov edx, [r13]
+    add r13, 4
+.conversion_ready:
+    cmp edx, 69                   ; E
     je .era_modifier
-    cmp dl, 79                   ; O
+    cmp edx, 79                   ; O
     jne .field
     lea rax, [rel numeric_conversions]
     jmp .modifier
 .era_modifier:
     lea rax, [rel era_conversions]
 .modifier:
+    test r15d, 2
+    jnz .wide_modifier
     movzx edx, byte [r13]
     inc r13
+    jmp .modifier_ready
+.wide_modifier:
+    mov edx, [r13]
+    add r13, 4
+.modifier_ready:
 .valid_modifier:
-    mov cl, [rax]
-    test cl, cl
+    movzx ecx, byte [rax]
+    test ecx, ecx
     jz .failure
-    cmp cl, dl
+    cmp ecx, edx
     je .field
     inc rax
     jmp .valid_modifier
 .field:
+    cmp edx, 127
+    ja .failure
     mov rdi, rbx
     mov rsi, r12
     mov rcx, r14
+    mov r8d, r15d
+    and r8d, 1
     call __al_strftime_field
     test rax, rax
     jz .restore
@@ -67,6 +102,8 @@ __al_strftime_render:
 .failure:
     xor eax, eax
 .restore:
+    add rsp, 8
+    pop r15
     pop r14
     pop r13
     pop r12

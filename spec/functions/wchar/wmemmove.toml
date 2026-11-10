@@ -1,0 +1,18 @@
+name = "wmemmove"
+header = "wchar.h"
+prototype = "wchar_t *wmemmove(wchar_t *dst, const wchar_t *src, size_t n)"
+standard = ["C17 7.29.4.2.4"]
+deps = ["memmove"]
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:wide-object-bounds", "diff:glibc", "diff:musl"]
+provenance = "original"
+semantics = [
+  "Copy exactly n wide elements with overlap supported.",
+  "Preserve errno.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

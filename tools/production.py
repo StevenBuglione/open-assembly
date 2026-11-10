@@ -51,15 +51,15 @@ for left, right in CONDITIONS:
 SIGNED = dict(zip(("ja", "jae", "jb", "jbe", "jg", "jge", "jl", "jle"),
                   ("jg", "jge", "jl", "jle", "ja", "jae", "jb", "jbe"), strict=True))
 MUTATION_EQUIVALENCES = {
-    "__al_strtox": ("031ddfce2337980c2800c784aa221ddf39a361e8377a1c304b469eed421f9bb0", {
-        "comparison-signedness-24": "A negative base still takes .zero_result via the immediately following unsigned upper bound.",
-        "comparison-signedness-104": "Bytes below '0' remain invalid. The later unsigned digit/base comparison rejects the negative offset before accumulation.",
-        "comparison-signedness-108": "A negative alphabet offset takes .end_digits either here or at the immediately following unsigned upper bound.",
-        "comparison-plus-one-109": "The added digit 36 is rejected by the next comparison for every radix from 2 through 36.",
-        "comparison-signedness-110": "A negative alphabet offset still reaches .end_digits through the following unsigned digit/base comparison.",
-        "comparison-signedness-113": "For a possible digit both the digit and radix have bit 63 clear. A negative offset has already been excluded.",
-        "comparison-signedness-119": "The preceding unsigned jump excludes values above the cutoff. The cutoff is at most UINT64_MAX divided by two.",
-        "comparison-signedness-121": "Both the digit and remainder are below the radix and have bit 63 clear.",
+    "__al_strtox": ("a5631fe7518c5ad2f1f484da046b77afd56621dc4cbc07e45e3aefa125155ba9", {
+        "comparison-signedness-29": "A negative base reaches .zero_result through one of the two range checks with either comparison.",
+        "comparison-signedness-139": "Code units below ASCII '0' remain invalid. The later unsigned digit/base comparison rejects the negative offset before accumulation.",
+        "comparison-signedness-143": "A negative alphabet offset takes .end_digits either here or at the immediately following unsigned upper bound.",
+        "comparison-plus-one-144": "The added digit 36 is rejected by the next comparison for every radix from 2 through 36.",
+        "comparison-signedness-145": "A negative alphabet offset still reaches .end_digits through the following unsigned digit/base comparison.",
+        "comparison-signedness-148": "For a possible digit both the digit and radix have bit 63 clear. A negative offset has already been excluded.",
+        "comparison-signedness-154": "The preceding unsigned jump excludes values above the cutoff. The cutoff is at most UINT64_MAX divided by two.",
+        "comparison-signedness-156": "Both the digit and remainder are below the radix and have bit 63 clear.",
     }),
     "bsearch": ("8926356d54c6fcadadc308330b7ab3505233037957b45361b01088fd03135ce7", {
         "comparison-signedness-49": "Both indices are bounded by the readable Linux user array.",

@@ -71,7 +71,7 @@ popen:
     call __errno_location
     mov eax, [rax]
     mov [rsp + 8], eax            ; preserve errno after successful creation
-    mov edi, 4224                 ; FILE and its inline buffer
+    mov edi, 4272                 ; FILE and its inline buffer
     call malloc
     test rax, rax
     jz .done

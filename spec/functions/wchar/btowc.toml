@@ -1,0 +1,18 @@
+name = "btowc"
+header = "wchar.h"
+prototype = "wint_t btowc(int c)"
+standard = ["C17 7.29.6.1.1"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["reference:unicode-scalar", "reference:mbstate-transition", "diff:glibc"]
+provenance = "original"
+semantics = [
+  "Return the corresponding wide character for a single ASCII byte. Return WEOF for EOF or a byte that is invalid as a complete multibyte character.",
+  "Preserve errno.",
+]
+
+[abi]
+narrow_args = ["edi:s32"]
+variadic = false

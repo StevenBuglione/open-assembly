@@ -1,0 +1,22 @@
+schema = 1
+
+[[case]]
+name = "worker-default-state"
+sources = ["tests/phase9/worker/default_state.c"]
+requires = ["pthread_create", "pthread_join", "mbrlen", "mbrtowc", "mbrtoc32", "mbrtoc16", "c16rtomb"]
+args = []
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:mbstate-transition", "reference:linux-thread-lifecycle"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Per-thread independence for null mbstate_t pointers is the project contract."
+
+[[stub]]
+symbol = "mbrlen"
+case = "worker-default-state"
+status = 11
+stdout = ""
+stderr = ""

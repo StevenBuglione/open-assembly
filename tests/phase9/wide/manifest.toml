@@ -1,0 +1,470 @@
+schema = 1
+
+[[case]]
+name = "wide-wcslen"
+sources = ["tests/phase9/wide/wide.c"]
+requires = ["wcslen"]
+args = ["wcslen", "C"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-elements", "reference:linux-guard-pages"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "wide-wcscmp"
+sources = ["tests/phase9/wide/wide.c"]
+requires = ["wcscmp"]
+args = ["wcscmp", "C"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-elements", "reference:linux-guard-pages"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "wide-wcsncmp"
+sources = ["tests/phase9/wide/wide.c"]
+requires = ["wcsncmp"]
+args = ["wcsncmp", "C"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-elements", "reference:linux-guard-pages"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "wide-wcscpy"
+sources = ["tests/phase9/wide/wide.c"]
+requires = ["wcscpy"]
+args = ["wcscpy", "C"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-elements", "reference:linux-guard-pages"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "wide-wcsncpy"
+sources = ["tests/phase9/wide/wide.c"]
+requires = ["wcsncpy"]
+args = ["wcsncpy", "C"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-elements", "reference:linux-guard-pages"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "wide-wcscat"
+sources = ["tests/phase9/wide/wide.c"]
+requires = ["wcscat"]
+args = ["wcscat", "C"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-elements", "reference:linux-guard-pages"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "wide-wcsncat"
+sources = ["tests/phase9/wide/wide.c"]
+requires = ["wcsncat"]
+args = ["wcsncat", "C"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-elements", "reference:linux-guard-pages"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "wide-wcschr"
+sources = ["tests/phase9/wide/wide.c"]
+requires = ["wcschr"]
+args = ["wcschr", "C"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-elements", "reference:linux-guard-pages"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "wide-wcsrchr"
+sources = ["tests/phase9/wide/wide.c"]
+requires = ["wcsrchr"]
+args = ["wcsrchr", "C"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-elements", "reference:linux-guard-pages"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "wide-wcsspn"
+sources = ["tests/phase9/wide/wide.c"]
+requires = ["wcsspn"]
+args = ["wcsspn", "C"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-elements", "reference:linux-guard-pages"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "wide-wcscspn"
+sources = ["tests/phase9/wide/wide.c"]
+requires = ["wcscspn"]
+args = ["wcscspn", "C"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-elements", "reference:linux-guard-pages"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "wide-wcspbrk"
+sources = ["tests/phase9/wide/wide.c"]
+requires = ["wcspbrk"]
+args = ["wcspbrk", "C"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-elements", "reference:linux-guard-pages"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "wide-wcsstr"
+sources = ["tests/phase9/wide/wide.c"]
+requires = ["wcsstr"]
+args = ["wcsstr", "C"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-elements", "reference:linux-guard-pages"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "wide-wcstok"
+sources = ["tests/phase9/wide/wide.c"]
+requires = ["wcstok"]
+args = ["wcstok", "C"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-elements", "reference:linux-guard-pages"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "wide-wcscoll"
+sources = ["tests/phase9/wide/wide.c"]
+requires = ["wcscoll"]
+args = ["wcscoll", "C"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-elements", "reference:linux-guard-pages"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "wide-wcsxfrm"
+sources = ["tests/phase9/wide/wide.c"]
+requires = ["wcsxfrm"]
+args = ["wcsxfrm", "C"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-elements", "reference:linux-guard-pages"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "wide-wmemchr"
+sources = ["tests/phase9/wide/wide.c"]
+requires = ["wmemchr"]
+args = ["wmemchr", "C"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-elements", "reference:linux-guard-pages"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "wide-wmemcmp"
+sources = ["tests/phase9/wide/wide.c"]
+requires = ["wmemcmp"]
+args = ["wmemcmp", "C"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-elements", "reference:linux-guard-pages"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "wide-wmemcpy"
+sources = ["tests/phase9/wide/wide.c"]
+requires = ["wmemcpy"]
+args = ["wmemcpy", "C"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-elements", "reference:linux-guard-pages"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "wide-wmemmove"
+sources = ["tests/phase9/wide/wide.c"]
+requires = ["wmemmove"]
+args = ["wmemmove", "C"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-elements", "reference:linux-guard-pages"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "wide-wmemset"
+sources = ["tests/phase9/wide/wide.c"]
+requires = ["wmemset"]
+args = ["wmemset", "C"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-elements", "reference:linux-guard-pages"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "wide-wcscoll-utf8"
+sources = ["tests/phase9/wide/wide.c"]
+requires = ["wcscoll"]
+args = ["wcscoll", "C.UTF-8"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-elements", "reference:linux-guard-pages"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "C.UTF-8 code-point collation is a project policy."
+
+[[case]]
+name = "wide-wcsxfrm-utf8"
+sources = ["tests/phase9/wide/wide.c"]
+requires = ["wcsxfrm"]
+args = ["wcsxfrm", "C.UTF-8"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-wide-elements", "reference:linux-guard-pages"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "C.UTF-8 code-point collation is a project policy."
+
+[[stub]]
+symbol = "wcslen"
+case = "wide-wcslen"
+status = 10
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "wcscmp"
+case = "wide-wcscmp"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "wcsncmp"
+case = "wide-wcsncmp"
+status = 12
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "wcscpy"
+case = "wide-wcscpy"
+status = 13
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "wcsncpy"
+case = "wide-wcsncpy"
+status = 14
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "wcscat"
+case = "wide-wcscat"
+status = 15
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "wcsncat"
+case = "wide-wcsncat"
+status = 16
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "wcschr"
+case = "wide-wcschr"
+status = 17
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "wcsrchr"
+case = "wide-wcsrchr"
+status = 18
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "wcsspn"
+case = "wide-wcsspn"
+status = 19
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "wcscspn"
+case = "wide-wcscspn"
+status = 20
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "wcspbrk"
+case = "wide-wcspbrk"
+status = 21
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "wcsstr"
+case = "wide-wcsstr"
+status = 22
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "wcstok"
+case = "wide-wcstok"
+status = 23
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "wcscoll"
+case = "wide-wcscoll"
+status = 24
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "wcsxfrm"
+case = "wide-wcsxfrm"
+status = 25
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "wmemchr"
+case = "wide-wmemchr"
+status = 26
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "wmemcmp"
+case = "wide-wmemcmp"
+status = 27
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "wmemcpy"
+case = "wide-wmemcpy"
+status = 28
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "wmemmove"
+case = "wide-wmemmove"
+status = 29
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "wmemset"
+case = "wide-wmemset"
+status = 30
+stdout = ""
+stderr = ""

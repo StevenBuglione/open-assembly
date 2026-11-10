@@ -1,0 +1,18 @@
+name = "wctomb"
+header = "stdlib.h"
+prototype = "int wctomb(char *s, wchar_t wc)"
+standard = ["C17 7.22.7.3"]
+deps = ["__errno_location"]
+errno = ["EILSEQ"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:unicode-scalar", "reference:mbstate-transition", "diff:glibc"]
+provenance = "original"
+semantics = [
+  "Encode one representable wide character. A null destination resets the conversion state and returns zero.",
+  "Return minus one and set EILSEQ on invalid input. Preserve errno on success.",
+]
+
+[abi]
+narrow_args = ["esi:s32"]
+variadic = false

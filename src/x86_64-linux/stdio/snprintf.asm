@@ -4,7 +4,7 @@
 ; prototype: int snprintf(char *restrict dest, size_t size, const char *restrict format, ...)
 ; standard: C17 7.21.6.5
 ; deps: vsnprintf
-; errno: EINVAL, EOVERFLOW, EIO
+; errno: EILSEQ, EINVAL, EOVERFLOW, EIO
 ; mt_safe: true
 ; as_safe: false
 ; oracles: diff:glibc, diff:musl, reference:phase4-stdio
@@ -13,7 +13,7 @@
 ; variadic: true
 ; semantics: Interpret the integer, floating, string, byte, pointer, count, and percent conversions.
 ; semantics: Return the byte count excluding the terminator on success, or a negative result on error.
-; semantics: Unsupported wide conversions report EINVAL. Count overflow reports EOVERFLOW.
+; semantics: Wide c and s encode arguments with the active LC_CTYPE. String precision limits complete multibyte characters by byte count. Count overflow reports EOVERFLOW.
 ; semantics: Write at most size-1 bytes and terminate when size is nonzero. Return the full untruncated count. With size zero dest may be NULL.
 ; END OPEN ASSEMBLY GENERATED SPEC
 

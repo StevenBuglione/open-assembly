@@ -1,5 +1,5 @@
 ; Original C-locale strftime conversion. Inputs: cursor, reserved end,
-; conversion character, and tm pointer. Return cursor or null.
+; conversion character, tm pointer, and wide-output flag. Return cursor or null.
 bits 64
 default rel
 
@@ -16,10 +16,17 @@ __al_strftime_field:
     push r12
     push r13
     push r14
+    push r15
+    sub rsp, 8
     mov rbx, rdi
     mov r12, rsi
     mov r13, rcx
     mov r14d, edx
+    mov r15d, 1                 ; output stride
+    test r8d, r8d
+    jz .width_ready
+    mov r15d, 4
+.width_ready:
     mov ecx, 2                   ; common magnitude width
     mov r8d, 48                  ; common zero padding
     cmp r14b, 65                ; A
@@ -243,6 +250,7 @@ __al_strftime_field:
 .number:
     mov rdi, rbx
     mov rsi, r12
+    mov r9d, r15d
     call __al_strftime_number
     jmp .return
 .zone_name:
@@ -264,10 +272,18 @@ __al_strftime_field:
 .zone_magnitude:
     cmp rax, 360000
     jae .empty
-    lea r8, [rbx + 5]
+    lea r8, [r15 + r15 * 4]
+    add r8, rbx
+    jc .failure
     cmp r8, r12
     ja .failure
-    mov byte [rbx], r11b
+    cmp r15d, 4
+    je .wide_zone_sign
+    mov [rbx], r11b
+    jmp .zone_hours
+.wide_zone_sign:
+    mov [rbx], r11d
+.zone_hours:
     mov r9d, 60
     xor edx, edx
     div r9                       ; discard subminute seconds
@@ -277,17 +293,31 @@ __al_strftime_field:
     mov r9d, 10
     xor edx, edx
     div r9
-    add al, 48
-    add dl, 48
+    add eax, 48
+    add edx, 48
+    cmp r15d, 4
+    je .wide_hours
     mov [rbx + 1], al
     mov [rbx + 2], dl
+    jmp .zone_minutes
+.wide_hours:
+    mov [rbx + 4], eax
+    mov [rbx + 8], edx
+.zone_minutes:
     mov rax, rcx
     xor edx, edx
     div r9
-    add al, 48
-    add dl, 48
+    add eax, 48
+    add edx, 48
+    cmp r15d, 4
+    je .wide_minutes
     mov [rbx + 3], al
     mov [rbx + 4], dl
+    jmp .zone_done
+.wide_minutes:
+    mov [rbx + 12], eax
+    mov [rbx + 16], edx
+.zone_done:
     mov rax, r8
     jmp .return
 .newline:
@@ -301,20 +331,34 @@ __al_strftime_field:
 .byte:
     cmp rbx, r12
     jae .failure
+    cmp r15d, 4
+    je .wide_byte
     mov [rbx], dl
-    lea rax, [rbx + 1]
+    jmp .advance_byte
+.wide_byte:
+    mov [rbx], edx
+.advance_byte:
+    lea rax, [rbx + r15]
     jmp .return
 .text:
     mov rax, rbx
 .text_byte:
-    mov cl, [rdx]
-    test cl, cl
+    movzx ecx, byte [rdx]
+    test ecx, ecx
     jz .return
     cmp rax, r12
     jae .failure
+    cmp r15d, 4
+    je .wide_text
     mov [rax], cl
+    jmp .advance_text
+.wide_text:
+    cmp ecx, 127                 ; supported timezone designations are ASCII
+    ja .failure
+    mov [rax], ecx
+.advance_text:
     inc rdx
-    inc rax
+    add rax, r15
     jmp .text_byte
 .date_time:
     lea rdx, [rel format_date_time]
@@ -337,6 +381,11 @@ __al_strftime_field:
     mov rdi, rbx
     mov rsi, r12
     mov rcx, r13
+    xor r8d, r8d                ; compound formats have ASCII source text
+    cmp r15d, 4
+    jne .render_width
+    mov r8d, 1                  ; inherit wide output
+.render_width:
     call __al_strftime_render
     jmp .return
 .empty:
@@ -345,6 +394,8 @@ __al_strftime_field:
 .failure:
     xor eax, eax
 .return:
+    add rsp, 8
+    pop r15
     pop r14
     pop r13
     pop r12

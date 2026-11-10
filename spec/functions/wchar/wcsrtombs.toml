@@ -1,0 +1,18 @@
+name = "wcsrtombs"
+header = "wchar.h"
+prototype = "size_t wcsrtombs(char *restrict dst, const wchar_t **restrict src, size_t len, mbstate_t *restrict ps)"
+standard = ["C17 7.29.6.4.2"]
+deps = ["__errno_location"]
+errno = ["EILSEQ"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:unicode-scalar", "reference:mbstate-transition", "diff:glibc"]
+provenance = "original"
+semantics = [
+  "Convert the null-terminated wide string to bytes without splitting a multibyte character. Count-only calls preserve both source pointer and state.",
+  "Return minus one and set EILSEQ on invalid input. Preserve errno on success.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

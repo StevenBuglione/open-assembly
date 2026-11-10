@@ -4,14 +4,14 @@
 ; prototype: int vasprintf(char **restrict result, const char *restrict format, va_list args)
 ; standard: Extension ABI vasprintf
 ; deps: malloc, realloc, free
-; errno: EINVAL, ENOMEM, EOVERFLOW
+; errno: EILSEQ, EINVAL, ENOMEM, EOVERFLOW
 ; mt_safe: true
 ; as_safe: false
 ; oracles: diff:glibc, diff:musl, reference:linux-busybox-abi
 ; provenance: original
 ; narrow_args: -
 ; variadic: false
-; semantics: Interpret the same implemented byte, integer, and floating conversions as vfprintf in a single pass.
+; semantics: Interpret the same byte, integer, floating and wide-argument conversions as vfprintf.
 ; semantics: Perform count stores in format order exactly once, including when buffers grow.
 ; semantics: On success return the byte count excluding the NUL and publish a caller-owned allocation.
 ; semantics: Empty output still produces a valid NUL-terminated allocation.

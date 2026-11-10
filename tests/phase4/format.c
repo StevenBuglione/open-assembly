@@ -5,6 +5,7 @@
 #include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <wchar.h>
 
 #ifdef OA_PHASE4_HOST
 # include <sys/mman.h>
@@ -194,7 +195,8 @@ static int policy(void)
     int result = snprintf(buffer, sizeof buffer, "%p:%p", (void *)0, (void *)(uintptr_t)0x1234);
     REQUIRE(TEXT_IS(buffer, result, "0x0:0x1234"), 74);
     errno = 0;
-    REQUIRE(snprintf(buffer, sizeof buffer, "%ls", L"wide") < 0 && errno == EINVAL, 75);
+    result = snprintf(buffer, sizeof buffer, "%ls:%lc", L"wide", (wint_t)L'!');
+    REQUIRE(TEXT_IS(buffer, result, "wide:!") && errno == 0, 75);
     return 0;
 }
 

@@ -164,7 +164,8 @@ __al_scan_float:
 .pattern:
     or eax, 32
     mov rcx, [rsp + 40]
-    cmp al, [rcx]
+    movzx edx, byte [rcx]
+    cmp eax, edx
     jne .finish
     inc rcx
     mov [rsp + 40], rcx
@@ -245,6 +246,7 @@ __al_scan_float:
     mov byte [rdi + rax], 0
     lea rsi, [rel validation_number]
     lea rdx, [rel validation_meta]
+    mov ecx, 1
     call __al_float_lex           ; validate without rounding or raising flags
     test rax, rax
     js .matching_failure

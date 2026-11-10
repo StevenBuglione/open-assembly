@@ -13,6 +13,7 @@
 ; variadic: false
 ; semantics: Close the existing association, then associate stream with the opened file and reset its buffering and indicators.
 ; semantics: Return stream on success. Return NULL on failure. A NULL pathname is unsupported and sets EINVAL.
+; semantics: A successful reassociation resets byte or wide orientation and conversion state.
 ; END OPEN ASSEMBLY GENERATED SPEC
 
 bits 64

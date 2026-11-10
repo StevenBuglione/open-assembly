@@ -1,5 +1,6 @@
 ; Original decimal field formatter. Inputs: cursor, reserved end, signed
-; value, minimum magnitude digits, and a padding byte. Return cursor or null.
+; value, minimum magnitude digits, padding byte, and output stride.
+; Return cursor or null.
 bits 64
 default rel
 
@@ -8,6 +9,8 @@ global __al_strftime_number:function
 section .text.__al_strftime_number alloc exec nowrite progbits
 __al_strftime_number:
     push rbx
+    push r12
+    mov r12d, r9d
     mov r9, rdx
     xor r11d, r11d
     test r9, r9
@@ -28,39 +31,60 @@ __al_strftime_number:
     jae .width
     mov rcx, r10
 .width:
-    lea rax, [rdi + rcx]
-    add rax, r11
+    lea rax, [rcx + r11]
+    imul rax, r12
+    add rax, rdi
+    jc .failure
     cmp rax, rsi
     ja .failure
     mov rsi, rax
     mov r10, rax
     test r11d, r11d
     jz .unsigned
-    mov byte [rdi], 45           ; sign precedes magnitude padding
+    cmp r12d, 4
+    je .wide_sign
+    mov byte [rdi], 45          ; sign precedes magnitude padding
+    jmp .unsigned
+.wide_sign:
+    mov dword [rdi], 45
 .unsigned:
     mov rax, r9
 .write_digit:
     xor edx, edx
     div rbx
-    add dl, 48
-    dec r10
+    add edx, 48
+    sub r10, r12
+    cmp r12d, 4
+    je .wide_digit
     mov [r10], dl
+    jmp .next_digit
+.wide_digit:
+    mov [r10], edx
+.next_digit:
     dec rcx
     test rax, rax
     jnz .write_digit
     test rcx, rcx
     jz .success
 .pad:
-    dec r10
+    sub r10, r12
+    cmp r12d, 4
+    je .wide_pad
     mov [r10], r8b
+    jmp .next_pad
+.wide_pad:
+    mov [r10], r8d
+.next_pad:
     dec rcx
     jnz .pad
 .success:
     mov rax, rsi
+    pop r12
     pop rbx
     ret
 .failure:
     xor eax, eax
+    pop r12
     pop rbx
     ret
 

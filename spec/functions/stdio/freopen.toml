@@ -11,6 +11,7 @@ provenance = "original"
 semantics = [
   "Close the existing association, then associate stream with the opened file and reset its buffering and indicators.",
   "Return stream on success. Return NULL on failure. A NULL pathname is unsupported and sets EINVAL.",
+  "A successful reassociation resets byte or wide orientation and conversion state.",
 ]
 
 [abi]

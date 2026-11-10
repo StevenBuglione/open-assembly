@@ -1,0 +1,20 @@
+name = "wcsftime"
+header = "wchar.h"
+prototype = "size_t wcsftime(wchar_t *restrict dest, size_t size, const wchar_t *restrict format, const struct tm *restrict value)"
+standard = ["C17 7.29.5.1"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:c17-time-format"]
+provenance = "original"
+semantics = [
+  "Format a broken-down time using a wide format and wide output, preserving wide literals.",
+  "Use the same C-locale fields, modifiers and ISO week calculation as strftime in both supported locales.",
+  "Return the count excluding the terminating null, or zero for invalid format or inadequate capacity.",
+  "For size zero, return zero without accessing the destination. Preserve errno.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

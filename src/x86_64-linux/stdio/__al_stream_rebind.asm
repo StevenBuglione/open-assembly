@@ -22,10 +22,14 @@ __al_stream_rebind:
     mov [rbx + 8], r13
     mov rax, [rel __al_streams]
     mov [rbx + 16], rax
-    lea rax, [rbx + 128]
+    lea rax, [rbx + 176]
     mov [rbx + 24], rax
     mov qword [rbx + 32], 4096
     mov qword [rbx + 72], -1
+    mov qword [rbx + 128], 0    ; unoriented, no captured encoding
+    mov qword [rbx + 136], 0    ; initial wide conversion state
+    mov qword [rbx + 144], -1   ; no public pushback or scanner lookahead
+    mov dword [rbx + 160], 0
     mov [rel __al_streams], rbx
     pop r13
     pop r12

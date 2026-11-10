@@ -1,0 +1,18 @@
+name = "fgetws"
+header = "wchar.h"
+prototype = "wchar_t *fgetws(wchar_t *restrict string, int count, FILE *restrict stream)"
+standard = ["C17 7.29.3.2"]
+deps = []
+errno = ["EBADF", "EILSEQ", "EIO"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:c17-wide-stdio", "diff:glibc", "diff:musl"]
+provenance = "original"
+semantics = [
+  "Read at most count minus one wide characters, retaining a newline and terminating successful output.",
+  "Return null for invalid count, an input error, or EOF before a character.",
+]
+
+[abi]
+narrow_args = ["esi:s32"]
+variadic = false

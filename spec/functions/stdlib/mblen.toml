@@ -1,0 +1,18 @@
+name = "mblen"
+header = "stdlib.h"
+prototype = "int mblen(const char *s, size_t n)"
+standard = ["C17 7.22.7.1"]
+deps = ["__errno_location"]
+errno = ["EILSEQ"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:unicode-scalar", "reference:mbstate-transition", "diff:glibc"]
+provenance = "original"
+semantics = [
+  "Return the byte length of a complete non-null multibyte character or zero for a null byte or a null source reset.",
+  "Return minus one and set EILSEQ on invalid input. Preserve errno on success.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

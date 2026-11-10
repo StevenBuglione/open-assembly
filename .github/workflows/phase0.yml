@@ -110,10 +110,29 @@ jobs:
           path: build/evidence/
           if-no-files-found: warn
 
+  locale:
+    name: Locale and wide character gates
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b
+      - name: Run Unicode, worker-state, and pinned libc-test gates
+        run: ./tools/container make -k phase9-multibyte phase9-bulk phase9-worker phase9-worker-sync phase9-wide phase9-wctype phase9-libc-test phase9-stdio phase9-narrow-wide
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: locale-verification-evidence
+          path: build/evidence/
+          if-no-files-found: warn
+
   acceptance:
     name: acceptance
     if: always()
-    needs: [core, integration, mathematics, applications, threads]
+    needs: [core, integration, mathematics, applications, threads, locale]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions: {}
@@ -123,15 +142,17 @@ jobs:
       MATH_RESULT: ${{ needs.mathematics.result }}
       APPLICATION_RESULT: ${{ needs.applications.result }}
       THREAD_RESULT: ${{ needs.threads.result }}
+      LOCALE_RESULT: ${{ needs.locale.result }}
     steps:
       - name: Require all verification jobs
         shell: bash
         run: |
           set -euo pipefail
-          printf 'Core: %s\nIntegration: %s\nMathematics: %s\nApplications: %s\nThreads: %s\n' \
-            "$CORE_RESULT" "$INTEGRATION_RESULT" "$MATH_RESULT" "$APPLICATION_RESULT" "$THREAD_RESULT"
+          printf 'Core: %s\nIntegration: %s\nMathematics: %s\nApplications: %s\nThreads: %s\nLocale: %s\n' \
+            "$CORE_RESULT" "$INTEGRATION_RESULT" "$MATH_RESULT" "$APPLICATION_RESULT" "$THREAD_RESULT" "$LOCALE_RESULT"
           test "$CORE_RESULT" = success
           test "$INTEGRATION_RESULT" = success
           test "$MATH_RESULT" = success
           test "$APPLICATION_RESULT" = success
           test "$THREAD_RESULT" = success
+          test "$LOCALE_RESULT" = success

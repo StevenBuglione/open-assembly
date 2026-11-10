@@ -1,0 +1,18 @@
+name = "wcstombs"
+header = "stdlib.h"
+prototype = "size_t wcstombs(char *restrict dst, const wchar_t *restrict src, size_t len)"
+standard = ["C17 7.22.8.2"]
+deps = ["__errno_location"]
+errno = ["EILSEQ"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:unicode-scalar", "reference:mbstate-transition", "diff:glibc"]
+provenance = "original"
+semantics = [
+  "Convert the wide string in an initial state and preserve character boundaries. Count without writing when dst is null.",
+  "Return minus one and set EILSEQ on invalid input. Preserve errno on success.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

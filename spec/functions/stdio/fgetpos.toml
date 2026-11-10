@@ -10,6 +10,7 @@ oracles = ["diff:glibc", "diff:musl", "reference:phase4-stdio"]
 provenance = "original"
 semantics = [
   "Save the logical position of stream in pos. Return zero on success or nonzero on failure.",
+  "Save the multibyte conversion state of a wide stream together with its logical position.",
 ]
 
 [abi]

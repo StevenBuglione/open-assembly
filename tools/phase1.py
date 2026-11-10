@@ -19,6 +19,7 @@ RUNTIME_SRC = Path("src/x86_64-linux")
 STARTUP_SRC = RUNTIME_SRC / "rt/_start.asm"
 MANIFEST = Path("tests/runtime/manifest.toml")
 BACKENDS = {"native", "qemu", "valgrind"}
+RUNTIME_BUILD_TIMEOUT = 180
 DEFINED_KINDS = {"T", "B", "D", "R"}
 PHASE1_PUBLIC = {"__errno_location", "__stack_chk_fail", "_Exit", "_exit", "atexit",
                  "close", "exit", "read", "write"}
@@ -132,7 +133,8 @@ def phase1_inputs():
 
 
 def build_runtime(directory, log):
-    checked(log, ["make", "--no-print-directory", "runtime", f"RUNTIME_BUILD={directory}"], timeout=60)
+    checked(log, ["make", "--no-print-directory", "runtime", f"RUNTIME_BUILD={directory}"],
+            timeout=RUNTIME_BUILD_TIMEOUT)
     startup = directory / "crt1.o"
     archive = directory / "libopenasm.a"
     sources = sorted(path for path in RUNTIME_SRC.rglob("*.asm") if path != STARTUP_SRC)
@@ -177,7 +179,7 @@ def build_runtime(directory, log):
 
 
 def build_case(case, directory, runtime, log, stub=None, *, link_wraps=(), candidate=None,
-               c_include=()):
+               c_include=(), c_flags=()):
     startup, archive, exports, _ = runtime
     directory.mkdir()
     objects = []
@@ -186,7 +188,7 @@ def build_case(case, directory, runtime, log, stub=None, *, link_wraps=(), candi
         obj = directory / f"test-{index}.o"
         if source.suffix == ".c":
             include = [argument for path in c_include for argument in ("-I", path)]
-            checked(log, ["gcc", *TEST_C_FLAGS, *include, "-c", source, "-o", obj])
+            checked(log, ["gcc", *TEST_C_FLAGS, *include, *c_flags, "-c", source, "-o", obj])
             audit = "--test-object"
         else:
             checked(log, [*NASM, "-o", obj, source])

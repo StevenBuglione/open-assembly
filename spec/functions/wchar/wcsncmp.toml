@@ -1,0 +1,18 @@
+name = "wcsncmp"
+header = "wchar.h"
+prototype = "int wcsncmp(const wchar_t *a, const wchar_t *b, size_t n)"
+standard = ["C17 7.29.4.4.3"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:wide-object-bounds", "diff:glibc", "diff:musl"]
+provenance = "original"
+semantics = [
+  "Compare at most n wide elements, stopping at the terminating null.",
+  "Preserve errno.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

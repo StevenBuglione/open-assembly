@@ -1,0 +1,18 @@
+name = "wmemchr"
+header = "wchar.h"
+prototype = "wchar_t *wmemchr(const wchar_t *s, wchar_t c, size_t n)"
+standard = ["C17 7.29.4.5.8"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:wide-object-bounds", "diff:glibc", "diff:musl"]
+provenance = "original"
+semantics = [
+  "Find c within the first n wide elements, including zero-valued elements.",
+  "Preserve errno.",
+]
+
+[abi]
+narrow_args = ["esi:s32"]
+variadic = false

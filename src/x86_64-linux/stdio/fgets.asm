@@ -40,6 +40,9 @@ fgets:
     xor r14d, r14d               ; bytes read
     mov rdi, rbx
     call __al_stream_lock
+    cmp dword [rbx + 128], 1
+    je .failure
+    mov dword [rbx + 128], -1
     test r13, r13
     jz .terminate
 .next:

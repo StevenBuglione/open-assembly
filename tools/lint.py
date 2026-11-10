@@ -77,6 +77,11 @@ COMPLEX_EXTENDED_ARGUMENTS = {**{name + "l": 2 for name in (
     "creal", "cimag", "conj", "cproj", "cabs", "carg", "clog", "csqrt", "cexp", "ccos", "csin", "ccosh", "csinh", "ctan", "ctanh", "catan", "catanh", "casin", "cacos", "casinh", "cacosh",
 )}, "cpowl": 4}
 PRIVATE_FUNCTIONS = {
+    "stdio/__al_scan_wset", "stdio/__al_scan_wmember", "stdio/__al_scan_wchars",
+    "stdio/__al_fmt_unit", "stdio/__al_fmt_wemit", "stdio/__al_fmt_wtext",
+    "stdio/__al_fmt_nwide",
+    "stdio/__al_stream_orient", "stdio/__al_stream_read_raw", "stdio/__al_stream_write_raw",
+    "stdio/__al_stream_getwc", "stdio/__al_stream_putwc",
     "complex/__al_complex_power", "complex/__al_complex_power_log", "complex/__al_complex_power_arg",
     "complex/__al_fixed_ratio_precision", "complex/__al_fixed_mul_precision",
     "complex/__al_fixed_odd_series", "complex/__al_complex_scaled_ratio_precision",
@@ -88,6 +93,10 @@ PRIVATE_FUNCTIONS = {
     "complex/__al_complex_inverse_circle", "complex/__al_complex_scaled_add",
     "complex/__al_complex_scaled_sqrt", "complex/__al_complex_scaled_ratio",
     "complex/__al_complex_constant_angle", "complex/__al_complex_distance_delta", "complex/__al_complex_geometric_root", "complex/__al_complex_align", "complex/__al_complex_square_cmp",
+    "wctype/__al_unicode_mask", "wctype/__al_unicode_case",
+    "locale/__al_locale_value", "locale/__al_mb_cur_max", "locale/__al_mbstate_default",
+    "wchar/__al_mb_error", "wchar/__al_mbs_convert", "wchar/__al_wcs_convert",
+    "wchar/__al_mb_legacy", "wchar/__al_wide_span", "wchar/__al_mb_decode", "wchar/__al_mb_encode", "wchar/__al_mbr_scalar", "wchar/__al_wcr_scalar",
     "math/__al_fp_decode", "math/__al_fp_pack_exact", "math/__al_fp_quiet",
     "math/__al_fp_round_shift", "math/__al_math_effects", "math/__al_math_round",
     "math/__al_math_frexp", "math/__al_math_modf", "math/__al_math_scale",
@@ -159,6 +168,7 @@ PRIVATE_FUNCTIONS = {
     "pthread/__al_cond_wait", "pthread/__al_cond_wake", "pthread/__al_tsd_destruct",
     "pthread/__al_once_reset", "pthread/__al_once_wake", "pthread/__al_mutex_timed_wait",
     "rt/__al_panic", "rt/__al_abort", "rt/__al_diagnostic", "stdlib/__al_strtox",
+    "wchar/__al_skip_wide_space", "wchar/__al_wcstox", "wchar/__al_wcstof_core",
 }
 PRIVATE_NORETURN = {"_start", "__al_rt_sigreturn", "__al_panic", "__al_abort", "__al_heap_bad", "__al_big_bad", "__al_spawn_child",
                     "__al_shell_exec", "__al_popen_child", "__al_thread_start", "__al_thread_unmap_exit"}
@@ -269,6 +279,7 @@ KERNEL_STACK_RECORDS = {
     },
 }
 PRIVATE_DATA = {
+    "__al_locale_flags": "locale/setlocale",
     "stdin": "rt/__al_stdio_init", "stdout": "rt/__al_stdio_init", "stderr": "rt/__al_stdio_init",
     "__al_stdio_lock": "rt/__al_stdio_init", "__al_streams": "rt/__al_stdio_init",
     "__al_heap_seed": "stdlib/__al_heap",
@@ -322,12 +333,18 @@ DATA_SECTIONS = {
     ".bss": {"nobits", "alloc", "noexec", "write"},
 }
 VARARGS_WRAPPERS = {
-    f"stdio/{name}": (target, fixed, register)
+    name: (target, fixed, register)
     for name, target, fixed, register in (
-        ("printf", "vprintf", 1, "rsi"), ("fprintf", "vfprintf", 2, "rdx"),
-        ("sprintf", "vsprintf", 2, "rdx"), ("snprintf", "vsnprintf", 3, "rcx"),
-        ("scanf", "vscanf", 1, "rsi"), ("fscanf", "vfscanf", 2, "rdx"),
-        ("sscanf", "vsscanf", 2, "rdx"),
+        ("stdio/printf", "vprintf", 1, "rsi"), ("stdio/fprintf", "vfprintf", 2, "rdx"),
+        ("stdio/sprintf", "vsprintf", 2, "rdx"), ("stdio/snprintf", "vsnprintf", 3, "rcx"),
+        ("stdio/scanf", "vscanf", 1, "rsi"), ("stdio/fscanf", "vfscanf", 2, "rdx"),
+        ("stdio/sscanf", "vsscanf", 2, "rdx"),
+        ("wchar/fwprintf", "vfwprintf", 2, "rdx"),
+        ("wchar/swprintf", "vswprintf", 3, "rcx"),
+        ("wchar/wprintf", "vwprintf", 1, "rsi"),
+        ("wchar/fwscanf", "vfwscanf", 2, "rdx"),
+        ("wchar/swscanf", "vswscanf", 2, "rdx"),
+        ("wchar/wscanf", "vwscanf", 1, "rsi"),
     )
 }
 
@@ -1168,7 +1185,7 @@ def check_file(path, function, fixture_syscall, functions_snapshot=project_funct
     elif relative_runtime == f"complex/{path.stem}":
         program.extended_arguments = COMPLEX_EXTENDED_ARGUMENTS.get(path.stem, 0)
     program.atomic_instructions = RUNTIME_ATOMICS.get(relative_runtime)
-    program.tls_self = relative_runtime in {"rt/__errno_location", "rt/__al_stream_owner", "pthread/pthread_self"}
+    program.tls_self = relative_runtime in {"rt/__errno_location", "rt/__al_stream_owner", "pthread/pthread_self", "locale/__al_mbstate_default"}
     program.callback_table = CALLBACK_TABLES.get(relative_runtime)
     program.callback_argument = ("rdi" if relative_runtime == "pthread/__al_thread_start"
                                    else CALLBACK_ARGUMENTS.get(function))
@@ -1210,7 +1227,7 @@ def check_file(path, function, fixture_syscall, functions_snapshot=project_funct
         expected = [("push", ("rbp",)), ("mov", ("rbp", "rsp")), ("sub", ("rsp", "208"))]
         expected += [("mov", (f"[rsp + {32 + index * 8}]", argument))
                      for index, argument in enumerate(("rdi", "rsi", "rdx", "rcx", "r8", "r9"))]
-        if target in {"vprintf", "vfprintf", "vsprintf", "vsnprintf"}:
+        if target in {"vprintf", "vfprintf", "vsprintf", "vsnprintf", "vfwprintf", "vswprintf", "vwprintf"}:
             expected += [("movdqa", (f"[rsp + {80 + index * 16}]", f"xmm{index}"))
                          for index in range(8)]
         expected += [

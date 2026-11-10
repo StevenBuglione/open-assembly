@@ -15,6 +15,8 @@ from spec import ROOT, load_project, sha256_file
 ADDITIONAL = {"atoi", "atol", "atoll", "strtol", "strtoll", "strtoul", "strtoull",
               "strtoimax", "strtoumax", "bsearch", "qsort"}
 TOOLS = {"coverage": "tools/coverage", "stub": "tools/stubcheck", "mutation": "tools/mutate"}
+# The scanner includes two input widths and a full shared mutation campaign.
+SCANNER_TIMEOUT = 900
 
 
 def phase2_functions():
@@ -61,7 +63,7 @@ def check_after(function, only, prerequisites):
 def check_scanner():
     report = EVIDENCE / f"{HELPER}.production.json"
     try:
-        result = run(["python3", "tools/phase2_helpers.py"], timeout=240)
+        result = run(["python3", "tools/phase2_helpers.py"], timeout=SCANNER_TIMEOUT)
         result["outcome"] = "pass" if result["returncode"] == 0 and report.is_file() else "fail"
         if report.is_file():
             result.update(evidence=str(report), evidence_sha256=sha256_file(report))
