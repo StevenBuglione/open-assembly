@@ -3,7 +3,7 @@ bits 64
 default rel
 
 global __al_stream_lock:function
-extern __errno_location:function
+extern __al_stream_owner:function
 extern __al_lock:function
 extern __al_panic:function
 
@@ -13,7 +13,7 @@ __al_stream_lock:
     push r12
     sub rsp, 8
     mov rbx, rdi
-    call __errno_location
+    call __al_stream_owner
     cmp [rbx + 104], rax
     je .recursive
     mov r12, rax

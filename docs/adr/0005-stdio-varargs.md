@@ -21,8 +21,8 @@ Each stream owns a descriptor, buffer state, direction, one byte of
 pushback, EOF and error indicators, and a registry link. The library
 serializes ordinary operations with a recursive per-stream lock. Explicit
 `flockfile` ownership and implicit I/O share that lock and use the calling
-thread's TLS identity. Unlocked entry points bypass acquisition. The
-registry has a separate lock. It may be acquired under a stream lock
+thread pointer from initialized static TLS. Unlocked entry points bypass
+acquisition. The registry has a separate lock. It may be acquired under a stream lock
 during disassociation and rebinding. Code releases the registry lock
 before waiting for a stream. A flush of all streams pins a pointer
 snapshot under the registry lock, flushes each open output stream under
