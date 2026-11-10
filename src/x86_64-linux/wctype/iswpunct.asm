@@ -25,6 +25,7 @@ section .text.iswpunct alloc exec nowrite progbits
 iswpunct:
     mov edi, edi
     sub rsp, 8
+    xor esi, esi          ; select the active locale
     call __al_unicode_mask
     and eax, 256
     add rsp, 8

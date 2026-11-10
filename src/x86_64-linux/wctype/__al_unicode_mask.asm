@@ -1,4 +1,4 @@
-; Return classification flags for the wide character in edi.
+; Return classification flags for the wide character in edi. ESI selects live (0), C (1), or UTF-8 (2).
 bits 64
 default rel
 
@@ -11,6 +11,12 @@ __al_unicode_mask:
     ja .absent
     cmp edi, 127
     jbe .search
+    test esi, esi
+    jz .current
+    cmp esi, 2
+    je .search
+    jmp .absent
+.current:
     test dword [rel __al_locale_flags], 1
     jz .absent
 .search:

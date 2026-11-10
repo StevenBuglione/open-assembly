@@ -26,6 +26,7 @@ towupper:
     mov edi, edi
     mov esi, 1
     sub rsp, 8
+    xor edx, edx          ; select the active locale
     call __al_unicode_case
     add rsp, 8
     ret

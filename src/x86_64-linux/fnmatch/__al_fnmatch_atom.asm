@@ -77,6 +77,7 @@ __al_fnmatch_atom:
 .lookup_class:
     lea rbx, [rdi + rsi + 2]
     mov edx, r12d
+    mov ecx, r13d
     call __al_fnmatch_class
     test eax, eax
     js .invalid_class

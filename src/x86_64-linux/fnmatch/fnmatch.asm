@@ -3,7 +3,7 @@
 ; header: fnmatch.h
 ; prototype: int fnmatch(const char *pattern, const char *string, int flags)
 ; standard: POSIX.1-2024 XSH fnmatch
-; deps: iswctype, towlower, towupper, wctype
+; deps: wctype
 ; errno: -
 ; mt_safe: true
 ; as_safe: true

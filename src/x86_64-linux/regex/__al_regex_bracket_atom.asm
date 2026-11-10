@@ -7,8 +7,7 @@ default rel
 global __al_regex_bracket_atom:function
 extern __al_fnmatch_unit:function
 extern __al_fnmatch_class:function
-extern towupper:function
-extern towlower:function
+extern __al_unicode_case:function
 
 section .text.__al_regex_bracket_atom alloc exec nowrite progbits
 __al_regex_bracket_atom:
@@ -70,6 +69,7 @@ __al_regex_bracket_atom:
     mov rdi, r14
     mov rsi, r15
     mov edx, r12d
+    mov ecx, r13d
     call __al_fnmatch_class
     test eax, eax
     js .bad_class
@@ -77,18 +77,28 @@ __al_regex_bracket_atom:
     test r13d, 2               ; test both case variants for REG_ICASE
     jz .class_result
     mov edi, r12d
-    call towupper
+    mov esi, 1
+    mov edx, r13d
+    and edx, 1
+    inc edx
+    call __al_unicode_case
     mov edx, eax
     mov rdi, r14
     mov rsi, r15
+    mov ecx, r13d
     call __al_fnmatch_class
     test eax, eax
     jnz .class_result
     mov edi, r12d
-    call towlower
+    xor esi, esi
+    mov edx, r13d
+    and edx, 1
+    inc edx
+    call __al_unicode_case
     mov edx, eax
     mov rdi, r14
     mov rsi, r15
+    mov ecx, r13d
     call __al_fnmatch_class
 .class_result:
     mov edx, eax

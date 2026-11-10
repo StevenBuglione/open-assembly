@@ -6,8 +6,7 @@ default rel
 
 global __al_regex_bracket:function
 extern __al_regex_bracket_atom:function
-extern towupper:function
-extern towlower:function
+extern __al_unicode_case:function
 
 section .text.__al_regex_bracket alloc exec nowrite progbits
 __al_regex_bracket:
@@ -67,14 +66,22 @@ __al_regex_bracket:
     mov [rsp + 8], r8d
     mov [rsp + 12], edx
     mov edi, r12d
-    call towupper
+    mov esi, 1
+    mov edx, r14d
+    and edx, 1
+    inc edx
+    call __al_unicode_case
     cmp eax, [rsp + 4]
     jb .lower_range
     cmp eax, [rsp + 8]
     jbe .matched
 .lower_range:
     mov edi, r12d
-    call towlower
+    xor esi, esi
+    mov edx, r14d
+    and edx, 1
+    inc edx
+    call __al_unicode_case
     cmp eax, [rsp + 4]
     jb .folded_range
     cmp eax, [rsp + 8]
