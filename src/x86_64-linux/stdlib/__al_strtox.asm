@@ -1,6 +1,7 @@
-; Original integer scanner for the LP64 C locale.
+; Original integer scanner for LP64 ASCII numeric subjects.
 ; rdi = input, rsi = endptr, rdx = base, rcx = flags.
-; Flag bit 0 selects unsigned range. Bit 1 suppresses errno for ato*.
+; Flag bit 0 selects unsigned range, bit 1 suppresses errno for ato*,
+; and bit 2 selects four-byte input.
 bits 64
 default rel
 
@@ -17,7 +18,11 @@ __al_strtox:
     mov [rsp + 16], rcx           ; flags
     mov qword [rsp + 24], 0       ; negative sign
     mov r9, rdx                  ; base
-
+    mov esi, 1                   ; input stride, endptr is saved
+    test ecx, 4
+    jz .check_base
+    mov esi, 4
+.check_base:
     test r9, r9
     jz .space
     cmp r9, 2
@@ -25,28 +30,40 @@ __al_strtox:
     cmp r9, 36
     ja .zero_result
 .space:
+    cmp esi, 4
+    je .wide_space
     movzx eax, byte [rdi]
+    jmp .space_byte
+.wide_space:
+    mov eax, [rdi]
+.space_byte:
     cmp eax, 32                  ; space
     je .skip_space
     lea rcx, [rax - 9]            ; tab, newline, VT, FF, CR
     cmp rcx, 4
     ja .sign
 .skip_space:
-    inc rdi
+    add rdi, rsi
     jmp .space
 .sign:
     cmp eax, 45                  ; '-'
     jne .plus
     mov qword [rsp + 24], 1
-    inc rdi
+    add rdi, rsi
     jmp .base
 .plus:
     cmp eax, 43                  ; '+'
     jne .base
-    inc rdi
+    add rdi, rsi
 
 .base:
+    cmp esi, 4
+    je .wide_zero
     cmp byte [rdi], 48            ; '0'
+    jmp .base_zero
+.wide_zero:
+    cmp dword [rdi], 48
+.base_zero:
     jne .decimal_if_auto
     test r9, r9
     jz .octal_if_no_prefix
@@ -56,11 +73,23 @@ __al_strtox:
 .octal_if_no_prefix:
     mov r9d, 8
 .hex_prefix:
-    movzx ecx, byte [rdi + 1]
+    cmp esi, 4
+    je .wide_prefix_letter
+    movzx ecx, byte [rdi + rsi]
+    jmp .prefix_letter
+.wide_prefix_letter:
+    mov ecx, [rdi + rsi]
+.prefix_letter:
     or ecx, 32
     cmp ecx, 120                 ; 'x' or 'X'
     jne .limit
-    movzx ecx, byte [rdi + 2]
+    cmp esi, 4
+    je .wide_prefix_digit
+    movzx ecx, byte [rdi + rsi * 2]
+    jmp .prefix_digit
+.wide_prefix_digit:
+    mov ecx, [rdi + rsi * 2]
+.prefix_digit:
     lea rdx, [rcx - 48]
     cmp rdx, 9
     jbe .use_hex
@@ -69,7 +98,7 @@ __al_strtox:
     cmp rdx, 5
     ja .limit
 .use_hex:
-    add rdi, 2
+    lea rdi, [rdi + rsi * 2]
     mov r9d, 16
     jmp .limit
 .decimal_if_auto:
@@ -98,7 +127,13 @@ __al_strtox:
     xor r11d, r11d                ; overflow flag
 
 .next:
+    cmp esi, 4
+    je .wide_digit
     movzx ecx, byte [rdi]
+    jmp .digit_value
+.wide_digit:
+    mov ecx, [rdi]
+.digit_value:
     lea rdx, [rcx - 48]           ; '0'..'9'
     cmp rdx, 9
     jbe .digit
@@ -111,7 +146,7 @@ __al_strtox:
 .digit:
     cmp rdx, r9
     jae .end_digits
-    inc rdi
+    add rdi, rsi
     test r11d, r11d
     jnz .next                    ; consume the remaining digits after overflow
     cmp r10, [rsp + 40]

@@ -3,7 +3,7 @@
 
 This index lists authored function specifications. For implementation state, run `tools/queue status`.
 
-Specs: 586 of 639 inventoried functions. The inventory covers C17, the named POSIX subset, runtime ABI entries, and Linux compatibility extensions. see [inventory scope](cookbook/specifications.md#inventory-scope).
+Specs: 595 of 639 inventoried functions. The inventory covers C17, the named POSIX subset, runtime ABI entries, and Linux compatibility extensions. see [inventory scope](cookbook/specifications.md#inventory-scope).
 
 | Function | Header | Prototype | Standard |
 | --- | --- | --- | --- |
@@ -580,8 +580,17 @@ Specs: 586 of 639 inventoried functions. The inventory covers C17, the named POS
 | [`wcsrtombs`](../spec/functions/wchar/wcsrtombs.toml) | `<wchar.h>` | `size_t wcsrtombs(char *restrict dst, const wchar_t **restrict src, size_t len, mbstate_t *restrict ps)` | C17 7.29.6.4.2 |
 | [`wcsspn`](../spec/functions/wchar/wcsspn.toml) | `<wchar.h>` | `size_t wcsspn(const wchar_t *s, const wchar_t *accept)` | C17 7.29.4.5.5 |
 | [`wcsstr`](../spec/functions/wchar/wcsstr.toml) | `<wchar.h>` | `wchar_t *wcsstr(const wchar_t *haystack, const wchar_t *needle)` | C17 7.29.4.5.6 |
+| [`wcstod`](../spec/functions/wchar/wcstod.toml) | `<wchar.h>` | `double wcstod(const wchar_t *restrict s, wchar_t **restrict endptr)` | C17 7.29.4.1.1 |
+| [`wcstof`](../spec/functions/wchar/wcstof.toml) | `<wchar.h>` | `float wcstof(const wchar_t *restrict s, wchar_t **restrict endptr)` | C17 7.29.4.1.1 |
+| [`wcstoimax`](../spec/functions/inttypes/wcstoimax.toml) | `<inttypes.h>` | `intmax_t wcstoimax(const wchar_t *restrict s, wchar_t **restrict endptr, int base)` | C17 7.8.2.4 |
 | [`wcstok`](../spec/functions/wchar/wcstok.toml) | `<wchar.h>` | `wchar_t *wcstok(wchar_t *restrict s, const wchar_t *restrict separators, wchar_t **restrict context)` | C17 7.29.4.5.7 |
+| [`wcstol`](../spec/functions/wchar/wcstol.toml) | `<wchar.h>` | `long wcstol(const wchar_t *restrict s, wchar_t **restrict endptr, int base)` | C17 7.29.4.1.2 |
+| [`wcstold`](../spec/functions/wchar/wcstold.toml) | `<wchar.h>` | `long double wcstold(const wchar_t *restrict s, wchar_t **restrict endptr)` | C17 7.29.4.1.1 |
+| [`wcstoll`](../spec/functions/wchar/wcstoll.toml) | `<wchar.h>` | `long long wcstoll(const wchar_t *restrict s, wchar_t **restrict endptr, int base)` | C17 7.29.4.1.2 |
 | [`wcstombs`](../spec/functions/stdlib/wcstombs.toml) | `<stdlib.h>` | `size_t wcstombs(char *restrict dst, const wchar_t *restrict src, size_t len)` | C17 7.22.8.2 |
+| [`wcstoul`](../spec/functions/wchar/wcstoul.toml) | `<wchar.h>` | `unsigned long wcstoul(const wchar_t *restrict s, wchar_t **restrict endptr, int base)` | C17 7.29.4.1.2 |
+| [`wcstoull`](../spec/functions/wchar/wcstoull.toml) | `<wchar.h>` | `unsigned long long wcstoull(const wchar_t *restrict s, wchar_t **restrict endptr, int base)` | C17 7.29.4.1.2 |
+| [`wcstoumax`](../spec/functions/inttypes/wcstoumax.toml) | `<inttypes.h>` | `uintmax_t wcstoumax(const wchar_t *restrict s, wchar_t **restrict endptr, int base)` | C17 7.8.2.4 |
 | [`wcsxfrm`](../spec/functions/wchar/wcsxfrm.toml) | `<wchar.h>` | `size_t wcsxfrm(wchar_t *restrict dst, const wchar_t *restrict src, size_t n)` | C17 7.29.4.4.4 |
 | [`wctob`](../spec/functions/wchar/wctob.toml) | `<wchar.h>` | `int wctob(wint_t c)` | C17 7.29.6.1.2 |
 | [`wctomb`](../spec/functions/stdlib/wctomb.toml) | `<stdlib.h>` | `int wctomb(char *s, wchar_t wc)` | C17 7.22.7.3 |

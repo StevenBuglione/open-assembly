@@ -1,5 +1,5 @@
-; Original ASCII case-insensitive token match. Returns first byte after the
-; keyword, or NULL. rdi = input, rsi = lowercase keyword.
+; Original ASCII case-insensitive token match. Returns the input pointer
+; after the keyword, or NULL. rdi = input, rsi = ASCII keyword, rdx = stride.
 bits 64
 default rel
 
@@ -8,15 +8,22 @@ global __al_float_keyword:function
 section .text.__al_float_keyword alloc exec nowrite progbits
 __al_float_keyword:
     mov rax, rdi
+    mov r8, rdx
 .next:
-    mov dl, [rsi]
-    test dl, dl
+    movzx edx, byte [rsi]
+    test edx, edx
     jz .done
-    mov cl, [rax]
-    or cl, 32
-    cmp cl, dl
+    cmp r8d, 4
+    je .wide_unit
+    movzx ecx, byte [rax]
+    jmp .unit
+.wide_unit:
+    mov ecx, [rax]
+.unit:
+    or ecx, 32
+    cmp ecx, edx
     jne .missing
-    inc rax
+    add rax, r8
     inc rsi
     jmp .next
 .missing:

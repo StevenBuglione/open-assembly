@@ -163,6 +163,7 @@ PRIVATE_FUNCTIONS = {
     "pthread/__al_cond_wait", "pthread/__al_cond_wake", "pthread/__al_tsd_destruct",
     "pthread/__al_once_reset", "pthread/__al_once_wake", "pthread/__al_mutex_timed_wait",
     "rt/__al_panic", "rt/__al_abort", "rt/__al_diagnostic", "stdlib/__al_strtox",
+    "wchar/__al_skip_wide_space", "wchar/__al_wcstox", "wchar/__al_wcstof_core",
 }
 PRIVATE_NORETURN = {"_start", "__al_rt_sigreturn", "__al_panic", "__al_abort", "__al_heap_bad", "__al_big_bad", "__al_spawn_child",
                     "__al_shell_exec", "__al_popen_child", "__al_thread_start", "__al_thread_unmap_exit"}

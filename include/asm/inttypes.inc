@@ -4,5 +4,7 @@
 
 extern strtoimax
 extern strtoumax
+extern wcstoimax
+extern wcstoumax
 
 %endif

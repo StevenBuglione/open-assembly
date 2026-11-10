@@ -1,5 +1,5 @@
 ; Original floating conversion dispatcher. rdi = string, rsi = endptr,
-; rdx = target 0 binary32, 1 binary64, 2 x86 extended.
+; rdx = target 0 binary32, 1 binary64, 2 x86 extended. Bit 2 selects wide input.
 ; Returns raw bits in rax and extended sign/exponent in dx.
 bits 64
 default rel
@@ -30,6 +30,12 @@ __al_strtof_core:
     mov rdi, rbx
     lea rsi, [rel numerator]
     lea rdx, [rel metadata]
+    mov ecx, 1
+    test r13d, 4
+    jz .lex
+    mov ecx, 4
+    and r13d, 3
+.lex:
     call __al_float_lex
     test r12, r12
     jz .kind
