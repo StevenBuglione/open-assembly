@@ -6,7 +6,7 @@ default rel
 global __al_dns_reverse:function
 extern __al_dns_reverse_name:function
 extern __al_dns_server:function
-extern __al_dns_query:function
+extern __al_dns_try_servers:function
 extern __al_dns_text:function
 
 section .text.__al_dns_reverse alloc exec nowrite progbits
@@ -21,10 +21,11 @@ __al_dns_reverse:
     call __al_dns_server
     mov esi, eax
     lea rdi, [rbx + 576]
-    lea rdx, [rbx + 608]
-    mov ecx, 12                ; PTR
-    lea r8, [rbx + 1088]        ; reuse the configuration line after selection
-    call __al_dns_query
+    lea rdx, [rbx + 832]        ; alternate bank for reverse
+    lea rcx, [rbx + 608]
+    mov r8d, 12                 ; PTR
+    lea r9, [rbx + 1088]        ; reuse the configuration line after selection
+    call __al_dns_try_servers
     test eax, eax
     jnz .return
     cmp byte [rbx + 1352], 0   ; the root name is not a host name

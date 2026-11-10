@@ -135,12 +135,16 @@ PRIVATE_FUNCTIONS = {
     "netdb/__al_gai_equalname", "netdb/__al_gai_service", "netdb/__al_gai_hosts",
     "netdb/__al_gai_filter", "netdb/__al_gai_result",
     "netdb/__al_gai_addrconfig", "netdb/__al_gai_addrconfig_parse",
+    "netdb/__al_ipv6_zone_kind", "netdb/__al_ipv6_zone_id", "netdb/__al_ipv6_zone_name",
+    "netdb/__al_netdb_ifreq",
     "netdb/__al_dns_build", "netdb/__al_dns_name", "netdb/__al_dns_parse",
     "netdb/__al_dns_now", "netdb/__al_dns_wait", "netdb/__al_dns_open",
     "netdb/__al_dns_transfer", "netdb/__al_dns_query",
     "netdb/__al_dns_lookup", "netdb/__al_dns_publish", "netdb/__al_dns_text",
     "netdb/__al_dns_server", "netdb/__al_dns_reverse",
-    "netdb/__al_dns_config", "netdb/__al_dns_lookup_one", "netdb/__al_dns_reverse_name",
+    "netdb/__al_dns_config", "netdb/__al_dns_lookup_one",
+    "netdb/__al_dns_config_server", "netdb/__al_dns_try_servers",
+    "netdb/__al_dns_option", "netdb/__al_dns_rotate", "netdb/__al_dns_query_timeout", "netdb/__al_dns_reverse_name",
     "netdb/__al_gni_address",
     "netdb/__al_gni_host", "netdb/__al_gni_service",
     "math/__al_big_muladd", "math/__al_big_left", "math/__al_big_right1",
@@ -270,6 +274,9 @@ HTTP_APP_CALLS = {
 }
 
 RUNTIME_ATOMICS = {
+    "netdb/__al_dns_rotate": {
+        ("lock", ("xadd qword [rel next_rotation]", "rax")): ("rax", ("rax",)),
+    },
     "compiler_rt/__al_atomic_bytes": {
         **{("xchg", (f"{width} [rsi]", accumulator)): (accumulator, ("rsi", "rax"))
            for width, accumulator in (("byte", "al"), ("word", "ax"), ("dword", "eax"), ("qword", "rax"))},

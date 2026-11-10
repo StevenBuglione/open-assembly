@@ -9,9 +9,12 @@ global __al_gai_hosts:function
 extern __al_gai_equalname:function
 extern __al_gai_line:function
 extern __al_gai_word:function
+extern __al_ipv6_zone_id:function
 extern fclose:function
 extern fopen:function
 extern inet_pton:function
+extern memcpy:function
+extern strchr:function
 extern strlen:function
 
 section .text.__al_gai_hosts alloc exec nowrite progbits
@@ -28,7 +31,13 @@ __al_gai_hosts:
     jz .null_node
     cmp byte [rsi], 0
     je .not_found
+    mov rdi, r12
+    mov esi, 37                 ; percent scope delimiter
+    call strchr
+    test rax, rax
+    jnz .scoped_ipv6
     mov edi, 10                 ; AF_INET6
+    mov rsi, r12
     lea rdx, [rbx + 72]
     call inet_pton
     test eax, eax
@@ -50,6 +59,31 @@ __al_gai_hosts:
     mov [rbx + 32], rax
     mov eax, 1
     jmp .both_families
+.scoped_ipv6:
+    mov r13, rax
+    mov r15, rax
+    sub r15, r12
+    jz .not_found
+    cmp r15, 45
+    ja .not_found
+    lea rdi, [rbx + 1088]
+    mov rsi, r12
+    mov rdx, r15
+    call memcpy
+    mov byte [rax + r15], 0
+    mov edi, 10
+    mov rsi, rax
+    lea rdx, [rbx + 72]
+    call inet_pton
+    test eax, eax
+    jz .not_found
+    lea rdi, [r13 + 1]
+    lea rsi, [rbx + 72]
+    lea rdx, [rbx + 1136]      ; ifreq beyond the temporary address text
+    call __al_ipv6_zone_id
+    test rax, rax
+    js .return
+    mov [rbx + 68], eax
 .numeric_ipv6:
     mov dword [rbx + 64], 10
     jmp .numeric_done

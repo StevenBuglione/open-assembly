@@ -8,7 +8,7 @@ mt_safe = true
 as_safe = true
 oracles = ["reference:arena-vector-model"]
 provenance = "original"
-semantics = ["Append one element. Grow capacity geometrically in the caller-owned arena when needed.", "Return a negative error for invalid arguments, wrapping extent or arena exhaustion. Preserve both states on failure and preserve errno."]
+semantics = ["Append one element. Grow capacity geometrically in the caller-owned arena when needed.", "Require initialized state and a valid element span. Retry an exhausted geometric allocation at the exact next capacity. Preserve both states on failure and preserve errno."]
 
 [abi]
 narrow_args = []

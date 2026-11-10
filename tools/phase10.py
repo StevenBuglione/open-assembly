@@ -52,7 +52,10 @@ def main():
         contracts.extend((Path("docs/adr/0017-dns-forward.md"),
                           Path("docs/adr/0019-local-reverse-lookup.md"),
                           Path("docs/adr/0038-address-configuration.md"),
-                          Path("docs/adr/0039-resolver-search.md")))
+                          Path("docs/adr/0039-resolver-search.md"),
+                          Path("docs/adr/0040-ipv6-scope.md"),
+                          Path("docs/adr/0041-resolver-failover.md"),
+                          Path("docs/adr/0042-resolver-options.md")))
         wraps = {directory / "files.c": ("fopen",),
                  directory / "lifetime.c": ("malloc", "calloc", "free")}
     if scope == "terminal":

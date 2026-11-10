@@ -3,14 +3,16 @@
 ; header: netdb.h
 ; prototype: int getnameinfo(const struct sockaddr *restrict address, socklen_t address_length, char *restrict host, socklen_t host_length, char *restrict service, socklen_t service_length, int flags)
 ; standard: POSIX.1-2024 XSH getnameinfo
-; deps: __errno_location, calloc, clock_gettime, close, connect, fclose, feof, fgetc, fgets, fopen, free, getsockopt, inet_ntop, inet_pton, malloc, memcmp, memcpy, poll, recv, send, socket, snprintf, strchr, strcmp, strlen
+; deps: __errno_location, calloc, clock_gettime, close, connect, fclose, feof, fgetc, fgets, fopen, free, getsockopt, inet_ntop, inet_pton, ioctl, malloc, memcmp, memcpy, poll, recv, send, socket, snprintf, strchr, strcmp, strlen
 ; errno: -
 ; mt_safe: true
 ; as_safe: false
-; oracles: reference:rfc3493, reference:local-netdb, reference:rfc1035, reference:rfc3596, diff:glibc, diff:musl
+; oracles: reference:rfc3493, reference:rfc4007, reference:local-netdb, reference:rfc1035, reference:rfc3596, diff:glibc, diff:musl
 ; provenance: original
 ; narrow_args: esi:u32, ecx:u32, r9d:u32
 ; variadic: false
+; semantics: Use configured DNS nameservers with bounded failover, deadlines and retry rounds.
+; semantics: Append a scoped IPv6 interface name or decimal scope ID to numeric host output.
 ; semantics: Render an IPv4 or IPv6 socket address as numeric, local-file or PTR host text and numeric or local-file service text.
 ; semantics: Publish requested output strings only if both fit, otherwise return an EAI code. Preserve errno.
 ; semantics: Use local host names before DNS. Fall back to numeric output unless a name is required.

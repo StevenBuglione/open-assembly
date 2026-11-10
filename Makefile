@@ -29,6 +29,10 @@ production-scalars:
 production-linux-files:
 	python3 tools/phase2.py --linux-files
 
+.PHONY: production-linux-io
+production-linux-io:
+	python3 tools/phase2.py --linux-io
+
 phase3:
 	python3 tools/phase3.py
 

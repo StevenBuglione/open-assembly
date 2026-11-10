@@ -11,8 +11,8 @@
 ; provenance: original
 ; narrow_args: -
 ; variadic: false
-; semantics: Reserve at least the requested element capacity in the caller-owned arena, preserving current elements.
-; semantics: Return a negative error for invalid state, wrapping extent or arena exhaustion. Preserve both states on failure and preserve errno.
+; semantics: Grow initialized state to exactly the requested capacity when necessary, preserving current elements.
+; semantics: Return a negative error for null required arguments, a wrapping new extent or arena exhaustion. Preserve both states on failure and preserve errno.
 ; END OPEN ASSEMBLY GENERATED SPEC
 
 bits 64

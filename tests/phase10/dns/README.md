@@ -40,3 +40,10 @@ write output.
 [IPv4 reverse DNS](https://www.rfc-editor.org/rfc/rfc1035.html#section-3.5) ·
 [IPv6 reverse DNS](https://www.rfc-editor.org/rfc/rfc3596.html#section-2.5) ·
 [Public name lookup](https://www.rfc-editor.org/rfc/rfc3493.html#section-6.2)
+
+
+The resolver search probes use separate file-backed configurations and a
+loopback peer. The hook changes only the server port after the real
+configuration reader returns. The fixtures check configuration limits,
+candidate order, both eligible families, fatal errors, canonical names,
+and numeric and local bypass. See [the resolver search contract](../../../docs/adr/0039-resolver-search.md).

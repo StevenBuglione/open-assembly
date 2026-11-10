@@ -11,6 +11,7 @@ import subprocess
 import sys
 import tempfile
 
+from extension_abi import COMPILERS, load_baselines, verify_stable_abi
 from extension_build import build_extension, dependency_order
 from extensions import NAME, confined, extension_sources, load_packages
 from gate import BUILD, GateError, identify_tools, source_policy, verify_setup
@@ -65,6 +66,8 @@ def execute(name):
     if name not in packages:
         raise GateError(f"unknown extension package {name}")
     closure = dependency_order(packages, name)
+    baselines = load_baselines(project.root, packages)
+    stable = any(package.name in baselines for package in closure)
     sources = extension_sources(project, packages)
     for package in closure:
         if not package.functions:
@@ -78,17 +81,26 @@ def execute(name):
     destination.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="package-", dir=destination) as work:
         directory = Path(work).relative_to(ROOT)
+        abi = {"outcome": "fail"}
+        if stable:
+            verify_stable_abi(baselines, closure, directory, abi)
         source_policy(checks, directory)
         first = build_extension(directory / "first", closure, sources, [])
         second = build_extension(directory / "second", closure, sources, [])
         if first[3] != second[3]:
             raise GateError("two isolated extension builds differ")
+        additional = tuple(compiler for compiler in COMPILERS if compiler != "gcc") if stable else ()
         metadata = {
             "schema_version": 1, "scope": "extension-package-build", "outcome": "pass",
             "package": name, "packages": [package.name for package in closure],
             "exports": sorted(symbol for package in closure for symbol in package.functions),
-            "inputs": inputs, "toolchain": identify_tools("ar", "make"),
+            "inputs": inputs, "toolchain": identify_tools("ar", "make", *additional),
         }
+        if stable:
+            # Command records carry the transient build path. Bundle identities do not.
+            for item in abi["packages"].values():
+                del item["commands"]
+            metadata["stable_abi"] = abi
         path = publish(directory, destination, metadata, first[3])
         print(path.relative_to(ROOT))
 

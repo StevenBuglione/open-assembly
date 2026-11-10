@@ -22,7 +22,7 @@ __al_dns_lookup:
     mov rbx, rdi                ; resolver context
     mov r13, rsi                ; original node
     mov edi, 1
-    mov esi, 2880               ; answer, sockaddr, search record and scratch
+    mov esi, 3136               ; answer, sockaddr, search record and candidate
     call calloc
     test rax, rax
     jz .no_memory
@@ -30,7 +30,7 @@ __al_dns_lookup:
     mov rdi, r13
     mov esi, 1
     xor edx, edx
-    lea rcx, [r14 + 2608]
+    xor ecx, ecx
     mov r8d, 272
     call __al_dns_build
     test rax, rax
@@ -93,7 +93,7 @@ __al_dns_lookup:
     cmp rcx, 253               ; without the trailing root dot
     ja .next_suffix
     mov [rsp + 24], rax
-    lea rdi, [r14 + 2608]
+    lea rdi, [r14 + 2880]
     mov rsi, r13
     mov rdx, r12
     call memcpy
@@ -104,7 +104,7 @@ __al_dns_lookup:
     inc rdx                    ; include the suffix terminator
     call memcpy
     mov rdi, rbx
-    lea rsi, [r14 + 2608]
+    lea rsi, [r14 + 2880]
     mov rdx, r14
     mov ecx, r15d
     mov r8, r13

@@ -14,8 +14,8 @@ import time
 from branch_coverage import verify_coverage
 from gate import (BUILD, COMPILE_FLAGS, LINK_FLAGS, GateError, checked, identify_tools,
                   nm_symbols, verify_setup, write_evidence)
-from phase1 import NASM, build_case, build_runtime
-from phase4 import load_probes, observation, parse_probe
+from phase1 import NASM, build_case, build_runtime, load_manifest as load_phase1_manifest
+from phase4 import Probe, load_probes, observation, parse_probe
 from phase6 import ABI_FIXTURES, PUBLIC as FILE_PUBLIC, SUITE as FILE_SUITE, run_cases, run_stubs
 from production import applicable_variants, phase2_inputs, source_paths
 from spec import ROOT, load_project, sha256_file, snapshot_inputs
@@ -33,9 +33,21 @@ class Plan:
     record_sizes: tuple
     contracts: tuple
     fault_wrappers: tuple = ()
+    phase1_cases: tuple = ()
 
 
 FCNTL = Path("tests/phase6/fcntl")
+IO = Path("tests/phase6/io")
+IO_PHASE1_CASES = {"read": ("io-read", "eintr"), "write": ("io-write", "hello-asm"),
+                   "close": ("io-close",)}
+IO_PHASE1_FAILURES = {"read": (21, 22, 23, 24, 26, 28), "write": (32, 33, 34, 38),
+                      "close": (41, 42, 43, 44)}
+IO_POSITIONAL = frozenset({"pread", "pwrite"})
+IO_FUNCTIONS = frozenset(IO_PHASE1_CASES) | IO_POSITIONAL
+IO_MUTATIONS = {name: ((f"io-{name}", codes),) for name, codes in IO_PHASE1_FAILURES.items()}
+IO_MUTATIONS.update(pread=(("io-pread", (11, 12, 13, 14)),),
+                    pwrite=(("io-pwrite", (11, 12, 13, 14, 15)),
+                            ("io-pwrite-coverage", (*range(11, 19), 21, 22, 23, 24))))
 FILE_MUTATION_FAILURES = {"lseek": (62, 63, 65, 67), "dup": (72, 73, 74), "dup2": (82, 83, 84, 85)}
 FILE_CONTRACTS = (Path("docs/adr/0007-linux-files-process-signal-time.md"),
                   Path("docs/cookbook/linux-file-verification.md"))
@@ -45,6 +57,11 @@ PLANS = {
                   f"file-{name}-fuzz", (16, 24), FILE_CONTRACTS,
                   ((FILE_SUITE / "fault.c", ("__al_syscall",)),))
        for name, codes in FILE_MUTATION_FAILURES.items()},
+    **{name: Plan(IO, IO_POSITIONAL, (Path("tests/phase2/abi.asm"),),
+                  f"io-{name}-abi", "io-pwrite-coverage" if name == "pwrite" else f"io-{name}",
+                  mutations, f"io-{name}-fuzz", (16, 24), FILE_CONTRACTS,
+                  ((IO / "pwrite_fault.c", ("__al_syscall",)),), IO_PHASE1_CASES.get(name, ()))
+       for name, mutations in IO_MUTATIONS.items()},
     "fcntl": Plan(
         FCNTL, frozenset({"fcntl"}), (Path("tests/phase2/abi.asm"), FCNTL / "variadic.asm"),
         "fcntl-abi", "fcntl-dispatch",
@@ -68,6 +85,29 @@ def manifest_inputs(function):
     return dict(sorted(inputs.items()))
 
 
+def phase1_probe(case):
+    return Probe(case, b"", case.stdout.encode(), case.stderr.encode(), {}, (),
+                 "Phase 1 fixture links the Open Assembly runtime directly.")
+
+
+def load_plan_probes(function, plan):
+    parse = partial(parse_probe, suite=plan.suite, programs=(), asm_fixtures=plan.assembly,
+                    fault_wrappers=dict(plan.fault_wrappers), allow_fixture_files=True)
+    probes, controls = load_probes(plan.suite / "manifest.toml", plan.public, parse)
+    selected = {probe.case.name: probe for probe in probes if function in probe.case.requires}
+    if plan.phase1_cases:
+        cases, stubs = load_phase1_manifest()
+        phase1 = {case.name: phase1_probe(case) for case in cases if function in case.requires}
+        case, rejection = stubs[function]
+        names = set(plan.phase1_cases)
+        if names & selected.keys() or not names <= phase1.keys() or case.name not in names:
+            raise GateError(f"{function}: incomplete or overlapping Phase 1 cases")
+        selected.update({name: phase1[name] for name in plan.phase1_cases})
+        status, stdout, stderr = rejection
+        controls[function] = selected[case.name], (status, stdout.encode(), stderr.encode())
+    return selected, controls
+
+
 def candidate_object(path, source, name, original, log, *, debug=False):
     command = (*NASM, "-g", "-F", "dwarf") if debug else NASM
     checked(log, [*command, "-o", path, source])
@@ -80,8 +120,8 @@ def candidate_object(path, source, name, original, log, *, debug=False):
 
 
 def trace_function(name, source, original, probe, directory, runtime, record):
-    if probe.files or probe.input_bytes or probe.wraps:
-        raise GateError(f"{probe.case.name}: trace case requires a direct, argument-only probe")
+    if probe.files or probe.input_bytes or "qemu" not in probe.case.backends:
+        raise GateError(f"{probe.case.name}: trace case requires an argument-only QEMU probe")
     directory.mkdir()
     log = record["commands"]
     debug = candidate_object(directory / f"{name}.debug.o", source, name, original, log, debug=True)
@@ -90,10 +130,11 @@ def trace_function(name, source, original, probe, directory, runtime, record):
     if not text[0] or text[0] != text[1]:
         raise GateError("traced candidate differs from the archived function")
     binary, artifacts = build_case(probe.case, directory / "linked", runtime, log,
-                                  candidate=(name, debug))
-    record.update(debug_object_sha256=sha256_file(debug), linked_artifacts=artifacts)
+                                  candidate=(name, debug), link_wraps=probe.wraps)
+    record.update(debug_object_sha256=sha256_file(debug), linked_artifacts=artifacts,
+                  link_wraps=probe.wraps)
     verify_coverage(record, directory, binary, name, source, [probe.case.args], exact_case=probe.case,
-                    require_entry=name in FILE_MUTATION_FAILURES)
+                    require_entry=True)
 
 
 def expected(probe):
@@ -220,10 +261,7 @@ def runtime_manifest_production(function, only=None):
         project = load_project()
         spec = project.functions[function]
         source = source_paths()[function]
-        parse = partial(parse_probe, suite=plan.suite, programs=(), asm_fixtures=plan.assembly,
-                        fault_wrappers=dict(plan.fault_wrappers), allow_fixture_files=True)
-        probes, controls = load_probes(plan.suite / "manifest.toml", plan.public, parse)
-        probes = {probe.case.name: probe for probe in probes if function in probe.case.requires}
+        probes, controls = load_plan_probes(function, plan)
         required_cases = {"coverage": {plan.trace}, "mutation": {case for case, _ in plan.mutations},
                           "stub": set(), "fuzz": {plan.fuzz}}
         selected = {plan.abi}.union(*required_cases.values()) if only is None else required_cases[only]

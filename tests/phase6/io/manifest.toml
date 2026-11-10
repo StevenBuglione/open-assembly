@@ -1,0 +1,213 @@
+schema = 1
+
+[[case]]
+name = "io-read-fuzz"
+sources = ["tests/phase6/io/packets.c"]
+requires = ["read"]
+args = ["read"]
+env = {}
+status = 0
+stdin_hex = "00000000000000000000000000000000"
+stdout = ""
+stdout_hex = "0100000000000000b3030000000000007800000001000000"
+stderr = ""
+oracle = ["reference:linux-file-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "io-read-abi"
+sources = ["tests/phase6/io/abi.c", "tests/phase2/abi.asm"]
+requires = ["read"]
+args = ["read"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["abi:sysv-amd64"]
+backends = ["native", "qemu"]
+host_skip = "Direct SysV AMD64 register-state probe on the freestanding runtime."
+[case.skip]
+valgrind = "Shared nondefault x87 ABI probe exceeds Memcheck emulation."
+
+[[case]]
+name = "io-write-fuzz"
+sources = ["tests/phase6/io/packets.c"]
+requires = ["write"]
+args = ["write"]
+env = {}
+status = 0
+stdin_hex = "00000000000000000000000000000000"
+stdout = ""
+stdout_hex = "0100000000000000b3030000000000000300000000000000"
+stderr = ""
+oracle = ["reference:linux-file-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "io-write-abi"
+sources = ["tests/phase6/io/abi.c", "tests/phase2/abi.asm"]
+requires = ["write"]
+args = ["write"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["abi:sysv-amd64"]
+backends = ["native", "qemu"]
+host_skip = "Direct SysV AMD64 register-state probe on the freestanding runtime."
+[case.skip]
+valgrind = "Shared nondefault x87 ABI probe exceeds Memcheck emulation."
+
+[[case]]
+name = "io-close-fuzz"
+sources = ["tests/phase6/io/packets.c"]
+requires = ["close"]
+args = ["close"]
+env = {}
+status = 0
+stdin_hex = "00000000000000000000000000000000"
+stdout = ""
+stdout_hex = "0000000000000000b3030000000000000200000000000000"
+stderr = ""
+oracle = ["reference:linux-file-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "io-close-abi"
+sources = ["tests/phase6/io/abi.c", "tests/phase2/abi.asm"]
+requires = ["close"]
+args = ["close"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["abi:sysv-amd64"]
+backends = ["native", "qemu"]
+host_skip = "Direct SysV AMD64 register-state probe on the freestanding runtime."
+[case.skip]
+valgrind = "Shared nondefault x87 ABI probe exceeds Memcheck emulation."
+
+[[case]]
+name = "io-pread-fuzz"
+sources = ["tests/phase6/io/packets.c"]
+requires = ["pread"]
+args = ["pread"]
+env = {}
+status = 0
+stdin_hex = "00000000000000000000000000000000"
+stdout = ""
+stdout_hex = "0100000000000000b303000000000000780000000d000000"
+stderr = ""
+oracle = ["reference:linux-file-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "io-pread-abi"
+sources = ["tests/phase6/io/abi.c", "tests/phase2/abi.asm"]
+requires = ["pread"]
+args = ["pread"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["abi:sysv-amd64"]
+backends = ["native", "qemu"]
+host_skip = "Direct SysV AMD64 register-state probe on the freestanding runtime."
+[case.skip]
+valgrind = "Shared nondefault x87 ABI probe exceeds Memcheck emulation."
+
+[[case]]
+name = "io-pwrite-fuzz"
+sources = ["tests/phase6/io/packets.c"]
+requires = ["pwrite"]
+args = ["pwrite"]
+env = {}
+status = 0
+stdin_hex = "00000000000000000000000000000000"
+stdout = ""
+stdout_hex = "0100000000000000b3030000000000000100000004000000"
+stderr = ""
+oracle = ["reference:linux-file-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "io-pwrite-abi"
+sources = ["tests/phase6/io/abi.c", "tests/phase2/abi.asm"]
+requires = ["pwrite"]
+args = ["pwrite"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["abi:sysv-amd64"]
+backends = ["native", "qemu"]
+host_skip = "Direct SysV AMD64 register-state probe on the freestanding runtime."
+[case.skip]
+valgrind = "Shared nondefault x87 ABI probe exceeds Memcheck emulation."
+
+[[case]]
+name = "io-pread"
+sources = ["tests/phase6/io/positional.c"]
+requires = ["pread"]
+args = ["pread"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-file-abi", "posix:pread"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "io-pwrite"
+sources = ["tests/phase6/io/positional.c"]
+requires = ["pwrite"]
+args = ["pwrite"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-file-abi", "posix:pwrite"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "io-pwrite-coverage"
+sources = ["tests/phase6/io/pwrite_fault.c"]
+requires = ["pwrite"]
+args = []
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-file-abi", "posix:pwrite"]
+link_wraps = ["__al_syscall"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Checks project append policy, real kernel support and directed raw syscall denials."
+
+[[stub]]
+symbol = "pread"
+case = "io-pread"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "pwrite"
+case = "io-pwrite"
+status = 11
+stdout = ""
+stderr = ""

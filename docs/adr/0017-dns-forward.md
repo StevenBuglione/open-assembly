@@ -15,6 +15,7 @@ The private DNS wire interfaces support direct bounded tests.
 query byte count, or zero without writing the output. A query
 requests recursion and contains one lowercase question. Types
 are 1 for A, 12 for PTR and 28 for AAAA. The ID is a 16-bit value.
+A null output pointer measures the query without writing it.
 
 `__al_dns_parse(response, response_size, query, query_size,
 answer)` consumes the original query from the builder and a
@@ -42,7 +43,7 @@ perform no allocation or I/O and preserve errno.
 
 [DNS wire protocol](https://www.rfc-editor.org/rfc/rfc1035.html).
 
-The transport selects the first valid IPv4 or IPv6 nameserver
+The transport selects up to three valid IPv4 or IPv6 nameservers
 in `/etc/resolv.conf`, with a loopback IPv4 default if none is
 present. It queries port 53 and uses a new connected socket
 and a random 16-bit transaction ID for each family. The socket
@@ -55,7 +56,7 @@ The private `__al_dns_query(server, server_length, name,
 qtype, answer)` takes a numeric sockaddr and uses its supplied
 port. Its return is zero or a negative EAI code. It preserves
 errno. A connected UDP query and a truncation-triggered TCP
-retry each have an absolute two-second monotonic deadline.
+retry each have an absolute monotonic deadline, two seconds by default.
 The TCP reply uses two-byte DNS framing and handles short
 reads or writes. A transport error or timeout yields EAI_AGAIN.
 [DNS over TCP](https://www.rfc-editor.org/rfc/rfc7766.html).
@@ -65,7 +66,8 @@ Forward lookup accepts AI_PASSIVE, AI_CANONNAME, AI_NUMERICHOST,
 AI_NUMERICSERV, AI_V4MAPPED, AI_ALL and AI_ADDRCONFIG. AI_ALL applies
 only with AI_V4MAPPED for AF_INET6. AI_ADDRCONFIG uses the Linux
 [address configuration snapshot](0038-address-configuration.md).
-The configuration parser uses one nameserver and applies search,
-domain and ndots directives to forward lookup. Attempts, rotation
-and timeout overrides remain separate.
-Numeric IPv6 zone suffixes and interface names remain separate.
+The configuration parser applies search, domain and ndots directives
+to forward lookup and [ordered server failover](0041-resolver-failover.md)
+to forward and reverse queries. [Resolver options](0042-resolver-options.md)
+control timeout, retry rounds and starting server rotation.
+[IPv6 zone identifiers](0040-ipv6-scope.md) are handled before DNS.

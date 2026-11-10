@@ -21,8 +21,8 @@ returned in lowercase with no final root dot. An unusable or
 missing name falls back to numeric output. With NI_NAMEREQD,
 lookup failure returns its EAI status and preserves both output
 buffers. Numeric output keeps the supplied address family and
-appends a nonzero IPv6 scope ID after `%`. Interface names for
-scope IDs remain a separate capability.
+appends a nonzero IPv6 scope ID after `%` as a usable
+[interface name or decimal ID](0040-ipv6-scope.md).
 
 Service lookup searches `/etc/services` for the first name
 matching the numeric port and transport. TCP is the default.

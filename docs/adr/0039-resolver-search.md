@@ -1,8 +1,8 @@
 # Resolver search lists
 
-Forward DNS uses the first valid numeric nameserver from
-`/etc/resolv.conf` and port 53. The loopback IPv4 fallback and
-transport deadlines are unchanged. The resolver reads up to
+Forward DNS uses the [configured nameservers](0041-resolver-failover.md)
+from `/etc/resolv.conf` and port 53. The loopback IPv4 fallback
+and transport deadlines are unchanged. The resolver reads up to
 256 physical lines accepted by the 4095-byte line reader.
 
 The last `search` or `domain` directive supplies the list.
@@ -29,8 +29,9 @@ reports the selected DNS owner. Numeric, local-file and
 synthetic results keep precedence over DNS. AI_NUMERICHOST
 and reverse PTR never use the search list.
 
-Multiple nameservers, retry and rotation directives, environment
-overrides, address sorting and DNSSEC remain separate work.
+Environment overrides, address sorting and DNSSEC remain separate
+work. [Resolver options](0042-resolver-options.md) configure transport
+timeouts, retry rounds and server rotation.
 [Linux resolv.conf](https://man7.org/linux/man-pages/man5/resolv.conf.5.html) ·
 [DNS names](https://www.rfc-editor.org/rfc/rfc1035.html#section-2.3.4).
 
@@ -46,6 +47,6 @@ unsigned int __al_dns_config(void *context, struct sockaddr *server,
 
 The first two native 32-bit words of a search record are suffix count
 and ndots. Six 256-byte suffix records follow, each terminated by a
-null when present. A final 272-byte region is scratch. The unused
-records and scratch have unspecified contents. A null search pointer
+null when present. A final 272-byte region holds the alternate
+server bank and scratch. Unused bytes have unspecified contents. A null search pointer
 selects nameserver-only processing, which also backs reverse lookup.

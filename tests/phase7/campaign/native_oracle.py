@@ -6,7 +6,7 @@ import subprocess
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "transcendental"))
-from oracle import EDOM, OBSERVATION, REQUEST, TEST_ERRNO
+from oracle import DIVBYZERO, EDOM, OBSERVATION, REQUEST, TEST_ERRNO
 
 
 class OracleMismatch(ValueError):
@@ -26,22 +26,6 @@ def produce(helper, folder, operation, start, count, mode):
     expected = folder / "expected"
     checked([helper, operation, start, count, mode, request, expected])
     return request.read_bytes(), expected.read_bytes()
-
-
-def exact_result(operation, input_bits):
-    magnitude = input_bits & 0x7fffffff
-    exponent = magnitude >> 23
-    if operation == "exp2":
-        return (not magnitude or exponent >= 150 or
-                exponent >= 127 and not magnitude & ((1 << (150 - exponent)) - 1))
-    if operation in {"exp", "cos", "sin", "tan"}:
-        return not magnitude
-    if operation == "log":
-        return input_bits == 0x3f800000
-    if operation != "log2":
-        raise ValueError(f"unknown native oracle operation {operation}")
-    fraction = magnitude & 0x7fffff
-    return (not fraction if exponent else bool(fraction and not fraction & (fraction - 1)))
 
 
 def compare_native(actual, expected, operation, start, count):
@@ -65,7 +49,9 @@ def compare_native(actual, expected, operation, start, count):
         same_sign = (reference ^ value) >> 31 == 0
         normal = all(0x00800000 <= (bits & 0x7fffffff) < 0x7f800000 for bits in (reference, value))
         distance = abs(value - reference)
-        if (exact_result(operation, start + index) or wanted_error != TEST_ERRNO or
+        # A valid normal approximation always carries INEXACT in addition
+        # to the seeded DIVBYZERO. An exact result admits no neighboring encoding.
+        if (wanted_flags == DIVBYZERO or wanted_error != TEST_ERRNO or
                 not same_sign or not normal or distance > 1):
             raise OracleMismatch(f"value mismatch at {start + index:#x}: {value:#x} != {reference:#x}")
         maximum = max(maximum, distance)

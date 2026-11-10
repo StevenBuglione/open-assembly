@@ -73,6 +73,8 @@ __al_dns_build:
     lea r9d, [r8 + 16]         ; DNS header, wire name and QTYPE/QCLASS
     cmp r9, rbx
     ja .invalid
+    test r13, r13
+    jz .measured
     mov qword [r13], 0
     mov dword [r13 + 8], 0
     rol r15w, 8
@@ -117,6 +119,7 @@ __al_dns_build:
     rol r14w, 8
     mov [rdx + 1], r14w
     mov word [rdx + 3], 256     ; QCLASS IN
+.measured:
     mov eax, r9d
     jmp .return
 .invalid:

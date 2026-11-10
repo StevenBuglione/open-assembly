@@ -76,6 +76,10 @@ MUTATION_EQUIVALENCES = {
         "comparison-signedness-30": "Valid x86-64 Linux user pointers have bit 63 clear.",
         "comparison-signedness-36": "This path has dest > src. Their difference and the valid object extent have bit 63 clear.",
     }),
+    "pwrite": ("d308e3ac36e5b338ded35ea90b4d98ca3c6bfb10d536e90a6cdb4d19001f473e", {
+        "comparison-minus-one-46": "The only changed F_GETFL result is -4096. Successful file flags are unsigned and Linux errors range from -4095 to -1.",
+        "comparison-minus-one-59": "The only changed fstatfs result is -4096. fstatfs returns zero on success and Linux errors range from -4095 to -1.",
+    }),
     "qsort": ("d10adef9dc4ba66ed9084390813a257af587ab3c88763090f32ce0b801707a8c", {
         "comparison-minus-one-27": "The added one-element path reaches .done without comparing or writing any element.",
         "comparison-signedness-28": "A valid array with nonzero element width has a count below 2^63. Zero width returns independently.",

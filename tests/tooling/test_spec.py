@@ -11,6 +11,8 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
+from extension_abi import COMPILERS, fixture, load_baselines
+from extensions import load_packages
 from spec import (COMPILER_ATOMIC_ABI, PHASE0_FIXED_INPUTS, SpecError, check_comment_header,
                   comment_header, load_project, phase0_input_paths, snapshot_inputs)
 
@@ -25,7 +27,7 @@ class ProjectTest(unittest.TestCase):
         self.root = Path(self.tmp.name)
         shutil.copytree(ROOT / "spec", self.root / "spec")
         (self.root / "tools").mkdir()
-        for name in ("spec.py", "extensions.py", "gen", "queue", "provenance"):
+        for name in ("spec.py", "extensions.py", "extension_abi.py", "gen", "queue", "provenance"):
             shutil.copy(ROOT / "tools" / name, self.root / "tools" / name)
 
     def write(self, path, content):
@@ -199,6 +201,93 @@ class ProjectTest(unittest.TestCase):
         self.assertIn("unexpected output", self.run_tool("gen", "--check", expect=1))
         self.assertIn("refusing to delete non-generated", self.run_tool("gen", expect=1))
         self.assertEqual("; written by a human\n", source.read_text())
+
+    def test_stable_extension_declaration_and_layout_controls(self):
+        package_path = "ext/abi_control/package.toml"
+        self.write(package_path, '''schema_version = 1
+name = "abi_control"
+stability = "stable"
+dependencies = []
+oracle = "reference:abi-control"
+''')
+        spec_path = "ext/abi_control/spec/functions/abi_control_size.toml"
+        prototype = "size_t abi_control_size(const struct abi_control_record *item)"
+        self.write(spec_path, f'''name = "abi_control_size"
+header = "abi_control.h"
+prototype = "{prototype}"
+standard = ["Extension ABI abi_control"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:abi-control"]
+provenance = "original"
+semantics = ["Return the record extent."]
+
+[abi]
+narrow_args = []
+variadic = false
+''')
+        baseline_path = "tests/oracle/abi_control/extension-abi.toml"
+        baseline_file = self.write(baseline_path, f'''schema_version = 1
+target = "x86_64-linux-sysv"
+package = "abi_control"
+
+[[function]]
+name = "abi_control_size"
+prototype = "{prototype}"
+narrow_args = []
+variadic = false
+noreturn = false
+
+[[layout]]
+name = "abi_control_record"
+size = 12
+align = 4
+member = [
+  {{name = "flags", type = "uint32_t", offset = 0}},
+  {{name = "payload", type = "uint8_t", count = 8, offset = 4}},
+]
+''')
+        self.run_tool("gen", "--test-headers")
+        project = load_project(self.root)
+        packages = load_packages(project)
+        baseline = load_baselines(self.root, packages)["abi_control"]
+        source = self.write("abi.c", fixture("abi_control.h", baseline))
+        relative_header = "build/include/c/abi_control.h"
+        header = self.root / relative_header
+        original_header = header.read_text()
+        for before, after, diagnostic in (
+                ("", "", ""),
+                (prototype, prototype.replace("size_t", "long"), "prototype abi_control_size"),
+                ("uint32_t flags", "uint64_t flags", "offset abi_control_record.payload"),
+                ("uint32_t flags", "int32_t flags", "type abi_control_record.flags"),
+                ("payload[8]", "payload[9]", "type abi_control_record.payload")):
+            self.write(relative_header, original_header)
+            if diagnostic:
+                self.edit(relative_header, before, after)
+            for compiler in COMPILERS:
+                with self.subTest(compiler=compiler, diagnostic=diagnostic):
+                    result = subprocess.run(
+                        [compiler, "-std=c17", "-ffreestanding", "-fno-builtin", "-Wall", "-Werror",
+                         "-I", str(header.parent), "-c", str(source), "-o", str(self.root / "abi.o")],
+                        text=True, capture_output=True, check=False,
+                    )
+                    if diagnostic:
+                        self.assertNotEqual(result.returncode, 0)
+                        self.assertIn(diagnostic, result.stderr)
+                    else:
+                        self.assertEqual(result.returncode, 0, result.stderr)
+
+        self.edit(spec_path, prototype, prototype.replace("size_t", "long"))
+        self.assertIn("stable declaration changed for abi_control_size",
+                      self.run_tool("gen", "--test-headers", expect=1))
+        self.edit(spec_path, prototype.replace("size_t", "long"), prototype)
+        self.edit(package_path, '"stable"', '"experimental"')
+        self.assertIn("must remain a stable package", self.run_tool("gen", "--test-headers", expect=1))
+        self.edit(package_path, '"experimental"', '"stable"')
+        baseline_file.unlink()
+        self.assertIn("missing protected baseline for abi_control", self.run_tool("gen", "--test-headers", expect=1))
 
     def test_comment_header_is_exact_and_only_production_source_counts(self):
         spec = load_project(self.root).functions["strlen"]

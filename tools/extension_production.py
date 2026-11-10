@@ -6,6 +6,7 @@ from pathlib import Path
 import runpy
 import sys
 
+from extension_abi import stable_abi_evidence
 from gate import GateError, nm_symbols
 from phase1 import build_case
 from runtime_manifest_gate import mutate_function, timed_packets, trace_function
@@ -26,8 +27,6 @@ class Plan:
 
 
 def production_plans(package, probes):
-    if package.stability == "stable":
-        raise GateError("stable extension ABI baseline and layout checks are pending")
     if not package.oracle.startswith("reference:"):
         raise GateError("a pinned-suite adapter for the timed extension oracle is pending")
     relative = package.tests / "production.toml"
@@ -91,6 +90,9 @@ def verify_dependencies(project, packages, current_inputs):
                 or data.get("production_verified") is not True or data.get("inputs") != current_inputs
                 or data.get("checks", {}).get("full_production", {}).get("outcome") != "pass"):
             raise GateError(f"{package.name}: extension dependency lacks fresh production evidence")
+        if package.stability == "stable" and not stable_abi_evidence(
+                package, data["checks"].get("stable_abi"), current_inputs):
+            raise GateError(f"{package.name}: stable extension dependency lacks frozen ABI evidence")
     dependencies = {name for package in packages for spec in package.functions.values() for name in spec.deps
                     if name in project.functions}
     if dependencies:

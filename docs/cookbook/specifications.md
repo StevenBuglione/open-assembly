@@ -167,8 +167,42 @@ rejection, and at least 60 seconds of differential packets. Each function
 names a Python model under `tests/oracle/<package>/` and declares the fixed
 request and result record sizes. The evidence binds the model and exact
 candidate bytes. See the disposable word_math production fixture for the
-manifest format. Pinned suite adapters and stable ABI layout baselines
-remain explicit pending requirements.
+manifest format. Pinned suite adapters remain pending.
+
+Before declaring a package stable, review and add its ABI baseline at
+`tests/oracle/<package>/extension-abi.toml`. The protected file freezes
+the public function set, each C declaration's tokens and its register
+extension, variadic and nonreturning metadata. The target is
+`x86_64-linux-sysv`. Every declaration appears once in `[[function]]`
+with `name`, `prototype`, `narrow_args`, `variadic`, and `noreturn`.
+Generation rejects a missing baseline, a declaration change, or removal
+or downgrade of a frozen package.
+
+Declare each public record as a namespaced `[[layout]]` with `name`,
+`size`, `align`, and an ordered `member` array. Each member has `name`,
+`type`, and a byte `offset`. Use `count` for an inline array. For a package
+with no records, set `layout = []` before the function tables. The ABI
+baseline begins with `schema_version = 1`, `target`, and `package`.
+This record entry declares `struct packet_view` in the package header.
+
+```toml
+[[layout]]
+name = "packet_view"
+size = 16
+align = 8
+member = [
+  {name = "data", type = "const unsigned char *", offset = 0},
+  {name = "length", type = "size_t", offset = 8},
+]
+```
+
+The package gate and publisher compile static assertions with pinned
+GCC and Clang against the generated header. The checks cover function
+types and each declared record's size, alignment, member offsets and
+member types. Evidence binds the baseline, header, probe and compiler
+objects. Changes that require a different frozen ABI can use a new
+package namespace.
+
 Run `./tools/container tools/build-extension word_math` to produce a
 static package for an application. The command audits two isolated builds
 and publishes their matching `crt1.o`, `libopenasm-extension.a`, and

@@ -6,7 +6,7 @@ default rel
 
 global __al_dns_lookup_one:function
 extern __al_dns_publish:function
-extern __al_dns_query:function
+extern __al_dns_try_servers:function
 
 section .text.__al_dns_lookup_one alloc exec nowrite progbits
 __al_dns_lookup_one:
@@ -36,10 +36,11 @@ __al_dns_lookup_one:
 .query:
     lea rdi, [r14 + 1032]
     mov esi, r15d
-    mov rdx, r13
-    mov ecx, r12d
-    mov r8, r14
-    call __al_dns_query
+    lea rdx, [r14 + 2608]       ; alternate bank at search record +1544
+    mov rcx, r13
+    mov r8d, r12d
+    mov r9, r14
+    call __al_dns_try_servers
     mov [rsp + 4], eax
     test eax, eax
     jnz .next_family

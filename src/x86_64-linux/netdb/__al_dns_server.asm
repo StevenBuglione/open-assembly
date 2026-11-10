@@ -1,4 +1,4 @@
-; Select the first valid resolv.conf nameserver or IPv4 loopback.
+; Select the primary server and the reverse lookup alternate bank.
 ; RDI resolver context, RSI a 32-byte sockaddr buffer. Return its length.
 bits 64
 default rel

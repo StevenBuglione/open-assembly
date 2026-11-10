@@ -16,6 +16,7 @@ import sys
 import tempfile
 from time import monotonic, time_ns
 
+from extension_abi import stable_abi_evidence
 from extension_build import dependency_order
 from extensions import load_packages
 from gate import BUILD, EVIDENCE, GateError, checked, identify_tools, verify_setup, write_evidence
@@ -24,10 +25,15 @@ from musl_authorship import inputs as authorship_inputs
 from phase1 import RUNTIME_SRC, build_runtime, phase1_inputs
 from phase2 import phase2_functions
 from phase11_platform import SECCOMP_CASES, boot_cases, inputs as platform_inputs, verify_boot_cases, write_boot_header
+from phase11_vdso_benchmark import inputs as vdso_inputs
+from production import SCALAR_FUNCTIONS
+from runtime_manifest_gate import FILE_MUTATION_FAILURES, IO_FUNCTIONS
+from upstream_conformance import PINS as UPSTREAM_PINS, inputs as upstream_inputs
 from spec import ROOT, SpecError, has_runtime_entry, load_project, regular_file, relative_path, sha256_file, snapshot_inputs
 
 PHASES = (
-    "phase0", "phase1", "phase2", "phase3", "phase4", "phase5",
+    "phase0", "phase1", "phase2", "production-scalars", "production-linux-files", "production-linux-io",
+    "phase3", "phase4", "phase5",
     "phase6-files", "phase6-fcntl", "phase6-compat", "phase6-busybox", "phase6-lua", "phase6-zlib",
     "phase6-sqlite", "phase6-process", "phase6-signal", "phase6-jump", "phase6-time", "phase6-calendar",
     "phase6-zone", "phase6-luafiles", "phase6-spawn", "phase6-shell", "phase6-path", "phase6-strftime",
@@ -36,18 +42,16 @@ PHASES = (
     "phase8-compiler-atomics",
     "phase9-multibyte", "phase9-bulk", "phase9-worker", "phase9-worker-sync", "phase9-wide",
     "phase9-libc-test", "phase9-stdio", "phase9-narrow-wide", "phase9-wctype",
-    "phase10-endpoints", "phase10-inet", "phase10-netdb", "phase10-dns", "phase10-http",
-    "phase10-terminal", "phase10-libc-test", "phase10-glob", "phase10-regex", "phase11-vdso",
+    "phase10-endpoints", "phase10-inet", "phase10-netdb", "phase10-dns", "phase10-addrconfig",
+    "phase10-http",
+    "phase10-terminal", "phase10-libc-test", "phase10-glob", "phase10-regex",
+    "phase10-gnulib", "phase10-native-ltp", "phase11-vdso",
     "phase11-static-pie", "phase11-allocator", "phase11-copy-benchmark", "phase11-allocator-benchmark",
-    "phase11-seccomp", "phase11-old-kernel", "scan-musl-authorship",
+    "phase11-vdso-benchmark", "phase11-seccomp", "phase11-old-kernel", "scan-musl-authorship",
 )
-EXTRA = ("fcntl-production", "extension-control", "extension-packages")
+EXTRA = ("fcntl-production", "extension-control", "extension-packages", "math-campaigns")
 FUZZ_SECONDS = 300
-GAPS = {
-    "remaining_binary32_domains": "The full remaining binary32 math campaigns need artifact-bound completion and audit.",
-    "ltp_gnulib_conformance": "The roadmap's independent LTP and gnulib subsets need pinned executable gates.",
-    "remaining_musl_performance": "Copy and allocator benchmarks cover their predeclared workloads. Remaining musl performance criteria need measured gates.",
-}
+DEFAULT_CAMPAIGN_ROOT = "build/phase7-campaign"
 
 
 def evidence_json(path):
@@ -93,35 +97,66 @@ def fresh_report(root, filename, scope, started):
     return path, data
 
 
-def phase2_report(started):
-    path, data = report_file(ROOT, "phase2.json", started)
-    functions = phase2_functions()
-    if (data.get("outcome") != "pass" or data.get("scope") != "phase2-batch"
+
+def production_child(started, name, scope, item):
+    report, record = fresh_report(ROOT, f"{name}.production.json", scope, started)
+    if (type(item) is not dict or item.get("outcome") != "pass" or record.get("function") != name
+            or item.get("evidence_sha256") != sha256_file(report)):
+        raise GateError(f"invalid child production evidence for {name}")
+    return record
+
+
+def batch_report(started, name, functions):
+    path, data = report_file(ROOT, f"{name}.json", started)
+    if (data.get("outcome") != "pass" or data.get("scope") != f"{name}-batch"
             or data.get("full_scope") is not True or data.get("total") != len(functions)
             or data.get("passed") != len(functions) or set(data.get("functions", {})) != set(functions)):
-        raise GateError("phase2.json: incomplete Phase 2 production batch")
+        raise GateError(f"{name}.json: incomplete production batch")
+    return path, data
 
-    def check_result(name, scope, item):
-        report, record = fresh_report(ROOT, f"{name}.production.json", scope, started)
-        if (type(item) is not dict or item.get("outcome") != "pass" or record.get("function") != name
-                or item.get("evidence_sha256") != sha256_file(report)):
-            raise GateError(f"phase2.json: invalid child evidence for {name}")
-        return record
 
+def engine_fuzz(record, name):
+    engine = record.get("checks", {}).get("engine_fuzz", {})
+    if (record.get("production_verified") is not True or engine.get("outcome") != "pass"
+            or engine.get("requested_seconds") != FUZZ_SECONDS
+            or type(engine.get("elapsed_seconds")) is not int or engine["elapsed_seconds"] < FUZZ_SECONDS
+            or type(engine.get("runs")) is not int or engine["runs"] < 1):
+        raise GateError(f"missing timed libFuzzer evidence for {name}")
+
+
+def packet_fuzz(record, name):
+    fuzz = record.get("checks", {}).get("differential_fuzz", {})
+    hashes = fuzz.get("sha256", {})
+    if (record.get("production_verified") is not True or fuzz.get("outcome") != "pass"
+            or type(fuzz.get("elapsed_s")) not in (int, float) or fuzz["elapsed_s"] < 60
+            or type(fuzz.get("records")) is not int or fuzz["records"] < 1
+            or set(hashes) != {"candidate", "glibc", "musl", "input"}
+            or len({hashes[key] for key in ("candidate", "glibc", "musl")}) != 1):
+        raise GateError(f"missing timed candidate/glibc/musl packet evidence for {name}")
+
+
+def supplemental_batch(started, name):
+    scalars = name == "production-scalars"
+    functions = {"production-scalars": SCALAR_FUNCTIONS, "production-linux-files": FILE_MUTATION_FAILURES,
+                 "production-linux-io": IO_FUNCTIONS}[name]
+    path, data = batch_report(started, name, functions)
+    scope = "production-function" if scalars else "production-runtime-manifest-function"
+    check = engine_fuzz if scalars else packet_fuzz
+    for symbol, item in data["functions"].items():
+        check(production_child(started, symbol, scope, item), symbol)
+    return path, data
+
+
+def phase2_report(started):
+    path, data = batch_report(started, "phase2", phase2_functions())
     for name, item in data["functions"].items():
-        record = check_result(name, "production-function", item)
-        engine = record.get("checks", {}).get("engine_fuzz", {})
-        if (record.get("production_verified") is not True or engine.get("outcome") != "pass"
-                or engine.get("requested_seconds") != FUZZ_SECONDS
-                or type(engine.get("elapsed_seconds")) is not int or engine["elapsed_seconds"] < FUZZ_SECONDS
-                or type(engine.get("runs")) is not int or engine["runs"] < 1):
-            raise GateError(f"phase2.json: missing timed libFuzzer evidence for {name}")
+        engine_fuzz(production_child(started, name, "production-function", item), name)
     for field, name, scope in (
         ("shared_integer_scanner", "__al_strtox", "production-private-dependency"),
         ("runtime_tls_accessor", "__errno_location", "production-runtime-function"),
         ("bulk_memcpy", "__al_memcpy_bulk", "production-private-dependency"),
     ):
-        check_result(name, scope, data.get(field))
+        production_child(started, name, scope, data.get(field))
     return path, data
 
 
@@ -199,6 +234,8 @@ def check_extension_production(data, package, inputs):
             or controls.get("outcome") != "pass" or type(stubs) is not dict
             or stubs.keys() != package.functions.keys()):
         raise GateError(f"{name}: incomplete current extension production evidence")
+    if package.stability == "stable" and not stable_abi_evidence(package, checks.get("stable_abi"), inputs):
+        raise GateError(f"{name}: incomplete stable extension ABI evidence")
     for symbol, item in functions.items():
         source = package.source(symbol).as_posix()
         edges = item.get("branch_coverage", {})
@@ -450,6 +487,117 @@ def check_authorship(data, review, scan_hash, expected):
     return [row["symbol"] for row in findings]
 
 
+
+def check_vdso_benchmark(data):
+    workload = {
+        "api": "time(NULL)", "calls_per_sample": 1000000, "pairs": 9,
+        "median_ratio_limit": 1.5, "min_preflight_idle": 0.9,
+        "raw_denial": {"time": "EACCES", "gettimeofday": "EACCES",
+                       "clock_gettime": "EACCES except MONOTONIC and THREAD_CPUTIME_ID"},
+    }
+    if data.get("workload") != workload:
+        raise GateError("vDSO benchmark differs from its predeclared workload")
+    groups = {"openasm", "musl"}
+    cpu = data.get("native_cpu", {})
+    allowed, selected = cpu.get("allowed_cpus", []), cpu.get("cpu")
+    fraction = cpu.get("idle_fractions", {}).get(str(selected))
+    if (type(selected) is not int or selected not in allowed or type(fraction) not in (int, float)
+            or not workload["min_preflight_idle"] <= fraction <= 1):
+        raise GateError("vDSO benchmark did not use a qualified quiet CPU")
+    qualification, measurements = data.get("qualification"), data.get("measurements")
+    if (type(qualification) is not dict or set(qualification) != groups
+            or type(measurements) is not dict or set(measurements) != groups):
+        raise GateError("vDSO benchmark lacks its two qualified implementations")
+    medians = {}
+    for kind in sorted(groups):
+        item = qualification[kind]
+        command = item.get("command", [])
+        if (len(command) != 2 or command[1] != "qualify" or Path(command[0]).name != f"benchmark-{kind}"
+                or (item.get("returncode"), item.get("stdout"), item.get("stderr")) != (
+                    0, "PASS realtime through vDSO with raw calls denied\n", "")):
+            raise GateError(f"{kind} vDSO benchmark lacks actual raw-denial qualification")
+        samples = measurements[kind]
+        if type(samples) is not list or len(samples) != workload["pairs"]:
+            raise GateError(f"{kind} vDSO benchmark lacks paired timings")
+        for pair, sample in enumerate(samples, 1):
+            wall, elapsed = sample.get("nanoseconds"), sample.get("cpu_nanoseconds")
+            if (sample.get("pair") != pair or sample.get("valid_calls") != workload["calls_per_sample"]
+                    or type(wall) is not int or type(elapsed) is not int or min(wall, elapsed) <= 0
+                    or wall - elapsed > max(50000, wall * (1 - workload["min_preflight_idle"]))):
+                raise GateError(f"{kind} vDSO benchmark has an invalid sample")
+        medians[kind] = median(sample["nanoseconds"] for sample in samples)
+    ratio = medians["openasm"] / medians["musl"]
+    if (data.get("median_nanoseconds") != medians or data.get("ratio") != ratio
+            or ratio > workload["median_ratio_limit"]):
+        raise GateError("vDSO benchmark exceeds or omits its predeclared median ratio")
+
+
+def check_addrconfig(data):
+    backends = {"native", "qemu", "valgrind"}
+    checks = data.get("checks", {})
+    wire = checks.get("wire", {})
+    observations = wire.get("backends", {})
+    selection = checks.get("selection", {})
+    stubs = checks.get("stubs", {})
+    strata = wire.get("strata", {})
+    if (wire.get("outcome") != "pass" or set(observations) != backends or set(selection) != backends
+            or set(stubs) != {"__al_gai_addrconfig_parse", "getaddrinfo"}
+            or any(item.get("outcome") != "pass" for item in stubs.values())
+            or not strata or any(type(count) is not int or count < 1 for count in strata.values())
+            or not {"seeded-data", "seeded-done", "seeded-partial", "seeded-interrupted"} <= strata.keys()
+            or not {"docs/adr/0038-address-configuration.md", "tests/phase10/addrconfig/oracle.py"}
+            <= data.get("inputs", {}).keys()):
+        raise GateError("address-configuration evidence lacks its guarded, public or stub scope")
+    records = sum(strata.values())
+    digests = set()
+    for backend in sorted(backends):
+        edges = observations[backend]
+        cases = selection[backend]
+        if set(edges) != {"left", "right"} or set(cases) != {"real", "public"}:
+            raise GateError(f"address-configuration evidence omits cases on {backend}")
+        for edge in edges.values():
+            digest = edge.get("output_sha256")
+            if (edge.get("outcome") != "pass" or edge.get("records") != records
+                    or type(digest) is not str or re.fullmatch(r"[0-9a-f]{64}", digest) is None):
+                raise GateError(f"address-configuration guarded observations differ on {backend}")
+            digests.add(digest)
+        if any((row.get("status"), row.get("stdout"), row.get("stderr")) != (0, "", "")
+               for row in cases.values()):
+            raise GateError(f"address-configuration public observations differ on {backend}")
+    if len(digests) != 1:
+        raise GateError("address-configuration result bytes differ across guard edges or backends")
+
+
+def check_upstream_subset(suite, data):
+    _, prefix, archive, files = UPSTREAM_PINS[suite]
+    if (data.get("upstream") != {"archive_root": prefix, "archive_sha256": archive, "files": files}
+            or data.get("inputs") != upstream_inputs()):
+        raise GateError(f"{suite} evidence omits exact upstream or project source identities")
+    if suite == "gnulib":
+        modes = {"lseek": ("files", "pipes", "closed"), "memchr": ("guard",)}
+        labels = ("glibc", "musl", "candidate", "candidate-qemu", "candidate-memcheck")
+        expected = {case: {f"{label}-{mode}": (0, "", "") for label in labels for mode in kinds}
+                    for case, kinds in modes.items()}
+        stubs = {"lseek": -signal.SIGABRT, "memchr": -signal.SIGABRT}
+    else:
+        expected = {case: {label: (0, f"LTP scoped pass={passes} fail=0 tmpdir={tmpdir}\n", "")
+                           for label in ("glibc", "musl", "candidate")}
+                    for case, passes, tmpdir in (("dup01", 2, 1), ("dup02", 2, 0), ("lseek01", 4, 1))}
+        stubs = {"dup01": 1, "lseek01": 1}
+    checks = data.get("checks", {})
+    for case, required in expected.items():
+        result = checks.get(case, {})
+        runs = result.get("runs", {})
+        if (result.get("outcome") != "pass"
+                or set(runs) != set(required) | ({"stub"} if case in stubs else set())
+                or any(tuple(runs[label].get(field) for field in ("status", "stdout", "stderr")) != want
+                       for label, want in required.items())
+                or (case in stubs and (runs["stub"].get("status") != stubs[case]
+                                       or not runs["stub"].get("stderr")
+                                       or not result.get("stub_source_sha256")))):
+            raise GateError(f"{suite} {case} lacks its pinned conformance observations")
+
+
 def gate(name, record):
     environment = {**os.environ, "LC_ALL": "C", "OPEN_ASSEMBLY_LIBFUZZER_SECONDS": str(FUZZ_SECONDS)}
     started = time_ns()
@@ -468,11 +616,15 @@ def gate(name, record):
         filename, scope = "fcntl.production.json", "production-runtime-manifest-function"
     elif name == "phase11-copy-benchmark":
         scope = "phase11-native-hot-disjoint-memcpy-benchmark"
+    elif name == "phase11-vdso-benchmark":
+        scope = "phase11-native-warm-vdso-time-benchmark"
     elif name == "scan-musl-authorship":
         filename, scope = "musl-authorship.json", "nightly-same-symbol-musl-authorship-scan"
     invoke(command, record, timeout=timeout, environment=environment)
     if name == "phase2":
         path, _ = phase2_report(started)
+    elif name in ("production-scalars", "production-linux-files", "production-linux-io"):
+        path, _ = supplemental_batch(started, name)
     else:
         path, data = fresh_report(ROOT, filename, scope, started)
         if name == "fcntl-production" and data.get("production_verified") is not True:
@@ -481,6 +633,14 @@ def gate(name, record):
             check_allocator_benchmark(data)
         if name == "phase11-seccomp":
             record["installed_filter_cases"] = check_seccomp(data)
+        if name in ("phase10-gnulib", "phase10-native-ltp"):
+            check_upstream_subset(name.removeprefix("phase10-"), data)
+        if name == "phase10-addrconfig":
+            check_addrconfig(data)
+        if name == "phase11-vdso-benchmark":
+            if data["inputs"] != vdso_inputs():
+                raise GateError("vDSO benchmark evidence omits the exact source snapshot")
+            check_vdso_benchmark(data)
         if name == "scan-musl-authorship":
             if data["inputs"] != authorship_inputs():
                 raise GateError("musl authorship evidence omits source-bound scan inputs")
@@ -574,7 +734,29 @@ def platform_observation():
             "seccomp": seccomp, "qemu_system": shutil.which("qemu-system-x86_64")}
 
 
-def execute(tier, only, tag, old_started, old_status):
+
+def math_campaigns(record, campaign_root):
+    started = time_ns()
+    command = ["python3", "tests/phase7/campaign/tier_audit.py", campaign_root]
+    failed = None
+    try:
+        invoke(command, record, timeout=3600)
+    except GateError as error:
+        failed = error
+    path, data = report_file(ROOT, "phase7-campaigns.json", started)
+    if data.get("scope") != "phase7-binary32-campaigns":
+        raise GateError("math ledger audit has the wrong scope")
+    record.update(evidence=path.relative_to(ROOT).as_posix(), evidence_sha256=sha256_file(path))
+    if failed:
+        raise failed
+    if data.get("outcome") not in ("pending", "pass"):
+        raise GateError("math ledger audit did not establish its scope")
+    record["unary"] = data["unary"]
+    record["binary"] = data["binary"]
+    return data["outcome"]
+
+
+def execute(tier, only, tag, old_started, old_status, campaign_root):
     scope = f"verification-{tier}"
     choices = PHASES + EXTRA + (("reproducible",) if tier == "release" else ())
     selected = tuple(only) if only else choices
@@ -582,8 +764,6 @@ def execute(tier, only, tag, old_started, old_status):
              for name in choices if name not in selected}
     checks = {
         "gates": gates,
-        "required_matrix_gaps": {name: {"outcome": "pending", "reason": reason}
-                                 for name, reason in GAPS.items()},
     }
     evidence = {"schema_version": 1, "scope": scope, "tier": tier, "outcome": "fail",
                 "qualified": False, "checks": checks, "selected": selected, "full_scope": not only}
@@ -600,6 +780,10 @@ def execute(tier, only, tag, old_started, old_status):
                     extension_control(commit, item)
                 elif name == "extension-packages":
                     item["outcome"] = extension_packages(item, evidence["inputs"])
+                    print(f"{item['outcome'].upper()} {scope} {name}", flush=True)
+                    continue
+                elif name == "math-campaigns":
+                    item["outcome"] = math_campaigns(item, campaign_root)
                     print(f"{item['outcome'].upper()} {scope} {name}", flush=True)
                     continue
                 elif name == "reproducible":
@@ -619,8 +803,7 @@ def execute(tier, only, tag, old_started, old_status):
         checks["production_inventory"] = coverage_and_deviations()
         if evidence["inputs"] != phase1_inputs() or checked([], ["git", "rev-parse", "HEAD"]).strip() != commit:
             raise GateError("verification inputs changed during the tier run")
-        records = [checks["repository"], checks["production_inventory"], *gates.values(),
-                   *checks["required_matrix_gaps"].values()]
+        records = [checks["repository"], checks["production_inventory"], *gates.values()]
         outcomes = {record["outcome"] for record in records}
         evidence["outcome"] = "fail" if "fail" in outcomes else "pending" if "pending" in outcomes else "pass"
         evidence["qualified"] = evidence["outcome"] == "pass"
@@ -637,6 +820,8 @@ def main():
     parser.add_argument("tier", choices=("nightly", "release"))
     parser.add_argument("--only", choices=PHASES + EXTRA + ("reproducible",), action="append", default=[])
     parser.add_argument("--tag")
+    parser.add_argument("--campaign-root", default=DEFAULT_CAMPAIGN_ROOT,
+                        help="checkout-relative path to current campaign ledgers under build/")
     parser.add_argument("--old-kernel-started", type=int)
     parser.add_argument("--old-kernel-status", type=int)
     args = parser.parse_args()
@@ -653,7 +838,8 @@ def main():
     if args.old_kernel_started is not None and not (
             0 < args.old_kernel_started <= time_ns() and 0 <= args.old_kernel_status <= 255):
         parser.error("invalid old-kernel start time or status")
-    return execute(args.tier, args.only, args.tag, args.old_kernel_started, args.old_kernel_status)
+    return execute(args.tier, args.only, args.tag, args.old_kernel_started,
+                   args.old_kernel_status, args.campaign_root)
 
 
 if __name__ == "__main__":

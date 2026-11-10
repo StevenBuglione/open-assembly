@@ -8,6 +8,7 @@ import os
 import sys
 import tempfile
 
+from extension_abi import header_layouts, load_baselines
 from extensions import extension_functions, load_packages
 from spec import (COMPILER_ATOMIC_ABI, FNM_CONSTANTS, GLOB_CONSTANTS, REGEX_CONSTANTS, LANGINFO_CONSTANTS, MATH_XSI_CONSTANTS, NETDB_CONSTANTS, POSIX_FDS, PTHREAD_CREATION, PTHREAD_MUTEX_TYPES, PTHREAD_ONCE_CONSTANTS, PTHREAD_TSD_LIMITS, ROOT, SEEK_ORIGINS, STAT_FILE_KINDS, SpecError, comment_header, has_runtime_entry,
                   TERMIOS_LINUX_SPEEDS, TERMIOS_POSIX_CONSTANTS,
@@ -151,7 +152,9 @@ def make_outputs(project, include_tracked=True, include_test=True):
         "stdlib.h": {"EXIT_SUCCESS": 0, "EXIT_FAILURE": 1, "RAND_MAX": 2147483647},
     }
     grouped = defaultdict(list)
-    extensions = extension_functions(load_packages(project))
+    packages = load_packages(project)
+    extensions = extension_functions(packages)
+    baselines = {packages[name].header: baseline for name, baseline in load_baselines(project.root, packages).items()}
     for spec in (*project.functions.values(), *extensions.values()):
         grouped[spec.header].append(spec)
     grouped["limits.h"] = []
@@ -217,6 +220,8 @@ def make_outputs(project, include_tracked=True, include_test=True):
         if include_test:
             lines = [f"/* {MARKER} Test declarations only. */", f"#ifndef {guard}_C",
                      f"#define {guard}_C", "", "#include <stddef.h>", ""]
+            if header in baselines:
+                lines.extend(header_layouts(baselines[header]))
             if header in {"unistd.h", "sys/wait.h", "signal.h"}:
                 lines.extend((f"typedef {process_abi['types']['pid_t']} pid_t;", ""))
             if header == "limits.h":

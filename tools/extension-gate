@@ -10,6 +10,7 @@ import subprocess
 import sys
 import tempfile
 
+from extension_abi import COMPILERS, load_baselines, verify_stable_abi
 from extension_build import build_extension, dependency_order
 from extension_production import production_plans, verify_dependencies, verify_production
 from extensions import NAME, extension_functions, extension_sources, load_packages
@@ -35,6 +36,8 @@ def execute(name, require_production):
             raise GateError(f"unknown extension package {name}")
         package = packages[name]
         closure = dependency_order(packages, name)
+        baselines = load_baselines(project.root, packages)
+        stable = any(item.name in baselines for item in closure)
         evidence.update(stability=package.stability, dependencies=package.dependencies, oracle=package.oracle)
         functions = extension_functions({item.name: item for item in closure})
         sources = extension_sources(project, packages)
@@ -57,6 +60,8 @@ def execute(name, require_production):
             plans, probe_by_name = production_plans(package, probes)
             checks["full_production"] = {"outcome": "fail"}
         additional = ("objdump",) if require_production else ()
+        if stable:
+            additional += tuple(compiler for compiler in COMPILERS if compiler != "gcc")
         evidence["toolchain"] = identify_tools("ar", "make", "qemu-x86_64", *additional)
         evidence["inputs"] = verify_setup(checks, False, snapshot=phase1_inputs)
         if require_production:
@@ -68,6 +73,8 @@ def execute(name, require_production):
                                 "--leak-check=full", "--errors-for-leak-kinds=all"]}
         with tempfile.TemporaryDirectory(dir=workspace, prefix="run-") as temporary:
             directory = Path(temporary).resolve().relative_to(ROOT)
+            if stable:
+                verify_stable_abi(baselines, closure, directory, checks.setdefault("stable_abi", {"outcome": "fail"}))
             source_policy(checks, directory)
             build = checks["package_build"] = {"outcome": "fail", "commands": []}
             first = build_extension(directory / "first", closure, sources, build["commands"])

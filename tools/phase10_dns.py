@@ -16,13 +16,15 @@ SUITE = Path("tests/phase10/dns")
 sys.path.insert(0, str(ROOT / SUITE))
 import loopback
 import ptr_loopback
+import search_loopback
 from oracle import FRAME, RESULT, SEED, decoded, directed, ptr_directed, ptr_sampled, sampled
 
 WIRE = ("__al_dns_build", "__al_dns_parse")
 TRANSPORT = ("__al_dns_query",)
-PTR_WRAPS = ("__al_dns_server", "fopen")
+WRAPS = {"dns-ptr": ("__al_dns_server", "fopen"), "dns-search": ("__al_dns_config", "fopen")}
 SOURCE = {"dns-wire": ("wire.c", WIRE), "dns-transport": ("transport.c", TRANSPORT),
-          "dns-ptr": ("ptr.c", ("getnameinfo",))}
+          "dns-ptr": ("ptr.c", ("getnameinfo",)),
+          "dns-search": ("search.c", ("getaddrinfo", "__al_dns_config"))}
 ORACLE = ("reference:rfc1035", "reference:rfc7766", "reference:rfc5452")
 PTR_ORACLE = ("reference:rfc1035", "reference:rfc3493", "reference:rfc3596")
 
@@ -31,7 +33,9 @@ def inputs():
     bound = phase6_inputs()
     contracts = [Path("docs/adr/0017-dns-forward.md"), Path("docs/adr/0019-local-reverse-lookup.md"),
                  Path("docs/adr/0038-address-configuration.md"),
-                 Path("docs/adr/0039-resolver-search.md"), SUITE / "ptr.hosts"]
+                 Path("docs/adr/0039-resolver-search.md"),
+                 Path("docs/adr/0041-resolver-failover.md"),
+                 Path("docs/adr/0042-resolver-options.md"), SUITE / "ptr.hosts"]
     bound.update(snapshot_inputs(ROOT, contracts))
     return dict(sorted(bound.items()))
 
@@ -131,7 +135,7 @@ def main():
             binaries = {}
             for name_ in SOURCE:
                 fixture = checks["fixtures"][name_] = {"outcome": "fail", "commands": []}
-                wraps = PTR_WRAPS if name_ == "dns-ptr" else ()
+                wraps = WRAPS.get(name_, ())
                 artifacts = [build_case(make_case(name_), directory / f"{name_}-{i}", runtime,
                                         fixture["commands"], link_wraps=wraps)
                              for i, runtime in enumerate(runtimes, 1)]
@@ -145,6 +149,7 @@ def main():
             checks["wire"] = {"directed": len(fixed), "seed": SEED, "sampled": len(corpus) - len(fixed),
                               "backends": {}}
             checks["transport"] = {}
+            checks["search"] = {}
             ptr_fixed = ptr_directed()
             ptr_corpus = ptr_fixed + ptr_sampled(512)
             checks["reverse"] = {"directed": len(ptr_fixed), "sampled": 512, "seed": SEED ^ 12, "backends": {}}
@@ -161,7 +166,9 @@ def main():
                 }
                 ptr_command = list(map(str, [*prefix, binaries["dns-ptr"]]))
                 reverse["getnameinfo"] = ptr_loopback.run(ptr_command)
-                print(f"PASS DNS {backend} forward and reverse packet and loopback cases", flush=True)
+                search_command = list(map(str, [*prefix, binaries["dns-search"]]))
+                checks["search"][backend] = search_loopback.run(search_command, directory / f"search-{backend}")
+                print(f"PASS DNS {backend} forward, reverse, and search cases", flush=True)
             checks["wire"]["outcome"] = "pass"
             checks["reverse"]["outcome"] = "pass"
             checks["stubs"] = {}

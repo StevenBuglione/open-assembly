@@ -11,7 +11,7 @@ from phase2_helpers import HELPER, WRAPPERS
 from phase11_copy import HELPER as COPY_HELPER
 from production import SCALAR_FUNCTIONS, libfuzzer_seconds, phase2_inputs
 from runtime_gate import ERRNO
-from runtime_manifest_gate import FILE_MUTATION_FAILURES, PLANS as RUNTIME_PLANS, manifest_inputs
+from runtime_manifest_gate import FILE_MUTATION_FAILURES, IO_FUNCTIONS, PLANS as RUNTIME_PLANS, manifest_inputs
 from spec import ROOT, load_project, sha256_file
 
 ADDITIONAL = {"atoi", "atol", "atoll", "strtol", "strtoll", "strtoul", "strtoull",
@@ -88,11 +88,14 @@ def main():
     batches = parser.add_mutually_exclusive_group()
     batches.add_argument("--scalars", action="store_true", help="verify the C17 scalar arithmetic batch")
     batches.add_argument("--linux-files", action="store_true", help="verify the Linux file-descriptor batch")
+    batches.add_argument("--linux-io", action="store_true", help="verify the Linux descriptor I/O batch")
     args = parser.parse_args()
     if args.scalars:
         name, label, available = "production-scalars", "Scalar production", sorted(SCALAR_FUNCTIONS)
     elif args.linux_files:
         name, label, available = "production-linux-files", "Linux file production", sorted(FILE_MUTATION_FAILURES)
+    elif args.linux_io:
+        name, label, available = "production-linux-io", "Linux I/O production", sorted(IO_FUNCTIONS)
     else:
         name, label, available = "phase2", "Phase 2", phase2_functions()
     if args.jobs < 1 or set(args.functions) - set(available) or len(set(args.functions)) != len(args.functions):

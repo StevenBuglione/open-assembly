@@ -3,21 +3,23 @@
 A vector has five caller-owned size_t words. On x86-64 these
 hold the active data address, element count, capacity, element
 size and alignment. Initialize the state with vector_init before
-use. A nonzero element size must be a multiple of its positive
+use, and keep its metadata and backing storage valid. A nonzero element size must be a multiple of its positive
 power-of-two alignment. Calls preserve errno and return zero or
 a negative error number. Shared state requires caller synchronization.
 
-Reserve grows the vector to the requested capacity when necessary.
-The supplied arena provides the new buffer. Existing elements
+Reserve grows the vector to exactly the requested capacity when
+necessary. The supplied arena provides the new buffer. An arena
+is required only when reserve or push grows the vector. Existing elements
 retain their values and earlier buffers remain in their arenas.
 The caller keeps the active buffer valid until the next growth.
 A failed reserve preserves both the vector and the arena.
 
 Push copies one element and doubles capacity when growth is
-needed, starting with one slot. If geometric growth fails for
-size or space, push tries the exact next capacity. The source
+needed, starting with one slot. When the arena lacks space for
+geometric growth, push tries the exact next capacity. The source
 may refer to an element of the current vector. Pop removes the
-last element and can discard it with a null result pointer.
+last element and can discard it with a null result pointer. The
+copy permits overlap with the vector element storage.
 An empty vector returns -ENOENT. At publishes a pointer for a
 valid index or returns -ERANGE. A subsequent growth can change
 the active element addresses.

@@ -8,6 +8,9 @@ extern __al_gni_address:function
 extern __al_dns_reverse:function
 extern __al_gai_line:function
 extern __al_gai_word:function
+extern __al_ipv6_zone_kind:function
+extern __al_ipv6_zone_name:function
+extern __al_netdb_ifreq:function
 extern fclose:function
 extern fopen:function
 extern inet_ntop:function
@@ -143,6 +146,30 @@ __al_gni_host:
     jne .success
     cmp dword [r12 + 24], 0
     je .success
+    xor r14d, r14d              ; decimal scope by default
+    lea rdi, [r12 + 8]
+    call __al_ipv6_zone_kind
+    test eax, 2
+    jz .render_scope
+    lea rdi, [rbx + 1088]
+    xor eax, eax
+    mov [rdi], rax
+    mov [rdi + 8], rax
+    mov [rdi + 16], rax
+    mov [rdi + 24], rax
+    mov [rdi + 32], rax
+    mov eax, [r12 + 24]
+    mov [rdi + 16], eax
+    mov esi, 0x8910            ; SIOCGIFNAME
+    call __al_netdb_ifreq
+    test eax, eax
+    js .render_scope
+    lea rdi, [rbx + 1088]
+    call __al_ipv6_zone_name
+    test rax, rax
+    jz .render_scope
+    lea r14, [rbx + 1088]
+.render_scope:
     lea rdi, [rbx + 64]
     call strlen
     lea rdi, [rbx + rax + 64]
@@ -150,6 +177,11 @@ __al_gni_host:
     sub rsi, rax
     lea rdx, [rel scope_format]
     mov ecx, [r12 + 24]
+    test r14, r14
+    jz .write_scope
+    lea rdx, [rel interface_format]
+    mov rcx, r14
+.write_scope:
     xor eax, eax
     call snprintf
     test eax, eax
@@ -177,5 +209,6 @@ section .rodata.__al_gni_host alloc noexec nowrite progbits
 hosts_path: db "/etc/hosts", 0
 read_mode: db "r", 0
 scope_format: db "%%%u", 0
+interface_format: db "%%%s", 0
 
 section .note.GNU-stack noalloc noexec nowrite progbits

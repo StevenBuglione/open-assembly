@@ -6,15 +6,15 @@ default rel
 
 global __al_dns_config:function
 extern __al_dns_build:function
+extern __al_dns_config_server:function
+extern __al_dns_option:function
 extern __al_gai_line:function
 extern __al_gai_word:function
 extern fclose:function
 extern fopen:function
-extern inet_pton:function
 extern memcpy:function
 extern strcmp:function
 extern strlen:function
-extern strncmp:function
 
 section .text.__al_dns_config alloc exec nowrite progbits
 __al_dns_config:
@@ -23,7 +23,7 @@ __al_dns_config:
     push r13
     push r14
     push r15
-    sub rsp, 32
+    sub rsp, 48
     mov rbx, rdi
     mov r13, rsi
     mov r15, rdx
@@ -33,11 +33,18 @@ __al_dns_config:
     mov qword [r13 + 8], 0
     mov qword [r13 + 16], 0
     mov qword [r13 + 24], 0
+    lea rax, [rbx + 832]        ; alternate bank for reverse
     test r15, r15
-    jz .open
+    jz .server_bank
     mov dword [r15], 0
     mov dword [r15 + 4], 1
-.open:
+    lea rax, [r15 + 1544]       ; alternate bank for forward
+.server_bank:
+    mov [rsp + 32], rax
+    mov dword [rax], 0
+    mov dword [rax + 112], 2
+    mov dword [rax + 116], 1
+    mov dword [rax + 120], 0
     lea rdi, [rel resolv_path]
     lea rsi, [rel read_mode]
     call fopen
@@ -46,12 +53,9 @@ __al_dns_config:
     mov r12, rax
 
 .read_line:
-    test r15, r15
-    jz .read
     cmp qword [rsp], 0
     je .close
     dec qword [rsp]
-.read:
     mov rdi, r12
     lea rsi, [rbx + 1088]
     call __al_gai_line
@@ -63,8 +67,6 @@ __al_dns_config:
     test rax, rax
     jz .read_line
     mov [rsp + 8], rax
-    test r14d, r14d
-    jnz .search_directives
     mov rdi, rax
     lea rsi, [rel nameserver]
     call strcmp
@@ -72,6 +74,11 @@ __al_dns_config:
     jz .server_word
 
 .search_directives:
+    mov rdi, [rsp + 8]
+    lea rsi, [rel options]
+    call strcmp
+    test eax, eax
+    jz .option_word
     test r15, r15
     jz .read_line
     mov rdi, [rsp + 8]
@@ -84,11 +91,6 @@ __al_dns_config:
     call strcmp
     test eax, eax
     jz .domain
-    mov rdi, [rsp + 8]
-    lea rsi, [rel options]
-    call strcmp
-    test eax, eax
-    jz .option_word
     jmp .read_line
 
 .server_word:
@@ -96,29 +98,13 @@ __al_dns_config:
     call __al_gai_word
     test rax, rax
     jz .read_line
-    mov [rsp + 8], rax
-    mov edi, 2
-    mov rsi, rax
-    lea rdx, [r13 + 4]
-    call inet_pton
-    test eax, eax
-    jnz .ipv4
-    mov edi, 10
-    mov rsi, [rsp + 8]
-    lea rdx, [r13 + 8]
-    call inet_pton
-    test eax, eax
-    jz .read_line
-    mov word [r13], 10
-    mov r14d, 28
-    jmp .server_ready
-.ipv4:
-    mov word [r13], 2
-    mov r14d, 16
-.server_ready:
-    test r15, r15
-    jnz .read_line
-    jmp .close
+    mov rdi, rax
+    mov rsi, r13
+    mov rdx, [rsp + 32]
+    mov ecx, r14d
+    call __al_dns_config_server
+    mov r14d, eax
+    jmp .read_line
 
 .search:
     mov dword [rsp + 16], 6
@@ -136,7 +122,7 @@ __al_dns_config:
     mov rdi, rax
     mov esi, 1
     xor edx, edx
-    lea rcx, [r15 + 1544]      ; scratch wire question
+    xor ecx, ecx               ; measure without writing a wire question
     mov r8d, 272
     call __al_dns_build
     cmp rax, 17                ; invalid or root-only suffix
@@ -171,36 +157,10 @@ __al_dns_config:
     call __al_gai_word
     test rax, rax
     jz .read_line
-    mov [rsp + 8], rax
     mov rdi, rax
-    lea rsi, [rel ndots]
-    mov edx, 6
-    call strncmp
-    test eax, eax
-    jnz .option_word
-    mov rsi, [rsp + 8]
-    add rsi, 6
-    cmp byte [rsi], 0
-    je .option_word
-    xor ecx, ecx
-    mov edx, 15
-.digit:
-    movzx eax, byte [rsi]
-    test eax, eax
-    jz .set_ndots
-    sub eax, 48
-    cmp eax, 9
-    ja .option_word
-    imul ecx, 10
-    add ecx, eax
-    cmp ecx, edx
-    jbe .next_digit
-    mov ecx, edx
-.next_digit:
-    inc rsi
-    jmp .digit
-.set_ndots:
-    mov [r15 + 4], ecx
+    mov rsi, r15
+    mov rdx, [rsp + 32]
+    call __al_dns_option
     jmp .option_word
 
 .close:
@@ -215,7 +175,7 @@ __al_dns_config:
 .ready:
     mov word [r13 + 2], 0x3500
     mov eax, r14d
-    add rsp, 32
+    add rsp, 48
     pop r15
     pop r14
     pop r13
@@ -230,6 +190,5 @@ nameserver: db "nameserver", 0
 search: db "search", 0
 domain: db "domain", 0
 options: db "options", 0
-ndots: db "ndots:", 0
 
 section .note.GNU-stack noalloc noexec nowrite progbits

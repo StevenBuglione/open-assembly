@@ -370,9 +370,14 @@ type changes to existing files fail the check.
 ```
 
 The nightly entry point runs the available matrix, including Phase 2
-production mutation and 300-second libFuzzer observations, exact binary32
-rounding groups, selected transcendental shards, the isolated memcpy benchmark,
-and the pinned application and external suites. The extension smoke control runs in a separate clone.
+production mutation and 300-second libFuzzer observations, the eight
+scalar arithmetic production gates with the same libFuzzer floor, the
+three Linux descriptor gates with timed glibc and musl packet comparisons,
+exact binary32 rounding groups, selected transcendental shards, the
+pinned application and upstream suites, and independent address-family
+selection. The isolated memcpy, allocator, and warmed vDSO time benchmarks
+measure the named workloads against musl. The extension smoke control
+runs in a separate clone.
 Its unimplemented, scoped, and production-required reports are archived
 with the main evidence. The separate shipped extension check runs declared
 packages in dependency order and validates each fresh per-function production
@@ -392,11 +397,32 @@ application artifacts. Its JSON evidence includes fresh per-function
 coverage, mutation summaries, the outstanding inventory, and the declared
 deviations. Both workflows upload evidence even when verification fails.
 
+The binary32 campaign check independently audits checkpoint files under
+`build/phase7-campaign` by default. Use `--campaign-root build/...` for a
+different current ledger directory. Keep each exported ledger at its
+recorded checkout-relative path. The check binds the current complete
+Phase 7 source snapshot, candidate archive and probe, oracle artifacts,
+and checkpoint-set digest. It counts only complete contiguous coverage
+of all 2^32 encodings with no failed observations for an operation and
+rounding mode. Fixed-second-operand campaigns count as binary axes.
+The report lists missing unary modes and remaining binary axes. Earlier
+source snapshots are recorded separately as historical. The source gate
+binds the complete Phase 7 input snapshot, so an unrelated changed input
+also prevents current credit for an older ledger.
+
+The nightly and release workflows currently call the tier without staging
+external ledgers. That leaves the campaign check pending unless the exact
+current ledgers are available at the default path. A run that stages them
+at a different recorded path can supply it explicitly.
+
+```sh
+./tools/verify-tier nightly --campaign-root build/current-campaigns
+./tools/verify-tier release --tag v1.0.0 --campaign-root build/current-campaigns
+```
+
 Every listed gate must produce a fresh passing report with matching input
 hashes. Use repeated `--only` selections for focused diagnosis. Such a run
-exits nonzero with a partial report. The current matrix also records unmet
-the remaining full binary32 domains,
-LTP and gnulib, and performance requirements. A tier
-with any failure or unmet requirement exits nonzero and cannot qualify
-a release. The platform section records the actual native kernel and
-seccomp mode separately from those matrix requirements.
+exits nonzero with a partial report. A tier with any failure or unmet
+requirement exits nonzero and cannot qualify a release. The platform
+section records the actual native kernel and seccomp mode separately
+from the scoped platform gate results.

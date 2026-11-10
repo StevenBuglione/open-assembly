@@ -109,7 +109,7 @@ def exercise(root, gate, artifacts, headers):
         invoke("run", native, "--limit", 0, expect=1, diagnostic="campaign artifact changed")
         path.write_bytes(original)
     invoke("run", native, "--limit", 0)
-    invoke("prepare", root / "unsupported-native", gate, artifacts, "log10",
+    invoke("prepare", root / "unsupported-native", gate, artifacts, "pow", "--second", "0x3f800000",
            "--native-headers", headers, "--count", 8, "--width", 8,
            expect=1, diagnostic="supports only these unary operations")
     logarithm = root / "native-log2"
@@ -133,7 +133,15 @@ def exercise(root, gate, artifacts, headers):
     invoke("run", logarithm, "--limit", 0)
     for operation, start in (("exp", "0x42b171fe"), ("log", "0x3f7ffff8"),
                              ("sin", "0x007ffff8"), ("cos", "0x7f7ffff8"),
-                             ("tan", "0xbfc90fd8")):
+                             ("tan", "0xbfc90fd8"), ("log10", "0x411ffff8"),
+                             ("expm1", "0x80000000"), ("log1p", "0xbf7ffff8"),
+                             ("asin", "0x3f7ffff8"), ("acos", "0xbf7ffff8"),
+                             ("atan", "0x7f7ffff8"), ("sinh", "0x42b2d4f8"),
+                             ("cosh", "0xc2b2d4f8"), ("tanh", "0x411ffff8"),
+                             ("asinh", "0x007ffff8"), ("acosh", "0x3f7ffff8"),
+                             ("atanh", "0xbf7ffff8"), ("erf", "0x007ffff8"),
+                             ("erfc", "0x4121fff8"), ("tgamma", "0xbf7ffff8"),
+                             ("lgamma", "0x3ffffff8")):
         path = root / f"native-{operation}"
         invoke("prepare", path, gate, artifacts, operation, "--native-headers", headers,
                "--mode", 2, "--start", start, "--count", 16, "--width", 8)

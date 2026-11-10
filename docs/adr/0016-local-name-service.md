@@ -23,7 +23,7 @@ slice reads a maximum of 32 matching address records and skips
 physical lines longer than 4095 bytes. Missing files or absent
 matches yield the corresponding EAI error. AI_ADDRCONFIG applies
 the [configured family snapshot](0038-address-configuration.md).
-IPv6 zone identifiers remain separate.
+[IPv6 zone identifiers](0040-ipv6-scope.md) are supported for numeric nodes.
 
 AI_V4MAPPED applies when AF_INET6 is requested. It makes
 matching IPv4 addresses available as mapped IPv6 addresses if

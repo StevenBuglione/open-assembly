@@ -12,7 +12,7 @@
 ; narrow_args: -
 ; variadic: false
 ; semantics: Append one element. Grow capacity geometrically in the caller-owned arena when needed.
-; semantics: Return a negative error for invalid arguments, wrapping extent or arena exhaustion. Preserve both states on failure and preserve errno.
+; semantics: Require initialized state and a valid element span. Retry an exhausted geometric allocation at the exact next capacity. Preserve both states on failure and preserve errno.
 ; END OPEN ASSEMBLY GENERATED SPEC
 
 bits 64
@@ -56,10 +56,7 @@ vector_push:
     test eax, eax
     jz .append
     cmp eax, -28               ; ENOSPC
-    je .try_exact
-    cmp eax, -75               ; EOVERFLOW
     jne .return
-.try_exact:
     cmp r15, [rsp]
     je .return
     mov rdi, rbx

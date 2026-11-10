@@ -2,13 +2,15 @@ name = "getaddrinfo"
 header = "netdb.h"
 prototype = "int getaddrinfo(const char *restrict node, const char *restrict service, const struct addrinfo *restrict hints, struct addrinfo **restrict result)"
 standard = ["POSIX.1-2024 XSH getaddrinfo"]
-deps = ["__errno_location", "calloc", "clock_gettime", "close", "connect", "fclose", "feof", "fgetc", "fgets", "fopen", "free", "freeaddrinfo", "getsockopt", "inet_pton", "malloc", "memcmp", "memcpy", "poll", "recv", "recvfrom", "send", "sendto", "socket", "strchr", "strcmp", "strlen", "strncmp"]
+deps = ["__errno_location", "calloc", "clock_gettime", "close", "connect", "fclose", "feof", "fgetc", "fgets", "fopen", "free", "freeaddrinfo", "getsockopt", "inet_pton", "ioctl", "malloc", "memcmp", "memcpy", "poll", "recv", "recvfrom", "send", "sendto", "socket", "strchr", "strcmp", "strlen", "strncmp"]
 errno = []
 mt_safe = true
 as_safe = false
-oracles = ["reference:rfc3493", "reference:local-netdb", "reference:rfc1035", "diff:glibc", "diff:musl"]
+oracles = ["reference:rfc3493", "reference:rfc4007", "reference:local-netdb", "reference:rfc1035", "diff:glibc", "diff:musl"]
 provenance = "original"
 semantics = [
+  "Use configured DNS nameservers with bounded failover, deadlines and retry rounds.",
+  "Resolve decimal IPv6 scope IDs and eligible interface-name zones without DNS.",
   "Resolve numeric, local-file and DNS node inputs and numeric or local-file services into an owned IPv4 or IPv6 TCP/UDP address list.",
   "Apply resolv.conf search, domain and ndots to forward DNS candidates.",
   "Return zero on success or an EAI error and a null result on failure.",
