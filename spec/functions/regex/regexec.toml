@@ -1,0 +1,19 @@
+name = "regexec"
+header = "regex.h"
+prototype = "int regexec(const regex_t *restrict expression, const char *restrict string, size_t count, regmatch_t *restrict matches, int flags)"
+standard = ["POSIX.1-2024 XSH regexec"]
+deps = ["calloc", "free", "iswctype", "malloc", "memcmp", "memcpy", "memset", "realloc", "strlen", "towlower", "towupper", "wctype"]
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["reference:posix-regex", "diff:glibc", "diff:musl", "suite:libc-test"]
+provenance = "original"
+semantics = [
+  "Search a null-terminated string for the leftmost longest match.",
+  "Report byte offsets and participating subexpressions unless REG_NOSUB or a zero match count suppresses reporting.",
+  "Return zero, REG_NOMATCH, or a REG error.",
+]
+
+[abi]
+narrow_args = ["r8d:s32"]
+variadic = false

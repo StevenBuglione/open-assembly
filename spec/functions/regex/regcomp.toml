@@ -1,0 +1,18 @@
+name = "regcomp"
+header = "regex.h"
+prototype = "int regcomp(regex_t *restrict expression, const char *restrict pattern, int flags)"
+standard = ["POSIX.1-2024 XSH regcomp"]
+deps = ["calloc", "free", "iswctype", "strdup", "strlen", "towlower", "towupper", "wctype"]
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["reference:posix-regex", "diff:glibc", "diff:musl", "suite:libc-test"]
+provenance = "original"
+semantics = [
+  "Compile a POSIX basic or extended regular expression with the requested flags.",
+  "Publish the subexpression count and an owned program on success. Return a REG error on failure.",
+]
+
+[abi]
+narrow_args = ["edx:s32"]
+variadic = false

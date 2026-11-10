@@ -112,7 +112,16 @@ GLOB_CONSTANTS = {"GLOB_ERR": 1, "GLOB_MARK": 2, "GLOB_NOSORT": 4,
                   "GLOB_DOOFFS": 8, "GLOB_NOCHECK": 16, "GLOB_APPEND": 32,
                   "GLOB_NOESCAPE": 64, "GLOB_NOSPACE": 1, "GLOB_ABORTED": 2,
                   "GLOB_NOMATCH": 3}
+REGEX_CONSTANTS = {"REG_EXTENDED": 1, "REG_ICASE": 2, "REG_NEWLINE": 4,
+                   "REG_NOSUB": 8, "REG_NOTBOL": 1, "REG_NOTEOL": 2,
+                   "REG_NOMATCH": 1, "REG_BADPAT": 2, "REG_ECOLLATE": 3,
+                   "REG_ECTYPE": 4, "REG_EESCAPE": 5, "REG_ESUBREG": 6,
+                   "REG_EBRACK": 7, "REG_EPAREN": 8, "REG_EBRACE": 9,
+                   "REG_BADBR": 10, "REG_ERANGE": 11, "REG_ESPACE": 12,
+                   "REG_BADRPT": 13}
 POSIX_SCOPE = {
+    "regex.h": {"functions": {"regcomp", "regerror", "regexec", "regfree"},
+                "types": {"regex_t", "regmatch_t", "regoff_t"}, "macros": set(REGEX_CONSTANTS)},
     "glob.h": {"functions": {"glob", "globfree"}, "types": {"glob_t"}, "macros": set(GLOB_CONSTANTS)},
     "fnmatch.h": {"functions": {"fnmatch"}, "macros": set(FNM_CONSTANTS)},
     "langinfo.h": {"functions": {"nl_langinfo"}, "types": {"nl_item"}, "macros": set(LANGINFO_CONSTANTS)},

@@ -3,7 +3,7 @@
 
 This index lists authored function specifications. For implementation state, run `tools/queue status`.
 
-Specs: 725 of 725 inventoried functions. The inventory covers C17, the named POSIX subset, runtime ABI entries, and Linux compatibility extensions. see [inventory scope](cookbook/specifications.md#inventory-scope).
+Specs: 729 of 729 inventoried functions. The inventory covers C17, the named POSIX subset, runtime ABI entries, and Linux compatibility extensions. see [inventory scope](cookbook/specifications.md#inventory-scope).
 
 | Function | Header | Prototype | Standard |
 | --- | --- | --- | --- |
@@ -534,6 +534,10 @@ Specs: 725 of 725 inventoried functions. The inventory covers C17, the named POS
 | [`recv`](../spec/functions/sys/socket/recv.toml) | `<sys/socket.h>` | `ssize_t recv(int fd, void *buffer, size_t length, int flags)` | POSIX.1-2024 XSH recv |
 | [`recvfrom`](../spec/functions/sys/socket/recvfrom.toml) | `<sys/socket.h>` | `ssize_t recvfrom(int fd, void *restrict buffer, size_t length, int flags, struct sockaddr *restrict address, socklen_t *restrict address_length)` | POSIX.1-2024 XSH recvfrom |
 | [`recvmsg`](../spec/functions/sys/socket/recvmsg.toml) | `<sys/socket.h>` | `ssize_t recvmsg(int fd, struct msghdr *message, int flags)` | POSIX.1-2024 XSH recvmsg |
+| [`regcomp`](../spec/functions/regex/regcomp.toml) | `<regex.h>` | `int regcomp(regex_t *restrict expression, const char *restrict pattern, int flags)` | POSIX.1-2024 XSH regcomp |
+| [`regerror`](../spec/functions/regex/regerror.toml) | `<regex.h>` | `size_t regerror(int code, const regex_t *restrict expression, char *restrict buffer, size_t size)` | POSIX.1-2024 XSH regerror |
+| [`regexec`](../spec/functions/regex/regexec.toml) | `<regex.h>` | `int regexec(const regex_t *restrict expression, const char *restrict string, size_t count, regmatch_t *restrict matches, int flags)` | POSIX.1-2024 XSH regexec |
+| [`regfree`](../spec/functions/regex/regfree.toml) | `<regex.h>` | `void regfree(regex_t *expression)` | POSIX.1-2024 XSH regfree |
 | [`remainder`](../spec/functions/math/remainder.toml) | `<math.h>` | `double remainder(double x, double y)` | C17 7.12.10.2 |
 | [`remainderf`](../spec/functions/math/remainderf.toml) | `<math.h>` | `float remainderf(float x, float y)` | C17 7.12.10.2 |
 | [`remainderl`](../spec/functions/math/remainderl.toml) | `<math.h>` | `long double remainderl(long double x, long double y)` | C17 7.12.10.2 |

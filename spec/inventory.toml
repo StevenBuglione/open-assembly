@@ -810,3 +810,11 @@ count = 13
 functions = ["glob", "globfree"]
 types = ["glob_t"]
 macros = ["GLOB_ABORTED", "GLOB_APPEND", "GLOB_DOOFFS", "GLOB_ERR", "GLOB_MARK", "GLOB_NOCHECK", "GLOB_NOESCAPE", "GLOB_NOMATCH", "GLOB_NOSORT", "GLOB_NOSPACE"]
+
+[[headers]]
+name = "regex.h"
+standard = "POSIX.1-2024 XBD <regex.h>"
+count = 26
+functions = ["regcomp", "regerror", "regexec", "regfree"]
+types = ["regex_t", "regmatch_t", "regoff_t"]
+macros = ["REG_BADBR", "REG_BADPAT", "REG_BADRPT", "REG_EBRACE", "REG_EBRACK", "REG_ECOLLATE", "REG_ECTYPE", "REG_EESCAPE", "REG_EPAREN", "REG_ERANGE", "REG_ESPACE", "REG_ESUBREG", "REG_EXTENDED", "REG_ICASE", "REG_NEWLINE", "REG_NOMATCH", "REG_NOSUB", "REG_NOTBOL", "REG_NOTEOL"]

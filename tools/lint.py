@@ -77,6 +77,11 @@ COMPLEX_EXTENDED_ARGUMENTS = {**{name + "l": 2 for name in (
     "creal", "cimag", "conj", "cproj", "cabs", "carg", "clog", "csqrt", "cexp", "ccos", "csin", "ccosh", "csinh", "ctan", "ctanh", "catan", "catanh", "casin", "cacos", "casinh", "cacosh",
 )}, "cpowl": 4}
 PRIVATE_FUNCTIONS = {
+    "regex/__al_regex_bounds", "regex/__al_regex_bracket", "regex/__al_regex_bracket_atom",
+    "regex/__al_regex_branch", "regex/__al_regex_emit", "regex/__al_regex_node",
+    "regex/__al_regex_parse", "regex/__al_regex_token",
+    "regex/__al_regex_backref", "regex/__al_regex_better", "regex/__al_regex_exec",
+    "regex/__al_regex_push", "regex/__al_regex_seen", "regex/__al_regex_span_count",
     "compiler_rt/__al_atomic_bytes", "compiler_rt/__al_atomic_quad",
     "glob/__al_glob_add", "glob/__al_glob_candidate", "glob/__al_glob_compare",
     "glob/__al_glob_error", "glob/__al_glob_parse", "glob/__al_glob_path", "glob/__al_glob_walk",
