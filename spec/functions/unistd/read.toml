@@ -1,0 +1,19 @@
+name = "read"
+header = "unistd.h"
+prototype = "ssize_t read(int fd, void *buf, size_t count)"
+standard = ["POSIX.1-2024 XSH read"]
+deps = ["__errno_location"]
+errno = ["EAGAIN", "EBADF", "EFAULT", "EINTR", "EINVAL", "EIO", "EISDIR"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "reference:linux-read"]
+provenance = "original"
+semantics = [
+  "Perform one Linux read of up to count bytes; return the byte count, including a short result or zero at EOF.",
+  "Do not modify errno on success or modify the buffer beyond the bytes transferred.",
+  "Return -1 and set errno to the positive kernel error on failure; do not retry EINTR.",
+]
+
+[abi]
+narrow_args = ["edi:s32"]
+variadic = false

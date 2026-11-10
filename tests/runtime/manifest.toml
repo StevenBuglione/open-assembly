@@ -1,0 +1,305 @@
+schema = 1
+
+[[case]]
+name = "hello-asm"
+sources = ["tests/apps/phase1/hello.asm"]
+requires = ["write"]
+args = []
+env = {}
+status = 0
+stdout = "Hello from assembly!\n"
+stderr = ""
+oracle = ["abi:sysv-amd64", "posix:write"]
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "hello-c"
+sources = ["tests/apps/phase1/hello.c"]
+requires = ["write", "__stack_chk_fail"]
+args = []
+env = {}
+status = 0
+stdout = "Hello from C!\n"
+stderr = ""
+oracle = ["gcc:stack-protector", "posix:write"]
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "startup"
+sources = ["tests/runtime/startup.c"]
+requires = ["_start", "__al_initial_envp", "__al_auxv", "__al_syscall", "__errno_location"]
+args = ["arg with spaces", "", "--value=a=b"]
+env = { OA_PHASE1_VALUE = "one two", OA_PHASE1_EMPTY = "" }
+status = 0
+stdout = ""
+stderr = ""
+oracle = ["abi:sysv-amd64", "abi:elf-tls", "c17:errno", "linux:exec-auxv", "linux:fs-base", "project:runtime-abi"]
+backends = ["native", "qemu"]
+[case.skip]
+valgrind = "Memcheck adds its own LD_PRELOAD entry. The startup-valgrind case tests that input separately."
+
+[[case]]
+name = "startup-empty-env"
+sources = ["tests/runtime/startup.c"]
+requires = ["_start", "__al_initial_envp", "__al_auxv", "__al_syscall", "__errno_location"]
+args = []
+env = {}
+status = 0
+stdout = ""
+stderr = ""
+oracle = ["abi:sysv-amd64", "abi:elf-tls", "c17:errno", "linux:exec-auxv", "linux:fs-base", "project:runtime-abi"]
+backends = ["native", "qemu"]
+[case.skip]
+valgrind = "Memcheck adds an LD_PRELOAD entry even when it is launched with an empty environment."
+
+[[case]]
+name = "startup-valgrind"
+sources = ["tests/runtime/startup.c"]
+requires = ["_start", "__al_initial_envp", "__al_auxv", "__al_syscall", "__errno_location"]
+args = ["arg with spaces", "", "--value=a=b", "expect-valgrind-preload"]
+env = { OA_PHASE1_VALUE = "one two", OA_PHASE1_EMPTY = "" }
+status = 0
+stdout = ""
+stderr = ""
+oracle = ["abi:sysv-amd64", "abi:elf-tls", "c17:errno", "linux:exec-auxv", "linux:fs-base", "project:runtime-abi"]
+backends = ["valgrind"]
+[case.skip]
+native = "Native execution does not receive Memcheck's injected LD_PRELOAD entry."
+qemu = "QEMU user-mode execution does not receive Memcheck's injected LD_PRELOAD entry."
+
+[[case]]
+name = "syscall-args"
+sources = ["tests/runtime/syscall_args.c"]
+requires = ["__al_syscall", "__errno_location"]
+args = []
+env = {}
+status = 0
+stdout = ""
+stderr = ""
+oracle = ["abi:sysv-amd64", "linux:syscall-abi", "linux:syscall-errors"]
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "syscall-result"
+sources = ["tests/runtime/syscall_result.c"]
+requires = ["__al_syscall_result", "__errno_location"]
+args = []
+env = {}
+status = 0
+stdout = ""
+stderr = ""
+oracle = ["linux:syscall-errors", "project:runtime-abi"]
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "io-read"
+sources = ["tests/runtime/io.c"]
+requires = ["read", "__al_syscall", "__errno_location"]
+args = ["read"]
+env = {}
+status = 0
+stdout = ""
+stderr = ""
+oracle = ["posix:read", "linux:nonblocking-pipe", "project:runtime-abi"]
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "io-write"
+sources = ["tests/runtime/io.c"]
+requires = ["write", "__al_syscall", "__errno_location"]
+args = ["write"]
+env = {}
+status = 0
+stdout = ""
+stderr = ""
+oracle = ["posix:write", "linux:nonblocking-pipe", "project:runtime-abi"]
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "io-close"
+sources = ["tests/runtime/io.c"]
+requires = ["close", "__al_syscall", "__errno_location"]
+args = ["close"]
+env = {}
+status = 0
+stdout = ""
+stderr = ""
+oracle = ["posix:close", "project:runtime-abi"]
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "eintr"
+sources = ["tests/runtime/eintr.c"]
+requires = ["read", "__al_syscall", "__al_rt_sigreturn", "__errno_location"]
+args = []
+env = {}
+status = 0
+stdout = ""
+stderr = ""
+oracle = ["posix:read", "linux:signal-frame", "project:runtime-abi"]
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "exit-return"
+sources = ["tests/runtime/exit_order.c"]
+requires = ["exit", "atexit", "write"]
+args = ["return"]
+env = {}
+status = 52
+stdout = "MBDCA"
+stderr = ""
+oracle = ["c17:main-exit", "c17:atexit", "linux:wait-status"]
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "exit-explicit"
+sources = ["tests/runtime/exit_order.c"]
+requires = ["exit", "atexit", "write"]
+args = ["exit"]
+env = {}
+status = 52
+stdout = "MBDCA"
+stderr = ""
+oracle = ["c17:main-exit", "c17:atexit", "linux:wait-status"]
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "atexit-capacity"
+sources = ["tests/runtime/atexit_capacity.c"]
+requires = ["atexit", "write", "_Exit"]
+args = []
+env = {}
+status = 0
+stdout = "RF"
+stderr = ""
+oracle = ["c17:atexit", "project:runtime-abi"]
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "immediate-c"
+sources = ["tests/runtime/immediate_exit.c"]
+requires = ["_Exit", "atexit", "write"]
+args = ["C"]
+env = {}
+status = 113
+stdout = ""
+stderr = ""
+oracle = ["c17:immediate-exit", "linux:wait-status"]
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "immediate-posix"
+sources = ["tests/runtime/immediate_exit.c"]
+requires = ["_exit", "atexit", "write"]
+args = ["posix"]
+env = {}
+status = 254
+stdout = ""
+stderr = ""
+oracle = ["posix:immediate-exit", "linux:wait-status"]
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "panic"
+sources = ["tests/runtime/panic.c"]
+requires = ["__al_panic", "atexit"]
+args = []
+env = {}
+status = 127
+stdout = ""
+stderr = "panic\u0000detail\n"
+oracle = ["project:runtime-abi"]
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "stack-fail"
+sources = ["tests/runtime/stack_fail.c"]
+requires = ["__stack_chk_fail", "__al_syscall", "atexit"]
+args = []
+env = {}
+status = -6
+stdout = ""
+stderr = "open-assembly: stack smashing detected\n"
+oracle = ["gcc:stack-protector", "linux:wait-status", "project:runtime-abi"]
+backends = ["native"]
+[case.skip]
+qemu = "The QEMU wrapper emits its own fatal signal diagnostics."
+valgrind = "The Memcheck wrapper emits its own fatal signal diagnostics."
+
+[[case]]
+name = "stack-fail-masked"
+sources = ["tests/runtime/stack_fail.c"]
+requires = ["__stack_chk_fail", "__al_syscall", "atexit"]
+args = ["masked"]
+env = {}
+status = -6
+stdout = ""
+stderr = "open-assembly: stack smashing detected\n"
+oracle = ["gcc:stack-protector", "linux:signal-frame", "linux:wait-status", "project:runtime-abi"]
+backends = ["native"]
+[case.skip]
+qemu = "The QEMU wrapper emits its own fatal signal diagnostics."
+valgrind = "The Memcheck wrapper emits its own fatal signal diagnostics."
+
+[[stub]]
+symbol = "read"
+case = "io-read"
+status = 22
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "write"
+case = "hello-asm"
+status = 42
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "close"
+case = "io-close"
+status = 42
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "__errno_location"
+case = "startup"
+status = 31
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "atexit"
+case = "atexit-capacity"
+status = 23
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "exit"
+case = "exit-explicit"
+status = 0
+stdout = "M"
+stderr = ""
+
+[[stub]]
+symbol = "_Exit"
+case = "immediate-c"
+status = 0
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "_exit"
+case = "immediate-posix"
+status = 0
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "__stack_chk_fail"
+case = "stack-fail"
+status = 0
+stdout = ""
+stderr = ""

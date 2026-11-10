@@ -1,0 +1,19 @@
+name = "close"
+header = "unistd.h"
+prototype = "int close(int fd)"
+standard = ["POSIX.1-2024 XSH close"]
+deps = ["__errno_location"]
+errno = ["EBADF", "EINTR", "EIO", "ENOSPC", "EDQUOT"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "reference:linux-close"]
+provenance = "original"
+semantics = [
+  "Perform one Linux close operation and return zero on success without changing errno.",
+  "Return -1 and set errno to the positive kernel error on failure.",
+  "On Linux an EINTR result does not leave the descriptor open; do not retry close.",
+]
+
+[abi]
+narrow_args = ["edi:s32"]
+variadic = false

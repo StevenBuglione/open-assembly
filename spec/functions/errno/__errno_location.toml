@@ -1,0 +1,19 @@
+name = "__errno_location"
+header = "errno.h"
+prototype = "int *__errno_location(void)"
+standard = ["Runtime ABI __errno_location", "C17 7.5"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:runtime-abi", "diff:glibc"]
+provenance = "original"
+semantics = [
+  "Return a stable, writable pointer to the calling thread's errno integer.",
+  "The initial thread's errno starts at zero; obtaining the pointer does not change it.",
+  "The runtime ABI locates errno at offset 0x40 from the current thread pointer after startup.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

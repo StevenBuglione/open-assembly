@@ -1,0 +1,20 @@
+name = "write"
+header = "unistd.h"
+prototype = "ssize_t write(int fd, const void *buf, size_t count)"
+standard = ["POSIX.1-2024 XSH write"]
+deps = ["__errno_location"]
+errno = ["EAGAIN", "EBADF", "EDQUOT", "EFAULT", "EFBIG", "EINTR", "EINVAL", "EIO", "ENOSPC", "EPERM", "EPIPE"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "reference:linux-write"]
+provenance = "original"
+semantics = [
+  "Perform one Linux write of up to count bytes and return the byte count, including a short result.",
+  "Do not modify errno on success or the source buffer.",
+  "Return -1 and set errno to the positive kernel error on failure; do not retry EINTR.",
+  "An EPIPE error has the kernel's normal SIGPIPE side effect.",
+]
+
+[abi]
+narrow_args = ["edi:s32"]
+variadic = false

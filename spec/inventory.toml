@@ -1,4 +1,4 @@
-# Catalog of the C17 clause 7 API and the named POSIX bootstrap subset.
+# Catalog of the C17 clause 7 API, named POSIX subset, and runtime ABI entries.
 # Counts include conditional entries and count each family pattern once.
 # See docs/cookbook/specifications.md for the scope and counting rules.
 schema_version = 1
@@ -493,6 +493,19 @@ types = ["wctrans_t", "wctype_t", "wint_t"]
 [[headers]]
 name = "unistd.h"
 standard = "POSIX.1-2024 XBD <unistd.h>"
-count = 6
+count = 9
 functions = ["_exit", "close", "read", "write"]
 types = ["size_t", "ssize_t"]
+macros = ["STDIN_FILENO", "STDOUT_FILENO", "STDERR_FILENO"]
+
+[[headers]]
+name = "compiler_rt.h"
+standard = "Runtime ABI <compiler_rt.h>"
+count = 1
+functions = ["__stack_chk_fail"]
+
+[[headers]]
+name = "errno.h"
+standard = "Runtime ABI <errno.h>"
+count = 1
+functions = ["__errno_location"]

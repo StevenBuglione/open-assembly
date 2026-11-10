@@ -1,4 +1,4 @@
-name: Phase 0 verification
+name: Assembly verification
 
 on:
   pull_request:
@@ -24,11 +24,11 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: ./tools/container tools/gate --protected-base "$BASE_SHA"
-      - name: Run the pinned verification toolchain
-        run: ./tools/container make phase0
+      - name: Run the pinned Phase 0 and Phase 1 gates
+        run: ./tools/container make -k phase0 phase1
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
-          name: phase0-evidence
+          name: verification-evidence
           path: build/evidence/
           if-no-files-found: warn
