@@ -427,6 +427,34 @@ Run `./tools/container make production-wide-core` for `wcslen`, `wcscmp`,
 source against the candidate and hosted libcs, while the inherited
 Phase 9 C-locale cases retain their original adapter and stub controls.
 
+The next wide-element groups have separate entry points.
+
+```sh
+./tools/container make production-wide-search-copy
+./tools/container make production-wide-memory verify-wide-memory-wrappers
+./tools/container make production-wide-matching
+```
+
+Search/copy checks cover `wcschr`, `wcsrchr`, `wcscpy`, and `wcsncpy`.
+Memory production checks cover `wmemcmp` and `wmemset`. The companion copy
+wrapper batch keeps `wmemcpy` and `wmemmove` at `production_verified=false`
+with their byte-copy dependency closure pending. Its source entry, own
+mutations, typed ABI, and timed observations remain recorded.
+
+Matching checks first rebuild and prove `__al_wide_span`, then verify
+`wcsspn`, `wcscspn`, `wcspbrk`, and `wcsstr`. The span wrappers bind the fresh
+helper report, source, actual member, object, and complete repeated runtime
+maps. `wcspbrk` also requires the current full `wcscspn` result from that
+invocation. The helper's reviewed domain includes all shipped runtime,
+application, and extension assembly references. [Wide-span boundary](wide-span-helper.md)
+
+Both clean tiers invoke these groups. The copy batch retains its pending
+shared dependency status in their child records. Hosted recipes use pinned
+containers and fail when their declared evidence artifacts are absent.
+Standalone search/copy, memory, and matching recipes took 515, 475, and 683
+seconds locally. Their hosted step budgets are 25, 25, and 35 minutes.
+
+
 ## Nightly and tagged verification
 
 ```sh

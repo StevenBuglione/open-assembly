@@ -96,6 +96,30 @@ production-wide-core:
 	tools/gate wcsncmp
 	tools/gate wmemchr
 
+.PHONY: production-wide-search-copy
+production-wide-search-copy:
+	tools/gate wcschr
+	tools/gate wcsrchr
+	tools/gate wcscpy
+	tools/gate wcsncpy
+
+.PHONY: production-wide-memory
+production-wide-memory:
+	tools/gate wmemcmp
+	tools/gate wmemset
+
+.PHONY: verify-wide-memory-wrappers
+verify-wide-memory-wrappers:
+	python3 tools/runtime_manifest_gate.py --wide-memory-wrappers
+
+.PHONY: production-wide-matching
+production-wide-matching:
+	python3 tools/wide_span_production.py
+	tools/gate wcsspn
+	tools/gate wcscspn
+	tools/gate wcspbrk
+	tools/gate wcsstr
+
 .PHONY: verify-math-wrappers
 verify-math-wrappers:
 	python3 tools/math_production.py --batch

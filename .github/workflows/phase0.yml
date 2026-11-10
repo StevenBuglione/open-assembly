@@ -178,6 +178,80 @@ jobs:
             build/evidence/wmemchr.production.json
           if-no-files-found: error
 
+  wide_search_copy:
+    name: Wide element search and copy production
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b
+      - name: Verify exact wide scopes
+        timeout-minutes: 25
+        run: ./tools/container sh -ec 'python3 tests/tooling/test_manifest_supplements.py && python3 tests/tooling/test_verification_tiers.py && make production-wide-search-copy'
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: wide-search-copy-production-evidence
+          path: |
+            build/evidence/wcschr.production.json
+            build/evidence/wcsrchr.production.json
+            build/evidence/wcscpy.production.json
+            build/evidence/wcsncpy.production.json
+          if-no-files-found: error
+
+  wide_memory:
+    name: Wide memory with scoped copy wrappers
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b
+      - name: Verify exact wide scopes
+        timeout-minutes: 25
+        run: ./tools/container sh -ec 'python3 tests/tooling/test_wide_matching_wrappers.py && python3 tests/tooling/test_verification_tiers.py && make production-wide-memory verify-wide-memory-wrappers'
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: wide-memory-scope-evidence
+          path: |
+            build/evidence/wmemcmp.production.json
+            build/evidence/wmemset.production.json
+            build/evidence/wmemcpy.wide-memory-wrapper.json
+            build/evidence/wmemmove.wide-memory-wrapper.json
+            build/evidence/wide-memory-wrappers.json
+          if-no-files-found: error
+
+  wide_matching:
+    name: Wide matching and exact span helper closure
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b
+      - name: Verify exact wide scopes
+        timeout-minutes: 35
+        run: ./tools/container sh -ec 'python3 tests/tooling/test_wide_span_dependencies.py && python3 tests/tooling/test_wide_span_inputs.py && python3 tests/tooling/test_manifest_supplements.py && python3 tests/tooling/test_verification_tiers.py && make production-wide-matching'
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: wide-matching-production-evidence
+          path: |
+            build/evidence/__al_wide_span.production.json
+            build/evidence/wcsspn.production.json
+            build/evidence/wcscspn.production.json
+            build/evidence/wcspbrk.production.json
+            build/evidence/wcsstr.production.json
+          if-no-files-found: error
+
   stream_indicators:
     name: Scoped stdio stream indicator checks
     runs-on: ubuntu-24.04
@@ -399,7 +473,7 @@ jobs:
   acceptance:
     name: acceptance
     if: always()
-    needs: [core, integration, process_production, pathname_production, wait_exec_production, stat_production, wide_core_production, stream_indicators, mathematics, applications, threads, locale, real_programs, network, platform, extensions, extension_formats]
+    needs: [core, integration, process_production, pathname_production, wait_exec_production, stat_production, wide_core_production, wide_search_copy, wide_memory, wide_matching, stream_indicators, mathematics, applications, threads, locale, real_programs, network, platform, extensions, extension_formats]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions: {}
@@ -411,6 +485,9 @@ jobs:
       WAIT_EXEC_PRODUCTION_RESULT: ${{ needs.wait_exec_production.result }}
       STAT_PRODUCTION_RESULT: ${{ needs.stat_production.result }}
       WIDE_CORE_PRODUCTION_RESULT: ${{ needs.wide_core_production.result }}
+      WIDE_SEARCH_COPY_RESULT: ${{ needs.wide_search_copy.result }}
+      WIDE_MEMORY_RESULT: ${{ needs.wide_memory.result }}
+      WIDE_MATCHING_RESULT: ${{ needs.wide_matching.result }}
       STREAM_INDICATORS_RESULT: ${{ needs.stream_indicators.result }}
       MATH_RESULT: ${{ needs.mathematics.result }}
       APPLICATION_RESULT: ${{ needs.applications.result }}
@@ -438,6 +515,10 @@ jobs:
           printf 'Stat production: %s\nWide core production: %s\n' "$STAT_PRODUCTION_RESULT" "$WIDE_CORE_PRODUCTION_RESULT"
           test "$STAT_PRODUCTION_RESULT" = success
           test "$WIDE_CORE_PRODUCTION_RESULT" = success
+          printf 'Wide search/copy: %s\nWide memory scopes: %s\nWide matching: %s\n' "$WIDE_SEARCH_COPY_RESULT" "$WIDE_MEMORY_RESULT" "$WIDE_MATCHING_RESULT"
+          test "$WIDE_SEARCH_COPY_RESULT" = success
+          test "$WIDE_MEMORY_RESULT" = success
+          test "$WIDE_MATCHING_RESULT" = success
           printf 'Scoped stream indicators: %s\n' "$STREAM_INDICATORS_RESULT"
           test "$STREAM_INDICATORS_RESULT" = success
           test "$MATH_RESULT" = success

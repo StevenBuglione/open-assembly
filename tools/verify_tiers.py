@@ -31,10 +31,11 @@ from phase11_vdso_benchmark import inputs as vdso_inputs
 from production import SCALAR_FUNCTIONS, source_paths
 from runtime_manifest_gate import (ALLOCATOR_FUNCTIONS, FILE_MUTATION_FAILURES, IO_FUNCTIONS,
                                    FUZZ_SECONDS as PACKET_FUZZ_SECONDS, FUZZ_SEED as PACKET_FUZZ_SEED,
-                                   PLANS as MANIFEST_PLANS,
+                                   PLANS as MANIFEST_PLANS, WIDE_MEMORY_DEPENDENCIES, WIDE_MEMORY_SUFFIX, WIDE_SPAN_ENGINE,
                                    REQUIRED_CHECKS as MANIFEST_CHECKS, STAT_ENGINE, STREAM_FAILURES, STREAM_WRAPPER_SUFFIX,
                                    bind_descriptorless_scope, check_stat_archive, manifest_dependency_bindings,
                                    manifest_inputs, manifest_stat_binding, pending_dependency)
+from wide_span_production import check_span_dependency_binding, span_dependency_bindings
 from upstream_conformance import PINS as UPSTREAM_PINS, inputs as upstream_inputs
 from spec import ROOT, SpecError, has_runtime_entry, load_project, regular_file, relative_path, sha256_file, snapshot_inputs
 
@@ -50,6 +51,7 @@ PHASES = (
     "phase8-lifecycle", "phase8-fork", "phase8-sync", "phase8-c11", "phase8-openposix", "phase8-detectors",
     "phase8-compiler-atomics",
     "phase9-multibyte", "phase9-bulk", "phase9-worker", "phase9-worker-sync", "phase9-wide", "production-wide-core",
+    "production-wide-search-copy", "production-wide-memory", "verify-wide-memory-wrappers", "production-wide-matching",
     "phase9-libc-test", "phase9-stdio", "phase9-narrow-wide", "phase9-wctype",
     "phase10-endpoints", "phase10-inet", "phase10-netdb", "phase10-dns", "phase10-addrconfig",
     "phase10-dns-failover", "phase10-dns-options",
@@ -71,8 +73,12 @@ MANIFEST_PRODUCTION_GROUPS = {
     "production-exec": ("execve", "execv"),
     "production-stat": ("fstat", "fstatat", "stat", "lstat"),
     "production-wide-core": ("wcslen", "wcscmp", "wcsncmp", "wmemchr"),
+    "production-wide-search-copy": ("wcschr", "wcsrchr", "wcscpy", "wcsncpy"),
+    "production-wide-memory": ("wmemcmp", "wmemset"),
+    "production-wide-matching": ("wcsspn", "wcscspn", "wcspbrk", "wcsstr"),
 }
 SCOPED_WRAPPER_BATCHES = {
+    "verify-wide-memory-wrappers": (WIDE_MEMORY_SUFFIX, frozenset(WIDE_MEMORY_DEPENDENCIES)),
     "verify-allocator-wrappers": ("allocator-wrapper", ALLOCATOR_FUNCTIONS),
     "verify-stream-indicators": (STREAM_WRAPPER_SUFFIX, frozenset(STREAM_FAILURES)),
 }
@@ -178,10 +184,19 @@ def stat_tier_binding(started):
     return binding
 
 
+def span_tier_binding(started):
+    binding = span_dependency_bindings()
+    path, _ = fresh_report(ROOT, f"{WIDE_SPAN_ENGINE}.production.json", "production-private-dependency", started)
+    if binding["functions"][WIDE_SPAN_ENGINE]["evidence_sha256"] != sha256_file(path):
+        raise GateError("wide span tier dependency report changed after binding")
+    return binding
+
+
 def manifest_production_reports(started, group):
     children = {}
     sources = source_paths()
     stat_binding = stat_tier_binding(started) if group == "production-stat" else None
+    span_binding = span_tier_binding(started) if group == "production-wide-matching" else None
     for name in MANIFEST_PRODUCTION_GROUPS[group]:
         path, record = fresh_report(ROOT, f"{name}.production.json", "production-runtime-manifest-function", started)
         hashes, checks = record["inputs"], record.get("checks")
@@ -205,6 +220,9 @@ def manifest_production_reports(started, group):
                     or builds["first"] != builds["second"]):
                 raise GateError(f"{name}: stat tier requires complete matching candidate runtime builds")
             check_stat_archive(stat_binding, builds["first"])
+        if span_binding is not None and MANIFEST_PLANS[name].private_engine == WIDE_SPAN_ENGINE:
+            if check_span_dependency_binding(checks) != span_binding:
+                raise GateError(f"{name}: span dependency differs from the fresh helper")
         if required := MANIFEST_PLANS[name].required_production:
             bindings = manifest_dependency_bindings(required)
             builds = checks["runtime_build"].get("artifacts")
@@ -820,6 +838,8 @@ def gate(name, record):
         record["children"] = manifest_production_reports(started, name)
         if name == "production-stat":
             record["dependencies"] = stat_tier_binding(started)["functions"]
+        if name == "production-wide-matching":
+            record["dependencies"] = span_tier_binding(started)["functions"]
         return
     elif name == "verify-math-wrappers":
         path, _ = math_wrapper_report(started)

@@ -1,0 +1,22 @@
+schema = 1
+
+[[case]]
+name = "wide-matching-wcsstr-ordinary"
+sources = ["tests/phase9/wide_matching_control/ordinary.c"]
+requires = ["wcsstr"]
+args = []
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:wide-object-bounds", "reference:c17-wide-substring-first-match", "diff:glibc", "diff:musl"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[stub]]
+symbol = "wcsstr"
+case = "wide-matching-wcsstr-ordinary"
+status = 21
+stdout = ""
+stderr = ""
