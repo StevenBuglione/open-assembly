@@ -493,10 +493,17 @@ types = ["wctrans_t", "wctype_t", "wint_t"]
 [[headers]]
 name = "unistd.h"
 standard = "POSIX.1-2024 XBD <unistd.h>"
-count = 9
+count = 10
 functions = ["_exit", "close", "read", "write"]
 types = ["size_t", "ssize_t"]
 macros = ["STDIN_FILENO", "STDOUT_FILENO", "STDERR_FILENO"]
+objects = ["environ"]
+
+[[headers]]
+name = "stdlib.h"
+standard = "POSIX.1-2024 XBD <stdlib.h>"
+count = 4
+functions = ["posix_memalign", "putenv", "setenv", "unsetenv"]
 
 [[headers]]
 name = "compiler_rt.h"

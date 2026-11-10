@@ -142,7 +142,7 @@ def read_plan(function):
 def phase2_inputs():
     bound = inputs()
     headers = sorted(path.relative_to(ROOT) for path in (ROOT / BUILD / "include/c").rglob("*.h"))
-    bound.update(snapshot_inputs(ROOT, headers))
+    bound.update(snapshot_inputs(ROOT, [*headers, Path("docs/adr/0002-runtime-abi.md")]))
     return dict(sorted(bound.items()))
 
 
@@ -392,10 +392,15 @@ def dependency_evidence(dependencies, inputs_snapshot):
             record = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, ValueError):
             record = {}
-        candidate = record.get("checks", {}).get("candidate_build", {})
-        if (record.get("scope") == "production-function" and record.get("function") == name
+        if type(record) is not dict or type(record.get("checks", {})) is not dict:
+            record = {}
+        checks = record.get("checks", {})
+        candidate = checks.get("candidate_build", {})
+        scope = "production-runtime-function" if name == "__errno_location" else "production-function"
+        if (record.get("scope") == scope and record.get("function") == name
                 and record.get("outcome") == "pass" and record.get("production_verified") is True
                 and record.get("inputs") == inputs_snapshot
+                and type(candidate) is dict
                 and candidate.get("source") == source
                 and candidate.get("source_sha256") == inputs_snapshot.get(source)):
             item.update(outcome="pass", evidence=str(path), evidence_sha256=sha256_file(path))
@@ -534,9 +539,12 @@ def production(function, only=None):
             oracle = legacy_oracle("gcc", directory, log) if plan.legacy_strlen else None
             candidate_check.update(**candidate_info, outcome="pass", source=str(source),
                                    source_sha256=sha256_file(source), binary_sha256=sha256_file(binary))
-            if only is None and candidate_info["dependencies"]:
+            dependencies = dict(candidate_info["dependencies"])
+            for name in candidate_info["host_dependencies"]:
+                dependencies[name] = str(source_paths()[name])
+            if only is None and dependencies:
                 checks["dependency_coverage_mutation"] = dependency_evidence(
-                    candidate_info["dependencies"], evidence["inputs"])
+                    dependencies, evidence["inputs"])
 
             if only in (None, "coverage"):
                 checks["branch_coverage"] = {"outcome": "fail", "commands": [], "runs": []}

@@ -5,7 +5,7 @@ RUNTIME_SOURCES := $(filter-out $(RUNTIME_START),$(sort $(wildcard $(RUNTIME_SRC
 RUNTIME_OBJECTS := $(patsubst $(RUNTIME_SRC)/%.asm,$(RUNTIME_BUILD)/obj/%.o,$(RUNTIME_SOURCES))
 ASM_INCLUDES := $(wildcard include/asm/*.inc)
 
-.PHONY: phase0 phase1 phase2 runtime gate FORCE
+.PHONY: phase0 phase1 phase2 phase3 runtime gate FORCE
 
 phase0:
 	tools/gate --phase0
@@ -15,6 +15,9 @@ phase1:
 
 phase2:
 	python3 tools/phase2.py
+
+phase3:
+	python3 tools/phase3.py
 
 runtime: $(RUNTIME_BUILD)/crt1.o $(RUNTIME_BUILD)/libopenasm.a
 

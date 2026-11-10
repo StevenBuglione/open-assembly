@@ -105,14 +105,19 @@ def production_status(project, spec, implementation):
         return False, evidence_status(project, spec)
     try:
         from production import REQUIRED_CHECKS, SUITE_CASES, phase2_inputs
+        from runtime_gate import ERRNO, REQUIRED_CHECKS as RUNTIME_CHECKS
 
         source = regular_file(project.root, relative, "production evidence")
         with source.open(encoding="utf-8") as stream:
             record = json.load(stream, object_pairs_hook=unique_keys, parse_constant=no_nonfinite)
         if (type(record) is not dict or type(record.get("schema_version")) is not int
-                or record["schema_version"] != 1 or record.get("scope") != "production-function"
-                or record.get("function") != spec.name):
+                or record["schema_version"] != 1 or record.get("function") != spec.name):
             return False, "malformed production evidence identity"
+        scope = record.get("scope")
+        runtime = spec.name == ERRNO
+        expected_scope = "production-runtime-function" if runtime else "production-function"
+        if scope != expected_scope:
+            return False, "production report has the wrong verification scope"
         if record.get("outcome") == "fail" and record.get("production_verified") is False:
             error = record.get("error")
             return False, f"production gate incomplete ({error})" if type(error) is str and error else (
@@ -121,7 +126,8 @@ def production_status(project, spec, implementation):
             return False, "malformed production evidence outcome"
 
         checks = record.get("checks")
-        if type(checks) is not dict or not REQUIRED_CHECKS <= checks.keys():
+        required_checks = RUNTIME_CHECKS if runtime else REQUIRED_CHECKS
+        if type(checks) is not dict or not required_checks <= checks.keys():
             return False, "production evidence is missing required checks"
         for key, item in checks.items():
             if type(item) is not dict:
@@ -133,7 +139,8 @@ def production_status(project, spec, implementation):
                 return False, f"production check {key} is incomplete"
 
         toolchain = record.get("toolchain")
-        required_tools = {"nasm", "gcc", "musl-gcc", "al-clang", "qemu-x86_64", "valgrind"}
+        required_tools = {"nasm", "gcc", "qemu-x86_64", "valgrind"}
+        required_tools |= {"ar", "make", "objdump"} if runtime else {"musl-gcc", "al-clang"}
         if (type(toolchain) is not dict or not required_tools <= toolchain.keys() or any(
                 type(item) is not dict or not is_hash(item.get("sha256"))
                 or type(item.get("version")) is not str or not item["version"].strip()
@@ -151,11 +158,12 @@ def production_status(project, spec, implementation):
             return False, "stale production evidence (changed: " + ", ".join(changed) + ")"
         candidate = checks["candidate_build"]
         relative_source = implementation.relative_to(project.root).as_posix()
+        artifact = "object_sha256" if runtime else "binary_sha256"
         if (candidate.get("source") != relative_source
                 or candidate.get("source_sha256") != hashes.get(relative_source)
-                or not is_hash(candidate.get("binary_sha256"))):
+                or not is_hash(candidate.get(artifact))):
             return False, "production evidence does not bind the candidate"
-        return True, "fresh production-function pass"
+        return True, f"fresh {scope} pass"
     except (ImportError, OSError, ValueError, RecursionError) as error:
         return False, f"malformed or stale production evidence ({error})"
 

@@ -241,6 +241,33 @@ backends = ["native"]
 qemu = "The QEMU wrapper emits its own fatal signal diagnostics."
 valgrind = "The Memcheck wrapper emits its own fatal signal diagnostics."
 
+[[case]]
+name = "errno-context"
+sources = ["tests/runtime/errno_context.c", "tests/phase2/abi.asm"]
+requires = ["__errno_location", "__al_syscall"]
+args = []
+env = {}
+status = 0
+stdout = ""
+stderr = ""
+oracle = ["linux:fs-base", "project:runtime-abi"]
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "errno-context-abi"
+sources = ["tests/runtime/errno_context.c", "tests/phase2/abi.asm"]
+requires = ["__errno_location", "__al_syscall"]
+args = ["abi"]
+env = {}
+status = 0
+stdout = ""
+stderr = ""
+oracle = ["abi:sysv-amd64", "linux:fs-base", "project:runtime-abi"]
+backends = ["native"]
+[case.skip]
+qemu = "The callee-state probe measures native CPU state."
+valgrind = "Memcheck reports different x87 and MXCSR control state for this probe."
+
 [[stub]]
 symbol = "read"
 case = "io-read"

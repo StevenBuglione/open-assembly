@@ -58,13 +58,22 @@ DATA = frozenset(("db", "dw", "dd", "dq", "dt", "do", "dy", "dz", "resb",
 SIZE = {"byte": 1, "word": 2, "dword": 4, "qword": 8, "tword": 10, "oword": 16}
 RUNTIME = ("src", "x86_64-linux")
 PRIVATE_FUNCTIONS = {
+    "rt/__al_map_anon", "rt/__al_unmap_anon", "rt/__al_env_init",
+    "stdlib/__al_heap", "stdlib/__al_heap_alloc", "stdlib/__al_heap_free",
+    "stdlib/__al_heap_inspect", "stdlib/__al_heap_tag", "stdlib/__al_heap_bad",
+    "stdlib/__al_env_change", "stdlib/__al_env_match", "stdlib/__al_env_name",
+    "stdlib/__al_env_collect",
     "internal/__al_syscall", "internal/__al_syscall_result", "internal/__al_rt_sigreturn",
     "internal/__al_lock", "internal/__al_unlock", "rt/_start", "rt/__al_tls_init",
     "rt/__al_panic", "rt/__al_abort", "rt/__al_diagnostic", "stdlib/__al_strtox",
 }
-PRIVATE_NORETURN = {"_start", "__al_rt_sigreturn", "__al_panic", "__al_abort"}
+PRIVATE_NORETURN = {"_start", "__al_rt_sigreturn", "__al_panic", "__al_abort", "__al_heap_bad"}
 COMPARATOR_ARGUMENTS = {"bsearch": "r8", "qsort": "rcx"}
 PRIVATE_DATA = {
+    "__al_heap_seed": "stdlib/__al_heap",
+    "environ": "rt/__al_env_init",
+    "__al_env_lock": "rt/__al_env_init",
+    "__al_env_owned": "stdlib/__al_env_change",
     "__al_initial_envp": "rt/_start",
     "__al_auxv": "rt/_start",
     "__al_atexit_state": "stdlib/atexit",

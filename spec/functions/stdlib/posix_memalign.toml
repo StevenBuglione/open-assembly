@@ -1,0 +1,20 @@
+name = "posix_memalign"
+header = "stdlib.h"
+prototype = "int posix_memalign(void **out, size_t alignment, size_t size)"
+standard = ["POSIX.1-2024 XSH posix_memalign"]
+deps = []
+errno = ["EINVAL", "ENOMEM"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:phase3-contract"]
+provenance = "original"
+semantics = [
+  "Require alignment to be a power of two and a multiple of sizeof(void *).",
+  "On success store a freeable aligned allocation in out and return zero.",
+  "On invalid alignment return EINVAL. On allocation failure return ENOMEM. Leave out unchanged on failure.",
+  "Preserve errno. A zero-size request follows the allocator's freeable-pointer policy.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

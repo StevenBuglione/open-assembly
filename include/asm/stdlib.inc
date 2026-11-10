@@ -3,16 +3,26 @@
 %define OPEN_ASSEMBLY_7374646C69622E68
 
 extern _Exit
+extern aligned_alloc
 extern atexit
 extern atoi
 extern atol
 extern atoll
 extern bsearch
+extern calloc
 extern exit
+extern free
+extern getenv
+extern malloc
+extern posix_memalign
+extern putenv
 extern qsort
+extern realloc
+extern setenv
 extern strtol
 extern strtoll
 extern strtoul
 extern strtoull
+extern unsetenv
 
 %endif

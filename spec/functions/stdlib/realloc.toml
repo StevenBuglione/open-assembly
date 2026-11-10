@@ -1,0 +1,21 @@
+name = "realloc"
+header = "stdlib.h"
+prototype = "void *realloc(void *ptr, size_t size)"
+standard = ["C17 7.22.3.5"]
+deps = ["__errno_location", "memcpy"]
+errno = ["ENOMEM"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:phase3-contract"]
+provenance = "original"
+semantics = [
+  "When ptr is NULL, allocate as malloc would. Otherwise ptr must be a live allocation pointer.",
+  "On success preserve the minimum of the old and new requested sizes and end the old allocation's lifetime.",
+  "A successful zero-byte resize returns a freeable pointer that exposes no accessible bytes.",
+  "If allocation fails, the original allocation and contents remain valid even for a zero-byte request.",
+  "On exhaustion or an unrepresentable allocation size, return NULL and set ENOMEM. Preserve errno on success.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

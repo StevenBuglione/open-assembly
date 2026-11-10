@@ -6,6 +6,7 @@
 %define STDOUT_FILENO 1
 %define STDERR_FILENO 2
 
+extern environ:data
 extern _exit
 extern close
 extern read

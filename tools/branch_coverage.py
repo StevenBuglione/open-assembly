@@ -5,7 +5,7 @@ from pathlib import Path
 import re
 import shutil
 
-from gate import COMPILE_FLAGS, GateError, checked
+from gate import COMPILE_FLAGS, GateError, checked, run
 from lint import JCC
 from spec import sha256_file
 
@@ -85,7 +85,8 @@ def read_edges(report, addresses):
     return int(rows[0].split()[1]), observed
 
 
-def verify_coverage(record, directory, binary, function, source, commands, *, require_complete=True):
+def verify_coverage(record, directory, binary, function, source, commands, *, require_complete=True,
+                    exact_case=None):
     log = record["commands"]
     addresses, branches = describe_branches(binary, function, source, log)
     plugin, header_hash = compile_plugin(directory, log)
@@ -93,11 +94,19 @@ def verify_coverage(record, directory, binary, function, source, commands, *, re
                            "binary_sha256": sha256_file(binary), "source_sha256": sha256_file(source)}
     coverage = set()
     for index, args in enumerate(commands):
-        mode = args[0]
+        mode = exact_case.name if exact_case else args[0]
         report = directory / f"edges-{index}.txt"
         options = f"{plugin},start={addresses[0]:x},end={addresses[-1] + 1:x},output={report}"
-        stdout = checked(log, ["qemu-x86_64", "-plugin", options, binary, *args], timeout=90)
-        if not stdout.startswith(f"PASS {mode} "):
+        command = [shutil.which("qemu-x86_64"), "-plugin", options, binary, *args]
+        if exact_case:
+            result = run(command, environment=exact_case.env, timeout=90)
+            log.append(result)
+            passed = ((result["returncode"], result["stdout"], result["stderr"]) ==
+                      (exact_case.status, exact_case.stdout, exact_case.stderr))
+        else:
+            stdout = checked(log, command, timeout=90)
+            passed = stdout.startswith(f"PASS {mode} ")
+        if not passed:
             raise GateError(f"instrumented {mode} did not pass the intended oracle")
         executions, observed = read_edges(report, addresses)
         record["runs"].append({"mode": mode, "instructions": executions,

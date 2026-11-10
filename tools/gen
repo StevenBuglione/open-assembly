@@ -29,7 +29,7 @@ def make_outputs(project, include_tracked=True, include_test=True):
             lines = [f"; {MARKER}", f"%ifndef {guard}", f"%define {guard}", ""]
             if header == "unistd.h":
                 lines.extend(f"%define {name} {value}" for name, value in POSIX_FDS.items())
-                lines.append("")
+                lines.extend(("", "extern environ:data"))
             lines.extend(f"extern {spec.name}" for spec in specs)
             lines.extend(("", "%endif", ""))
             outputs[ASM / (header[:-2] + ".inc")] = "\n".join(lines)
@@ -39,7 +39,7 @@ def make_outputs(project, include_tracked=True, include_test=True):
             if header == "unistd.h":
                 lines.extend(("typedef long ssize_t;", ""))
                 lines.extend(f"#define {name} {value}" for name, value in POSIX_FDS.items())
-                lines.append("")
+                lines.extend(("", "extern char **environ;", ""))
             elif header == "errno.h":
                 lines.extend(("#include <asm/errno.h>", "", "#define errno (*__errno_location())", ""))
             elif header == "inttypes.h":
@@ -52,7 +52,7 @@ def make_outputs(project, include_tracked=True, include_test=True):
         lines = [f"<!-- {MARKER} -->", "# Open Assembly API index", "",
                  "This index lists authored function specifications. For implementation state, run `tools/queue status`.", "",
                  f"Specs: {len(project.functions)} of {sum(n for (_, kind), n in counts.items() if kind == 'functions')} "
-                 "inventoried functions. The inventory covers C17, the named POSIX bootstrap subset, and runtime ABI entries; "
+                 "inventoried functions. The inventory covers C17, the named POSIX subset, and runtime ABI entries; "
                  "see [inventory scope](cookbook/specifications.md#inventory-scope).", "",
                  "| Function | Header | Prototype | Standard |", "| --- | --- | --- | --- |"]
         lines.extend(
