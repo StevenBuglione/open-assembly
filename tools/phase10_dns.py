@@ -30,7 +30,8 @@ PTR_ORACLE = ("reference:rfc1035", "reference:rfc3493", "reference:rfc3596")
 def inputs():
     bound = phase6_inputs()
     contracts = [Path("docs/adr/0017-dns-forward.md"), Path("docs/adr/0019-local-reverse-lookup.md"),
-                 Path("docs/adr/0038-address-configuration.md"), SUITE / "ptr.hosts"]
+                 Path("docs/adr/0038-address-configuration.md"),
+                 Path("docs/adr/0039-resolver-search.md"), SUITE / "ptr.hosts"]
     bound.update(snapshot_inputs(ROOT, contracts))
     return dict(sorted(bound.items()))
 

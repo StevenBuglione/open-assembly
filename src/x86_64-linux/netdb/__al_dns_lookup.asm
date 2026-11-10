@@ -1,14 +1,15 @@
-; Query the first valid configured name server for the requested families.
-; Local context layout matches __al_gai_hosts and __al_gai_result.
+; Try an absolute DNS name and bounded search suffixes in configured order.
 bits 64
 default rel
 
 global __al_dns_lookup:function
-extern __al_dns_publish:function
-extern __al_dns_query:function
-extern __al_dns_server:function
+extern __al_dns_build:function
+extern __al_dns_config:function
+extern __al_dns_lookup_one:function
 extern calloc:function
 extern free:function
+extern memcpy:function
+extern strlen:function
 
 section .text.__al_dns_lookup alloc exec nowrite progbits
 __al_dns_lookup:
@@ -17,80 +18,108 @@ __al_dns_lookup:
     push r13
     push r14
     push r15
-    sub rsp, 16
+    sub rsp, 32
     mov rbx, rdi                ; resolver context
     mov r13, rsi                ; original node
     mov edi, 1
-    mov esi, 1064               ; answer block and name server sockaddr
+    mov esi, 2880               ; answer, sockaddr, search record and scratch
     call calloc
     test rax, rax
     jz .no_memory
     mov r14, rax
+    mov rdi, r13
+    mov esi, 1
+    xor edx, edx
+    lea rcx, [r14 + 2608]
+    mov r8d, 272
+    call __al_dns_build
+    test rax, rax
+    jz .missing
+    mov rdi, r13
+    call strlen
+    mov r12, rax
     mov rdi, rbx
     lea rsi, [r14 + 1032]
-    call __al_dns_server
+    lea rdx, [r14 + 1064]
+    call __al_dns_config
     mov r15d, eax
-    mov dword [rsp], -2        ; first unsuccessful family status
-    mov dword [rsp + 4], -2
-    cmp dword [rbx + 12], 2    ; AF_INET requests only A
-    je .ipv4
-    test dword [rbx + 48], 2   ; configured IPv6 source
-    jz .maybe_ipv4
-    mov r12d, 28               ; AAAA
-    jmp .query
-.ipv4:
-    test dword [rbx + 48], 1   ; configured IPv4 source
-    jz .select_result
-    mov r12d, 1                ; A
-.query:
-    lea rdi, [r14 + 1032]
-    mov esi, r15d
-    mov rdx, r13
-    mov ecx, r12d
-    mov r8, r14
-    call __al_dns_query
-    mov [rsp + 4], eax
-    test eax, eax
-    jnz .next_family
+
+    mov qword [rsp], 0          ; next search suffix
+    mov dword [rsp + 8], 0     ; absolute not yet tried
+    cmp byte [r13 + r12 - 1], 46
+    je .absolute_only
+    cmp dword [r14 + 1064], 0
+    je .absolute_only
+    xor ecx, ecx
+    xor edx, edx
+.count_dots:
+    cmp byte [r13 + rdx], 46
+    jne .next_byte
+    inc ecx
+.next_byte:
+    inc rdx
+    cmp rdx, r12
+    jb .count_dots
+    cmp ecx, [r14 + 1068]
+    jb .next_suffix
+
+.absolute:
+    mov dword [rsp + 8], 1
+    jmp .query_absolute
+.absolute_only:
+    mov dword [rsp + 8], 2
+.query_absolute:
     mov rdi, rbx
     mov rsi, r13
     mov rdx, r14
-    call __al_dns_publish
-.next_family:
-    cmp r12d, 1
-    je .select_result
-    mov eax, [rsp + 4]
-    mov [rsp], eax
-    cmp eax, -10               ; allocation failure need not try another family
-    je .select_result
-.maybe_ipv4:
-    cmp dword [rbx + 12], 0    ; AF_UNSPEC tries both families
-    je .ipv4
-    test dword [rbx + 16], 8   ; AI_V4MAPPED
-    jz .select_result
-    cmp dword [rbx], 0
-    je .ipv4
-    test dword [rbx + 16], 16  ; AI_ALL
-    jnz .ipv4
-.select_result:
-    xor r12d, r12d
-    cmp dword [rbx], 0
+    mov ecx, r15d
+    mov r8, r13
+    call __al_dns_lookup_one
+    cmp eax, -2
     jne .release
-    mov r12d, [rsp + 4]
-    cmp r12d, -10
+    cmp dword [rsp + 8], 2
     je .release
-    mov eax, [rsp]
-    cmp eax, -10
-    je .first_status
-    cmp eax, -3                ; retryable failure wins over a negative answer
-    je .first_status
-    cmp r12d, -3
-    je .release
-    cmp eax, -4
-    jne .release
-.first_status:
-    mov r12d, eax
+
+.next_suffix:
+    mov rax, [rsp]
+    cmp eax, [r14 + 1064]
+    jae .suffixes_done
+    shl rax, 8
+    lea rdi, [r14 + rax + 1072]
+    mov [rsp + 16], rdi
+    inc qword [rsp]
+    call strlen
+    lea rcx, [rax + r12 + 1]
+    cmp rcx, 253               ; without the trailing root dot
+    ja .next_suffix
+    mov [rsp + 24], rax
+    lea rdi, [r14 + 2608]
+    mov rsi, r13
+    mov rdx, r12
+    call memcpy
+    mov byte [rax + r12], 46
+    lea rdi, [rax + r12 + 1]
+    mov rsi, [rsp + 16]
+    mov rdx, [rsp + 24]
+    inc rdx                    ; include the suffix terminator
+    call memcpy
+    mov rdi, rbx
+    lea rsi, [r14 + 2608]
+    mov rdx, r14
+    mov ecx, r15d
+    mov r8, r13
+    call __al_dns_lookup_one
+    cmp eax, -2
+    je .next_suffix
+    jmp .release
+
+.suffixes_done:
+    cmp dword [rsp + 8], 0
+    je .absolute
+.missing:
+    mov eax, -2                ; EAI_NONAME
 .release:
+    mov r12d, eax
     mov rdi, r14
     call free
     mov eax, r12d
@@ -98,7 +127,7 @@ __al_dns_lookup:
 .no_memory:
     mov eax, -10               ; EAI_MEMORY
 .return:
-    add rsp, 16
+    add rsp, 32
     pop r15
     pop r14
     pop r13

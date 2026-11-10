@@ -3,7 +3,7 @@
 ; header: netdb.h
 ; prototype: int getaddrinfo(const char *restrict node, const char *restrict service, const struct addrinfo *restrict hints, struct addrinfo **restrict result)
 ; standard: POSIX.1-2024 XSH getaddrinfo
-; deps: __errno_location, calloc, clock_gettime, close, connect, fclose, feof, fgetc, fgets, fopen, free, freeaddrinfo, getsockopt, inet_pton, malloc, memcmp, memcpy, poll, recv, recvfrom, send, sendto, socket, strchr, strcmp, strlen
+; deps: __errno_location, calloc, clock_gettime, close, connect, fclose, feof, fgetc, fgets, fopen, free, freeaddrinfo, getsockopt, inet_pton, malloc, memcmp, memcpy, poll, recv, recvfrom, send, sendto, socket, strchr, strcmp, strlen, strncmp
 ; errno: -
 ; mt_safe: true
 ; as_safe: false
@@ -12,6 +12,7 @@
 ; narrow_args: -
 ; variadic: false
 ; semantics: Resolve numeric, local-file and DNS node inputs and numeric or local-file services into an owned IPv4 or IPv6 TCP/UDP address list.
+; semantics: Apply resolv.conf search, domain and ndots to forward DNS candidates.
 ; semantics: Return zero on success or an EAI error and a null result on failure.
 ; semantics: Preserve errno. The resolver supports AI_PASSIVE, AI_CANONNAME, AI_NUMERICHOST, AI_NUMERICSERV, AI_V4MAPPED, AI_ALL and AI_ADDRCONFIG.
 ; END OPEN ASSEMBLY GENERATED SPEC

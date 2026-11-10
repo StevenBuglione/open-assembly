@@ -6,8 +6,9 @@ Forward queries use class IN and type A or AAAA. Host text
 accepts ASCII letters, digits, hyphens and underscores in labels
 from one through 63 bytes, separated by dots. A final root dot
 is permitted. A single `.` represents the root. Names must fit
-the 255-byte wire limit. Search lists, IDNA, address sorting and
-DNSSEC validation remain separate resolver capabilities.
+the 255-byte wire limit. See the [resolver search policy](0039-resolver-search.md)
+for suffix and ndots processing. IDNA, address sorting and DNSSEC
+validation remain separate resolver capabilities.
 
 The private DNS wire interfaces support direct bounded tests.
 `__al_dns_build(name, qtype, id, output, capacity)` returns the
@@ -64,6 +65,7 @@ Forward lookup accepts AI_PASSIVE, AI_CANONNAME, AI_NUMERICHOST,
 AI_NUMERICSERV, AI_V4MAPPED, AI_ALL and AI_ADDRCONFIG. AI_ALL applies
 only with AI_V4MAPPED for AF_INET6. AI_ADDRCONFIG uses the Linux
 [address configuration snapshot](0038-address-configuration.md).
-The configuration parser uses one nameserver and does not apply
-search, domain, ndots, attempts, rotate, or timeout directives.
+The configuration parser uses one nameserver and applies search,
+domain and ndots directives to forward lookup. Attempts, rotation
+and timeout overrides remain separate.
 Numeric IPv6 zone suffixes and interface names remain separate.
