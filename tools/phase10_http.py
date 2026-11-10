@@ -20,7 +20,11 @@ import live
 from oracle import PACKET, classify, directed, fuzz_record, request
 
 PARSER = "__al_http_parse"
-OBJECTS = ("http_parse.o", "http_find.o", "http_token.o")
+PACKAGE_DEPENDENCIES = {
+    "http_parse": {"http_find_header_end": "U", "http_is_token_byte": "U"},
+    "http_find_header_end": {},
+    "http_is_token_byte": {},
+}
 SEED = 0x614d47f9
 FUZZ_SECONDS = 60
 
@@ -38,13 +42,26 @@ def build_app(directory, commands):
     checked(commands, ["make", "--no-print-directory", "-j2", f"RUNTIME_BUILD={directory}", app],
             timeout=180)
     startup, archive = directory / "crt1.o", directory / "libopenasm.a"
-    objects = [directory / "app-obj/httpd" / name for name in OBJECTS]
+    app_objects = sorted((directory / "app-obj/httpd").glob("*.o"))
+    bridge = directory / "app-obj/httpd/http_parse.o"
+    if nm_symbols(commands, bridge, ["-g", "--defined-only"]) != {PARSER: "T"}:
+        raise GateError("app parser bridge does not define the exact parser symbol")
+    if nm_symbols(commands, bridge, ["-g", "-u"]) != {"http_parse": "U"}:
+        raise GateError("app parser bridge does not directly call the package parser")
+    package_objects = []
+    for symbol, dependencies in PACKAGE_DEPENDENCIES.items():
+        obj = directory / "app-obj/http" / f"{symbol}.o"
+        if nm_symbols(commands, obj, ["-g", "--defined-only"]) != {symbol: "T"}:
+            raise GateError(f"HTTP package object does not define exactly {symbol}")
+        if nm_symbols(commands, obj, ["-g", "-u"]) != dependencies:
+            raise GateError(f"HTTP package object {symbol} has unexpected dependencies")
+        package_objects.append(obj)
     hashes = {path.relative_to(directory).as_posix(): sha256_file(path)
-              for path in [startup, archive, app, *sorted((directory / "app-obj/httpd").glob("*.o"))]}
-    if nm_symbols(commands, objects[0], ["-g", "--defined-only"]) != {PARSER: "T"}:
-        raise GateError("app parser object does not define the exact parser symbol")
-    if nm_symbols(commands, app, ["-g", "--defined-only"]).get(PARSER) != "T":
-        raise GateError("linked HTTP server lacks the exact parser symbol")
+              for path in [startup, archive, app, *app_objects, *package_objects]}
+    exports = nm_symbols(commands, app, ["-g", "--defined-only"])
+    if any(exports.get(symbol) != "T" for symbol in (PARSER, *PACKAGE_DEPENDENCIES)):
+        raise GateError("linked HTTP server lacks the app bridge or exact package parser symbols")
+    objects = [bridge, *package_objects]
     return (app, startup, archive, objects), hashes
 
 

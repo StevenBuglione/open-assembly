@@ -1,0 +1,16 @@
+name = "http_find_header_end"
+header = "http.h"
+prototype = "size_t http_find_header_end(const unsigned char *bytes, size_t length)"
+standard = ["Extension ABI http"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:bounded-http-model"]
+provenance = "original"
+semantics = ["Return the byte count through the first CRLF CRLF, or zero when it is absent."]
+
+[abi]
+narrow_args = []
+variadic = false
+noreturn = false

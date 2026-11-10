@@ -265,7 +265,6 @@ CALLBACK_TABLES = {
 HTTP_APP_CALLS = {
     "apps/httpd/main.asm": {"__al_http_client"},
     "apps/httpd/http_client.asm": {"__al_http_find", "__al_http_parse"},
-    "apps/httpd/http_parse.asm": {"__al_http_find", "__al_http_token"},
 }
 
 RUNTIME_ATOMICS = {

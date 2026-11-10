@@ -21,8 +21,9 @@ leaves other clients available.
 
 The app-private SysV symbol `__al_http_parse` has signature
 `unsigned __al_http_parse(const unsigned char *bytes, size_t length)`.
-It may be linked directly as an object for guard-page, mutation
-and differential fuzz fixtures. It reads at most the supplied
+This bridge calls `http_parse` from the [HTTP extension](../../ext/http/README.md).
+The gate links the same package objects for the app and its guard-page,
+mutation and differential fuzz fixtures. The parser reads at most the supplied
 span and 8192 bytes, performs no allocation or I/O and leaves
 errno and the input intact. A zero-length span may have a null
 pointer. Nonzero spans require readable input.

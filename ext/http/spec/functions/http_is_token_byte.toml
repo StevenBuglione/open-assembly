@@ -1,0 +1,16 @@
+name = "http_is_token_byte"
+header = "http.h"
+prototype = "unsigned int http_is_token_byte(unsigned char byte)"
+standard = ["Extension ABI http"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:bounded-http-model"]
+provenance = "original"
+semantics = ["Return one for an RFC 9110 token character byte and zero otherwise."]
+
+[abi]
+narrow_args = ["dil:u8"]
+variadic = false
+noreturn = false

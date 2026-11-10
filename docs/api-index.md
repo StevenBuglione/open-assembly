@@ -744,6 +744,9 @@ Specs: 729 of 729 inventoried functions. The inventory covers C17, the named POS
 | [`arena_alloc`](../ext/arena/spec/functions/arena_alloc.toml) | `<arena.h>` | `int arena_alloc(size_t *restrict state, size_t size, size_t alignment, void **restrict result)` | Extension ABI arena |
 | [`arena_init`](../ext/arena/spec/functions/arena_init.toml) | `<arena.h>` | `int arena_init(size_t state[3], void *storage, size_t capacity)` | Extension ABI arena |
 | [`arena_reset`](../ext/arena/spec/functions/arena_reset.toml) | `<arena.h>` | `int arena_reset(size_t state[3])` | Extension ABI arena |
+| [`http_find_header_end`](../ext/http/spec/functions/http_find_header_end.toml) | `<http.h>` | `size_t http_find_header_end(const unsigned char *bytes, size_t length)` | Extension ABI http |
+| [`http_is_token_byte`](../ext/http/spec/functions/http_is_token_byte.toml) | `<http.h>` | `unsigned int http_is_token_byte(unsigned char byte)` | Extension ABI http |
+| [`http_parse`](../ext/http/spec/functions/http_parse.toml) | `<http.h>` | `unsigned int http_parse(const unsigned char *bytes, size_t length)` | Extension ABI http |
 | [`json_lex`](../ext/json/spec/functions/json_lex.toml) | `<json.h>` | `int json_lex(const unsigned char *restrict data, size_t length, size_t offset, size_t *restrict record)` | Extension ABI json |
 | [`json_parse`](../ext/json/spec/functions/json_parse.toml) | `<json.h>` | `long json_parse(const unsigned char *restrict data, size_t length, size_t *restrict workspace, size_t frame_capacity, size_t *restrict tokens, size_t token_capacity)` | Extension ABI json |
 | [`json_scan_number`](../ext/json/spec/functions/json_scan_number.toml) | `<json.h>` | `long json_scan_number(const unsigned char *data, size_t length, size_t offset)` | Extension ABI json |
