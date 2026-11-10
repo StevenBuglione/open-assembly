@@ -1,0 +1,19 @@
+name = "tcflush"
+header = "termios.h"
+prototype = "int tcflush(int fd, int queue_selector)"
+standard = ["POSIX.1-2024 XSH tcflush"]
+deps = ["__errno_location"]
+errno = ["EBADF", "EINTR", "EINVAL", "EIO", "ENOTTY"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-termios-uapi"]
+provenance = "original"
+semantics = [
+  "Discard queued terminal input, output, or both.",
+  "Reject an unknown operation value with EINVAL before any ioctl.",
+  "Preserve errno on success and translate Linux errors.",
+]
+
+[abi]
+narrow_args = ["edi:s32", "esi:s32"]
+variadic = false

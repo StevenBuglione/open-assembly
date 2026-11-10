@@ -127,3 +127,91 @@ The queue reports stale and malformed evidence separately. Phase 0 fixture
 reports and Phase 1 and Phase 3 milestone reports have separate scopes.
 Only per-function production reports can unlock dependencies. Computed
 failure history and `blocked` status are pending.
+
+## Extension package scaffolding
+
+An extension declares its namespace, independent oracle, stability and
+package dependencies in `ext/<package>/package.toml`. Public function
+specifications use the existing ABI and provenance schema. The prefix
+`<package>_` is added to the function's short name. Function dependencies
+must name a specified runtime function or a function in the same package
+or a declared dependency package. The loader rejects dependency cycles
+and symbolic links in package input paths.
+
+```sh
+tools/new-package word_math --oracle reference:unsigned-minimum
+tools/new-function word_math clamp_u32 \
+  --prototype 'unsigned int word_math_clamp_u32(unsigned int value, unsigned int ceiling)' \
+  --narrow-arg edi:u32 --narrow-arg esi:u32 \
+  --mt-safe --as-safe \
+  --semantics 'Return the smaller unsigned value.'
+tools/gen
+tools/gen --comment-header word_math_clamp_u32
+```
+
+Use the generated comment in the hand-authored NASM source at
+`ext/word_math/src/x86_64-linux/word_math_clamp_u32.asm`. Generation also
+updates the package include, test declarations and API index. Keep the
+independently authored C fixtures and their manifest under
+`tests/ext/word_math/`. Every fixture names the package oracle and each
+public entry point needs a generated-stub rejection. An extension can use
+an external suite or an independent model under the protected oracle path.
+
+Run `./tools/container tools/extension-gate word_math` after writing the
+implementation and tests. The scope uses reproducible static links, ABI and
+source checks, native/QEMU/Memcheck cases, and the generated stub controls.
+An empty scaffold cannot pass. Use `--require-production` with
+`tests/ext/<package>/production.toml` to require direct SysV ABI, all
+conditional edges observed under QEMU, at least 90 percent NASM mutation
+rejection, and at least 60 seconds of differential packets. Each function
+names a Python model under `tests/oracle/<package>/` and declares the fixed
+request and result record sizes. The evidence binds the model and exact
+candidate bytes. See the disposable word_math production fixture for the
+manifest format. Pinned suite adapters remain pending.
+
+Before declaring a package stable, review and add its ABI baseline at
+`tests/oracle/<package>/extension-abi.toml`. The protected file freezes
+the public function set, each C declaration's tokens and its register
+extension, variadic and nonreturning metadata. The target is
+`x86_64-linux-sysv`. Every declaration appears once in `[[function]]`
+with `name`, `prototype`, `narrow_args`, `variadic`, and `noreturn`.
+Generation rejects a missing baseline, a declaration change, or removal
+or downgrade of a frozen package.
+
+Declare each public record as a namespaced `[[layout]]` with `name`,
+`size`, `align`, and an ordered `member` array. Each member has `name`,
+`type`, and a byte `offset`. Use `count` for an inline array. For a package
+with no records, set `layout = []` before the function tables. The ABI
+baseline begins with `schema_version = 1`, `target`, and `package`.
+This record entry declares `struct packet_view` in the package header.
+
+```toml
+[[layout]]
+name = "packet_view"
+size = 16
+align = 8
+member = [
+  {name = "data", type = "const unsigned char *", offset = 0},
+  {name = "length", type = "size_t", offset = 8},
+]
+```
+
+The package gate and publisher compile static assertions with pinned
+GCC and Clang against the generated header. The checks cover function
+types and each declared record's size, alignment, member offsets and
+member types. Evidence binds the baseline, header, probe and compiler
+objects. Changes that require a different frozen ABI can use a new
+package namespace.
+
+Run `./tools/container tools/build-extension word_math` to produce a
+static package for an application. The command audits two isolated builds
+and publishes their matching `crt1.o`, `libopenasm-extension.a`, and
+generated C headers in `build/extensions/word_math/current/`. The archive
+includes the core and the declared extension dependency closure. The
+hash-addressed bundle also contains a manifest with source and artifact
+identities. The `current` link is updated only after a complete build.
+Run `extension-gate` separately for behavioral evidence.
+
+A full smoke control is available in a disposable checkout through
+`./tools/container tests/tooling/extensions/setup.sh`. It exercises both
+rejections and an independently tested scalar package.

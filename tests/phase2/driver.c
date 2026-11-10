@@ -23,6 +23,7 @@ static volatile sig_atomic_t guard_armed;
 #endif
 
 extern unsigned phase2_abi_probe(uintptr_t function, const uint64_t *arguments);
+extern unsigned phase2_abi_probe_result(uintptr_t function, const uint64_t *arguments, uint64_t *result);
 
 int phase2_fail(const char *format, ...)
 {
@@ -59,6 +60,11 @@ int phase2_abi(uintptr_t function, const uint64_t arguments[6])
 {
     unsigned mask = phase2_abi_probe(function, arguments);
     return mask ? phase2_fail("callee state mask %#x", mask) : 0;
+}
+
+int phase2_abi_result(uintptr_t function, const uint64_t arguments[6], uint64_t return_bits[2])
+{
+    return (int)phase2_abi_probe_result(function, arguments, return_bits);
 }
 
 int phase2_page_open(struct phase2_page *page)
@@ -99,8 +105,14 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
     if (!state)
         state = SEED;
     mode = "fuzz";
+#ifdef TEST_FUZZ_HOST
+    oracle = "diff:glibc";
+    const int compare_host = 1;
+#else
     oracle = fixture.unit_oracle;
-    if (fixture.sample(case_index, &state, 0))
+    const int compare_host = 0;
+#endif
+    if (fixture.sample(case_index, &state, compare_host))
         abort();
     return 0;
 }

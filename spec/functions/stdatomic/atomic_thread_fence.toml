@@ -1,0 +1,15 @@
+name = "atomic_thread_fence"
+header = "stdatomic.h"
+prototype = "void atomic_thread_fence(memory_order order)"
+standard = ["C17 7.17.4.1"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:c17-atomic-ordering", "reference:amd64-atomic-flag"]
+provenance = "original"
+semantics = ["Use a full AMD64 memory fence for sequential consistency. The compiler supplies ordering for inline fences."]
+
+[abi]
+narrow_args = ["edi:u32"]
+variadic = false

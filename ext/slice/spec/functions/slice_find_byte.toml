@@ -1,0 +1,16 @@
+name = "slice_find_byte"
+header = "slice.h"
+prototype = "int slice_find_byte(const unsigned char *bytes, size_t length, unsigned int needle, size_t *restrict offset)"
+standard = ["Extension ABI slice"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:bounded-slice-model"]
+provenance = "original"
+semantics = ["Store the first offset of the requested byte in the bounded slice.", "Return -EINVAL for invalid arguments or a needle above 255, -EOVERFLOW for a wrapping span, or -ENOENT if the byte is absent.", "Preserve offset on failure and preserve errno."]
+
+[abi]
+narrow_args = ["edx:u32"]
+variadic = false
+noreturn = false

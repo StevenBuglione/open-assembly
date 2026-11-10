@@ -1,0 +1,15 @@
+name = "lldiv"
+header = "stdlib.h"
+prototype = "lldiv_t lldiv(long long numerator, long long denominator)"
+standard = ["C17 7.22.6.2"]
+deps = ["ldiv"]
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:c17-integer-arithmetic"]
+provenance = "original"
+semantics = ["Return the quotient rounded toward zero and remainder as two signed long long members.", "The denominator must be nonzero and the quotient must be representable.", "AMD64 returns quotient in RAX and remainder in RDX."]
+
+[abi]
+narrow_args = []
+variadic = false

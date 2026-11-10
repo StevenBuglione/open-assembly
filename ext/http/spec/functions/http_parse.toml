@@ -1,0 +1,16 @@
+name = "http_parse"
+header = "http.h"
+prototype = "unsigned int http_parse(const unsigned char *bytes, size_t length)"
+standard = ["Extension ABI http"]
+deps = ["http_find_header_end", "http_is_token_byte"]
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:bounded-http-model"]
+provenance = "original"
+semantics = ["Classify one bounded HTTP request head using the loopback origin-server grammar."]
+
+[abi]
+narrow_args = []
+variadic = false
+noreturn = false

@@ -1,0 +1,15 @@
+name = "ftruncate"
+header = "unistd.h"
+prototype = "int ftruncate(int fd, off_t length)"
+standard = ["POSIX.1-2024 XSH ftruncate"]
+deps = ["__errno_location"]
+errno = ["EBADF", "EFBIG", "EINTR", "EINVAL", "EIO", "EPERM", "EROFS"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-filesystem-time-abi"]
+provenance = "original"
+semantics = ["Resize a writable regular file to the requested signed length without changing its current offset.", "Preserve errno on success and translate Linux errors."]
+
+[abi]
+narrow_args = ["edi:s32"]
+variadic = false

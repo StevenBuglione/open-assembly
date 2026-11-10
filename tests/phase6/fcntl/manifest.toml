@@ -1,0 +1,165 @@
+schema = 1
+
+[[case]]
+name = "fcntl-descriptor"
+sources = ["tests/phase6/fcntl/fcntl.c"]
+requires = ["fcntl"]
+args = ["descriptor"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-fcntl-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "fcntl-pipe-size"
+sources = ["tests/phase6/fcntl/fcntl.c"]
+requires = ["fcntl"]
+args = ["pipe-size"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-fcntl-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "fcntl-process-lock"
+sources = ["tests/phase6/fcntl/fcntl.c"]
+requires = ["fcntl"]
+args = ["process-lock"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-fcntl-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "fcntl-ofd-lock"
+sources = ["tests/phase6/fcntl/fcntl.c"]
+requires = ["fcntl"]
+args = ["ofd-lock"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-fcntl-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "fcntl-owner"
+sources = ["tests/phase6/fcntl/fcntl.c"]
+requires = ["fcntl"]
+args = ["owner"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-fcntl-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "fcntl-bad-fd"
+sources = ["tests/phase6/fcntl/fcntl.c"]
+requires = ["fcntl"]
+args = ["bad-fd"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-fcntl-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "fcntl-unknown"
+sources = ["tests/phase6/fcntl/fcntl.c"]
+requires = ["fcntl"]
+args = ["unknown"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-fcntl-abi"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Project rejects an unknown command before the kernel can report EBADF."
+
+[[case]]
+name = "fcntl-owner-sentinel"
+sources = ["tests/phase6/fcntl/fcntl.c"]
+requires = ["fcntl"]
+args = ["owner-sentinel"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-fcntl-abi"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Project reserves -1 for an error and returns EOVERFLOW for PGID 1. Both pinned hosts return -1 with preserved errno."
+
+[[case]]
+name = "fcntl-dispatch"
+sources = ["tests/phase6/fcntl/dispatch.c"]
+requires = ["fcntl"]
+args = []
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-fcntl-abi"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Includes the project's invalid-command precedence and process-group sentinel behavior."
+
+[[case]]
+name = "fcntl-abi"
+sources = ["tests/phase6/fcntl/abi.c", "tests/phase6/fcntl/variadic.asm", "tests/phase2/abi.asm"]
+requires = ["fcntl"]
+args = []
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:sysv-amd64"]
+backends = ["native", "qemu"]
+host_skip = "Uses an assembly thunk to exercise the target's variadic ABI directly."
+[case.skip]
+valgrind = "The shared register probe reports x87 and MXCSR control differences even for a no-op callback. The native and QEMU probe masks are zero."
+
+[[case]]
+name = "fcntl-fuzz"
+sources = ["tests/phase6/fcntl/fuzz.c"]
+requires = ["fcntl"]
+args = []
+env = {}
+status = 0
+stdin_hex = "0100000023000000440000006600000089000000ab000000cd000000ee000000"
+stdout_hex = "000000002100000000000000000000002100000000080000120000002100000000000000ffffffff090000009dffffff00000000210000000200000000000000210000000000000001000000210000009dffffff000000002100000000000000"
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-fcntl-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[stub]]
+symbol = "fcntl"
+case = "fcntl-bad-fd"
+status = 51
+stdout = ""
+stderr = ""

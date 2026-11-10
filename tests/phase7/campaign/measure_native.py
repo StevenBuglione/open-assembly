@@ -17,12 +17,38 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "transcendental"
 from oracle import MODES, OBSERVATION, TEST_ERRNO, shard
 from verify import compare
 
+SPECIAL = (0, 0x80000000, 0x7f7ffe00, 0xff7ffe00, 0x7fbffe00, 0xffbffe00)
+NEAR_NORMAL = (0x007ffe00, 0x807ffe00)
+QUADRANTS = (0x3fc90ddb, 0x40490ddb, 0x40c90ddb, 0xbfc90ddb,
+             0x4afffe00, 0x5efffe00, 0xdefffe00, 0x6f000000)
+UNIT = (0x3f7ffe00, 0xbf7ffe00, 0x3ffffe00, 0xbffffe00)
+TAILS = (0x40fffe00, 0xc0fffe00, 0x411ffe00, 0xc11ffe00, 0x5efffe00)
 PROOF_RANGES = {
-    "exp2": (0, 0x80000000, 0x3f000000, 0x42fffe00, 0xc315fe00,
-             0x7f7ffe00, 0xff7ffe00, 0x7fbffe00, 0xffbffe00),
-    "log2": (0, 0x80000000, 0x007ffe00, 0x00800000, 0x3f7ffe00, 0x3ffffe00, 0x5f000000,
-             0x7f7ffe00, 0xff7ffe00, 0x7fbffe00, 0xffbffe00),
+    "exp2": SPECIAL + (0x3f000000, 0x42fffe00, 0xc315fe00),
+    "log2": SPECIAL + (0x007ffe00, 0x00800000, 0x3f7ffe00, 0x3ffffe00, 0x5f000000),
+    "exp": SPECIAL + NEAR_NORMAL + (0x3f000000, 0x42b17018, 0xc2aeaa50, 0xc2ce8cd0, 0xc2cfefb4),
+    "log": SPECIAL + NEAR_NORMAL + (0x3f7ffe00, 0x3ffffe00, 0x40000000, 0x5f000000),
+    "sin": SPECIAL + NEAR_NORMAL + QUADRANTS,
+    "cos": SPECIAL + NEAR_NORMAL + QUADRANTS,
+    "tan": SPECIAL + NEAR_NORMAL + QUADRANTS,
+    "log10": SPECIAL + NEAR_NORMAL + UNIT + (0x411ffe00, 0x42c7fe00, 0x50150000),
+    "expm1": SPECIAL + NEAR_NORMAL + TAILS + (0x42b17018, 0xc18ffe00),
+    "log1p": SPECIAL + NEAR_NORMAL + UNIT + TAILS,
+    "asin": SPECIAL + NEAR_NORMAL + UNIT + (0x3efffe00, 0xbefffe00),
+    "acos": SPECIAL + NEAR_NORMAL + UNIT + (0x3efffe00, 0xbefffe00),
+    "atan": SPECIAL + NEAR_NORMAL + UNIT + TAILS,
+    "sinh": SPECIAL + NEAR_NORMAL + TAILS + (0x42b2d2f8, 0xc2b2d2f8),
+    "cosh": SPECIAL + NEAR_NORMAL + TAILS + (0x42b2d2f8, 0xc2b2d2f8),
+    "tanh": SPECIAL + NEAR_NORMAL + TAILS,
+    "asinh": SPECIAL + NEAR_NORMAL + UNIT + TAILS,
+    "acosh": SPECIAL + NEAR_NORMAL + UNIT + TAILS,
+    "atanh": SPECIAL + NEAR_NORMAL + UNIT + TAILS,
+    "erf": SPECIAL + NEAR_NORMAL + TAILS + (0x3f7ffe00, 0x407ffe00, 0xc07ffe00),
+    "erfc": SPECIAL + NEAR_NORMAL + TAILS + (0x4121fe00, 0x412ff000, 0xc121fe00),
+    "tgamma": SPECIAL + NEAR_NORMAL + UNIT + (0x3efffe00, 0xbefffe00, 0x420cfe00, 0xc20cfe00),
+    "lgamma": SPECIAL + NEAR_NORMAL + UNIT + (0x3efffe00, 0xbefffe00, 0x420cfe00, 0xc20cfe00),
 }
+
 
 
 def prove(helper, folder, operation, start, count, mode):

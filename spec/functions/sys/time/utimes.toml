@@ -1,0 +1,15 @@
+name = "utimes"
+header = "sys/time.h"
+prototype = "int utimes(const char *path, const struct timeval times[2])"
+standard = ["POSIX.1-2024 XSH utimes"]
+deps = ["__errno_location"]
+errno = ["EACCES", "EFAULT", "EINVAL", "EIO", "ELOOP", "ENAMETOOLONG", "ENOENT", "ENOTDIR", "EPERM", "EROFS"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-filesystem-time-abi"]
+provenance = "original"
+semantics = ["Set file access and modification time from two timeval records. A null pointer selects the current time.", "Preserve errno on success and translate Linux errors."]
+
+[abi]
+narrow_args = []
+variadic = false

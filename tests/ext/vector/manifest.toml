@@ -1,0 +1,285 @@
+schema = 1
+
+[[case]]
+name = "vector-init-unit"
+sources = ["tests/ext/vector/unit.c"]
+requires = ["vector_init"]
+args = ["init"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:arena-vector-model"]
+host_skip = "The independent vector state and backing-byte model is the oracle."
+
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "vector-init-abi"
+sources = ["tests/ext/vector/abi.c", "tests/phase2/abi.asm"]
+requires = ["vector_init"]
+args = ["init"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:arena-vector-model"]
+host_skip = "The independent vector state and backing-byte model is the oracle."
+
+backends = ["native", "qemu"]
+[case.skip]
+valgrind = "Shared nondefault x87 ABI probe exceeds Memcheck emulation."
+
+[[case]]
+name = "vector-init-packets"
+sources = ["tests/ext/vector/packets.c"]
+requires = ["vector_init"]
+args = ["init"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:arena-vector-model"]
+host_skip = "The independent vector state and backing-byte model is the oracle."
+
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "vector-reserve-unit"
+sources = ["tests/ext/vector/unit.c"]
+requires = ["vector_reserve"]
+args = ["reserve"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:arena-vector-model"]
+host_skip = "The independent vector state and backing-byte model is the oracle."
+
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "vector-reserve-abi"
+sources = ["tests/ext/vector/abi.c", "tests/phase2/abi.asm"]
+requires = ["vector_reserve"]
+args = ["reserve"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:arena-vector-model"]
+host_skip = "The independent vector state and backing-byte model is the oracle."
+
+backends = ["native", "qemu"]
+[case.skip]
+valgrind = "Shared nondefault x87 ABI probe exceeds Memcheck emulation."
+
+[[case]]
+name = "vector-reserve-packets"
+sources = ["tests/ext/vector/packets.c"]
+requires = ["vector_reserve"]
+args = ["reserve"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:arena-vector-model"]
+host_skip = "The independent vector state and backing-byte model is the oracle."
+
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "vector-push-unit"
+sources = ["tests/ext/vector/unit.c"]
+requires = ["vector_push"]
+args = ["push"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:arena-vector-model"]
+host_skip = "The independent vector state and backing-byte model is the oracle."
+
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "vector-push-abi"
+sources = ["tests/ext/vector/abi.c", "tests/phase2/abi.asm"]
+requires = ["vector_push"]
+args = ["push"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:arena-vector-model"]
+host_skip = "The independent vector state and backing-byte model is the oracle."
+
+backends = ["native", "qemu"]
+[case.skip]
+valgrind = "Shared nondefault x87 ABI probe exceeds Memcheck emulation."
+
+[[case]]
+name = "vector-push-packets"
+sources = ["tests/ext/vector/packets.c"]
+requires = ["vector_push"]
+args = ["push"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:arena-vector-model"]
+host_skip = "The independent vector state and backing-byte model is the oracle."
+
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "vector-pop-unit"
+sources = ["tests/ext/vector/unit.c"]
+requires = ["vector_pop"]
+args = ["pop"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:arena-vector-model"]
+host_skip = "The independent vector state and backing-byte model is the oracle."
+
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "vector-pop-abi"
+sources = ["tests/ext/vector/abi.c", "tests/phase2/abi.asm"]
+requires = ["vector_pop"]
+args = ["pop"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:arena-vector-model"]
+host_skip = "The independent vector state and backing-byte model is the oracle."
+
+backends = ["native", "qemu"]
+[case.skip]
+valgrind = "Shared nondefault x87 ABI probe exceeds Memcheck emulation."
+
+[[case]]
+name = "vector-pop-packets"
+sources = ["tests/ext/vector/packets.c"]
+requires = ["vector_pop"]
+args = ["pop"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:arena-vector-model"]
+host_skip = "The independent vector state and backing-byte model is the oracle."
+
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "vector-at-unit"
+sources = ["tests/ext/vector/unit.c"]
+requires = ["vector_at"]
+args = ["at"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:arena-vector-model"]
+host_skip = "The independent vector state and backing-byte model is the oracle."
+
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "vector-at-abi"
+sources = ["tests/ext/vector/abi.c", "tests/phase2/abi.asm"]
+requires = ["vector_at"]
+args = ["at"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:arena-vector-model"]
+host_skip = "The independent vector state and backing-byte model is the oracle."
+
+backends = ["native", "qemu"]
+[case.skip]
+valgrind = "Shared nondefault x87 ABI probe exceeds Memcheck emulation."
+
+[[case]]
+name = "vector-at-packets"
+sources = ["tests/ext/vector/packets.c"]
+requires = ["vector_at"]
+args = ["at"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:arena-vector-model"]
+host_skip = "The independent vector state and backing-byte model is the oracle."
+
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "vector-guards"
+sources = ["tests/ext/vector/guards.c"]
+requires = ["vector_push", "vector_pop", "vector_at"]
+args = []
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:arena-vector-model"]
+host_skip = "The independent vector state and backing-byte model is the oracle."
+backends = ["native", "qemu", "valgrind"]
+
+[[stub]]
+symbol = "vector_init"
+case = "vector-init-unit"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "vector_reserve"
+case = "vector-reserve-unit"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "vector_push"
+case = "vector-push-unit"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "vector_pop"
+case = "vector-pop-unit"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "vector_at"
+case = "vector-at-unit"
+status = 11
+stdout = ""
+stderr = ""

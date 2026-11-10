@@ -1,0 +1,18 @@
+name = "inet_ntoa"
+header = "arpa/inet.h"
+prototype = "char *inet_ntoa(struct in_addr address)"
+standard = ["POSIX.1-2024 XSH inet_ntoa"]
+deps = ["pthread_self"]
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["reference:posix-ipv4-address", "diff:glibc", "diff:musl", "suite:libc-test"]
+provenance = "original"
+semantics = [
+  "Return the IPv4 address in dotted decimal and preserve errno.",
+  "The text is stored in the calling thread and is overwritten by a later call on that thread.",
+]
+
+[abi]
+narrow_args = ["edi:u32"]
+variadic = false

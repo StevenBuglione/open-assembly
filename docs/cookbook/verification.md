@@ -13,6 +13,13 @@ has an exact generated-stub rejection. Fault probes cover malformed directory
 records, pipe descriptor exhaustion, allocated formatting failure, and unlocked
 stream lock ownership. The manifests record backend-specific omissions.
 
+`./tools/container make phase6-fcntl` checks typed variadic descriptor
+control, 64-bit process and OFD locks, and successful negative process
+group owners. It also exercises the reserved -1 result using the
+container's PID namespace and requires the exact bad-fd stub rejection.
+Evidence is written to `build/evidence/phase6-fcntl.json`.
+[Descriptor control fixtures](../../tests/phase6/fcntl/README.md)
+
 The BusyBox gate extracts the pinned 1.37.0 source with networking disabled.
 It builds the six selected upstream applets with freestanding, no-builtin
 flags, then uses the actual Kbuild link objects and the Open Assembly startup
@@ -55,6 +62,12 @@ production checks have separate requirements.
 The `phase6-strftime` gate checks C-locale directives and modifiers,
 exact buffer limits, and the ISO week-year across a full 400-year cycle.
 Its manifest records the host comparison scope for custom zone names.
+
+`./tools/container make phase6-sqlite` runs three pinned SQLite 3.53.3
+workloads: speedtest1, the threadtest3 shared-cache readers, and the
+single-worker threadtest5 control. The gate checks reproducible archive-only
+links and compares results under native Linux, QEMU, Memcheck, glibc and musl.
+[SQLite workload details](../../tests/external/sqlite/README.md)
 
 ## Phase 8 thread lifecycle
 
@@ -348,3 +361,68 @@ independent Phase 2 manifest.
 On pull requests, CI compares the protected oracle and external test paths
 with the base commit. New files are allowed. Edits, deletions, moves and
 type changes to existing files fail the check.
+
+## Nightly and tagged verification
+
+```sh
+./tools/verify-tier nightly
+./tools/verify-tier release --tag v1.0.0
+```
+
+The nightly entry point runs the available matrix, including Phase 2
+production mutation and 300-second libFuzzer observations, the eight
+scalar arithmetic production gates with the same libFuzzer floor, the
+three Linux descriptor gates with timed glibc and musl packet comparisons,
+exact binary32 rounding groups, selected transcendental shards, the
+pinned application and upstream suites, and independent address-family
+selection. The isolated memcpy, allocator, and warmed vDSO time benchmarks
+measure the named workloads against musl. The extension smoke control
+runs in a separate clone.
+Its unimplemented, scoped, and production-required reports are archived
+with the main evidence. The separate shipped extension check runs declared
+packages in dependency order and validates each fresh per-function production
+report. A missing independent plan or unmet package dependency keeps that
+scope pending. The host wrapper first starts the separate
+QEMU-system image for the pinned old-kernel boot check. The tier validates
+that report against the current inputs. It requires all 13 paired native
+and guest case results and their exact guest manifest. The nine installed
+seccomp filter observations have a separate exact scope. The musl authorship scan
+checks the relocated-copy and distinct NASM controls and archives its
+hash-linked review queue. Entries in that queue are similarity signals
+for human review.
+
+The release tier additionally validates the checked-out tag and compares
+two independently built and audited sets of runtime, PIE startup and
+application artifacts. Its JSON evidence includes fresh per-function
+coverage, mutation summaries, the outstanding inventory, and the declared
+deviations. Both workflows upload evidence even when verification fails.
+
+The binary32 campaign check independently audits checkpoint files under
+`build/phase7-campaign` by default. Use `--campaign-root build/...` for a
+different current ledger directory. Keep each exported ledger at its
+recorded checkout-relative path. The check binds the current complete
+Phase 7 source snapshot, candidate archive and probe, oracle artifacts,
+and checkpoint-set digest. It counts only complete contiguous coverage
+of all 2^32 encodings with no failed observations for an operation and
+rounding mode. Fixed-second-operand campaigns count as binary axes.
+The report lists missing unary modes and remaining binary axes. Earlier
+source snapshots are recorded separately as historical. The source gate
+binds the complete Phase 7 input snapshot, so an unrelated changed input
+also prevents current credit for an older ledger.
+
+The nightly and release workflows currently call the tier without staging
+external ledgers. That leaves the campaign check pending unless the exact
+current ledgers are available at the default path. A run that stages them
+at a different recorded path can supply it explicitly.
+
+```sh
+./tools/verify-tier nightly --campaign-root build/current-campaigns
+./tools/verify-tier release --tag v1.0.0 --campaign-root build/current-campaigns
+```
+
+Every listed gate must produce a fresh passing report with matching input
+hashes. Use repeated `--only` selections for focused diagnosis. Such a run
+exits nonzero with a partial report. A tier with any failure or unmet
+requirement exits nonzero and cannot qualify a release. The platform
+section records the actual native kernel and seccomp mode separately
+from the scoped platform gate results.

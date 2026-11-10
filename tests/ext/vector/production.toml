@@ -1,0 +1,51 @@
+schema = 1
+
+[[function]]
+symbol = "vector_init"
+abi = "vector-init-abi"
+trace = "vector-init-unit"
+mutations = { vector-init-unit = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22] }
+fuzz = "vector-init-packets"
+model = "tests/oracle/vector/model.py"
+record_size = 32
+result_size = 216
+
+[[function]]
+symbol = "vector_reserve"
+abi = "vector-reserve-abi"
+trace = "vector-reserve-unit"
+mutations = { vector-reserve-unit = [11, 12, 13, 14, 15, 16] }
+fuzz = "vector-reserve-packets"
+model = "tests/oracle/vector/model.py"
+record_size = 32
+result_size = 216
+
+[[function]]
+symbol = "vector_push"
+abi = "vector-push-abi"
+trace = "vector-push-unit"
+mutations = { vector-push-unit = [11, 12, 13, 14, 15, 16, 17, 18] }
+fuzz = "vector-push-packets"
+model = "tests/oracle/vector/model.py"
+record_size = 32
+result_size = 216
+
+[[function]]
+symbol = "vector_pop"
+abi = "vector-pop-abi"
+trace = "vector-pop-unit"
+mutations = { vector-pop-unit = [11, 12, 13, 14, 15] }
+fuzz = "vector-pop-packets"
+model = "tests/oracle/vector/model.py"
+record_size = 32
+result_size = 216
+
+[[function]]
+symbol = "vector_at"
+abi = "vector-at-abi"
+trace = "vector-at-unit"
+mutations = { vector-at-unit = [11, 12, 13, 14] }
+fuzz = "vector-at-packets"
+model = "tests/oracle/vector/model.py"
+record_size = 32
+result_size = 216

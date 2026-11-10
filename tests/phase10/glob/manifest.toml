@@ -1,0 +1,117 @@
+schema = 1
+
+[[case]]
+name = "glob-paths"
+sources = ["tests/phase10/glob/paths.c"]
+requires = ["glob"]
+args = ["paths"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:posix-pathname-expansion"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "glob-batches"
+sources = ["tests/phase10/glob/paths.c"]
+requires = ["glob"]
+args = ["batches"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:posix-pathname-expansion"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "glob-spelling"
+sources = ["tests/phase10/glob/paths.c"]
+requires = ["glob"]
+args = ["spelling"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:posix-pathname-expansion"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Project exact slash spelling and escaped separators."
+env = {}
+
+[[case]]
+name = "glob-missing"
+sources = ["tests/phase10/glob/errors.c"]
+requires = ["glob"]
+args = ["missing"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:posix-pathname-expansion"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Project error retention and independent readdir fault control."
+link_wraps = ["readdir"]
+env = {}
+
+[[case]]
+name = "glob-late-error"
+sources = ["tests/phase10/glob/errors.c"]
+requires = ["glob"]
+args = ["late-error"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:posix-pathname-expansion"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Project error retention and independent readdir fault control."
+link_wraps = ["readdir"]
+env = {}
+
+[[case]]
+name = "glob-release"
+sources = ["tests/phase10/glob/lifetime.c"]
+requires = ["glob", "globfree"]
+args = ["release"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:posix-pathname-expansion"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Project allocation faults and result release observations."
+link_wraps = ["malloc", "calloc", "realloc", "free"]
+env = {}
+
+[[case]]
+name = "glob-allocation-fault"
+sources = ["tests/phase10/glob/lifetime.c"]
+requires = ["glob", "globfree"]
+args = ["allocation-fault"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:posix-pathname-expansion"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Project allocation faults and result release observations."
+link_wraps = ["malloc", "calloc", "realloc", "free"]
+env = {}
+
+[[stub]]
+symbol = "glob"
+case = "glob-paths"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "globfree"
+case = "glob-release"
+status = 31
+stdout = ""
+stderr = ""

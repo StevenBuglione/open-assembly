@@ -1,0 +1,15 @@
+name = "__atomic_is_lock_free"
+header = "compiler_rt.h"
+prototype = "_Bool __atomic_is_lock_free(size_t size, const volatile void *object)"
+standard = ["Runtime ABI __atomic_is_lock_free"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:compiler-atomic-abi", "diff:libatomic"]
+provenance = "original"
+semantics = ["Report naturally aligned sizes 1, 2, 4, and 8 as lock-free without dereferencing object.", "Preserve errno."]
+
+[abi]
+narrow_args = []
+variadic = false

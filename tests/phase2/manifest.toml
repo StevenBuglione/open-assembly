@@ -436,3 +436,91 @@ host_symbols = ["bsearch"]
 coverage_modes = ["unit", "guard", "differential"]
 oracle = ["reference:sorted-search", "reference:page-protection", "abi:sysv-amd64", "diff:glibc", "diff:musl"]
 fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/phase2/algorithms.c"]
+
+[[function]]
+name = "abs"
+id = 48
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/scalar/scalar.c"]
+host_symbols = ["abs"]
+coverage_modes = ["abi", "unit", "differential"]
+oracle = ["abi:sysv-amd64", "reference:c17-integer-arithmetic", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/scalar/scalar.c"]
+fuzz_host = true
+guard_skip = "Scalar integer arguments and register-only result have no caller memory extent."
+
+[[function]]
+name = "labs"
+id = 49
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/scalar/scalar.c"]
+host_symbols = ["labs"]
+coverage_modes = ["abi", "unit", "differential"]
+oracle = ["abi:sysv-amd64", "reference:c17-integer-arithmetic", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/scalar/scalar.c"]
+fuzz_host = true
+guard_skip = "Scalar integer arguments and register-only result have no caller memory extent."
+
+[[function]]
+name = "llabs"
+id = 50
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/scalar/scalar.c"]
+host_symbols = ["llabs"]
+coverage_modes = ["abi", "unit", "differential"]
+oracle = ["abi:sysv-amd64", "reference:c17-integer-arithmetic", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/scalar/scalar.c"]
+fuzz_host = true
+guard_skip = "Scalar integer arguments and register-only result have no caller memory extent."
+
+[[function]]
+name = "div"
+id = 51
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/scalar/scalar.c"]
+host_symbols = ["div"]
+coverage_modes = ["abi", "unit", "differential"]
+oracle = ["abi:sysv-amd64", "reference:c17-integer-arithmetic", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/scalar/scalar.c"]
+fuzz_host = true
+guard_skip = "Scalar integer arguments and register-only result have no caller memory extent."
+
+[[function]]
+name = "ldiv"
+id = 52
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/scalar/scalar.c"]
+host_symbols = ["ldiv"]
+coverage_modes = ["abi", "unit", "differential"]
+oracle = ["abi:sysv-amd64", "reference:c17-integer-arithmetic", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/scalar/scalar.c"]
+fuzz_host = true
+guard_skip = "Scalar integer arguments and register-only result have no caller memory extent."
+
+[[function]]
+name = "lldiv"
+id = 53
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/scalar/scalar.c"]
+host_symbols = ["lldiv"]
+coverage_modes = ["abi", "unit", "differential"]
+oracle = ["abi:sysv-amd64", "reference:c17-integer-arithmetic", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/scalar/scalar.c"]
+fuzz_host = true
+guard_skip = "Scalar integer arguments and register-only result have no caller memory extent."
+
+[[function]]
+name = "imaxabs"
+id = 54
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/scalar/scalar.c"]
+host_symbols = ["imaxabs"]
+coverage_modes = ["abi", "unit", "differential"]
+oracle = ["abi:sysv-amd64", "reference:c17-integer-arithmetic", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/scalar/scalar.c"]
+fuzz_host = true
+guard_skip = "Scalar integer arguments and register-only result have no caller memory extent."
+
+[[function]]
+name = "imaxdiv"
+id = 55
+sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/scalar/scalar.c"]
+host_symbols = ["imaxdiv"]
+coverage_modes = ["abi", "unit", "differential"]
+oracle = ["abi:sysv-amd64", "reference:c17-integer-arithmetic", "diff:glibc", "diff:musl"]
+fuzz_sources = ["tests/phase2/driver.c", "tests/phase2/abi.asm", "tests/scalar/scalar.c"]
+fuzz_host = true
+guard_skip = "Scalar integer arguments and register-only result have no caller memory extent."

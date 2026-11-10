@@ -4,6 +4,7 @@
 
 %define EXIT_SUCCESS 0
 %define EXIT_FAILURE 1
+%define RAND_MAX 2147483647
 
 extern __al_mb_cur_max
 
@@ -11,6 +12,7 @@ extern _Exit
 extern abort
 extern $abs
 extern aligned_alloc
+extern at_quick_exit
 extern atexit
 extern atof
 extern atoi
@@ -18,9 +20,14 @@ extern atol
 extern atoll
 extern bsearch
 extern calloc
+extern $div
 extern exit
 extern free
 extern getenv
+extern labs
+extern ldiv
+extern llabs
+extern lldiv
 extern malloc
 extern mblen
 extern mbstowcs
@@ -29,8 +36,11 @@ extern mkstemp
 extern posix_memalign
 extern putenv
 extern qsort
+extern quick_exit
+extern rand
 extern realloc
 extern setenv
+extern srand
 extern strtod
 extern strtof
 extern strtol

@@ -1,0 +1,145 @@
+schema = 1
+
+[[case]]
+name = "allocator-public"
+sources = ["tests/phase11/allocator/public.c"]
+requires = ["realloc"]
+args = []
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-realloc", "reference:linux-mremap"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "allocator-real"
+sources = ["tests/phase11/allocator/remap.c"]
+requires = ["realloc"]
+args = ["real"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-realloc", "reference:linux-mremap"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Observes the project allocator through the raw Linux syscall boundary."
+link_wraps = ["__al_syscall"]
+env = {}
+
+[[case]]
+name = "allocator-forced-move"
+sources = ["tests/phase11/allocator/remap.c"]
+requires = ["realloc"]
+args = ["forced-move"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-realloc", "reference:linux-mremap"]
+backends = ["native"]
+host_skip = "Observes the project allocator through the raw Linux syscall boundary."
+link_wraps = ["__al_syscall"]
+env = {}
+[case.skip]
+qemu = "Forced address-space layout uses a native adjacent MAP_FIXED_NOREPLACE reservation."
+valgrind = "Forced address-space layout uses a native adjacent MAP_FIXED_NOREPLACE reservation."
+
+[[case]]
+name = "allocator-aligned"
+sources = ["tests/phase11/allocator/remap.c"]
+requires = ["realloc"]
+args = ["aligned"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-realloc", "reference:linux-mremap"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Observes the project allocator through the raw Linux syscall boundary."
+link_wraps = ["__al_syscall"]
+env = {}
+
+[[case]]
+name = "allocator-fallback"
+sources = ["tests/phase11/allocator/remap.c"]
+requires = ["realloc"]
+args = ["fallback"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-realloc", "reference:linux-mremap"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Observes the project allocator through the raw Linux syscall boundary."
+link_wraps = ["__al_syscall"]
+env = {}
+
+[[case]]
+name = "allocator-failure"
+sources = ["tests/phase11/allocator/remap.c"]
+requires = ["realloc"]
+args = ["failure"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-realloc", "reference:linux-mremap"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Observes the project allocator through the raw Linux syscall boundary."
+link_wraps = ["__al_syscall"]
+env = {}
+
+[[case]]
+name = "allocator-in-capacity"
+sources = ["tests/phase11/allocator/remap.c"]
+requires = ["realloc"]
+args = ["in-capacity"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-realloc", "reference:linux-mremap"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Observes the project allocator through the raw Linux syscall boundary."
+link_wraps = ["__al_syscall"]
+env = {}
+
+[[case]]
+name = "allocator-slab"
+sources = ["tests/phase11/allocator/remap.c"]
+requires = ["realloc"]
+args = ["slab"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-realloc", "reference:linux-mremap"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Observes the project allocator through the raw Linux syscall boundary."
+link_wraps = ["__al_syscall"]
+env = {}
+
+[[case]]
+name = "allocator-overflow"
+sources = ["tests/phase11/allocator/remap.c"]
+requires = ["realloc"]
+args = ["overflow"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-realloc", "reference:linux-mremap"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Observes the project allocator through the raw Linux syscall boundary."
+link_wraps = ["__al_syscall"]
+env = {}
+
+[[stub]]
+symbol = "realloc"
+case = "allocator-real"
+status = 11
+stdout = ""
+stderr = ""

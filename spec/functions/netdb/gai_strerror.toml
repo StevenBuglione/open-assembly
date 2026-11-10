@@ -1,0 +1,18 @@
+name = "gai_strerror"
+header = "netdb.h"
+prototype = "const char *gai_strerror(int code)"
+standard = ["POSIX.1-2024 XSH gai_strerror"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["reference:rfc3493", "reference:local-netdb", "diff:glibc", "diff:musl"]
+provenance = "original"
+semantics = [
+  "Return an immutable error description for a netdb result code or an unknown-error description.",
+  "Preserve errno.",
+]
+
+[abi]
+narrow_args = ["edi:s32"]
+variadic = false

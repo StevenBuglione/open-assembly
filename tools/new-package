@@ -1,0 +1,5 @@
+#!/usr/bin/env python3
+from extensions import scaffold
+
+if __name__ == "__main__":
+    raise SystemExit(scaffold("package"))

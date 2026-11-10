@@ -1,4 +1,4 @@
-; Map a wide character in edi using lowercase (esi=0) or uppercase (esi=1).
+; Map a wide character in edi using lowercase (esi=0) or uppercase (esi=1). EDX selects live (0), C (1), or UTF-8 (2).
 bits 64
 default rel
 
@@ -11,6 +11,12 @@ __al_unicode_case:
     ja .original
     cmp edi, 127
     jbe .search
+    test edx, edx
+    jz .current
+    cmp edx, 2
+    je .search
+    jmp .original
+.current:
     test dword [rel __al_locale_flags], 1
     jz .original
 .search:

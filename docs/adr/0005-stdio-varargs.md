@@ -7,6 +7,35 @@ define public semantics for the supported conversions. Floating-point
 formats and wide stream orientation belong to later phases. Public file
 and process APIs, remove, rename, tmpfile, and tmpnam belong to Phase 6.
 
+## Stream descriptor query
+
+The POSIX `fileno` operation reads the stream's descriptor with the
+same recursive ownership as other implicit stream operations. It leaves
+the stream position, pending buffers, and indicators alone. A live
+stream without an associated descriptor yields EBADF. The returned
+descriptor is borrowed and remains subject to normal stream lifetime.
+[POSIX fileno](https://pubs.opengroup.org/onlinepubs/9799919799/functions/fileno.html)
+
+## Temporary name policy
+
+C17 tmpnam selects a name in the fixed shared /tmp directory.
+It verifies the directory and chooses a 40-byte pathname from a
+process identifier, a process-local success counter, and 64 bits
+of kernel entropy. The selected path must be absent at a
+non-following lookup, so an existing dangling symbolic link is
+occupied. It retries occupied candidates up to 256 times.
+L_tmpnam is 41 and TMP_MAX is 32767. The counter makes all
+successful names distinct within the process. The implementation
+returns EAGAIN after that number of successful calls.
+
+The name is published only after the absence check. The function
+leaves filesystem creation and reservation to the caller. Another
+process can create the name before a later open. A null argument
+uses shared static output storage. A caller-provided L_tmpnam
+buffer receives a private copy. Errors leave both output paths
+untouched. Successful calls preserve errno.
+[C17 7.21.4.4 draft](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2310.pdf)
+
 ## Byte streams
 
 The generated test header declares an opaque FILE type, fpos_t, and the

@@ -26,7 +26,7 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: ./tools/container tools/gate --protected-base "$BASE_SHA"
       - name: Run pinned Phase 0 through Phase 5 gates
-        run: ./tools/container make -k phase0 phase1 phase2 phase3 phase4 phase5
+        run: ./tools/container make -k phase0 phase1 phase2 phase3 phase4 phase5 production-scalars
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
@@ -45,7 +45,7 @@ jobs:
           persist-credentials: false
       - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b
       - name: Run pinned Phase 6 slice gates
-        run: ./tools/container make -k phase6-files phase6-compat phase6-busybox phase6-process phase6-signal phase6-jump phase6-time phase6-calendar phase6-luafiles phase6-spawn phase6-shell phase6-path
+        run: ./tools/container make -k phase6-files phase6-compat phase6-busybox phase6-process phase6-signal phase6-jump phase6-time phase6-calendar phase6-luafiles phase6-spawn phase6-shell phase6-path production-linux-files production-linux-io
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
@@ -102,7 +102,7 @@ jobs:
           persist-credentials: false
       - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b
       - name: Run lifecycle, synchronization, C11, and detector gates
-        run: ./tools/container make -k phase8-lifecycle phase8-sync phase8-c11 phase8-openposix phase8-detectors
+        run: ./tools/container make -k phase8-lifecycle phase8-sync phase8-c11 phase8-openposix phase8-detectors phase8-compiler-atomics
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
@@ -129,10 +129,95 @@ jobs:
           path: build/evidence/
           if-no-files-found: warn
 
+  real_programs:
+    name: zlib, SQLite, and descriptor control gates
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b
+      - name: Run pinned applications and the descriptor production gate
+        run: ./tools/container make -k phase6-zlib phase6-sqlite phase6-fcntl phase10-gnulib phase10-native-ltp && ./tools/container make gate FUNC=fcntl
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: real-program-verification-evidence
+          path: build/evidence/
+          if-no-files-found: warn
+
+  network:
+    name: Socket, DNS, terminal, and HTTP gates
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b
+      - name: Run endpoint, resolver, terminal, and HTTP checks
+        run: ./tools/container make -k phase10-endpoints phase10-inet phase10-dns phase10-netdb phase10-terminal phase10-http phase10-libc-test phase10-glob phase10-regex phase10-addrconfig phase10-dns-failover phase10-dns-options
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: network-verification-evidence
+          path: build/evidence/
+          if-no-files-found: warn
+
+  platform:
+    name: Static PIE and CPU dispatch gates
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b
+      - name: Run optional static PIE and ELF relocation controls
+        run: ./tools/container make -k phase11-static-pie phase11-copy phase11-vdso phase11-allocator phase11-seccomp
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: platform-verification-evidence
+          path: build/evidence/
+          if-no-files-found: warn
+
+  extensions:
+    name: Assembly extension build and production gates
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b
+      - name: Build and independently verify arena, slice, and vector
+        run: |
+          ./tools/container tools/build-extension arena
+          ./tools/container tools/extension-gate arena --require-production
+          ./tools/container tools/build-extension slice
+          ./tools/container tools/extension-gate slice --require-production
+          ./tools/container tools/gate --production memmove
+          ./tools/container tools/build-extension vector
+          ./tools/container tools/extension-gate vector --require-production
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: extension-verification-evidence
+          path: |
+            build/evidence/extension-*.json
+            build/evidence/memmove.production.json
+          if-no-files-found: warn
+
   acceptance:
     name: acceptance
     if: always()
-    needs: [core, integration, mathematics, applications, threads, locale]
+    needs: [core, integration, mathematics, applications, threads, locale, real_programs, network, platform, extensions]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions: {}
@@ -143,6 +228,10 @@ jobs:
       APPLICATION_RESULT: ${{ needs.applications.result }}
       THREAD_RESULT: ${{ needs.threads.result }}
       LOCALE_RESULT: ${{ needs.locale.result }}
+      REAL_PROGRAMS_RESULT: ${{ needs.real_programs.result }}
+      NETWORK_RESULT: ${{ needs.network.result }}
+      PLATFORM_RESULT: ${{ needs.platform.result }}
+      EXTENSIONS_RESULT: ${{ needs.extensions.result }}
     steps:
       - name: Require all verification jobs
         shell: bash
@@ -156,3 +245,11 @@ jobs:
           test "$APPLICATION_RESULT" = success
           test "$THREAD_RESULT" = success
           test "$LOCALE_RESULT" = success
+          printf 'Real programs: %s\n' "$REAL_PROGRAMS_RESULT"
+          test "$REAL_PROGRAMS_RESULT" = success
+          printf 'Network: %s\n' "$NETWORK_RESULT"
+          test "$NETWORK_RESULT" = success
+          printf 'Platform: %s\n' "$PLATFORM_RESULT"
+          test "$PLATFORM_RESULT" = success
+          printf 'Extensions: %s\n' "$EXTENSIONS_RESULT"
+          test "$EXTENSIONS_RESULT" = success

@@ -1,0 +1,19 @@
+name = "srand"
+header = "stdlib.h"
+prototype = "void srand(unsigned int seed)"
+standard = ["C17 7.22.2.2"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["reference:c17-rand-repeatability"]
+provenance = "original"
+semantics = [
+  "Replace the shared generator state with the specified unsigned seed.",
+  "Equal seeds reproduce the same subsequent sequence.",
+  "Serialize updates to the shared sequence. Preserve errno.",
+]
+
+[abi]
+narrow_args = ["edi:u32"]
+variadic = false

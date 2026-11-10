@@ -1,0 +1,15 @@
+name = "gettimeofday"
+header = "sys/time.h"
+prototype = "int gettimeofday(struct timeval *restrict value, void *restrict zone)"
+standard = ["Extension ABI gettimeofday"]
+deps = ["__errno_location"]
+errno = ["EFAULT"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-filesystem-time-abi"]
+provenance = "original"
+semantics = ["Obtain wall time in signed seconds and microseconds using the historical Linux time ABI.", "Preserve errno on success and translate Linux errors."]
+
+[abi]
+narrow_args = []
+variadic = false

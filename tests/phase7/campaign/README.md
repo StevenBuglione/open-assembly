@@ -48,12 +48,14 @@ can independently read the published coverage while the runner works.
 ```
 
 The journal checks complete, disjoint coverage before marking the full
-binary32 unary domain complete. The native helper covers `exp2f` and `log2f`. Each operation and rounding
+binary32 unary domain complete. The native helper covers all 23 unary binary32 transcendental entries.
+Binary `powf` and `atan2f` still use the Python oracle and an explicit
+fixed second-operand encoding. Each operation and rounding
 mode uses its own campaign identity and checkpoint directory.
 The benchmark in `measure_native.py` compares its request and expected
 response bytes with the independent Python path at directed boundaries
-in all four modes. Select `--operation log2` to measure the logarithm
-against the same candidate ELF. Its exact powers and signed pole cases
+in all four modes. Select an operation with `--operation`. Exact powers, signed zeros,
+logarithm poles, trigonometric infinities, NaN quieting and range errors
 are checked separately from the one-ULP normal-value allowance. Any nonzero checker result preserves its first
 diagnostic and prevents silently resuming past a known semantic mismatch.
 Candidate outputs, errno, exceptions and control-state bits are all
@@ -61,3 +63,22 @@ checked. Campaign counts stay separate across candidate artifacts,
 rounding modes and oracle backends.
 
 [MPFR reference manual](https://www.mpfr.org/mpfr-current/mpfr.html)
+
+The tier recognizes 92 separate unary domains from 23 operations and
+four rounding modes. Each needs all 2^32 input encodings on one current
+candidate and oracle identity. A complete fixed-second-operand sweep of
+`powf` or `atan2f` counts as one axis only. The Cartesian domain for
+either binary operation in one mode contains 2^64 pairs and remains
+unattempted as a complete domain.
+
+The source gate binds the complete project input snapshot used by the
+Phase 7 checks. A change anywhere in that snapshot makes earlier ledgers
+historical for the current tier. Archived reports retain their original
+archive, probe and oracle identities. The tier grants no current coverage
+on the basis of a historical report.
+
+The one-worker cost varies substantially by operation and input range.
+The sampled gamma run took about 180 seconds for a 262,144-input shard.
+Choose a smaller shard width for a new expensive campaign if needed to
+stay inside the runner's subprocess budget. A different width produces
+a distinct campaign identity and must keep its own checkpoint set.

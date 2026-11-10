@@ -2,6 +2,21 @@
 %ifndef OPEN_ASSEMBLY_636F6D70696C65725F72742E68
 %define OPEN_ASSEMBLY_636F6D70696C65725F72742E68
 
+extern __atomic_compare_exchange
+extern __atomic_compare_exchange_16
+extern __atomic_exchange
+extern __atomic_exchange_16
+extern __atomic_fetch_add_16
+extern __atomic_fetch_and_16
+extern __atomic_fetch_nand_16
+extern __atomic_fetch_or_16
+extern __atomic_fetch_sub_16
+extern __atomic_fetch_xor_16
+extern __atomic_is_lock_free
+extern __atomic_load
+extern __atomic_load_16
+extern __atomic_store
+extern __atomic_store_16
 extern __stack_chk_fail
 
 %endif

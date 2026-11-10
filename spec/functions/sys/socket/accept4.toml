@@ -1,0 +1,18 @@
+name = "accept4"
+header = "sys/socket.h"
+prototype = "int accept4(int fd, struct sockaddr *restrict address, socklen_t *restrict length, int flags)"
+standard = ["Extension ABI accept4"]
+deps = ["__errno_location"]
+errno = ["EAGAIN", "EBADF", "ECONNABORTED", "EFAULT", "EINTR", "EINVAL", "EMFILE", "ENFILE", "ENOBUFS", "ENOMEM", "ENOTSOCK", "EOPNOTSUPP"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:linux-x86-64-network-abi", "diff:glibc", "diff:musl"]
+provenance = "original"
+semantics = [
+  "Accept a connection with optional atomic nonblocking and close-on-exec flags.",
+  "Return the Linux result or minus one with TLS errno. Preserve errno on success.",
+]
+
+[abi]
+narrow_args = ["edi:s32", "ecx:s32"]
+variadic = false

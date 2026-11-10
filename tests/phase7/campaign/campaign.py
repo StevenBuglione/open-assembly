@@ -23,7 +23,11 @@ OPERATIONS = Path("tests/phase7/transcendental/operations.def")
 NATIVE = Path("tests/phase7/campaign")
 NATIVE_ARTIFACTS = ("native-unary", "mpfr.h", "gmp.h")
 NATIVE_BACKEND = "native-mpfr-unary"
-NATIVE_OPERATIONS = {"exp2", "log2"}
+NATIVE_OPERATIONS = {
+    "exp", "exp2", "expm1", "log", "log2", "log10", "log1p", "sin", "cos", "tan",
+    "asin", "acos", "atan", "sinh", "cosh", "tanh", "asinh", "acosh", "atanh",
+    "erf", "erfc", "tgamma", "lgamma",
+}
 
 
 def digest(path):
@@ -57,7 +61,18 @@ def atomic_json(path, data):
 
 
 def read_json(path):
-    return json.loads(path.read_text())
+    def unique(pairs):
+        result = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError(f"{path}: duplicate JSON key {key}")
+            result[key] = value
+        return result
+
+    def nonfinite(value):
+        raise ValueError(f"{path}: invalid JSON number {value}")
+
+    return json.loads(path.read_text(), object_pairs_hook=unique, parse_constant=nonfinite)
 
 
 def source_inputs(gate, root):
@@ -133,7 +148,8 @@ def prepare(args, root):
     backend = "python"
     if args.native_headers is not None:
         if args.operation not in NATIVE_OPERATIONS or args.second is not None:
-            raise ValueError("native MPFR oracle supports only unary exp2 and log2")
+            raise ValueError("native MPFR oracle supports only these unary operations: "
+                             + ", ".join(sorted(NATIVE_OPERATIONS)))
         backend = NATIVE_BACKEND
     folder = args.campaign.resolve()
     folder.mkdir(parents=True, exist_ok=False)

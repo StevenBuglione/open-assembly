@@ -1,0 +1,31 @@
+schema = 1
+
+[[function]]
+symbol = "slice_take"
+abi = "slice-take-abi"
+trace = "slice-take-unit"
+mutations = { slice-take-unit = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23] }
+fuzz = "slice-take-packets"
+model = "tests/oracle/slice/take.py"
+record_size = 32
+result_size = 40
+
+[[function]]
+symbol = "slice_find_byte"
+abi = "slice-find-abi"
+trace = "slice-find-unit"
+mutations = { slice-find-unit = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25] }
+fuzz = "slice-find-packets"
+model = "tests/oracle/slice/find.py"
+record_size = 32
+result_size = 40
+
+[[function]]
+symbol = "slice_load_u32be"
+abi = "slice-load-abi"
+trace = "slice-load-unit"
+mutations = { slice-load-unit = [11, 12, 13, 14, 15, 16, 17] }
+fuzz = "slice-load-packets"
+model = "tests/oracle/slice/load.py"
+record_size = 32
+result_size = 40

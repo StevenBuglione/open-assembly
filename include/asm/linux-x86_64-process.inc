@@ -10,6 +10,7 @@
 %define __AL_NR_GETRLIMIT 97
 %define __AL_NR_GETUID 102
 %define __AL_NR_GETGID 104
+%define __AL_NR_GETEUID 107
 %define __AL_NR_SETPGID 109
 %define __AL_NR_GETPPID 110
 %define __AL_NR_SETRESUID 117

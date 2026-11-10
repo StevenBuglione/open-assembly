@@ -1,0 +1,15 @@
+name = "mmap"
+header = "sys/mman.h"
+prototype = "void *mmap(void *address, size_t length, int protection, int flags, int fd, off_t offset)"
+standard = ["POSIX.1-2024 XSH mmap"]
+deps = ["__errno_location"]
+errno = ["EACCES", "EAGAIN", "EBADF", "EEXIST", "EINVAL", "ENFILE", "ENODEV", "ENOMEM", "EOVERFLOW", "EPERM", "ETXTBSY"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:linux-filesystem-time-abi"]
+provenance = "original"
+semantics = ["Map anonymous storage or an open file using a byte offset. Return MAP_FAILED and errno on error.", "Preserve errno on success and translate Linux errors."]
+
+[abi]
+narrow_args = ["edx:s32", "ecx:s32", "r8d:s32"]
+variadic = false

@@ -263,6 +263,20 @@ yield boundary. These wrappers preserve errno unless an application
 callback modifies its own thread's errno.
 [C17 7.26 draft](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2310.pdf)
 
+## C17 flag and fence boundary
+
+The generated stdatomic header retains the pinned compilers' builtin
+macros and generic operations. Function designators for the six flag
+and fence APIs resolve to the Open Assembly archive. The compiler
+header must expose a one-byte lock-free atomic_flag and the selected
+memory_order values. Sequentially consistent flag clear uses a locked
+byte exchange. Relaxed and release clear use a byte store. Test and set
+uses a locked exchange for all orders. A sequentially consistent
+thread fence uses MFENCE. Inline signal fences preserve the compiler
+ordering boundary and the out-of-line signal fence emits no machine
+fence. Wider non-lock-free compiler atomics have a separate ABI.
+[C17 7.17 draft](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2310.pdf)
+
 ## Verification boundary
 
 Validate raw clone flags, branch-specific stack alignment, cleanup after

@@ -17,6 +17,7 @@ from spec import (IDENTIFIER, ROOT, SpecError, comment_header, keys, load_projec
 
 RUNTIME_SRC = Path("src/x86_64-linux")
 STARTUP_SRC = RUNTIME_SRC / "rt/_start.asm"
+PIE_STARTUP_SRC = RUNTIME_SRC / "rt/__al_pie_entry.asm"
 MANIFEST = Path("tests/runtime/manifest.toml")
 BACKENDS = {"native", "qemu", "valgrind"}
 RUNTIME_BUILD_TIMEOUT = 180
@@ -137,7 +138,7 @@ def build_runtime(directory, log):
             timeout=RUNTIME_BUILD_TIMEOUT)
     startup = directory / "crt1.o"
     archive = directory / "libopenasm.a"
-    sources = sorted(path for path in RUNTIME_SRC.rglob("*.asm") if path != STARTUP_SRC)
+    sources = sorted(path for path in RUNTIME_SRC.rglob("*.asm") if path not in {STARTUP_SRC, PIE_STARTUP_SRC})
     if not sources:
         raise GateError("the runtime library has no source files")
     objects = [directory / "obj" / path.relative_to(RUNTIME_SRC).with_suffix(".o")
@@ -259,6 +260,9 @@ def generate_stub(spec, directory, log):
     call __al_syscall
     ud2
 """
+    elif result_type == "unsigned __int128":
+        external = ""
+        body = "    xor eax, eax\n    xor edx, edx\n    ret\n"
     elif result_type == "long double _Complex":
         external = ""
         body = "    fldz\n    fldz\n    ret\n"

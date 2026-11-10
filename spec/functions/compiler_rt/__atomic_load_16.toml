@@ -1,0 +1,15 @@
+name = "__atomic_load_16"
+header = "compiler_rt.h"
+prototype = "unsigned __int128 __atomic_load_16(const volatile void *object, int order)"
+standard = ["Runtime ABI __atomic_load_16"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["reference:compiler-atomic-abi", "diff:libatomic"]
+provenance = "original"
+semantics = ["Atomically return the 16-byte object representation.", "Use sequentially consistent ordering and the baseline alignment policy.", "Preserve errno."]
+
+[abi]
+narrow_args = ["esi:s32"]
+variadic = false

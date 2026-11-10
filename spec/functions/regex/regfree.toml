@@ -1,0 +1,17 @@
+name = "regfree"
+header = "regex.h"
+prototype = "void regfree(regex_t *expression)"
+standard = ["POSIX.1-2024 XSH regfree"]
+deps = ["free"]
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["reference:posix-regex", "diff:glibc", "diff:musl", "suite:libc-test"]
+provenance = "original"
+semantics = [
+  "Release the compiled program and clear the expression.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

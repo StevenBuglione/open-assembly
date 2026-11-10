@@ -27,6 +27,7 @@
 %define S_IFSOCK 49152
 
 extern chmod
+extern fchmod
 extern fstat
 extern fstatat
 extern lstat

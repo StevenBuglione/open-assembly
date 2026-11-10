@@ -1,0 +1,16 @@
+name = "vector_pop"
+header = "vector.h"
+prototype = "int vector_pop(size_t *restrict state, void *result)"
+standard = ["Extension ABI vector"]
+deps = ["memmove"]
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:arena-vector-model"]
+provenance = "original"
+semantics = ["Remove the last element, copying it to a nonnull result. Return -ENOENT if empty.", "Preserve state and result on failure and preserve errno."]
+
+[abi]
+narrow_args = []
+variadic = false
+noreturn = false

@@ -1,0 +1,18 @@
+name = "epoll_create1"
+header = "sys/epoll.h"
+prototype = "int epoll_create1(int flags)"
+standard = ["Extension ABI epoll_create1"]
+deps = ["__errno_location"]
+errno = ["EINVAL", "EMFILE", "ENFILE", "ENOMEM"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:linux-x86-64-network-abi", "diff:glibc", "diff:musl"]
+provenance = "original"
+semantics = [
+  "Create an epoll instance with the supplied flags.",
+  "Return the Linux result or minus one with TLS errno. Preserve errno on success.",
+]
+
+[abi]
+narrow_args = ["edi:s32"]
+variadic = false

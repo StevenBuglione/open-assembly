@@ -1,0 +1,18 @@
+name = "tcgetsid"
+header = "termios.h"
+prototype = "pid_t tcgetsid(int fd)"
+standard = ["POSIX.1-2024 XSH tcgetsid"]
+deps = ["__errno_location"]
+errno = ["EBADF", "EINTR", "EIO", "ENOTTY"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-termios-uapi"]
+provenance = "original"
+semantics = [
+  "Return the session ID associated with the terminal when the kernel allows the query.",
+  "Preserve errno on success and translate Linux errors.",
+]
+
+[abi]
+narrow_args = ["edi:s32"]
+variadic = false

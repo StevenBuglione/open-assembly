@@ -1,0 +1,18 @@
+name = "tcdrain"
+header = "termios.h"
+prototype = "int tcdrain(int fd)"
+standard = ["POSIX.1-2024 XSH tcdrain"]
+deps = ["__errno_location"]
+errno = ["EBADF", "EINTR", "EIO", "ENOTTY"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-termios-uapi"]
+provenance = "original"
+semantics = [
+  "Wait for queued terminal output to be transmitted without requesting a break.",
+  "Preserve errno on success and translate Linux errors.",
+]
+
+[abi]
+narrow_args = ["edi:s32"]
+variadic = false

@@ -1,0 +1,177 @@
+schema = 1
+
+[[case]]
+name = "slice-take-unit"
+sources = ["tests/ext/slice/unit.c"]
+requires = ["slice_take"]
+args = ["take"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:bounded-slice-model"]
+host_skip = "The independent Python range and byte-sequence model is the oracle."
+
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "slice-take-abi"
+sources = ["tests/ext/slice/abi.c", "tests/phase2/abi.asm"]
+requires = ["slice_take"]
+args = ["take"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:bounded-slice-model"]
+host_skip = "The independent Python range and byte-sequence model is the oracle."
+
+backends = ["native", "qemu"]
+[case.skip]
+valgrind = "Shared nondefault x87 ABI probe exceeds Memcheck emulation."
+
+[[case]]
+name = "slice-take-packets"
+sources = ["tests/ext/slice/take_packets.c"]
+requires = ["slice_take"]
+args = []
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:bounded-slice-model"]
+host_skip = "The independent Python range and byte-sequence model is the oracle."
+
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "slice-find-unit"
+sources = ["tests/ext/slice/unit.c"]
+requires = ["slice_find_byte"]
+args = ["find"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:bounded-slice-model"]
+host_skip = "The independent Python range and byte-sequence model is the oracle."
+
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "slice-find-abi"
+sources = ["tests/ext/slice/abi.c", "tests/phase2/abi.asm"]
+requires = ["slice_find_byte"]
+args = ["find"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:bounded-slice-model"]
+host_skip = "The independent Python range and byte-sequence model is the oracle."
+
+backends = ["native", "qemu"]
+[case.skip]
+valgrind = "Shared nondefault x87 ABI probe exceeds Memcheck emulation."
+
+[[case]]
+name = "slice-find-packets"
+sources = ["tests/ext/slice/find_packets.c"]
+requires = ["slice_find_byte"]
+args = []
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:bounded-slice-model"]
+host_skip = "The independent Python range and byte-sequence model is the oracle."
+
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "slice-load-unit"
+sources = ["tests/ext/slice/unit.c"]
+requires = ["slice_load_u32be"]
+args = ["load"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:bounded-slice-model"]
+host_skip = "The independent Python range and byte-sequence model is the oracle."
+
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "slice-load-abi"
+sources = ["tests/ext/slice/abi.c", "tests/phase2/abi.asm"]
+requires = ["slice_load_u32be"]
+args = ["load"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:bounded-slice-model"]
+host_skip = "The independent Python range and byte-sequence model is the oracle."
+
+backends = ["native", "qemu"]
+[case.skip]
+valgrind = "Shared nondefault x87 ABI probe exceeds Memcheck emulation."
+
+[[case]]
+name = "slice-load-packets"
+sources = ["tests/ext/slice/load_packets.c"]
+requires = ["slice_load_u32be"]
+args = []
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:bounded-slice-model"]
+host_skip = "The independent Python range and byte-sequence model is the oracle."
+
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "slice-guards"
+sources = ["tests/ext/slice/guards.c"]
+requires = ["slice_take", "slice_find_byte", "slice_load_u32be"]
+args = []
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:bounded-slice-model"]
+host_skip = "The independent Python range and byte-sequence model is the oracle."
+backends = ["native", "qemu", "valgrind"]
+
+[[stub]]
+symbol = "slice_take"
+case = "slice-take-unit"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "slice_find_byte"
+case = "slice-find-unit"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "slice_load_u32be"
+case = "slice-load-unit"
+status = 11
+stdout = ""
+stderr = ""
