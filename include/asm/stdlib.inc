@@ -28,6 +28,7 @@ extern strtold
 extern strtoll
 extern strtoul
 extern strtoull
+extern system
 extern unsetenv
 
 %endif

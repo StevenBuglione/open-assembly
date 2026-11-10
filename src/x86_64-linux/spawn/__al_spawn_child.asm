@@ -6,6 +6,8 @@ global __al_spawn_child:function
 extern __al_syscall:function
 extern __al_spawn_attrs:function
 extern __al_spawn_actions:function
+extern __al_exec_search:function
+extern __al_execve_raw:function
 extern close:function
 extern _exit:function
 
@@ -38,13 +40,19 @@ __al_spawn_child:
     call __al_syscall
     cmp rax, -4095
     jae .error
-    mov edi, 59                   ; __NR_execve
-    mov rsi, [rbx]
-    mov rdx, [rbx + 8]
-    mov rcx, [rbx + 16]
-    xor r8d, r8d
-    xor r9d, r9d
-    call __al_syscall
+    mov rdi, [rbx]
+    mov rsi, [rbx + 8]
+    mov rdx, [rbx + 16]
+    mov rcx, [rbx + 56]
+    test rcx, rcx
+    jz .explicit_path
+    lea r8, [rbx + 128]
+    xor r9d, r9d                  ; report ENOEXEC without shell fallback
+    call __al_exec_search
+    jmp .exec_return
+.explicit_path:
+    call __al_execve_raw
+.exec_return:
     cmp rax, -4095
     jae .error
     mov rax, -5                   ; an exec success cannot return

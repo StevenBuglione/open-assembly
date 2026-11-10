@@ -42,7 +42,9 @@ extern fwrite
 extern getc
 extern getc_unlocked
 extern getchar
+extern pclose
 extern perror
+extern popen
 extern printf
 extern putc
 extern putchar

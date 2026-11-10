@@ -1,0 +1,19 @@
+name = "pclose"
+header = "stdio.h"
+prototype = "int pclose(FILE *stream)"
+standard = ["POSIX.1-2024 XSH pclose"]
+deps = ["close", "free", "__errno_location"]
+errno = ["ECHILD", "EINVAL", "EIO"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:linux-shell-process"]
+provenance = "original"
+semantics = [
+  "Close a popen stream and wait for its associated child.",
+  "Retry an interrupted wait. Return the raw wait status on success.",
+  "Report stream or wait errors as -1 and errno. An unrelated stream fails with EINVAL and remains open.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

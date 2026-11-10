@@ -116,8 +116,23 @@ Use the x86-64 `fork` syscall for the initial single-thread runtime.
 The child inherits its stack and TLS values in a separate address
 space. The later threading work owns at-fork handlers and lock recovery.
 `execve` passes the supplied argument and environment vectors to the
-kernel. Its ordinary return is an error. Convenience wrappers can use
-the runtime's `environ` and implement PATH search separately.
+kernel. Its ordinary return is an error. `execv` uses the runtime's
+`environ`. `execvp` and `posix_spawnp` search the calling environment's
+PATH when the name contains no slash. Search left to right and treat empty
+elements as the current directory. An unset PATH selects `/bin:/usr/bin`.
+Keep at most 4095 pathname bytes plus the terminator per candidate. If all
+candidates exceed that bound, return ENAMETOOLONG. Continue past ENOENT and
+ENOTDIR, and return EACCES if a candidate was denied and none succeeds.
+Other kernel errors terminate the search. For ENOEXEC, `execvp` invokes
+`/bin/sh` with the candidate and arguments after the original argv[0].
+`posix_spawnp` reports ENOEXEC through the child handshake. It uses the
+caller's PATH and passes the supplied envp to the new image. The parent
+prepares pathname storage before fork. The child searches after applying
+attributes and file actions, without allocating. PATH callers must
+serialize concurrent mutation of the environment.
+[Linux exec](https://man7.org/linux/man-pages/man3/exec.3.html) ·
+[POSIX spawn](https://pubs.opengroup.org/onlinepubs/9799919799/functions/posix_spawn.html) ·
+[Austin Group ENOEXEC interpretation](https://www.austingroupbugs.net/view.php?id=1674)
 `pid_t` is a signed 32-bit integer. `getpid` and `getppid` make raw
 Linux queries and preserve errno. `pipe2` creates the two descriptors
 with atomic flags and preserves its output array on error. The selected
@@ -146,6 +161,19 @@ signal mask. Child signal delivery stays blocked through descriptor and
 attribute setup. The parent restores its own mask and publishes a child
 ID only after the handshake succeeds.
 [POSIX posix_spawn](https://pubs.opengroup.org/onlinepubs/9799919799/functions/posix_spawn.html)
+
+## Shell commands and pipe streams
+
+`system` and `popen` execute the system command interpreter at `/bin/sh`.
+A child-side shell execution failure has exit status 127. `system` serializes
+temporary SIGINT and SIGQUIT dispositions, blocks SIGCHLD in the waiting
+thread, and restores the inherited child mask and dispositions before exec.
+`popen` creates a one-way pipe, redirects the child's input or output, and
+closes older pipe streams in the child. The optional `e` mode keeps the
+parent descriptor close-on-exec. A pipe stream stores its child PID in the
+private stream record at byte 88. `pclose` removes the stream from the
+registry, closes it, and waits for that PID with the stdio lock released.
+[Linux system](https://man7.org/linux/man-pages/man3/system.3.html) · [Linux popen](https://man7.org/linux/man-pages/man3/popen.3.html)
 
 ## Signals and non-local control flow
 
