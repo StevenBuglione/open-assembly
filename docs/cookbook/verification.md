@@ -58,6 +58,16 @@ Its manifest records the host comparison scope for custom zone names.
 
 ## Phase 8 thread lifecycle
 
+`./tools/container make phase8-sync phase8-c11` checks the independently
+authored synchronization and C11 fixtures. The reports bind the same
+freestanding archive to native, QEMU, and Memcheck runs, hosted comparison
+cases, and exact per-symbol stub rejections. The C11 fault fixture wraps
+only the runtime syscall boundary for selected mmap, nanosleep, and
+scheduler-yield operations. Cancellation, process-shared and robust
+mutexes, and full detector stress remain separate scopes.
+[POSIX synchronization fixtures](../../tests/phase8/sync/README.md) ·
+[C11 thread fixtures](../../tests/phase8/c11/README.md)
+
 `./tools/container make phase8-lifecycle` runs the six initial pthread
 APIs against archive-only links. The suite measures compiler TLS and
 errno isolation, guarded stacks, lifecycle claims, detached cleanup,
