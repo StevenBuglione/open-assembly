@@ -439,6 +439,9 @@ def main(default_fixture=None):
         parser.error("invalid function name")
     if args.production or (args.function is not None and args.fixture is None
                            and any(Path("src/x86_64-linux").glob(f"*/{args.function}.asm"))):
+        from runtime_gate import ERRNO, runtime_production
+        if args.function == ERRNO:
+            return runtime_production(args.function, default_fixture)
         from production import production
         return production(args.function, default_fixture)
     if args.function not in (None, "strlen"):

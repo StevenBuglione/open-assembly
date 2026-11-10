@@ -40,8 +40,8 @@ The production gate uses the shipped assembly source and the independent
 manifest under `tests/phase2/`. It renames the candidate and its linked
 assembly dependencies in copies of the objects so the hosted test process
 can still call glibc or musl independently. The numeric differentials use
-the host thread-local errno accessor. Phase 1 tests the runtime's own TLS
-and errno accessor on the freestanding link.
+the host thread-local errno accessor. Their gate also requires fresh
+per-function evidence for Open Assembly's accessor from a freestanding link.
 
 Each local gate checks the static ABI model, executable symbols, native ABI,
 fixed vectors, guarded access where applicable, and glibc and musl
@@ -112,6 +112,30 @@ function through the static linker. Each selected independent probe must
 report its expected rejection. A link error or an unexpected crash fails
 the gate. The full report is `build/evidence/phase1.json`, with source and
 tool hashes, expected and observed results, and reasons for backend skips.
+
+### Runtime errno accessor
+
+```sh
+./tools/container make gate FUNC=__errno_location
+```
+
+The per-function gate calls the actual accessor from freestanding programs
+linked with the runtime archive. The independent context fixture installs
+two synthetic FS bases and checks that each returns its own writable errno
+cell, that a write to one leaves the other intact, and that the original
+thread state is restored. Its native ABI probe checks the saved CPU state.
+A separate glibc program checks the common pointer and value contract.
+
+QEMU confirms execution of the candidate instructions. There are no
+conditional edges in the accessor. The oracle rejects the generated stub,
+both one-byte TCB offset changes, and omission of the TCB self pointer.
+This accessor has no argument-driven control flow, so the independent
+context model covers its varying state. The upstream libc-test snapshot
+has no case for this runtime-specific ABI entry.
+
+The report is `build/evidence/__errno_location.production.json`. The
+queue uses this scope for the accessor. The rest of Phase 1 and the
+allocator and environment remain covered by their milestone gates.
 
 ## Phase 0 fixture verification
 

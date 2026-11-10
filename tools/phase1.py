@@ -176,7 +176,7 @@ def build_runtime(directory, log):
     return startup, archive, exports, hashes
 
 
-def build_case(case, directory, runtime, log, stub=None, *, link_wraps=()):
+def build_case(case, directory, runtime, log, stub=None, *, link_wraps=(), candidate=None):
     startup, archive, exports, _ = runtime
     directory.mkdir()
     objects = []
@@ -214,6 +214,13 @@ def build_case(case, directory, runtime, log, stub=None, *, link_wraps=()):
         symbol, obj = stub
         wrapper = f"__wrap_{symbol}"
         wrap_options.append(f"--wrap={symbol}")
+        objects.append(obj)
+    if candidate:
+        name, obj = candidate
+        if (stub or name not in case.requires or exports.get(name) != "T"
+                or nm_symbols(log, obj, ["-g", "--defined-only"]) != {name: "T"}):
+            raise GateError(f"{case.name}: debug or mutant object does not replace a required function")
+        wrap_options.append(f"--unique=.text.{name}")
         objects.append(obj)
     checked(log, [*RUNTIME_LINK, *wrap_options, "-o", binary, startup, *objects, archive])
     checked(log, ["tools/elf-audit", binary])

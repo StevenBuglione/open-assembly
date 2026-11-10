@@ -6,6 +6,7 @@ import os
 import re
 
 from production import production
+from runtime_gate import ERRNO, runtime_production
 from spec import IDENTIFIER, ROOT
 
 parser = argparse.ArgumentParser(description=__doc__)
@@ -14,4 +15,5 @@ args = parser.parse_args()
 if re.fullmatch(IDENTIFIER, args.function) is None:
     parser.error("invalid function name")
 os.chdir(ROOT)
-raise SystemExit(production(args.function, "coverage"))
+execute = runtime_production if args.function == ERRNO else production
+raise SystemExit(execute(args.function, "coverage"))

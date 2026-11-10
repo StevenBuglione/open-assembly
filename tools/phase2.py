@@ -9,6 +9,7 @@ import sys
 from gate import EVIDENCE, GateError, run, write_evidence
 from phase2_helpers import HELPER, WRAPPERS
 from production import phase2_inputs
+from runtime_gate import ERRNO
 from spec import ROOT, load_project, sha256_file
 
 ADDITIONAL = {"atoi", "atol", "atoll", "strtol", "strtoll", "strtoul", "strtoull",
@@ -36,7 +37,10 @@ def check_function(function, only):
         if result["returncode"] == 0:
             try:
                 record = json.loads(report.read_text(encoding="utf-8"))
-                scope = f"production-{only}" if only else "production-function"
+                if function == ERRNO:
+                    scope = "production-runtime-function"
+                else:
+                    scope = f"production-{only}" if only else "production-function"
                 if (record.get("scope") == scope and record.get("outcome") == "pass"
                         and record.get("function") == function and record.get("inputs") == phase2_inputs()
                         and record.get("production_verified") is (only is None)):
@@ -81,6 +85,7 @@ def main():
     results = {}
     with ThreadPoolExecutor(max_workers=args.jobs) as pool:
         scanner = pool.submit(check_scanner) if not args.only and set(WRAPPERS) & set(functions) else None
+        errno = pool.submit(check_function, ERRNO, None) if scanner else None
         by_name = {}
 
         def submit(function):
@@ -92,7 +97,7 @@ def main():
                 if spec is not None:
                     dependencies.extend(submit(dep) for dep in spec.deps if dep in functions)
                 if scanner and function in WRAPPERS:
-                    dependencies.append(scanner)
+                    dependencies.extend((scanner, errno))
             future = pool.submit(check_after, function, args.only, dependencies)
             by_name[function] = future
             return future
@@ -100,6 +105,7 @@ def main():
         futures = {submit(function): function for function in functions}
         if scanner:
             futures[scanner] = HELPER
+            futures[errno] = ERRNO
         for future in as_completed(futures):
             function = futures[future]
             result = future.result()
@@ -108,13 +114,16 @@ def main():
             if result["outcome"] != "pass":
                 print(result.get("error") or result.get("stderr", "").strip(), file=sys.stderr, flush=True)
     helper = results.pop(HELPER, None)
+    tls = results.pop(ERRNO, None)
     passed = sum(result["outcome"] == "pass" for result in results.values())
-    success = passed == len(functions) and (helper is None or helper["outcome"] == "pass")
+    success = passed == len(functions) and all(item is None or item["outcome"] == "pass"
+                                               for item in (helper, tls))
     evidence = {"schema_version": 1, "scope": "phase2-batch" if not args.only else f"phase2-batch-{args.only}",
                 "outcome": "pass" if success else "fail", "passed": passed,
                 "total": len(functions), "functions": results, "full_scope": set(functions) == set(available)}
     if helper is not None:
         evidence["shared_integer_scanner"] = helper
+        evidence["runtime_tls_accessor"] = tls
     report = write_evidence(f"phase2.{args.only}" if args.only else "phase2", evidence)
     print(f"Phase 2 gate results {passed}/{len(functions)}. Evidence at {report}", flush=True)
     return 0 if success else 1
