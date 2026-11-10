@@ -12,6 +12,7 @@ wait4 = 61
 getrlimit = 97
 getuid = 102
 getgid = 104
+geteuid = 107
 setpgid = 109
 getppid = 110
 setresuid = 117

@@ -1,0 +1,141 @@
+schema = 1
+
+[[case]]
+name = "inet-htons"
+sources = ["tests/phase10/inet/codecs.c"]
+requires = ["htons"]
+args = ["htons"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:network-byte-order"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "inet-ntohs"
+sources = ["tests/phase10/inet/codecs.c"]
+requires = ["ntohs"]
+args = ["ntohs"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:network-byte-order"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "inet-htonl"
+sources = ["tests/phase10/inet/codecs.c"]
+requires = ["htonl"]
+args = ["htonl"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:network-byte-order"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "inet-ntohl"
+sources = ["tests/phase10/inet/codecs.c"]
+requires = ["ntohl"]
+args = ["ntohl"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:network-byte-order"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "inet-pton"
+sources = ["tests/phase10/inet/codecs.c"]
+requires = ["inet_pton"]
+args = ["pton"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:rfc4291"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "inet-ntop"
+sources = ["tests/phase10/inet/codecs.c"]
+requires = ["inet_ntop"]
+args = ["ntop"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:rfc5952"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "inet-compatible"
+sources = ["tests/phase10/inet/codecs.c"]
+requires = ["inet_pton", "inet_ntop"]
+args = ["compatible"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:rfc5952"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The project renders nonmapped IPv4-compatible addresses as hexadecimal words."
+
+[[stub]]
+symbol = "htons"
+case = "inet-htons"
+status = 10
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "ntohs"
+case = "inet-ntohs"
+status = 10
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "htonl"
+case = "inet-htonl"
+status = 10
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "ntohl"
+case = "inet-ntohl"
+status = 10
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "inet_pton"
+case = "inet-pton"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "inet_ntop"
+case = "inet-ntop"
+status = 11
+stdout = ""
+stderr = ""

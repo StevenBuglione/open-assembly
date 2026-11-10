@@ -1,0 +1,18 @@
+name = "getpeername"
+header = "sys/socket.h"
+prototype = "int getpeername(int fd, struct sockaddr *restrict address, socklen_t *restrict length)"
+standard = ["POSIX.1-2024 XSH getpeername"]
+deps = ["__errno_location"]
+errno = ["EBADF", "EFAULT", "EINVAL", "ENOBUFS", "ENOTCONN", "ENOTSOCK"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:linux-x86-64-network-abi", "diff:glibc", "diff:musl"]
+provenance = "original"
+semantics = [
+  "Return the connected peer address and actual address length.",
+  "Return the Linux result or minus one with TLS errno. Preserve errno on success.",
+]
+
+[abi]
+narrow_args = ["edi:s32"]
+variadic = false

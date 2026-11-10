@@ -1,0 +1,347 @@
+schema = 1
+
+[[case]]
+name = "terminal-tcgetattr"
+sources = ["tests/phase10/terminal/attributes.c"]
+requires = ["tcgetattr"]
+args = ["tcgetattr"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-termios", "reference:posix-termios"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "terminal-tcsetattr"
+sources = ["tests/phase10/terminal/attributes.c"]
+requires = ["tcsetattr"]
+args = ["tcsetattr"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-termios", "reference:posix-termios"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "terminal-cfgetispeed"
+sources = ["tests/phase10/terminal/attributes.c"]
+requires = ["cfgetispeed"]
+args = ["cfgetispeed"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-termios", "reference:posix-termios"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "terminal-cfgetospeed"
+sources = ["tests/phase10/terminal/attributes.c"]
+requires = ["cfgetospeed"]
+args = ["cfgetospeed"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-termios", "reference:posix-termios"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "terminal-cfsetispeed"
+sources = ["tests/phase10/terminal/attributes.c"]
+requires = ["cfsetispeed"]
+args = ["cfsetispeed"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-termios", "reference:posix-termios"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "terminal-cfsetospeed"
+sources = ["tests/phase10/terminal/attributes.c"]
+requires = ["cfsetospeed"]
+args = ["cfsetospeed"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-termios", "reference:posix-termios"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "terminal-encoding"
+sources = ["tests/phase10/terminal/attributes.c"]
+requires = ["cfgetispeed", "cfgetospeed", "cfsetispeed", "cfsetospeed"]
+args = ["encoding"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-termios", "reference:posix-termios"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Project raw Linux CBAUD and CIBAUD representation."
+env = {}
+
+[[case]]
+name = "terminal-tcdrain"
+sources = ["tests/phase10/terminal/controls.c"]
+requires = ["tcdrain"]
+args = ["tcdrain"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-termios", "reference:posix-termios"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "terminal-tcflow"
+sources = ["tests/phase10/terminal/controls.c"]
+requires = ["tcflow"]
+args = ["tcflow"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-termios", "reference:posix-termios"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "terminal-tcflush"
+sources = ["tests/phase10/terminal/controls.c"]
+requires = ["tcflush"]
+args = ["tcflush"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-termios", "reference:posix-termios"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "terminal-tcsendbreak"
+sources = ["tests/phase10/terminal/controls.c"]
+requires = ["tcsendbreak"]
+args = ["tcsendbreak"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-termios", "reference:posix-termios"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "terminal-tcgetsid"
+sources = ["tests/phase10/terminal/controls.c"]
+requires = ["tcgetsid"]
+args = ["tcgetsid"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-termios", "reference:posix-termios"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "terminal-reject-drain"
+sources = ["tests/phase10/terminal/controls.c"]
+requires = ["tcdrain"]
+args = ["reject-drain"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-termios", "reference:posix-termios"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "terminal-reject-flow"
+sources = ["tests/phase10/terminal/controls.c"]
+requires = ["tcflow"]
+args = ["reject-flow"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-termios", "reference:posix-termios"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "terminal-reject-flush"
+sources = ["tests/phase10/terminal/controls.c"]
+requires = ["tcflush"]
+args = ["reject-flush"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-termios", "reference:posix-termios"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "terminal-reject-break"
+sources = ["tests/phase10/terminal/controls.c"]
+requires = ["tcsendbreak"]
+args = ["reject-break"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-termios", "reference:posix-termios"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "terminal-errors"
+sources = ["tests/phase10/terminal/controls.c"]
+requires = ["tcgetattr", "tcsetattr", "tcdrain", "tcflow", "tcflush", "tcsendbreak", "tcgetsid"]
+args = ["errors"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-termios", "reference:posix-termios"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "terminal-ioctl"
+sources = ["tests/phase10/terminal/ioctl.c"]
+requires = ["tcgetattr", "tcsetattr", "tcdrain", "tcflow", "tcflush", "tcsendbreak", "tcgetsid"]
+args = []
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-termios", "reference:posix-termios"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Checks exact Linux ioctl requests and signed arguments at the private syscall ABI."
+link_wraps = ["__al_syscall"]
+env = {}
+
+[[case]]
+name = "terminal-abi"
+sources = ["tests/phase10/terminal/abi.c", "tests/phase2/abi.asm"]
+requires = ["tcgetattr", "tcsetattr", "cfgetispeed", "cfgetospeed", "cfsetispeed", "cfsetospeed", "tcdrain", "tcflow", "tcflush", "tcsendbreak", "tcgetsid"]
+args = []
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-termios", "reference:posix-termios"]
+backends = ["native", "qemu"]
+host_skip = "Direct project SysV ABI and poison in unspecified narrow argument bits."
+env = {}
+[case.skip]
+valgrind = "Pinned Memcheck changes x87 control bits in the calibrated no-op ABI probe. The independent terminal semantics all run under Memcheck."
+
+[[stub]]
+symbol = "tcgetattr"
+case = "terminal-tcgetattr"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "tcsetattr"
+case = "terminal-tcsetattr"
+status = 13
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "cfgetispeed"
+case = "terminal-cfgetispeed"
+status = 21
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "cfgetospeed"
+case = "terminal-cfgetospeed"
+status = 22
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "cfsetispeed"
+case = "terminal-cfsetispeed"
+status = 23
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "cfsetospeed"
+case = "terminal-cfsetospeed"
+status = 24
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "tcgetsid"
+case = "terminal-tcgetsid"
+status = 15
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "tcdrain"
+case = "terminal-reject-drain"
+status = 31
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "tcflow"
+case = "terminal-reject-flow"
+status = 32
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "tcflush"
+case = "terminal-reject-flush"
+status = 33
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "tcsendbreak"
+case = "terminal-reject-break"
+status = 34
+stdout = ""
+stderr = ""

@@ -16,16 +16,27 @@ extern optopt:data
 %define SEEK_END 2
 %define SEEK_DATA 3
 %define SEEK_HOLE 4
+%define F_OK 0
+%define X_OK 1
+%define W_OK 2
+%define R_OK 4
+%define _SC_PAGESIZE 30
+%define _SC_PAGE_SIZE 30
 
 extern _exit
+extern access
 extern close
 extern dup
 extern dup2
 extern execv
 extern execve
 extern execvp
+extern fchown
 extern fork
+extern fsync
+extern ftruncate
 extern getcwd
+extern geteuid
 extern getopt
 extern getpid
 extern getppid
@@ -33,9 +44,12 @@ extern isatty
 extern lseek
 extern pipe
 extern pipe2
+extern pread
+extern pwrite
 extern read
 extern readlink
 extern rmdir
+extern sysconf
 extern unlink
 extern write
 

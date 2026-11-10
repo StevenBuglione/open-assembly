@@ -1,0 +1,20 @@
+name = "asctime"
+header = "time.h"
+prototype = "char *asctime(const struct tm *timeptr)"
+standard = ["C17 7.27.3.1"]
+deps = ["__errno_location", "strftime"]
+errno = ["EINVAL", "EOVERFLOW"]
+mt_safe = false
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:c17-civil-text"]
+provenance = "original"
+semantics = [
+  "Convert a valid broken-down time to the fixed 25-character C17 representation and terminator.",
+  "Use the same C date and time names in the supported C and C.UTF-8 locales.",
+  "Return a pointer to static text storage. Reject years outside 1000 through 9999 with EOVERFLOW.",
+  "Reject out-of-range rendered fields with EINVAL rather than publishing partial text.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

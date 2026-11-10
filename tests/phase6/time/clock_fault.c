@@ -5,6 +5,7 @@
 enum fault { none, truncation, cpu_overflow, cpu_error, realtime_wide, realtime_error };
 static enum fault armed;
 static unsigned injections;
+extern void *__al_auxv;
 
 long __real___al_syscall(long, long, long, long, long, long, long);
 
@@ -50,7 +51,12 @@ int main(void)
     time_t stored = -17;
     armed = realtime_wide;
     errno = TEST_ERRNO;
-    if (time(&stored) != (1L << 40) + 123 || stored != (1L << 40) + 123 ||
+    /* Resolve the realtime cache on its raw path, then restore startup auxv. */
+    void *saved_auxv = __al_auxv;
+    __al_auxv = NULL;
+    time_t actual = time(&stored);
+    __al_auxv = saved_auxv;
+    if (actual != (1L << 40) + 123 || stored != (1L << 40) + 123 ||
         errno != TEST_ERRNO || armed != none || injections != 4)
         return 13;
     stored = -19;

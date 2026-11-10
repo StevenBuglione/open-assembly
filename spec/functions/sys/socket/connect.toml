@@ -1,0 +1,18 @@
+name = "connect"
+header = "sys/socket.h"
+prototype = "int connect(int fd, const struct sockaddr *address, socklen_t length)"
+standard = ["POSIX.1-2024 XSH connect"]
+deps = ["__errno_location"]
+errno = ["EACCES", "EADDRINUSE", "EADDRNOTAVAIL", "EAFNOSUPPORT", "EAGAIN", "EALREADY", "EBADF", "ECONNREFUSED", "EFAULT", "EINPROGRESS", "EINTR", "EISCONN", "ENETUNREACH", "ENOTSOCK", "ETIMEDOUT"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:linux-x86-64-network-abi", "diff:glibc", "diff:musl"]
+provenance = "original"
+semantics = [
+  "Connect or initiate a nonblocking connection to the supplied address.",
+  "Return the Linux result or minus one with TLS errno. Preserve errno on success.",
+]
+
+[abi]
+narrow_args = ["edi:s32", "edx:u32"]
+variadic = false

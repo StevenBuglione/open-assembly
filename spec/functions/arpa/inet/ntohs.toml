@@ -1,0 +1,18 @@
+name = "ntohs"
+header = "arpa/inet.h"
+prototype = "uint16_t ntohs(uint16_t value)"
+standard = ["POSIX.1-2024 XSH ntohs"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["reference:linux-x86-64-network-abi", "diff:glibc", "diff:musl"]
+provenance = "original"
+semantics = [
+  "Reverse the byte order of a 16-bit integer on x86-64.",
+  "Preserve errno.",
+]
+
+[abi]
+narrow_args = ["di:u16"]
+variadic = false

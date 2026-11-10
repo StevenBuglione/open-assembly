@@ -1,0 +1,19 @@
+name = "fnmatch"
+header = "fnmatch.h"
+prototype = "int fnmatch(const char *pattern, const char *string, int flags)"
+standard = ["POSIX.1-2024 XSH fnmatch"]
+deps = ["iswctype", "towlower", "towupper", "wctype"]
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:posix-pattern-matching", "diff:glibc", "diff:musl"]
+provenance = "original"
+semantics = [
+  "Match a shell pattern against the entire input under the selected pathname, escape, period and case-folding flags.",
+  "Use C-locale byte units or C.UTF-8 scalar units and the current character classes.",
+  "Return zero for a match or FNM_NOMATCH otherwise. Preserve errno.",
+]
+
+[abi]
+narrow_args = ["edx:s32"]
+variadic = false

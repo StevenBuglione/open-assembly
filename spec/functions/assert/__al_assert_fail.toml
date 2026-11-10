@@ -1,0 +1,20 @@
+name = "__al_assert_fail"
+header = "assert.h"
+prototype = "_Noreturn void __al_assert_fail(const char *expression, const char *file, unsigned int line, const char *function)"
+standard = ["Runtime ABI __al_assert_fail"]
+deps = ["abort", "strlen"]
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:c17-assert", "reference:freestanding-abort"]
+provenance = "original"
+semantics = [
+  "Report the failed assertion expression, file, line, and C function on standard error.",
+  "Use the fatal raw diagnostic path without acquiring a stdio lock.",
+  "Invoke abort after the diagnostic. Never return.",
+]
+
+[abi]
+narrow_args = ["edx:u32"]
+variadic = false
+noreturn = true

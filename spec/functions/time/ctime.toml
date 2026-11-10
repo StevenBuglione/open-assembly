@@ -1,0 +1,19 @@
+name = "ctime"
+header = "time.h"
+prototype = "char *ctime(const time_t *timer)"
+standard = ["C17 7.27.3.2"]
+deps = ["asctime", "localtime_r"]
+errno = ["EINVAL", "EOVERFLOW"]
+mt_safe = false
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:c17-civil-text"]
+provenance = "original"
+semantics = [
+  "Convert the calendar time to local broken-down time and use the C17 asctime representation.",
+  "Use the shared static text result without overwriting the public localtime structure.",
+  "Return null for an unrepresentable local time or text year.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

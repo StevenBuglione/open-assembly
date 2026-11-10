@@ -13,6 +13,13 @@ has an exact generated-stub rejection. Fault probes cover malformed directory
 records, pipe descriptor exhaustion, allocated formatting failure, and unlocked
 stream lock ownership. The manifests record backend-specific omissions.
 
+`./tools/container make phase6-fcntl` checks typed variadic descriptor
+control, 64-bit process and OFD locks, and successful negative process
+group owners. It also exercises the reserved -1 result using the
+container's PID namespace and requires the exact bad-fd stub rejection.
+Evidence is written to `build/evidence/phase6-fcntl.json`.
+[Descriptor control fixtures](../../tests/phase6/fcntl/README.md)
+
 The BusyBox gate extracts the pinned 1.37.0 source with networking disabled.
 It builds the six selected upstream applets with freestanding, no-builtin
 flags, then uses the actual Kbuild link objects and the Open Assembly startup
@@ -55,6 +62,12 @@ production checks have separate requirements.
 The `phase6-strftime` gate checks C-locale directives and modifiers,
 exact buffer limits, and the ISO week-year across a full 400-year cycle.
 Its manifest records the host comparison scope for custom zone names.
+
+`./tools/container make phase6-sqlite` runs three pinned SQLite 3.53.3
+workloads: speedtest1, the threadtest3 shared-cache readers, and the
+single-worker threadtest5 control. The gate checks reproducible archive-only
+links and compares results under native Linux, QEMU, Memcheck, glibc and musl.
+[SQLite workload details](../../tests/external/sqlite/README.md)
 
 ## Phase 8 thread lifecycle
 

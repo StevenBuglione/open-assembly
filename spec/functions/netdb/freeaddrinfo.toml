@@ -1,0 +1,18 @@
+name = "freeaddrinfo"
+header = "netdb.h"
+prototype = "void freeaddrinfo(struct addrinfo *list)"
+standard = ["POSIX.1-2024 XSH freeaddrinfo"]
+deps = ["free"]
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["reference:rfc3493", "reference:local-netdb", "diff:glibc", "diff:musl"]
+provenance = "original"
+semantics = [
+  "Free each address information node in the supplied list and its associated storage.",
+  "Support a detached sublist and a null list. Preserve errno.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

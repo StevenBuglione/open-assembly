@@ -1,0 +1,19 @@
+name = "inet_pton"
+header = "arpa/inet.h"
+prototype = "int inet_pton(int family, const char *restrict source, void *restrict destination)"
+standard = ["POSIX.1-2024 XSH inet_pton"]
+deps = ["__errno_location"]
+errno = ["EAFNOSUPPORT"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:rfc4291", "reference:rfc3986", "diff:glibc", "diff:musl"]
+provenance = "original"
+semantics = [
+  "Parse a numeric IPv4 or IPv6 address into network-order bytes and return one.",
+  "Return zero for invalid text without changing the destination or errno.",
+  "Return minus one with EAFNOSUPPORT for other families.",
+]
+
+[abi]
+narrow_args = ["edi:s32"]
+variadic = false

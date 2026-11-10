@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Audit x86-64 ELF objects and static non-PIE executables."""
+"""Audit x86-64 ELF objects and static executables."""
 
 import argparse
 from pathlib import Path
@@ -12,13 +12,13 @@ def output(tool, flags, path):
     return subprocess.run([tool, flags, str(path)], check=True, capture_output=True, text=True).stdout
 
 
-def audit(path, object_kind, hosted_test):
+def audit(path, object_kind, hosted_test, static_pie=False):
     header = output("readelf", "-hW", path)
     required = (r"Class:\s+ELF64", r"Data:\s+2's complement, little endian",
                 r"Machine:\s+Advanced Micro Devices X86-64")
     if not all(re.search(pattern, header) for pattern in required):
         return "expected a little-endian x86-64 ELF64 file"
-    kind = "REL" if object_kind else "EXEC"
+    kind = "REL" if object_kind else "DYN" if static_pie else "EXEC"
     if not re.search(rf"Type:\s+{kind}\b", header):
         return f"expected ELF type {kind}"
     sections = output("readelf", "-SW", path)
@@ -48,7 +48,7 @@ def audit(path, object_kind, hosted_test):
             return "compiler producer metadata in assembly object"
         return None
     program = [line.split() for line in output("readelf", "-lW", path).splitlines() if line.strip()]
-    if not hosted_test and any(fields[0] in {"INTERP", "DYNAMIC"} for fields in program):
+    if not hosted_test and not static_pie and any(fields[0] in {"INTERP", "DYNAMIC"} for fields in program):
         return "dynamic loader or dynamic table present"
     stack = [fields for fields in program if fields[0] == "GNU_STACK"]
     if len(stack) != 1 or "".join(stack[0][6:-1]) != "RW":
@@ -58,6 +58,11 @@ def audit(path, object_kind, hosted_test):
             return "writable executable load segment"
     if any({"W", "X"} <= set(flags) for _, _, flags in parsed_sections):
         return "writable executable section"
+    if static_pie:
+        from pie_elf import audit_static_pie
+
+        if problem := audit_static_pie(path):
+            return problem
     if not hosted_test and output("nm", "-u", path).strip():
         return "undefined symbols in linked executable"
     return None
@@ -69,12 +74,13 @@ def main():
     options.add_argument("--assembly-object", dest="object_kind", action="store_const", const="assembly")
     options.add_argument("--test-object", dest="object_kind", action="store_const", const="test")
     options.add_argument("--hosted-test", action="store_true")
+    options.add_argument("--static-pie", action="store_true")
     parser.add_argument("paths", type=Path, nargs="+")
     args = parser.parse_args()
     failed = False
     for path in args.paths:
         try:
-            problem = audit(path, args.object_kind, args.hosted_test)
+            problem = audit(path, args.object_kind, args.hosted_test, args.static_pie)
         except subprocess.CalledProcessError as error:
             problem = error.stderr.strip() or str(error)
         except OSError as error:

@@ -1,0 +1,752 @@
+schema = 1
+
+[[case]]
+name = "net-sockets-pair"
+sources = ["tests/phase10/endpoints/sockets.c"]
+requires = ["socketpair", "send", "recv", "shutdown"]
+args = ["pair"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-socket-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "net-sockets-tcp"
+sources = ["tests/phase10/endpoints/sockets.c"]
+requires = ["socket", "bind", "listen", "connect", "getsockname", "getpeername", "accept"]
+args = ["tcp"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-socket-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "net-sockets-accept4"
+sources = ["tests/phase10/endpoints/sockets.c"]
+requires = ["socket", "bind", "listen", "connect", "getsockname", "getpeername", "accept4"]
+args = ["accept4"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-socket-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "net-sockets-udp"
+sources = ["tests/phase10/endpoints/sockets.c"]
+requires = ["socket", "bind", "getsockname", "sendto", "recvfrom"]
+args = ["udp"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-socket-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "net-sockets-options"
+sources = ["tests/phase10/endpoints/sockets.c"]
+requires = ["socket", "setsockopt", "getsockopt"]
+args = ["options"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-socket-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "net-sockets-ancillary"
+sources = ["tests/phase10/endpoints/sockets.c"]
+requires = ["socketpair", "sendmsg", "recvmsg"]
+args = ["ancillary"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-socket-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "net-sockets-ancillary-bounds"
+sources = ["tests/phase10/endpoints/sockets.c"]
+requires = ["__al_cmsg_nxthdr"]
+args = ["ancillary-bounds"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-socket-abi"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Uses the project macro contract for truncated and malformed ancillary records."
+
+[[case]]
+name = "net-sockets-sigpipe"
+sources = ["tests/phase10/endpoints/sockets.c"]
+requires = ["socketpair", "send"]
+args = ["sigpipe"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-socket-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "net-sockets-short"
+sources = ["tests/phase10/endpoints/sockets.c"]
+requires = ["socketpair", "setsockopt", "send", "recv"]
+args = ["short"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-socket-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "net-readiness-poll"
+sources = ["tests/phase10/endpoints/readiness.c"]
+requires = ["poll", "ppoll"]
+args = ["poll"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-socket-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "net-readiness-large-count"
+sources = ["tests/phase10/endpoints/readiness.c"]
+requires = ["poll", "ppoll"]
+args = ["large-count"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-socket-abi"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Uses the project rejection contract for counts larger than the Linux kernel argument."
+
+[[case]]
+name = "net-readiness-epoll"
+sources = ["tests/phase10/endpoints/readiness.c"]
+requires = ["epoll_create", "epoll_ctl", "epoll_wait"]
+args = ["epoll"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-socket-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "net-readiness-epoll-create1"
+sources = ["tests/phase10/endpoints/readiness.c"]
+requires = ["epoll_create1", "epoll_ctl", "epoll_wait"]
+args = ["epoll-create1"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-socket-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "net-readiness-mask-poll"
+sources = ["tests/phase10/endpoints/readiness.c"]
+requires = ["ppoll"]
+args = ["mask-poll"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-socket-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "net-readiness-mask-epoll"
+sources = ["tests/phase10/endpoints/readiness.c"]
+requires = ["epoll_create1", "epoll_pwait"]
+args = ["mask-epoll"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-socket-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "net-reject-socket"
+sources = ["tests/phase10/endpoints/reject.c"]
+requires = ["socket"]
+args = ["socket"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-socket-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "net-reject-socketpair"
+sources = ["tests/phase10/endpoints/reject.c"]
+requires = ["socketpair"]
+args = ["socketpair"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-socket-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "net-reject-bind"
+sources = ["tests/phase10/endpoints/reject.c"]
+requires = ["bind"]
+args = ["bind"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-socket-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "net-reject-connect"
+sources = ["tests/phase10/endpoints/reject.c"]
+requires = ["connect"]
+args = ["connect"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-socket-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "net-reject-listen"
+sources = ["tests/phase10/endpoints/reject.c"]
+requires = ["listen"]
+args = ["listen"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-socket-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "net-reject-accept"
+sources = ["tests/phase10/endpoints/reject.c"]
+requires = ["accept"]
+args = ["accept"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-socket-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "net-reject-accept4"
+sources = ["tests/phase10/endpoints/reject.c"]
+requires = ["accept4"]
+args = ["accept4"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-socket-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "net-reject-getsockname"
+sources = ["tests/phase10/endpoints/reject.c"]
+requires = ["getsockname"]
+args = ["getsockname"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-socket-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "net-reject-getpeername"
+sources = ["tests/phase10/endpoints/reject.c"]
+requires = ["getpeername"]
+args = ["getpeername"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-socket-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "net-reject-setsockopt"
+sources = ["tests/phase10/endpoints/reject.c"]
+requires = ["setsockopt"]
+args = ["setsockopt"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-socket-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "net-reject-getsockopt"
+sources = ["tests/phase10/endpoints/reject.c"]
+requires = ["getsockopt"]
+args = ["getsockopt"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-socket-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "net-reject-shutdown"
+sources = ["tests/phase10/endpoints/reject.c"]
+requires = ["shutdown"]
+args = ["shutdown"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-socket-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "net-reject-send"
+sources = ["tests/phase10/endpoints/reject.c"]
+requires = ["send"]
+args = ["send"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-socket-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "net-reject-recv"
+sources = ["tests/phase10/endpoints/reject.c"]
+requires = ["recv"]
+args = ["recv"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-socket-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "net-reject-sendto"
+sources = ["tests/phase10/endpoints/reject.c"]
+requires = ["sendto"]
+args = ["sendto"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-socket-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "net-reject-recvfrom"
+sources = ["tests/phase10/endpoints/reject.c"]
+requires = ["recvfrom"]
+args = ["recvfrom"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-socket-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "net-reject-sendmsg"
+sources = ["tests/phase10/endpoints/reject.c"]
+requires = ["sendmsg"]
+args = ["sendmsg"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-socket-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "net-reject-recvmsg"
+sources = ["tests/phase10/endpoints/reject.c"]
+requires = ["recvmsg"]
+args = ["recvmsg"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-socket-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "net-reject-poll"
+sources = ["tests/phase10/endpoints/reject.c"]
+requires = ["poll"]
+args = ["poll"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-socket-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "net-reject-ppoll"
+sources = ["tests/phase10/endpoints/reject.c"]
+requires = ["ppoll"]
+args = ["ppoll"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-socket-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "net-reject-epoll-create"
+sources = ["tests/phase10/endpoints/reject.c"]
+requires = ["epoll_create"]
+args = ["epoll_create"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-socket-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "net-reject-epoll-create1"
+sources = ["tests/phase10/endpoints/reject.c"]
+requires = ["epoll_create1"]
+args = ["epoll_create1"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-socket-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "net-reject-epoll-ctl"
+sources = ["tests/phase10/endpoints/reject.c"]
+requires = ["epoll_ctl"]
+args = ["epoll_ctl"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-socket-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "net-reject-epoll-wait"
+sources = ["tests/phase10/endpoints/reject.c"]
+requires = ["epoll_wait"]
+args = ["epoll_wait"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-socket-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "net-reject-epoll-pwait"
+sources = ["tests/phase10/endpoints/reject.c"]
+requires = ["epoll_pwait"]
+args = ["epoll_pwait"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-socket-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "net-sysv-abi"
+sources = ["tests/phase10/endpoints/abi.c", "tests/phase2/abi.asm"]
+requires = ["socket", "socketpair", "bind", "connect", "listen", "accept", "accept4", "getsockname", "getpeername", "setsockopt", "getsockopt", "shutdown", "send", "recv", "sendto", "recvfrom", "sendmsg", "recvmsg", "poll", "ppoll", "epoll_create", "epoll_create1", "epoll_ctl", "epoll_wait", "epoll_pwait"]
+args = []
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:sysv-amd64"]
+backends = ["native", "qemu"]
+host_skip = "Exercises the actual candidate CPU state with the shared assembly trampoline."
+[case.skip]
+valgrind = "The same shared trampoline reports FP control changes for a no-op in pinned Memcheck."
+
+[[stub]]
+symbol = "socket"
+case = "net-reject-socket"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "socketpair"
+case = "net-reject-socketpair"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "bind"
+case = "net-reject-bind"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "connect"
+case = "net-reject-connect"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "listen"
+case = "net-reject-listen"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "accept"
+case = "net-reject-accept"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "accept4"
+case = "net-reject-accept4"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "getsockname"
+case = "net-reject-getsockname"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "getpeername"
+case = "net-reject-getpeername"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "setsockopt"
+case = "net-reject-setsockopt"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "getsockopt"
+case = "net-reject-getsockopt"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "shutdown"
+case = "net-reject-shutdown"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "send"
+case = "net-reject-send"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "recv"
+case = "net-reject-recv"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "sendto"
+case = "net-reject-sendto"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "recvfrom"
+case = "net-reject-recvfrom"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "sendmsg"
+case = "net-reject-sendmsg"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "recvmsg"
+case = "net-reject-recvmsg"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "poll"
+case = "net-reject-poll"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "ppoll"
+case = "net-reject-ppoll"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "epoll_create"
+case = "net-reject-epoll-create"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "epoll_create1"
+case = "net-reject-epoll-create1"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "epoll_ctl"
+case = "net-reject-epoll-ctl"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "epoll_wait"
+case = "net-reject-epoll-wait"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "epoll_pwait"
+case = "net-reject-epoll-pwait"
+status = 11
+stdout = ""
+stderr = ""

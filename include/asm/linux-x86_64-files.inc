@@ -4,11 +4,18 @@
 
 %define __AL_NR_FSTAT 5
 %define __AL_NR_LSEEK 8
+%define __AL_NR_MMAP 9
+%define __AL_NR_MUNMAP 11
 %define __AL_NR_IOCTL 16
+%define __AL_NR_PREAD64 17
+%define __AL_NR_PWRITE64 18
 %define __AL_NR_PIPE 22
+%define __AL_NR_MREMAP 25
 %define __AL_NR_DUP 32
 %define __AL_NR_DUP2 33
 %define __AL_NR_FCNTL 72
+%define __AL_NR_FSYNC 74
+%define __AL_NR_FTRUNCATE 77
 %define __AL_NR_GETCWD 79
 %define __AL_NR_RENAME 82
 %define __AL_NR_MKDIR 83
@@ -16,10 +23,14 @@
 %define __AL_NR_UNLINK 87
 %define __AL_NR_READLINK 89
 %define __AL_NR_CHMOD 90
+%define __AL_NR_FCHMOD 91
+%define __AL_NR_FCHOWN 93
 %define __AL_NR_UMASK 95
+%define __AL_NR_FSTATFS 138
 %define __AL_NR_GETDENTS64 217
 %define __AL_NR_OPENAT 257
 %define __AL_NR_NEWFSTATAT 262
 %define __AL_NR_GETRANDOM 318
+%define __AL_NR_PWRITEV2 328
 
 %endif

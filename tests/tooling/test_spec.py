@@ -70,6 +70,21 @@ class ProjectTest(unittest.TestCase):
         self.assertNotEqual("required", by_item["stdint.h", "uint{N}_t"].availability)
         self.assertEqual("POSIX.1-2024 XBD <unistd.h>", by_item["unistd.h", "ssize_t"].standard)
 
+    def test_inttypes_format_macros_match_selected_stdint(self):
+        self.run_tool("gen", "--test-headers")
+        fixture = ROOT / "tests/tooling/inttypes_formats.c"
+        headers = self.root / "build/include/c"
+        for compiler in ("gcc", "al-clang", "musl-gcc"):
+            for mode in ("-fhosted", "-ffreestanding"):
+                with self.subTest(compiler=compiler, mode=mode):
+                    wrapper_flags = ["-Wno-unused-command-line-argument"] if compiler == "al-clang" else []
+                    run = subprocess.run(
+                        [compiler, "-std=c17", mode, "-fno-builtin", "-Wformat=2", "-Werror", *wrapper_flags,
+                         "-fsyntax-only", "-I", str(headers), str(fixture)],
+                        text=True, capture_output=True, check=False,
+                    )
+                    self.assertEqual(0, run.returncode, run.stdout + run.stderr)
+
     def test_inventory_rejects_missing_header_duplicate_and_count_drift(self):
         path = self.root / "spec/inventory.toml"
         original = path.read_text()

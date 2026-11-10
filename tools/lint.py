@@ -82,6 +82,8 @@ PRIVATE_FUNCTIONS = {
     "stdio/__al_fmt_nwide",
     "stdio/__al_stream_orient", "stdio/__al_stream_read_raw", "stdio/__al_stream_write_raw",
     "stdio/__al_stream_getwc", "stdio/__al_stream_putwc",
+    "fnmatch/__al_fnmatch_unit", "fnmatch/__al_fnmatch_class",
+    "fnmatch/__al_fnmatch_atom", "fnmatch/__al_fnmatch_bracket",
     "complex/__al_complex_power", "complex/__al_complex_power_log", "complex/__al_complex_power_arg",
     "complex/__al_fixed_ratio_precision", "complex/__al_fixed_mul_precision",
     "complex/__al_fixed_odd_series", "complex/__al_complex_scaled_ratio_precision",
@@ -119,6 +121,16 @@ PRIVATE_FUNCTIONS = {
     "math/__al_math_rem", "math/__al_comparef", "math/__al_compare", "math/__al_comparel",
     "math/__al_fpclassifyf", "math/__al_fpclassify", "math/__al_fpclassifyl",
     "math/__al_signbitf", "math/__al_signbit", "math/__al_signbitl",
+    "socket/__al_cmsg_nxthdr",
+    "inet/__al_inet_parse4", "inet/__al_inet_text4", "inet/__al_inet_text6",
+    "netdb/__al_gai_port", "netdb/__al_gai_word", "netdb/__al_gai_line",
+    "netdb/__al_gai_equalname", "netdb/__al_gai_service", "netdb/__al_gai_hosts",
+    "netdb/__al_gai_filter", "netdb/__al_gai_result",
+    "netdb/__al_dns_build", "netdb/__al_dns_name", "netdb/__al_dns_parse",
+    "netdb/__al_dns_now", "netdb/__al_dns_wait", "netdb/__al_dns_open",
+    "netdb/__al_dns_transfer", "netdb/__al_dns_query",
+    "netdb/__al_dns_lookup", "netdb/__al_dns_publish", "netdb/__al_dns_text",
+    "netdb/__al_gni_host", "netdb/__al_gni_service",
     "math/__al_big_muladd", "math/__al_big_left", "math/__al_big_right1",
     "math/__al_big_cmp", "math/__al_big_sub", "math/__al_big_bits", "math/__al_big_copy",
     "math/__al_float_lex", "math/__al_float_round", "math/__al_strtof_core",
@@ -131,7 +143,9 @@ PRIVATE_FUNCTIONS = {
     "stdio/__al_stdio_seek", "stdio/__al_stdio_open", "stdio/__al_stdio_errno",
     "stdio/__al_stream_flush", "stdio/__al_stream_read", "stdio/__al_stream_write",
     "stdio/__al_stream_close", "stdio/__al_stream_init", "stdio/__al_stream_rebind",
-    "rt/__al_stream_owner",
+    "rt/__al_stream_owner", "rt/__al_vdso_clock_entry", "rt/__al_vdso_lookup",
+    "rt/__al_vdso_dynamic", "time/__al_realtime_parts",
+    "rt/__al_pie_entry", "rt/__al_pie_relocate",
     "stdio/__al_stream_lock", "stdio/__al_stream_unlock", "stdio/__al_stream_unlock_all",
     "stdio/__al_stream_snapshot", "stdio/__al_stream_unpin",
     "stdio/__al_va_next", "stdio/__al_vformat", "stdio/__al_fmt_emit",
@@ -145,7 +159,7 @@ PRIVATE_FUNCTIONS = {
     "stdlib/__al_env_change", "stdlib/__al_env_match", "stdlib/__al_env_name",
     "stdlib/__al_env_collect",
     "internal/__al_syscall", "internal/__al_syscall_result", "internal/__al_rt_sigreturn",
-    "internal/__al_fcntl", "internal/__al_stat_query", "internal/__al_sigset_publish", "internal/__al_clock_parts", "internal/__al_mktemp",
+    "internal/__al_fcntl", "internal/__al_fcntl_owner", "internal/__al_stat_query", "internal/__al_sigset_publish", "internal/__al_clock_parts", "internal/__al_mktemp",
     "spawn/__al_spawn_check_fd", "spawn/__al_spawn_append", "spawn/__al_spawn_actions",
     "spawn/__al_spawn_attrs", "spawn/__al_spawn_reserve", "spawn/__al_spawn_reap",
     "spawn/__al_spawn_child", "spawn/__al_spawn_entry", "spawn/__al_spawn_run",
@@ -170,7 +184,7 @@ PRIVATE_FUNCTIONS = {
     "rt/__al_panic", "rt/__al_abort", "rt/__al_diagnostic", "stdlib/__al_strtox",
     "wchar/__al_skip_wide_space", "wchar/__al_wcstox", "wchar/__al_wcstof_core",
 }
-PRIVATE_NORETURN = {"_start", "__al_rt_sigreturn", "__al_panic", "__al_abort", "__al_heap_bad", "__al_big_bad", "__al_spawn_child",
+PRIVATE_NORETURN = {"_start", "__al_pie_entry", "__al_rt_sigreturn", "__al_panic", "__al_abort", "__al_heap_bad", "__al_big_bad", "__al_spawn_child",
                     "__al_shell_exec", "__al_popen_child", "__al_thread_start", "__al_thread_unmap_exit"}
 CALLBACK_ARGUMENTS = {"bsearch": "r8", "qsort": "rcx", "pthread_once": "rsi"}
 ONCE_FRAME = (
@@ -182,10 +196,28 @@ ONCE_FRAME = (
 )
 CALLBACK_TABLES = {
     "stdlib/exit": ("__al_atexit_state", r"(\w+)\s*\+\s*rax\s*\*\s*8\s*\+\s*8"),
+    "stdlib/quick_exit": ("__al_quick_exit_state", r"(\w+)\s*\+\s*rax\s*\*\s*8\s*\+\s*8"),
     "pthread/__al_tsd_destruct": ("__al_tsd_keys", r"(\w+)\s*\+\s*r12\s*\+\s*8"),
+}
+HTTP_APP_CALLS = {
+    "apps/httpd/main.asm": {"__al_http_client"},
+    "apps/httpd/http_client.asm": {"__al_http_find", "__al_http_parse"},
+    "apps/httpd/http_parse.asm": {"__al_http_find", "__al_http_token"},
 }
 
 RUNTIME_ATOMICS = {
+    "stdatomic/atomic_flag_test_and_set_explicit": {
+        ("xchg", ("byte [rdi]", "al")): ("al", ("rdi", "rax")),
+    },
+    "stdatomic/atomic_flag_clear_explicit": {
+        ("xchg", ("byte [rdi]", "al")): ("al", ("rdi", "rax")),
+    },
+    "stdatomic/atomic_thread_fence": {
+        ("mfence", ()): (None, ()),
+    },
+    "rt/__al_vdso_clock_entry": {
+        ("lock", ("cmpxchg qword [rel cached_entry]", "rdx")): ("rax", ("rax", "rdx")),
+    },
     "pthread/pthread_once": {
         ("lock", ("cmpxchg dword [rbx]", "edx")): ("eax", ("rbx", "rdx", "rax")),
     },
@@ -226,6 +258,7 @@ class KernelStackRecord:
     extent: int
     setup: tuple[tuple[str, tuple[str, ...]], ...]
     finishes: tuple[tuple[tuple[str, tuple[str, ...]], ...], ...] = ((),)
+    target: str = "__al_syscall"
 
 
 SIGACTION_STACK_RECORDS = {
@@ -234,6 +267,32 @@ SIGACTION_STACK_RECORDS = {
     ("rdx", "rsp + 8"): KernelStackRecord(32, (("mov", ("edi", "13")), ("lea", ("rcx", "[rsp + 40]")))),
 }
 KERNEL_STACK_RECORDS = {
+    "rt/__al_vdso_clock_entry": {
+        ("rdx", "rsp + 8"): KernelStackRecord(
+            16, (("mov", ("edi", "310")),),
+            ((("mov", ("ecx", "1")), ("lea", ("r8", "[rsp + 24]")), ("mov", ("r9d", "4"))),),
+        ),
+        ("r8", "rsp + 24"): KernelStackRecord(
+            64, (("mov", ("edi", "310")), ("lea", ("rdx", "[rsp + 8]")), ("mov", ("ecx", "1"))),
+            ((("mov", ("r9d", "4")),),),
+        ),
+    },
+    "time/__al_realtime_parts": {
+        ("rsi", "rsp"): KernelStackRecord(
+            16, (("test", ("rax", "rax")), ("jz", (".fallback",)), ("xor", ("edi", "edi"))),
+            target="rax",
+        ),
+    },
+    "posix/pwrite": {
+        ("rdx", "rsp + 8"): KernelStackRecord(
+            120, (("mov", ("edi", "138")),),
+            ((("xor", ("ecx", "ecx")), ("xor", ("r8d", "r8d")), ("xor", ("r9d", "r9d"))),),
+        ),
+        ("rdx", "rsp + 128"): KernelStackRecord(
+            16, (("mov", ("edi", "328")),),
+            ((("mov", ("ecx", "1")), ("mov", ("r8", "r14")), ("xor", ("r9d", "r9d"))),),
+        ),
+    },
     "stdlib/abort": {
         ("rdx", "rsp + 8"): KernelStackRecord(8, (("mov", ("edi", "14")),)),
     },
@@ -243,9 +302,21 @@ KERNEL_STACK_RECORDS = {
             ((("xor", ("ecx", "ecx")), ("xor", ("r8d", "r8d")), ("xor", ("r9d", "r9d"))),),
         ),
     },
+    "poll/ppoll": {
+        ("rcx", "rsp + 8"): KernelStackRecord(16, (("mov", ("edi", "271")),)),
+    },
+    "internal/__al_fcntl_owner": {
+        ("rcx", "rsp + 8"): KernelStackRecord(
+            8, (("mov", ("edi", "72")), ("mov", ("edx", "16"))),
+            ((("xor", ("r8d", "r8d")), ("xor", ("r9d", "r9d"))),),
+        ),
+    },
     "internal/__al_stat_query": {
         ("rdx", "rsp + 8"): KernelStackRecord(144, (("mov", ("edi", "5")),)),
         ("rcx", "rsp + 8"): KernelStackRecord(144, (("mov", ("edi", "262")),)),
+    },
+    "termios/tcgetsid": {
+        ("rcx", "rsp + 8"): KernelStackRecord(4, (("mov", ("edi", "16")), ("mov", ("edx", "0x5429")))),
     },
     "posix/isatty": {
         ("rcx", "rsp + 8"): KernelStackRecord(64, (("mov", ("edi", "16")), ("mov", ("edx", "0x5401")))),
@@ -292,8 +363,11 @@ PRIVATE_DATA = {
     "__al_initial_envp": "rt/_start",
     "__al_auxv": "rt/_start",
     "__al_tls_template": "rt/__al_tls_init",
+    "__al_runtime_load_bias": "rt/__al_tls_init",
     "__al_thread_count": "pthread/pthread_exit",
     "__al_atexit_state": "stdlib/atexit",
+    "__al_rand_state": "stdlib/rand",
+    "__al_quick_exit_state": "stdlib/at_quick_exit",
     "__al_tsd_keys": "pthread/pthread_key_create", "__al_tsd_lock": "pthread/pthread_key_create",
 }
 THREAD_KERNEL_BOUNDARIES = {
@@ -432,7 +506,7 @@ class State:
     r10_ready: bool = False
     syscall_clobbers: frozenset[str] = frozenset()
     process_entry: bool = False
-    caller_stack_arg: bool = False
+    caller_stack_arg: int = 0
     extended_arguments: int = 0
     tls_self: bool = False
     callback_table_registers: frozenset[str] = frozenset()
@@ -453,8 +527,9 @@ class Program:
     external_signatures: set[str] | None = None
     noreturn: frozenset[str] = frozenset()
     process_entry: bool = False
+    process_tail: str | None = None
     signal_restorer: bool = False
-    caller_stack_arg: bool = False
+    caller_stack_arg: int = 0
     extended_arguments: int = 0
     atomic_instructions: dict | None = None
     tls_self: bool = False
@@ -462,6 +537,7 @@ class Program:
     callback_dispatch: bool = False
     callback_table: tuple[str, str] | None = None
     callback_argument: str | None = None
+    callback_resolver: str | None = None
     varargs_frame: bool = False
     fenv_access: bool = False
     fenv_controls: bool = False
@@ -507,9 +583,9 @@ def parse(source, narrow, variadic, allow_seed_metadata):
 
         body = body.strip()
         # Recognize reserved identifiers in ELF symbol positions.
-        if body in {"$abs:", "$wait:"}:
+        if body in {"$abs:", "$div:", "$wait:"}:
             body = body[1:]
-        elif escaped := re.fullmatch(r"(global|extern|call)\s+\$(abs|wait)(:function)?", body):
+        elif escaped := re.fullmatch(r"(global|extern|call)\s+\$(abs|div|wait)(:function)?", body):
             body = f"{escaped[1]} {escaped[2]}{escaped[3] or ''}"
         if not body:
             continue
@@ -687,10 +763,11 @@ def stack_location(state, op, width, line, *, write):
         reject(line, "STACK_ACCESS", "rbp does not have a known frame address")
     offset = integer((match[2] or "+") + (match[3] or "0"))
     address = base + offset
-    if not write and width == 8 and match[1].lower() == "rsp":
-        if ((state.process_entry and address == 0)
-                or (state.context_save and state.rsp == 0 and address == 0)
-                or (state.caller_stack_arg and address == 8)):
+    if not write and match[1].lower() == "rsp":
+        if (width == 8 and address == 0 and
+                (state.process_entry or (state.context_save and state.rsp == 0))):
+            return None
+        if width == state.caller_stack_arg and address == 8:
             return None
     if not write and any(8 + 16 * index <= address and address + width <= 18 + 16 * index
                          for index in range(state.extended_arguments)):
@@ -907,12 +984,18 @@ def transfer_control(state, program, ins, syscall_boundary, x87_return):
         entry_alignment = 0 if state.process_entry else 8
         if (entry_alignment + state.rsp) % 16:
             reject(line, "STACK_ALIGNMENT", "rsp must be 16-byte aligned before call")
+        callback_registers = state.callback_registers & CALLEE
+        if target == program.callback_resolver:
+            callback_registers = callback_registers | {"rax"}
         return replace(state, variadic_al_ready=False, r10_ready=False,
                        callback_table_registers=state.callback_table_registers & CALLEE,
-                       callback_registers=state.callback_registers & CALLEE)
+                       callback_registers=callback_registers)
     if opcode in JCC or opcode == "jmp":
         if len(ins.operands) != 1 or not re.fullmatch(LABEL, ins.operands[0]):
             reject(line, "CONTROL_FLOW", "only direct jumps to local code are supported")
+        if opcode == "jmp" and ins.operands[0] == program.process_tail:
+            if state.rsp or state.df or state.x87_depth or state.control_dirty:
+                reject(line, "CONTROL_FLOW", "process continuation requires its original stack and ABI state")
         return state
     if opcode in {"sysenter", "int", "int3", "iret", "iretq", "sysret", "sysretq"}:
         reject(line, "SYSCALL_BOUNDARY", f"{opcode} is outside the supported syscall boundary")
@@ -931,13 +1014,13 @@ def transfer(state, program, ins, syscall_boundary, x87_return):
         reject(line, "ISA_BASELINE", f"{opcode} exceeds the SSE2 baseline")
     if opcode in MOVES | ARITH | UNARY | SSE_MOVE | SSE_ALU | {"cmp", "test"}:
         return transfer_data(state, program, ins)
-    if opcode in {"lock", "xchg"}:
+    if opcode in {"lock", "xchg", "mfence"}:
         recipe = (program.atomic_instructions or {}).get((opcode, ins.operands))
         if recipe is None:
             reject(line, "INSTRUCTION", "atomic instruction needs a modeled runtime word")
         result, registers = recipe
         read_registers(state, registers, line)
-        return write_gpr(state, operand(result, line), line)
+        return write_gpr(state, operand(result, line), line) if result is not None else state
     if opcode == "cqo":
         check_operands(ins, {0})
         read_registers(state, ("rax",), line)
@@ -1093,6 +1176,9 @@ def verify(program, syscall_boundary, x87_return):
                 # its callee unexpectedly returns.
                 if not (index + 1 < stop and program.instructions[index + 1].opcode == "ud2"):
                     continue
+            if ins.opcode == "jmp" and ins.operands[0] == program.process_tail:
+                terminal = True
+                continue
             successors = []
             if ins.opcode in JCC or ins.opcode == "jmp":
                 label = ins.operands[0]
@@ -1172,24 +1258,30 @@ def check_file(path, function, fixture_syscall, functions_snapshot=project_funct
             variadic = {name for name, spec in functions.items() if spec.abi.variadic}
         except SpecError as error:
             reject(1, "SPEC_HEADER", str(error))
+    external_signatures.update(HTTP_APP_CALLS.get(relative.as_posix(), ()))
     program = parse(path.read_text(), narrow, set(), in_seed)
     if not in_seed or function is not None:
         program.external_signatures = external_signatures
     program.variadic.update(variadic & (set(program.entries) | program.externs))
     program.noreturn = frozenset(noreturn)
-    program.process_entry = relative_runtime == "rt/_start"
+    program.process_entry = relative_runtime in {"rt/_start", "rt/__al_pie_entry"}
     program.signal_restorer = relative_runtime == "internal/__al_rt_sigreturn"
-    program.caller_stack_arg = relative_runtime in {"internal/__al_syscall", "spawn/__al_spawn_entry"}
+    program.caller_stack_arg = {"internal/__al_syscall": 8, "spawn/__al_spawn_entry": 8, "netdb/getnameinfo": 4}.get(
+        relative_runtime, 0)
     if relative_runtime == f"math/{path.stem}":
         program.extended_arguments = EXTENDED_ARGUMENTS.get(path.stem, 0)
     elif relative_runtime == f"complex/{path.stem}":
         program.extended_arguments = COMPLEX_EXTENDED_ARGUMENTS.get(path.stem, 0)
     program.atomic_instructions = RUNTIME_ATOMICS.get(relative_runtime)
-    program.tls_self = relative_runtime in {"rt/__errno_location", "rt/__al_stream_owner", "pthread/pthread_self", "locale/__al_mbstate_default"}
+    program.tls_self = relative_runtime in {
+        "rt/__errno_location", "rt/__al_stream_owner", "pthread/pthread_self", "locale/__al_mbstate_default",
+    }
     program.callback_table = CALLBACK_TABLES.get(relative_runtime)
     program.callback_argument = ("rdi" if relative_runtime == "pthread/__al_thread_start"
                                    else CALLBACK_ARGUMENTS.get(function))
-    program.callback_dispatch = program.callback_table is not None or program.callback_argument is not None
+    if relative_runtime == "time/__al_realtime_parts":
+        program.callback_resolver = "__al_vdso_clock_entry"
+    program.callback_dispatch = any((program.callback_table, program.callback_argument, program.callback_resolver))
     program.fenv_access = relative_runtime in {
         f"fenv/{name}" for name in ("feclearexcept", "fegetenv", "feholdexcept", "fesetenv", "fetestexcept")
     }
@@ -1217,11 +1309,11 @@ def check_file(path, function, fixture_syscall, functions_snapshot=project_funct
             for finish in record.finishes:
                 call_index = index + len(finish) + 1
                 following = tuple((later.opcode, later.operands) for later in instructions[index + 1:call_index + 1])
-                if (preceding == record.setup and following == (*finish, ("call", ("__al_syscall",)))
+                if (preceding == record.setup and following == (*finish, ("call", (record.target,)))
                         and not any(start < target <= call_index for target in program.labels.values())):
                     break
             else:
-                reject(ins.line, "STACK_ACCESS", "bounded kernel stack record must go directly to its modeled syscall")
+                reject(ins.line, "STACK_ACCESS", "bounded kernel stack record must go directly to its modeled call")
     if relative_runtime in VARARGS_WRAPPERS:
         target, fixed, register = VARARGS_WRAPPERS[relative_runtime]
         expected = [("push", ("rbp",)), ("mov", ("rbp", "rsp")), ("sub", ("rsp", "208"))]
@@ -1254,9 +1346,22 @@ def check_file(path, function, fixture_syscall, functions_snapshot=project_funct
         first = program.instructions[0]
         if first.opcode != "mov" or first.operands != ("r10", "[rsp + 8]"):
             reject(first.line, "STACK_ACCESS", "spawn entry must capture the seventh SysV argument")
-    if program.process_entry:
+    if relative_runtime == "rt/_start":
         program.external_signatures.add("main")
-    if program.external_data - (PRIVATE_DATA.keys() if runtime or app else set()):
+    linker_data = set()
+    if relative_runtime == "rt/__al_pie_entry":
+        linker_data = {"__ehdr_start", "_DYNAMIC"}
+        shape = tuple((ins.opcode, ins.operands) for ins in program.instructions)
+        required = (("cld", ()), ("xor", ("ebp", "ebp")), ("lea", ("rdi", "[rel __ehdr_start]")),
+                    ("lea", ("rsi", "[rel _DYNAMIC]")), ("call", ("__al_pie_relocate",)),
+                    ("test", ("eax", "eax")), ("jz", (".start",)))
+        if (shape[:len(required)] != required or shape[-1:] != (("jmp", ("_start",)),)
+                or program.labels.get("__al_pie_entry.start") != len(shape) - 1
+                or program.externs != {"__al_pie_relocate", "__al_panic", "_start"}
+                or program.external_data != linker_data):
+            reject(1, "CONTROL_FLOW", "static PIE entry must relocate before the original process entry")
+        program.process_tail = "_start"
+    if program.external_data - ((set(PRIVATE_DATA) | linker_data) if runtime or app else set()):
         reject(1, "SYMBOL", "no modeled ABI for external data symbol")
     if any(name not in PRIVATE_DATA or PRIVATE_DATA[name] != relative_runtime
            for name in program.data_symbols):

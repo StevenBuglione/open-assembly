@@ -1,0 +1,18 @@
+name = "accept"
+header = "sys/socket.h"
+prototype = "int accept(int fd, struct sockaddr *restrict address, socklen_t *restrict length)"
+standard = ["POSIX.1-2024 XSH accept"]
+deps = ["__errno_location"]
+errno = ["EAGAIN", "EBADF", "ECONNABORTED", "EFAULT", "EINTR", "EINVAL", "EMFILE", "ENFILE", "ENOBUFS", "ENOMEM", "ENOTSOCK", "EOPNOTSUPP"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:linux-x86-64-network-abi", "diff:glibc", "diff:musl"]
+provenance = "original"
+semantics = [
+  "Accept a connection and optionally return its peer address.",
+  "Return the Linux result or minus one with TLS errno. Preserve errno on success.",
+]
+
+[abi]
+narrow_args = ["edi:s32"]
+variadic = false

@@ -1,0 +1,19 @@
+name = "sched_yield"
+header = "sched.h"
+prototype = "int sched_yield(void)"
+standard = ["POSIX.1-2024 XSH sched_yield"]
+deps = ["__errno_location"]
+errno = ["ENOSYS", "EPERM"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-scheduling"]
+provenance = "original"
+semantics = [
+  "Request a yield of the calling thread through Linux sched_yield.",
+  "Return zero and preserve errno on success. Translate a failed syscall to -1 with errno.",
+  "The Linux scheduler selects any subsequent runnable thread.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

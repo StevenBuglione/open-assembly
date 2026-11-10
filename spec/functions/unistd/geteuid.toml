@@ -1,0 +1,15 @@
+name = "geteuid"
+header = "unistd.h"
+prototype = "uid_t geteuid(void)"
+standard = ["POSIX.1-2024 XSH geteuid"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-filesystem-time-abi"]
+provenance = "original"
+semantics = ["Return the effective user ID as an unsigned value. Preserve errno."]
+
+[abi]
+narrow_args = []
+variadic = false

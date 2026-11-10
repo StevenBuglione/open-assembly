@@ -1,0 +1,15 @@
+name = "localtime"
+header = "time.h"
+prototype = "struct tm *localtime(const time_t *timep)"
+standard = ["C17 7.27.3.4"]
+deps = ["localtime_r"]
+errno = ["EOVERFLOW"]
+mt_safe = false
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:linux-filesystem-time-abi"]
+provenance = "original"
+semantics = ["Convert using the current timezone and publish the result in static broken-down time storage."]
+
+[abi]
+narrow_args = []
+variadic = false

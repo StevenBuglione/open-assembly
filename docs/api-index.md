@@ -3,11 +3,12 @@
 
 This index lists authored function specifications. For implementation state, run `tools/queue status`.
 
-Specs: 620 of 641 inventoried functions. The inventory covers C17, the named POSIX subset, runtime ABI entries, and Linux compatibility extensions. see [inventory scope](cookbook/specifications.md#inventory-scope).
+Specs: 706 of 706 inventoried functions. The inventory covers C17, the named POSIX subset, runtime ABI entries, and Linux compatibility extensions. see [inventory scope](cookbook/specifications.md#inventory-scope).
 
 | Function | Header | Prototype | Standard |
 | --- | --- | --- | --- |
 | [`_Exit`](../spec/functions/stdlib/_Exit.toml) | `<stdlib.h>` | `_Noreturn void _Exit(int status)` | C17 7.22.4.5 |
+| [`__al_assert_fail`](../spec/functions/assert/__al_assert_fail.toml) | `<assert.h>` | `_Noreturn void __al_assert_fail(const char *expression, const char *file, unsigned int line, const char *function)` | Runtime ABI __al_assert_fail |
 | [`__errno_location`](../spec/functions/errno/__errno_location.toml) | `<errno.h>` | `int *__errno_location(void)` | Runtime ABI __errno_location, C17 7.5 |
 | [`__stack_chk_fail`](../spec/functions/compiler_rt/__stack_chk_fail.toml) | `<compiler_rt.h>` | `_Noreturn void __stack_chk_fail(void)` | Runtime ABI __stack_chk_fail |
 | [`_exit`](../spec/functions/unistd/_exit.toml) | `<unistd.h>` | `_Noreturn void _exit(int status)` | POSIX.1-2024 XSH _exit |
@@ -15,6 +16,9 @@ Specs: 620 of 641 inventoried functions. The inventory covers C17, the named POS
 | [`_setjmp`](../spec/functions/setjmp/_setjmp.toml) | `<setjmp.h>` | `int _setjmp(jmp_buf env)` | Extension ABI _setjmp |
 | [`abort`](../spec/functions/stdlib/abort.toml) | `<stdlib.h>` | `_Noreturn void abort(void)` | C17 7.22.4.1 |
 | [`abs`](../spec/functions/stdlib/abs.toml) | `<stdlib.h>` | `int abs(int value)` | C17 7.22.6.1 |
+| [`accept`](../spec/functions/sys/socket/accept.toml) | `<sys/socket.h>` | `int accept(int fd, struct sockaddr *restrict address, socklen_t *restrict length)` | POSIX.1-2024 XSH accept |
+| [`accept4`](../spec/functions/sys/socket/accept4.toml) | `<sys/socket.h>` | `int accept4(int fd, struct sockaddr *restrict address, socklen_t *restrict length, int flags)` | Extension ABI accept4 |
+| [`access`](../spec/functions/unistd/access.toml) | `<unistd.h>` | `int access(const char *path, int mode)` | POSIX.1-2024 XSH access |
 | [`acos`](../spec/functions/math/acos.toml) | `<math.h>` | `double acos(double x)` | C17 7.12.4.1 |
 | [`acosf`](../spec/functions/math/acosf.toml) | `<math.h>` | `float acosf(float x)` | C17 7.12.4.1 |
 | [`acosh`](../spec/functions/math/acosh.toml) | `<math.h>` | `double acosh(double x)` | C17 7.12.5.1 |
@@ -22,12 +26,14 @@ Specs: 620 of 641 inventoried functions. The inventory covers C17, the named POS
 | [`acoshl`](../spec/functions/math/acoshl.toml) | `<math.h>` | `long double acoshl(long double x)` | C17 7.12.5.1 |
 | [`acosl`](../spec/functions/math/acosl.toml) | `<math.h>` | `long double acosl(long double x)` | C17 7.12.4.1 |
 | [`aligned_alloc`](../spec/functions/stdlib/aligned_alloc.toml) | `<stdlib.h>` | `void *aligned_alloc(size_t alignment, size_t size)` | C17 7.22.3.1 |
+| [`asctime`](../spec/functions/time/asctime.toml) | `<time.h>` | `char *asctime(const struct tm *timeptr)` | C17 7.27.3.1 |
 | [`asin`](../spec/functions/math/asin.toml) | `<math.h>` | `double asin(double x)` | C17 7.12.4.2 |
 | [`asinf`](../spec/functions/math/asinf.toml) | `<math.h>` | `float asinf(float x)` | C17 7.12.4.2 |
 | [`asinh`](../spec/functions/math/asinh.toml) | `<math.h>` | `double asinh(double x)` | C17 7.12.5.2 |
 | [`asinhf`](../spec/functions/math/asinhf.toml) | `<math.h>` | `float asinhf(float x)` | C17 7.12.5.2 |
 | [`asinhl`](../spec/functions/math/asinhl.toml) | `<math.h>` | `long double asinhl(long double x)` | C17 7.12.5.2 |
 | [`asinl`](../spec/functions/math/asinl.toml) | `<math.h>` | `long double asinl(long double x)` | C17 7.12.4.2 |
+| [`at_quick_exit`](../spec/functions/stdlib/at_quick_exit.toml) | `<stdlib.h>` | `int at_quick_exit(void (*function)(void))` | C17 7.22.4.3 |
 | [`atan`](../spec/functions/math/atan.toml) | `<math.h>` | `double atan(double x)` | C17 7.12.4.3 |
 | [`atan2`](../spec/functions/math/atan2.toml) | `<math.h>` | `double atan2(double y, double x)` | C17 7.12.4.4 |
 | [`atan2f`](../spec/functions/math/atan2f.toml) | `<math.h>` | `float atan2f(float y, float x)` | C17 7.12.4.4 |
@@ -42,6 +48,13 @@ Specs: 620 of 641 inventoried functions. The inventory covers C17, the named POS
 | [`atoi`](../spec/functions/stdlib/atoi.toml) | `<stdlib.h>` | `int atoi(const char *s)` | C17 7.22.1.2 |
 | [`atol`](../spec/functions/stdlib/atol.toml) | `<stdlib.h>` | `long atol(const char *s)` | C17 7.22.1.2 |
 | [`atoll`](../spec/functions/stdlib/atoll.toml) | `<stdlib.h>` | `long long atoll(const char *s)` | C17 7.22.1.2 |
+| [`atomic_flag_clear`](../spec/functions/stdatomic/atomic_flag_clear.toml) | `<stdatomic.h>` | `void atomic_flag_clear(volatile atomic_flag *object)` | C17 7.17.8.2 |
+| [`atomic_flag_clear_explicit`](../spec/functions/stdatomic/atomic_flag_clear_explicit.toml) | `<stdatomic.h>` | `void atomic_flag_clear_explicit(volatile atomic_flag *object, memory_order order)` | C17 7.17.8.2 |
+| [`atomic_flag_test_and_set`](../spec/functions/stdatomic/atomic_flag_test_and_set.toml) | `<stdatomic.h>` | `_Bool atomic_flag_test_and_set(volatile atomic_flag *object)` | C17 7.17.8.1 |
+| [`atomic_flag_test_and_set_explicit`](../spec/functions/stdatomic/atomic_flag_test_and_set_explicit.toml) | `<stdatomic.h>` | `_Bool atomic_flag_test_and_set_explicit(volatile atomic_flag *object, memory_order order)` | C17 7.17.8.1 |
+| [`atomic_signal_fence`](../spec/functions/stdatomic/atomic_signal_fence.toml) | `<stdatomic.h>` | `void atomic_signal_fence(memory_order order)` | C17 7.17.4.2 |
+| [`atomic_thread_fence`](../spec/functions/stdatomic/atomic_thread_fence.toml) | `<stdatomic.h>` | `void atomic_thread_fence(memory_order order)` | C17 7.17.4.1 |
+| [`bind`](../spec/functions/sys/socket/bind.toml) | `<sys/socket.h>` | `int bind(int fd, const struct sockaddr *address, socklen_t length)` | POSIX.1-2024 XSH bind |
 | [`bsearch`](../spec/functions/stdlib/bsearch.toml) | `<stdlib.h>` | `void *bsearch(const void *key, const void *base, size_t nmemb, size_t size, int (*compar)(const void *, const void *))` | C17 7.22.5.1 |
 | [`btowc`](../spec/functions/wchar/btowc.toml) | `<wchar.h>` | `wint_t btowc(int c)` | C17 7.29.6.1.1 |
 | [`c16rtomb`](../spec/functions/uchar/c16rtomb.toml) | `<uchar.h>` | `size_t c16rtomb(char *restrict s, char16_t c16, mbstate_t *restrict ps)` | C17 7.28.1.2 |
@@ -87,6 +100,10 @@ Specs: 620 of 641 inventoried functions. The inventory covers C17, the named POS
 | [`cexp`](../spec/functions/complex/cexp.toml) | `<complex.h>` | `double _Complex cexp(double _Complex z)` | C17 7.3.7.1 |
 | [`cexpf`](../spec/functions/complex/cexpf.toml) | `<complex.h>` | `float _Complex cexpf(float _Complex z)` | C17 7.3.7.1 |
 | [`cexpl`](../spec/functions/complex/cexpl.toml) | `<complex.h>` | `long double _Complex cexpl(long double _Complex z)` | C17 7.3.7.1 |
+| [`cfgetispeed`](../spec/functions/termios/cfgetispeed.toml) | `<termios.h>` | `speed_t cfgetispeed(const struct termios *termios_p)` | POSIX.1-2024 XSH cfgetispeed |
+| [`cfgetospeed`](../spec/functions/termios/cfgetospeed.toml) | `<termios.h>` | `speed_t cfgetospeed(const struct termios *termios_p)` | POSIX.1-2024 XSH cfgetospeed |
+| [`cfsetispeed`](../spec/functions/termios/cfsetispeed.toml) | `<termios.h>` | `int cfsetispeed(struct termios *termios_p, speed_t speed)` | POSIX.1-2024 XSH cfsetispeed |
+| [`cfsetospeed`](../spec/functions/termios/cfsetospeed.toml) | `<termios.h>` | `int cfsetospeed(struct termios *termios_p, speed_t speed)` | POSIX.1-2024 XSH cfsetospeed |
 | [`chmod`](../spec/functions/sys/stat/chmod.toml) | `<sys/stat.h>` | `int chmod(const char *path, mode_t mode)` | POSIX.1-2024 XSH chmod |
 | [`cimag`](../spec/functions/complex/cimag.toml) | `<complex.h>` | `double cimag(double _Complex z)` | C17 7.3.9.2 |
 | [`cimagf`](../spec/functions/complex/cimagf.toml) | `<complex.h>` | `float cimagf(float _Complex z)` | C17 7.3.9.2 |
@@ -110,6 +127,7 @@ Specs: 620 of 641 inventoried functions. The inventory covers C17, the named POS
 | [`conj`](../spec/functions/complex/conj.toml) | `<complex.h>` | `double _Complex conj(double _Complex z)` | C17 7.3.9.4 |
 | [`conjf`](../spec/functions/complex/conjf.toml) | `<complex.h>` | `float _Complex conjf(float _Complex z)` | C17 7.3.9.4 |
 | [`conjl`](../spec/functions/complex/conjl.toml) | `<complex.h>` | `long double _Complex conjl(long double _Complex z)` | C17 7.3.9.4 |
+| [`connect`](../spec/functions/sys/socket/connect.toml) | `<sys/socket.h>` | `int connect(int fd, const struct sockaddr *address, socklen_t length)` | POSIX.1-2024 XSH connect |
 | [`copysign`](../spec/functions/math/copysign.toml) | `<math.h>` | `double copysign(double x, double y)` | C17 7.12.11.1 |
 | [`copysignf`](../spec/functions/math/copysignf.toml) | `<math.h>` | `float copysignf(float x, float y)` | C17 7.12.11.1 |
 | [`copysignl`](../spec/functions/math/copysignl.toml) | `<math.h>` | `long double copysignl(long double x, long double y)` | C17 7.12.11.1 |
@@ -144,11 +162,18 @@ Specs: 620 of 641 inventoried functions. The inventory covers C17, the named POS
 | [`ctanhf`](../spec/functions/complex/ctanhf.toml) | `<complex.h>` | `float _Complex ctanhf(float _Complex z)` | C17 7.3.6.6 |
 | [`ctanhl`](../spec/functions/complex/ctanhl.toml) | `<complex.h>` | `long double _Complex ctanhl(long double _Complex z)` | C17 7.3.6.6 |
 | [`ctanl`](../spec/functions/complex/ctanl.toml) | `<complex.h>` | `long double _Complex ctanl(long double _Complex z)` | C17 7.3.5.6 |
+| [`ctime`](../spec/functions/time/ctime.toml) | `<time.h>` | `char *ctime(const time_t *timer)` | C17 7.27.3.2 |
 | [`difftime`](../spec/functions/time/difftime.toml) | `<time.h>` | `double difftime(time_t later, time_t earlier)` | C17 7.27.2.2 |
 | [`dirfd`](../spec/functions/dirent/dirfd.toml) | `<dirent.h>` | `int dirfd(DIR *dirp)` | POSIX.1-2024 XSH dirfd |
 | [`dirname`](../spec/functions/libgen/dirname.toml) | `<libgen.h>` | `char *dirname(char *path)` | POSIX.1-2024 XSH dirname |
+| [`div`](../spec/functions/stdlib/div.toml) | `<stdlib.h>` | `div_t div(int numerator, int denominator)` | C17 7.22.6.2 |
 | [`dup`](../spec/functions/unistd/dup.toml) | `<unistd.h>` | `int dup(int oldfd)` | POSIX.1-2024 XSH dup |
 | [`dup2`](../spec/functions/unistd/dup2.toml) | `<unistd.h>` | `int dup2(int oldfd, int newfd)` | POSIX.1-2024 XSH dup2 |
+| [`epoll_create`](../spec/functions/sys/epoll/epoll_create.toml) | `<sys/epoll.h>` | `int epoll_create(int size)` | Extension ABI epoll_create |
+| [`epoll_create1`](../spec/functions/sys/epoll/epoll_create1.toml) | `<sys/epoll.h>` | `int epoll_create1(int flags)` | Extension ABI epoll_create1 |
+| [`epoll_ctl`](../spec/functions/sys/epoll/epoll_ctl.toml) | `<sys/epoll.h>` | `int epoll_ctl(int epfd, int operation, int fd, struct epoll_event *event)` | Extension ABI epoll_ctl |
+| [`epoll_pwait`](../spec/functions/sys/epoll/epoll_pwait.toml) | `<sys/epoll.h>` | `int epoll_pwait(int epfd, struct epoll_event *events, int capacity, int timeout, const sigset_t *mask)` | Extension ABI epoll_pwait |
+| [`epoll_wait`](../spec/functions/sys/epoll/epoll_wait.toml) | `<sys/epoll.h>` | `int epoll_wait(int epfd, struct epoll_event *events, int capacity, int timeout)` | Extension ABI epoll_wait |
 | [`erf`](../spec/functions/math/erf.toml) | `<math.h>` | `double erf(double x)` | C17 7.12.8.1 |
 | [`erfc`](../spec/functions/math/erfc.toml) | `<math.h>` | `double erfc(double x)` | C17 7.12.8.2 |
 | [`erfcf`](../spec/functions/math/erfcf.toml) | `<math.h>` | `float erfcf(float x)` | C17 7.12.8.2 |
@@ -171,7 +196,10 @@ Specs: 620 of 641 inventoried functions. The inventory covers C17, the named POS
 | [`fabs`](../spec/functions/math/fabs.toml) | `<math.h>` | `double fabs(double x)` | C17 7.12.7.2 |
 | [`fabsf`](../spec/functions/math/fabsf.toml) | `<math.h>` | `float fabsf(float x)` | C17 7.12.7.2 |
 | [`fabsl`](../spec/functions/math/fabsl.toml) | `<math.h>` | `long double fabsl(long double x)` | C17 7.12.7.2 |
+| [`fchmod`](../spec/functions/sys/stat/fchmod.toml) | `<sys/stat.h>` | `int fchmod(int fd, mode_t mode)` | POSIX.1-2024 XSH fchmod |
+| [`fchown`](../spec/functions/unistd/fchown.toml) | `<unistd.h>` | `int fchown(int fd, uid_t owner, gid_t group)` | POSIX.1-2024 XSH fchown |
 | [`fclose`](../spec/functions/stdio/fclose.toml) | `<stdio.h>` | `int fclose(FILE *stream)` | C17 7.21.5.1 |
+| [`fcntl`](../spec/functions/fcntl/fcntl.toml) | `<fcntl.h>` | `int fcntl(int fd, int command, ...)` | POSIX.1-2024 XSH fcntl |
 | [`fdim`](../spec/functions/math/fdim.toml) | `<math.h>` | `double fdim(double x, double y)` | C17 7.12.12.1 |
 | [`fdimf`](../spec/functions/math/fdimf.toml) | `<math.h>` | `float fdimf(float x, float y)` | C17 7.12.12.1 |
 | [`fdiml`](../spec/functions/math/fdiml.toml) | `<math.h>` | `long double fdiml(long double x, long double y)` | C17 7.12.12.1 |
@@ -213,6 +241,7 @@ Specs: 620 of 641 inventoried functions. The inventory covers C17, the named POS
 | [`fmod`](../spec/functions/math/fmod.toml) | `<math.h>` | `double fmod(double x, double y)` | C17 7.12.10.1 |
 | [`fmodf`](../spec/functions/math/fmodf.toml) | `<math.h>` | `float fmodf(float x, float y)` | C17 7.12.10.1 |
 | [`fmodl`](../spec/functions/math/fmodl.toml) | `<math.h>` | `long double fmodl(long double x, long double y)` | C17 7.12.10.1 |
+| [`fnmatch`](../spec/functions/fnmatch/fnmatch.toml) | `<fnmatch.h>` | `int fnmatch(const char *pattern, const char *string, int flags)` | POSIX.1-2024 XSH fnmatch |
 | [`fopen`](../spec/functions/stdio/fopen.toml) | `<stdio.h>` | `FILE * fopen(const char *restrict path, const char *restrict mode)` | C17 7.21.5.3 |
 | [`fork`](../spec/functions/unistd/fork.toml) | `<unistd.h>` | `pid_t fork(void)` | POSIX.1-2024 XSH fork |
 | [`fprintf`](../spec/functions/stdio/fprintf.toml) | `<stdio.h>` | `int fprintf(FILE *restrict stream, const char *restrict format, ...)` | C17 7.21.6.1 |
@@ -223,6 +252,7 @@ Specs: 620 of 641 inventoried functions. The inventory covers C17, the named POS
 | [`fputws`](../spec/functions/wchar/fputws.toml) | `<wchar.h>` | `int fputws(const wchar_t *restrict string, FILE *restrict stream)` | C17 7.29.3.4 |
 | [`fread`](../spec/functions/stdio/fread.toml) | `<stdio.h>` | `size_t fread(void *restrict dest, size_t size, size_t count, FILE *restrict stream)` | C17 7.21.8.1 |
 | [`free`](../spec/functions/stdlib/free.toml) | `<stdlib.h>` | `void free(void *ptr)` | C17 7.22.3.3 |
+| [`freeaddrinfo`](../spec/functions/netdb/freeaddrinfo.toml) | `<netdb.h>` | `void freeaddrinfo(struct addrinfo *list)` | POSIX.1-2024 XSH freeaddrinfo |
 | [`freopen`](../spec/functions/stdio/freopen.toml) | `<stdio.h>` | `FILE * freopen(const char *restrict path, const char *restrict mode, FILE *restrict stream)` | C17 7.21.5.4 |
 | [`frexp`](../spec/functions/math/frexp.toml) | `<math.h>` | `double frexp(double x, int *exp)` | C17 7.12.6.4 |
 | [`frexpf`](../spec/functions/math/frexpf.toml) | `<math.h>` | `float frexpf(float x, int *exp)` | C17 7.12.6.4 |
@@ -233,31 +263,47 @@ Specs: 620 of 641 inventoried functions. The inventory covers C17, the named POS
 | [`fsetpos`](../spec/functions/stdio/fsetpos.toml) | `<stdio.h>` | `int fsetpos(FILE *stream, const fpos_t *pos)` | C17 7.21.9.3 |
 | [`fstat`](../spec/functions/sys/stat/fstat.toml) | `<sys/stat.h>` | `int fstat(int fd, struct stat *buf)` | POSIX.1-2024 XSH fstat |
 | [`fstatat`](../spec/functions/sys/stat/fstatat.toml) | `<sys/stat.h>` | `int fstatat(int dirfd, const char *restrict path, struct stat *restrict buf, int flags)` | POSIX.1-2024 XSH fstatat |
+| [`fsync`](../spec/functions/unistd/fsync.toml) | `<unistd.h>` | `int fsync(int fd)` | POSIX.1-2024 XSH fsync |
 | [`ftell`](../spec/functions/stdio/ftell.toml) | `<stdio.h>` | `long ftell(FILE *stream)` | C17 7.21.9.4 |
 | [`ftello`](../spec/functions/stdio/ftello.toml) | `<stdio.h>` | `off_t ftello(FILE *stream)` | POSIX.1-2024 XSH ftello |
+| [`ftruncate`](../spec/functions/unistd/ftruncate.toml) | `<unistd.h>` | `int ftruncate(int fd, off_t length)` | POSIX.1-2024 XSH ftruncate |
 | [`funlockfile`](../spec/functions/stdio/funlockfile.toml) | `<stdio.h>` | `void funlockfile(FILE *stream)` | POSIX.1-2024 XSH funlockfile |
 | [`fwide`](../spec/functions/wchar/fwide.toml) | `<wchar.h>` | `int fwide(FILE *stream, int mode)` | C17 7.29.3.5 |
 | [`fwprintf`](../spec/functions/wchar/fwprintf.toml) | `<wchar.h>` | `int fwprintf(FILE *restrict stream, const wchar_t *restrict format, ...)` | C17 7.29.2.1 |
 | [`fwrite`](../spec/functions/stdio/fwrite.toml) | `<stdio.h>` | `size_t fwrite(const void *restrict src, size_t size, size_t count, FILE *restrict stream)` | C17 7.21.8.2 |
 | [`fwscanf`](../spec/functions/wchar/fwscanf.toml) | `<wchar.h>` | `int fwscanf(FILE *restrict stream, const wchar_t *restrict format, ...)` | C17 7.29.2.2 |
+| [`gai_strerror`](../spec/functions/netdb/gai_strerror.toml) | `<netdb.h>` | `const char *gai_strerror(int code)` | POSIX.1-2024 XSH gai_strerror |
+| [`getaddrinfo`](../spec/functions/netdb/getaddrinfo.toml) | `<netdb.h>` | `int getaddrinfo(const char *restrict node, const char *restrict service, const struct addrinfo *restrict hints, struct addrinfo **restrict result)` | POSIX.1-2024 XSH getaddrinfo |
 | [`getc`](../spec/functions/stdio/getc.toml) | `<stdio.h>` | `int getc(FILE *stream)` | C17 7.21.7.5 |
 | [`getc_unlocked`](../spec/functions/stdio/getc_unlocked.toml) | `<stdio.h>` | `int getc_unlocked(FILE *stream)` | POSIX.1-2024 XSH getc_unlocked |
 | [`getchar`](../spec/functions/stdio/getchar.toml) | `<stdio.h>` | `int getchar(void)` | C17 7.21.7.6 |
 | [`getcwd`](../spec/functions/unistd/getcwd.toml) | `<unistd.h>` | `char *getcwd(char *buf, size_t size)` | POSIX.1-2024 XSH getcwd |
 | [`getenv`](../spec/functions/stdlib/getenv.toml) | `<stdlib.h>` | `char *getenv(const char *name)` | C17 7.22.4.6 |
+| [`geteuid`](../spec/functions/unistd/geteuid.toml) | `<unistd.h>` | `uid_t geteuid(void)` | POSIX.1-2024 XSH geteuid |
+| [`getnameinfo`](../spec/functions/netdb/getnameinfo.toml) | `<netdb.h>` | `int getnameinfo(const struct sockaddr *restrict address, socklen_t address_length, char *restrict host, socklen_t host_length, char *restrict service, socklen_t service_length, int flags)` | POSIX.1-2024 XSH getnameinfo |
 | [`getopt`](../spec/functions/unistd/getopt.toml) | `<unistd.h>` | `int getopt(int argc, char *const argv[], const char *optstring)` | POSIX.1-2024 XSH getopt |
+| [`getpeername`](../spec/functions/sys/socket/getpeername.toml) | `<sys/socket.h>` | `int getpeername(int fd, struct sockaddr *restrict address, socklen_t *restrict length)` | POSIX.1-2024 XSH getpeername |
 | [`getpid`](../spec/functions/unistd/getpid.toml) | `<unistd.h>` | `pid_t getpid(void)` | POSIX.1-2024 XSH getpid |
 | [`getppid`](../spec/functions/unistd/getppid.toml) | `<unistd.h>` | `pid_t getppid(void)` | POSIX.1-2024 XSH getppid |
+| [`getsockname`](../spec/functions/sys/socket/getsockname.toml) | `<sys/socket.h>` | `int getsockname(int fd, struct sockaddr *restrict address, socklen_t *restrict length)` | POSIX.1-2024 XSH getsockname |
+| [`getsockopt`](../spec/functions/sys/socket/getsockopt.toml) | `<sys/socket.h>` | `int getsockopt(int fd, int level, int option, void *restrict value, socklen_t *restrict length)` | POSIX.1-2024 XSH getsockopt |
+| [`gettimeofday`](../spec/functions/sys/time/gettimeofday.toml) | `<sys/time.h>` | `int gettimeofday(struct timeval *restrict value, void *restrict zone)` | Extension ABI gettimeofday |
 | [`getwc`](../spec/functions/wchar/getwc.toml) | `<wchar.h>` | `wint_t getwc(FILE *stream)` | C17 7.29.3.6 |
 | [`getwchar`](../spec/functions/wchar/getwchar.toml) | `<wchar.h>` | `wint_t getwchar(void)` | C17 7.29.3.7 |
 | [`gmtime`](../spec/functions/time/gmtime.toml) | `<time.h>` | `struct tm *gmtime(const time_t *timer)` | C17 7.27.3.3 |
 | [`gmtime_r`](../spec/functions/time/gmtime_r.toml) | `<time.h>` | `struct tm *gmtime_r(const time_t *restrict timer, struct tm *restrict result)` | POSIX.1-2024 XSH gmtime_r |
+| [`htonl`](../spec/functions/arpa/inet/htonl.toml) | `<arpa/inet.h>` | `uint32_t htonl(uint32_t value)` | POSIX.1-2024 XSH htonl |
+| [`htons`](../spec/functions/arpa/inet/htons.toml) | `<arpa/inet.h>` | `uint16_t htons(uint16_t value)` | POSIX.1-2024 XSH htons |
 | [`hypot`](../spec/functions/math/hypot.toml) | `<math.h>` | `double hypot(double x, double y)` | C17 7.12.7.3 |
 | [`hypotf`](../spec/functions/math/hypotf.toml) | `<math.h>` | `float hypotf(float x, float y)` | C17 7.12.7.3 |
 | [`hypotl`](../spec/functions/math/hypotl.toml) | `<math.h>` | `long double hypotl(long double x, long double y)` | C17 7.12.7.3 |
 | [`ilogb`](../spec/functions/math/ilogb.toml) | `<math.h>` | `int ilogb(double x)` | C17 7.12.6.5 |
 | [`ilogbf`](../spec/functions/math/ilogbf.toml) | `<math.h>` | `int ilogbf(float x)` | C17 7.12.6.5 |
 | [`ilogbl`](../spec/functions/math/ilogbl.toml) | `<math.h>` | `int ilogbl(long double x)` | C17 7.12.6.5 |
+| [`imaxabs`](../spec/functions/inttypes/imaxabs.toml) | `<inttypes.h>` | `intmax_t imaxabs(intmax_t value)` | C17 7.8.2.1 |
+| [`imaxdiv`](../spec/functions/inttypes/imaxdiv.toml) | `<inttypes.h>` | `imaxdiv_t imaxdiv(intmax_t numerator, intmax_t denominator)` | C17 7.8.2.2 |
+| [`inet_ntop`](../spec/functions/arpa/inet/inet_ntop.toml) | `<arpa/inet.h>` | `const char *inet_ntop(int family, const void *restrict source, char *restrict destination, socklen_t size)` | POSIX.1-2024 XSH inet_ntop |
+| [`inet_pton`](../spec/functions/arpa/inet/inet_pton.toml) | `<arpa/inet.h>` | `int inet_pton(int family, const char *restrict source, void *restrict destination)` | POSIX.1-2024 XSH inet_pton |
 | [`ioctl`](../spec/functions/sys/ioctl/ioctl.toml) | `<sys/ioctl.h>` | `int ioctl(int fd, unsigned long request, ...)` | Extension ABI ioctl |
 | [`isalnum`](../spec/functions/ctype/isalnum.toml) | `<ctype.h>` | `int isalnum(int c)` | C17 7.4.1.1 |
 | [`isalpha`](../spec/functions/ctype/isalpha.toml) | `<ctype.h>` | `int isalpha(int c)` | C17 7.4.1.2 |
@@ -286,12 +332,17 @@ Specs: 620 of 641 inventoried functions. The inventory covers C17, the named POS
 | [`iswxdigit`](../spec/functions/wctype/iswxdigit.toml) | `<wctype.h>` | `int iswxdigit(wint_t wc)` | C17 7.30.2.1.12 |
 | [`isxdigit`](../spec/functions/ctype/isxdigit.toml) | `<ctype.h>` | `int isxdigit(int c)` | C17 7.4.1.12 |
 | [`kill`](../spec/functions/signal/kill.toml) | `<signal.h>` | `int kill(pid_t pid, int sig)` | POSIX.1-2024 XSH kill |
+| [`labs`](../spec/functions/stdlib/labs.toml) | `<stdlib.h>` | `long labs(long value)` | C17 7.22.6.1 |
 | [`ldexp`](../spec/functions/math/ldexp.toml) | `<math.h>` | `double ldexp(double x, int n)` | C17 7.12.6.6 |
 | [`ldexpf`](../spec/functions/math/ldexpf.toml) | `<math.h>` | `float ldexpf(float x, int n)` | C17 7.12.6.6 |
 | [`ldexpl`](../spec/functions/math/ldexpl.toml) | `<math.h>` | `long double ldexpl(long double x, int n)` | C17 7.12.6.6 |
+| [`ldiv`](../spec/functions/stdlib/ldiv.toml) | `<stdlib.h>` | `ldiv_t ldiv(long numerator, long denominator)` | C17 7.22.6.2 |
 | [`lgamma`](../spec/functions/math/lgamma.toml) | `<math.h>` | `double lgamma(double x)` | C17 7.12.8.3 |
 | [`lgammaf`](../spec/functions/math/lgammaf.toml) | `<math.h>` | `float lgammaf(float x)` | C17 7.12.8.3 |
 | [`lgammal`](../spec/functions/math/lgammal.toml) | `<math.h>` | `long double lgammal(long double x)` | C17 7.12.8.3 |
+| [`listen`](../spec/functions/sys/socket/listen.toml) | `<sys/socket.h>` | `int listen(int fd, int backlog)` | POSIX.1-2024 XSH listen |
+| [`llabs`](../spec/functions/stdlib/llabs.toml) | `<stdlib.h>` | `long long llabs(long long value)` | C17 7.22.6.1 |
+| [`lldiv`](../spec/functions/stdlib/lldiv.toml) | `<stdlib.h>` | `lldiv_t lldiv(long long numerator, long long denominator)` | C17 7.22.6.2 |
 | [`llrint`](../spec/functions/math/llrint.toml) | `<math.h>` | `long long llrint(double x)` | C17 7.12.9.5 |
 | [`llrintf`](../spec/functions/math/llrintf.toml) | `<math.h>` | `long long llrintf(float x)` | C17 7.12.9.5 |
 | [`llrintl`](../spec/functions/math/llrintl.toml) | `<math.h>` | `long long llrintl(long double x)` | C17 7.12.9.5 |
@@ -299,6 +350,7 @@ Specs: 620 of 641 inventoried functions. The inventory covers C17, the named POS
 | [`llroundf`](../spec/functions/math/llroundf.toml) | `<math.h>` | `long long llroundf(float x)` | C17 7.12.9.7 |
 | [`llroundl`](../spec/functions/math/llroundl.toml) | `<math.h>` | `long long llroundl(long double x)` | C17 7.12.9.7 |
 | [`localeconv`](../spec/functions/locale/localeconv.toml) | `<locale.h>` | `struct lconv *localeconv(void)` | C17 7.11.2.1 |
+| [`localtime`](../spec/functions/time/localtime.toml) | `<time.h>` | `struct tm *localtime(const time_t *timep)` | C17 7.27.3.4 |
 | [`localtime_r`](../spec/functions/time/localtime_r.toml) | `<time.h>` | `struct tm *localtime_r(const time_t *restrict timer, struct tm *restrict result)` | POSIX.1-2024 XSH localtime_r |
 | [`log`](../spec/functions/math/log.toml) | `<math.h>` | `double log(double x)` | C17 7.12.6.7 |
 | [`log10`](../spec/functions/math/log10.toml) | `<math.h>` | `double log10(double x)` | C17 7.12.6.8 |
@@ -342,15 +394,18 @@ Specs: 620 of 641 inventoried functions. The inventory covers C17, the named POS
 | [`mkdir`](../spec/functions/sys/stat/mkdir.toml) | `<sys/stat.h>` | `int mkdir(const char *path, mode_t mode)` | POSIX.1-2024 XSH mkdir |
 | [`mkstemp`](../spec/functions/stdlib/mkstemp.toml) | `<stdlib.h>` | `int mkstemp(char *template)` | POSIX.1-2024 XSH mkstemp |
 | [`mktime`](../spec/functions/time/mktime.toml) | `<time.h>` | `time_t mktime(struct tm *value)` | C17 7.27.2.3 |
+| [`mmap`](../spec/functions/sys/mman/mmap.toml) | `<sys/mman.h>` | `void *mmap(void *address, size_t length, int protection, int flags, int fd, off_t offset)` | POSIX.1-2024 XSH mmap |
 | [`modf`](../spec/functions/math/modf.toml) | `<math.h>` | `double modf(double x, double *iptr)` | C17 7.12.6.12 |
 | [`modff`](../spec/functions/math/modff.toml) | `<math.h>` | `float modff(float x, float *iptr)` | C17 7.12.6.12 |
 | [`modfl`](../spec/functions/math/modfl.toml) | `<math.h>` | `long double modfl(long double x, long double *iptr)` | C17 7.12.6.12 |
+| [`mremap`](../spec/functions/sys/mman/mremap.toml) | `<sys/mman.h>` | `void *mremap(void *old_address, size_t old_length, size_t new_length, int flags, ...)` | Extension ABI mremap |
 | [`mtx_destroy`](../spec/functions/threads/mtx_destroy.toml) | `<threads.h>` | `void mtx_destroy(mtx_t *mutex)` | C17 7.26.4.1 |
 | [`mtx_init`](../spec/functions/threads/mtx_init.toml) | `<threads.h>` | `int mtx_init(mtx_t *mutex, int type)` | C17 7.26.4.2 |
 | [`mtx_lock`](../spec/functions/threads/mtx_lock.toml) | `<threads.h>` | `int mtx_lock(mtx_t *mutex)` | C17 7.26.4.3 |
 | [`mtx_timedlock`](../spec/functions/threads/mtx_timedlock.toml) | `<threads.h>` | `int mtx_timedlock(mtx_t *restrict mutex, const struct timespec *restrict deadline)` | C17 7.26.4.4 |
 | [`mtx_trylock`](../spec/functions/threads/mtx_trylock.toml) | `<threads.h>` | `int mtx_trylock(mtx_t *mutex)` | C17 7.26.4.5 |
 | [`mtx_unlock`](../spec/functions/threads/mtx_unlock.toml) | `<threads.h>` | `int mtx_unlock(mtx_t *mutex)` | C17 7.26.4.6 |
+| [`munmap`](../spec/functions/sys/mman/munmap.toml) | `<sys/mman.h>` | `int munmap(void *address, size_t length)` | POSIX.1-2024 XSH munmap |
 | [`nan`](../spec/functions/math/nan.toml) | `<math.h>` | `double nan(const char *tagp)` | C17 7.12.11.2 |
 | [`nanf`](../spec/functions/math/nanf.toml) | `<math.h>` | `float nanf(const char *tagp)` | C17 7.12.11.2 |
 | [`nanl`](../spec/functions/math/nanl.toml) | `<math.h>` | `long double nanl(const char *tagp)` | C17 7.12.11.2 |
@@ -365,6 +420,8 @@ Specs: 620 of 641 inventoried functions. The inventory covers C17, the named POS
 | [`nexttowardf`](../spec/functions/math/nexttowardf.toml) | `<math.h>` | `float nexttowardf(float x, long double y)` | C17 7.12.11.4 |
 | [`nexttowardl`](../spec/functions/math/nexttowardl.toml) | `<math.h>` | `long double nexttowardl(long double x, long double y)` | C17 7.12.11.4 |
 | [`nl_langinfo`](../spec/functions/langinfo/nl_langinfo.toml) | `<langinfo.h>` | `char *nl_langinfo(nl_item item)` | POSIX.1-2024 XSH nl_langinfo |
+| [`ntohl`](../spec/functions/arpa/inet/ntohl.toml) | `<arpa/inet.h>` | `uint32_t ntohl(uint32_t value)` | POSIX.1-2024 XSH ntohl |
+| [`ntohs`](../spec/functions/arpa/inet/ntohs.toml) | `<arpa/inet.h>` | `uint16_t ntohs(uint16_t value)` | POSIX.1-2024 XSH ntohs |
 | [`open`](../spec/functions/fcntl/open.toml) | `<fcntl.h>` | `int open(const char *path, int flags, ...)` | POSIX.1-2024 XSH open |
 | [`openat`](../spec/functions/fcntl/openat.toml) | `<fcntl.h>` | `int openat(int dirfd, const char *path, int flags, ...)` | POSIX.1-2024 XSH openat |
 | [`opendir`](../spec/functions/dirent/opendir.toml) | `<dirent.h>` | `DIR *opendir(const char *name)` | POSIX.1-2024 XSH opendir |
@@ -372,6 +429,7 @@ Specs: 620 of 641 inventoried functions. The inventory covers C17, the named POS
 | [`perror`](../spec/functions/stdio/perror.toml) | `<stdio.h>` | `void perror(const char *s)` | C17 7.21.10.4 |
 | [`pipe`](../spec/functions/unistd/pipe.toml) | `<unistd.h>` | `int pipe(int fildes[2])` | POSIX.1-2024 XSH pipe |
 | [`pipe2`](../spec/functions/unistd/pipe2.toml) | `<unistd.h>` | `int pipe2(int fildes[2], int flags)` | POSIX.1-2024 XSH pipe2 |
+| [`poll`](../spec/functions/poll/poll.toml) | `<poll.h>` | `int poll(struct pollfd fds[], nfds_t count, int timeout)` | POSIX.1-2024 XSH poll |
 | [`popen`](../spec/functions/stdio/popen.toml) | `<stdio.h>` | `FILE *popen(const char *command, const char *mode)` | POSIX.1-2024 XSH popen |
 | [`posix_memalign`](../spec/functions/stdlib/posix_memalign.toml) | `<stdlib.h>` | `int posix_memalign(void **out, size_t alignment, size_t size)` | POSIX.1-2024 XSH posix_memalign |
 | [`posix_spawn`](../spec/functions/spawn/posix_spawn.toml) | `<spawn.h>` | `int posix_spawn(pid_t *restrict pid, const char *restrict path, const posix_spawn_file_actions_t *restrict actions, const posix_spawnattr_t *restrict attr, char *const argv[restrict], char *const envp[restrict])` | POSIX.1-2024 XSH posix_spawn |
@@ -394,6 +452,8 @@ Specs: 620 of 641 inventoried functions. The inventory covers C17, the named POS
 | [`pow`](../spec/functions/math/pow.toml) | `<math.h>` | `double pow(double x, double y)` | C17 7.12.7.4 |
 | [`powf`](../spec/functions/math/powf.toml) | `<math.h>` | `float powf(float x, float y)` | C17 7.12.7.4 |
 | [`powl`](../spec/functions/math/powl.toml) | `<math.h>` | `long double powl(long double x, long double y)` | C17 7.12.7.4 |
+| [`ppoll`](../spec/functions/poll/ppoll.toml) | `<poll.h>` | `int ppoll(struct pollfd fds[], nfds_t count, const struct timespec *timeout, const sigset_t *mask)` | Extension ABI ppoll |
+| [`pread`](../spec/functions/unistd/pread.toml) | `<unistd.h>` | `ssize_t pread(int fd, void *buffer, size_t count, off_t offset)` | POSIX.1-2024 XSH pread |
 | [`printf`](../spec/functions/stdio/printf.toml) | `<stdio.h>` | `int printf(const char *restrict format, ...)` | C17 7.21.6.3 |
 | [`pthread_attr_destroy`](../spec/functions/pthread/pthread_attr_destroy.toml) | `<pthread.h>` | `int pthread_attr_destroy(pthread_attr_t *attr)` | POSIX.1-2024 XSH pthread_attr_destroy |
 | [`pthread_attr_getdetachstate`](../spec/functions/pthread/pthread_attr_getdetachstate.toml) | `<pthread.h>` | `int pthread_attr_getdetachstate(const pthread_attr_t *attr, int *detachstate)` | POSIX.1-2024 XSH pthread_attr_getdetachstate |
@@ -443,12 +503,18 @@ Specs: 620 of 641 inventoried functions. The inventory covers C17, the named POS
 | [`puts`](../spec/functions/stdio/puts.toml) | `<stdio.h>` | `int puts(const char *s)` | C17 7.21.7.9 |
 | [`putwc`](../spec/functions/wchar/putwc.toml) | `<wchar.h>` | `wint_t putwc(wchar_t character, FILE *stream)` | C17 7.29.3.8 |
 | [`putwchar`](../spec/functions/wchar/putwchar.toml) | `<wchar.h>` | `wint_t putwchar(wchar_t character)` | C17 7.29.3.9 |
+| [`pwrite`](../spec/functions/unistd/pwrite.toml) | `<unistd.h>` | `ssize_t pwrite(int fd, const void *buffer, size_t count, off_t offset)` | POSIX.1-2024 XSH pwrite |
 | [`qsort`](../spec/functions/stdlib/qsort.toml) | `<stdlib.h>` | `void qsort(void *base, size_t nmemb, size_t size, int (*compar)(const void *, const void *))` | C17 7.22.5.2 |
+| [`quick_exit`](../spec/functions/stdlib/quick_exit.toml) | `<stdlib.h>` | `_Noreturn void quick_exit(int status)` | C17 7.22.4.7 |
 | [`raise`](../spec/functions/signal/raise.toml) | `<signal.h>` | `int raise(int sig)` | C17 7.14.2.1 |
+| [`rand`](../spec/functions/stdlib/rand.toml) | `<stdlib.h>` | `int rand(void)` | C17 7.22.2.1 |
 | [`read`](../spec/functions/unistd/read.toml) | `<unistd.h>` | `ssize_t read(int fd, void *buf, size_t count)` | POSIX.1-2024 XSH read |
 | [`readdir`](../spec/functions/dirent/readdir.toml) | `<dirent.h>` | `struct dirent *readdir(DIR *dirp)` | POSIX.1-2024 XSH readdir |
 | [`readlink`](../spec/functions/unistd/readlink.toml) | `<unistd.h>` | `ssize_t readlink(const char *restrict path, char *restrict buf, size_t size)` | POSIX.1-2024 XSH readlink |
 | [`realloc`](../spec/functions/stdlib/realloc.toml) | `<stdlib.h>` | `void *realloc(void *ptr, size_t size)` | C17 7.22.3.5 |
+| [`recv`](../spec/functions/sys/socket/recv.toml) | `<sys/socket.h>` | `ssize_t recv(int fd, void *buffer, size_t length, int flags)` | POSIX.1-2024 XSH recv |
+| [`recvfrom`](../spec/functions/sys/socket/recvfrom.toml) | `<sys/socket.h>` | `ssize_t recvfrom(int fd, void *restrict buffer, size_t length, int flags, struct sockaddr *restrict address, socklen_t *restrict address_length)` | POSIX.1-2024 XSH recvfrom |
+| [`recvmsg`](../spec/functions/sys/socket/recvmsg.toml) | `<sys/socket.h>` | `ssize_t recvmsg(int fd, struct msghdr *message, int flags)` | POSIX.1-2024 XSH recvmsg |
 | [`remainder`](../spec/functions/math/remainder.toml) | `<math.h>` | `double remainder(double x, double y)` | C17 7.12.10.2 |
 | [`remainderf`](../spec/functions/math/remainderf.toml) | `<math.h>` | `float remainderf(float x, float y)` | C17 7.12.10.2 |
 | [`remainderl`](../spec/functions/math/remainderl.toml) | `<math.h>` | `long double remainderl(long double x, long double y)` | C17 7.12.10.2 |
@@ -472,11 +538,17 @@ Specs: 620 of 641 inventoried functions. The inventory covers C17, the named POS
 | [`scalbnf`](../spec/functions/math/scalbnf.toml) | `<math.h>` | `float scalbnf(float x, int n)` | C17 7.12.6.13 |
 | [`scalbnl`](../spec/functions/math/scalbnl.toml) | `<math.h>` | `long double scalbnl(long double x, int n)` | C17 7.12.6.13 |
 | [`scanf`](../spec/functions/stdio/scanf.toml) | `<stdio.h>` | `int scanf(const char *restrict format, ...)` | C17 7.21.6.4 |
+| [`sched_yield`](../spec/functions/sched/sched_yield.toml) | `<sched.h>` | `int sched_yield(void)` | POSIX.1-2024 XSH sched_yield |
+| [`send`](../spec/functions/sys/socket/send.toml) | `<sys/socket.h>` | `ssize_t send(int fd, const void *buffer, size_t length, int flags)` | POSIX.1-2024 XSH send |
+| [`sendmsg`](../spec/functions/sys/socket/sendmsg.toml) | `<sys/socket.h>` | `ssize_t sendmsg(int fd, const struct msghdr *message, int flags)` | POSIX.1-2024 XSH sendmsg |
+| [`sendto`](../spec/functions/sys/socket/sendto.toml) | `<sys/socket.h>` | `ssize_t sendto(int fd, const void *buffer, size_t length, int flags, const struct sockaddr *address, socklen_t address_length)` | POSIX.1-2024 XSH sendto |
 | [`setbuf`](../spec/functions/stdio/setbuf.toml) | `<stdio.h>` | `void setbuf(FILE *restrict stream, char *restrict buffer)` | C17 7.21.5.5 |
 | [`setenv`](../spec/functions/stdlib/setenv.toml) | `<stdlib.h>` | `int setenv(const char *name, const char *value, int overwrite)` | POSIX.1-2024 XSH setenv |
 | [`setjmp`](../spec/functions/setjmp/setjmp.toml) | `<setjmp.h>` | `int setjmp(jmp_buf env)` | C17 7.13.1.1, POSIX.1-2024 XSH setjmp |
 | [`setlocale`](../spec/functions/locale/setlocale.toml) | `<locale.h>` | `char *setlocale(int category, const char *locale)` | C17 7.11.1.1 |
+| [`setsockopt`](../spec/functions/sys/socket/setsockopt.toml) | `<sys/socket.h>` | `int setsockopt(int fd, int level, int option, const void *value, socklen_t length)` | POSIX.1-2024 XSH setsockopt |
 | [`setvbuf`](../spec/functions/stdio/setvbuf.toml) | `<stdio.h>` | `int setvbuf(FILE *restrict stream, char *restrict buffer, int mode, size_t size)` | C17 7.21.5.6 |
+| [`shutdown`](../spec/functions/sys/socket/shutdown.toml) | `<sys/socket.h>` | `int shutdown(int fd, int how)` | POSIX.1-2024 XSH shutdown |
 | [`sigaction`](../spec/functions/signal/sigaction.toml) | `<signal.h>` | `int sigaction(int sig, const struct sigaction *restrict act, struct sigaction *restrict oldact)` | POSIX.1-2024 XSH sigaction |
 | [`sigaddset`](../spec/functions/signal/sigaddset.toml) | `<signal.h>` | `int sigaddset(sigset_t *set, int sig)` | POSIX.1-2024 XSH sigaddset |
 | [`sigdelset`](../spec/functions/signal/sigdelset.toml) | `<signal.h>` | `int sigdelset(sigset_t *set, int sig)` | POSIX.1-2024 XSH sigdelset |
@@ -496,10 +568,13 @@ Specs: 620 of 641 inventoried functions. The inventory covers C17, the named POS
 | [`sinhl`](../spec/functions/math/sinhl.toml) | `<math.h>` | `long double sinhl(long double x)` | C17 7.12.5.5 |
 | [`sinl`](../spec/functions/math/sinl.toml) | `<math.h>` | `long double sinl(long double x)` | C17 7.12.4.6 |
 | [`snprintf`](../spec/functions/stdio/snprintf.toml) | `<stdio.h>` | `int snprintf(char *restrict dest, size_t size, const char *restrict format, ...)` | C17 7.21.6.5 |
+| [`socket`](../spec/functions/sys/socket/socket.toml) | `<sys/socket.h>` | `int socket(int domain, int type, int protocol)` | POSIX.1-2024 XSH socket |
+| [`socketpair`](../spec/functions/sys/socket/socketpair.toml) | `<sys/socket.h>` | `int socketpair(int domain, int type, int protocol, int sv[2])` | POSIX.1-2024 XSH socketpair |
 | [`sprintf`](../spec/functions/stdio/sprintf.toml) | `<stdio.h>` | `int sprintf(char *restrict dest, const char *restrict format, ...)` | C17 7.21.6.6 |
 | [`sqrt`](../spec/functions/math/sqrt.toml) | `<math.h>` | `double sqrt(double x)` | C17 7.12.7.5 |
 | [`sqrtf`](../spec/functions/math/sqrtf.toml) | `<math.h>` | `float sqrtf(float x)` | C17 7.12.7.5 |
 | [`sqrtl`](../spec/functions/math/sqrtl.toml) | `<math.h>` | `long double sqrtl(long double x)` | C17 7.12.7.5 |
+| [`srand`](../spec/functions/stdlib/srand.toml) | `<stdlib.h>` | `void srand(unsigned int seed)` | C17 7.22.2.2 |
 | [`sscanf`](../spec/functions/stdio/sscanf.toml) | `<stdio.h>` | `int sscanf(const char *restrict src, const char *restrict format, ...)` | C17 7.21.6.7 |
 | [`stat`](../spec/functions/sys/stat/stat.toml) | `<sys/stat.h>` | `int stat(const char *restrict path, struct stat *restrict buf)` | POSIX.1-2024 XSH stat |
 | [`strcat`](../spec/functions/string/strcat.toml) | `<string.h>` | `char *strcat(char *restrict dest, const char *restrict src)` | C17 7.24.3.1 |
@@ -510,6 +585,7 @@ Specs: 620 of 641 inventoried functions. The inventory covers C17, the named POS
 | [`strcspn`](../spec/functions/string/strcspn.toml) | `<string.h>` | `size_t strcspn(const char *s, const char *reject)` | C17 7.24.5.3 |
 | [`strdup`](../spec/functions/string/strdup.toml) | `<string.h>` | `char *strdup(const char *s)` | POSIX.1-2024 XSH strdup |
 | [`strerror`](../spec/functions/string/strerror.toml) | `<string.h>` | `char *strerror(int error)` | C17 7.24.6.2 |
+| [`strerror_r`](../spec/functions/string/strerror_r.toml) | `<string.h>` | `int strerror_r(int errnum, char *strerrbuf, size_t buflen)` | POSIX.1-2024 XSH strerror_r |
 | [`strftime`](../spec/functions/time/strftime.toml) | `<time.h>` | `size_t strftime(char *restrict dest, size_t size, const char *restrict format, const struct tm *restrict value)` | C17 7.27.3.5 |
 | [`strlen`](../spec/functions/string/strlen.toml) | `<string.h>` | `size_t strlen(const char *s)` | C17 7.24.6.3 |
 | [`strncat`](../spec/functions/string/strncat.toml) | `<string.h>` | `char *strncat(char *restrict dest, const char *restrict src, size_t n)` | C17 7.24.3.2 |
@@ -532,6 +608,7 @@ Specs: 620 of 641 inventoried functions. The inventory covers C17, the named POS
 | [`strxfrm`](../spec/functions/string/strxfrm.toml) | `<string.h>` | `size_t strxfrm(char *restrict dest, const char *restrict src, size_t n)` | C17 7.24.4.5 |
 | [`swprintf`](../spec/functions/wchar/swprintf.toml) | `<wchar.h>` | `int swprintf(wchar_t *restrict dest, size_t size, const wchar_t *restrict format, ...)` | C17 7.29.2.3 |
 | [`swscanf`](../spec/functions/wchar/swscanf.toml) | `<wchar.h>` | `int swscanf(const wchar_t *restrict string, const wchar_t *restrict format, ...)` | C17 7.29.2.4 |
+| [`sysconf`](../spec/functions/unistd/sysconf.toml) | `<unistd.h>` | `long sysconf(int name)` | POSIX.1-2024 XSH sysconf |
 | [`system`](../spec/functions/stdlib/system.toml) | `<stdlib.h>` | `int system(const char *command)` | C17 7.22.4.8 |
 | [`tan`](../spec/functions/math/tan.toml) | `<math.h>` | `double tan(double x)` | C17 7.12.4.7 |
 | [`tanf`](../spec/functions/math/tanf.toml) | `<math.h>` | `float tanf(float x)` | C17 7.12.4.7 |
@@ -539,6 +616,13 @@ Specs: 620 of 641 inventoried functions. The inventory covers C17, the named POS
 | [`tanhf`](../spec/functions/math/tanhf.toml) | `<math.h>` | `float tanhf(float x)` | C17 7.12.5.6 |
 | [`tanhl`](../spec/functions/math/tanhl.toml) | `<math.h>` | `long double tanhl(long double x)` | C17 7.12.5.6 |
 | [`tanl`](../spec/functions/math/tanl.toml) | `<math.h>` | `long double tanl(long double x)` | C17 7.12.4.7 |
+| [`tcdrain`](../spec/functions/termios/tcdrain.toml) | `<termios.h>` | `int tcdrain(int fd)` | POSIX.1-2024 XSH tcdrain |
+| [`tcflow`](../spec/functions/termios/tcflow.toml) | `<termios.h>` | `int tcflow(int fd, int action)` | POSIX.1-2024 XSH tcflow |
+| [`tcflush`](../spec/functions/termios/tcflush.toml) | `<termios.h>` | `int tcflush(int fd, int queue_selector)` | POSIX.1-2024 XSH tcflush |
+| [`tcgetattr`](../spec/functions/termios/tcgetattr.toml) | `<termios.h>` | `int tcgetattr(int fd, struct termios *termios_p)` | POSIX.1-2024 XSH tcgetattr |
+| [`tcgetsid`](../spec/functions/termios/tcgetsid.toml) | `<termios.h>` | `pid_t tcgetsid(int fd)` | POSIX.1-2024 XSH tcgetsid |
+| [`tcsendbreak`](../spec/functions/termios/tcsendbreak.toml) | `<termios.h>` | `int tcsendbreak(int fd, int duration)` | POSIX.1-2024 XSH tcsendbreak |
+| [`tcsetattr`](../spec/functions/termios/tcsetattr.toml) | `<termios.h>` | `int tcsetattr(int fd, int optional_actions, const struct termios *termios_p)` | POSIX.1-2024 XSH tcsetattr |
 | [`tgamma`](../spec/functions/math/tgamma.toml) | `<math.h>` | `double tgamma(double x)` | C17 7.12.8.4 |
 | [`tgammaf`](../spec/functions/math/tgammaf.toml) | `<math.h>` | `float tgammaf(float x)` | C17 7.12.8.4 |
 | [`tgammal`](../spec/functions/math/tgammal.toml) | `<math.h>` | `long double tgammal(long double x)` | C17 7.12.8.4 |
@@ -553,6 +637,7 @@ Specs: 620 of 641 inventoried functions. The inventory covers C17, the named POS
 | [`time`](../spec/functions/time/time.toml) | `<time.h>` | `time_t time(time_t *out)` | C17 7.27.2.4 |
 | [`timespec_get`](../spec/functions/time/timespec_get.toml) | `<time.h>` | `int timespec_get(struct timespec *ts, int base)` | C17 7.27.2.5 |
 | [`tmpfile`](../spec/functions/stdio/tmpfile.toml) | `<stdio.h>` | `FILE *tmpfile(void)` | C17 7.21.4.3 |
+| [`tmpnam`](../spec/functions/stdio/tmpnam.toml) | `<stdio.h>` | `char *tmpnam(char *buffer)` | C17 7.21.4.4 |
 | [`tolower`](../spec/functions/ctype/tolower.toml) | `<ctype.h>` | `int tolower(int c)` | C17 7.4.2.1 |
 | [`toupper`](../spec/functions/ctype/toupper.toml) | `<ctype.h>` | `int toupper(int c)` | C17 7.4.2.2 |
 | [`towctrans`](../spec/functions/wctype/towctrans.toml) | `<wctype.h>` | `wint_t towctrans(wint_t wc, wctrans_t desc)` | C17 7.30.3.2.1 |
@@ -570,6 +655,7 @@ Specs: 620 of 641 inventoried functions. The inventory covers C17, the named POS
 | [`ungetwc`](../spec/functions/wchar/ungetwc.toml) | `<wchar.h>` | `wint_t ungetwc(wint_t character, FILE *stream)` | C17 7.29.3.10 |
 | [`unlink`](../spec/functions/unistd/unlink.toml) | `<unistd.h>` | `int unlink(const char *path)` | POSIX.1-2024 XSH unlink |
 | [`unsetenv`](../spec/functions/stdlib/unsetenv.toml) | `<stdlib.h>` | `int unsetenv(const char *name)` | POSIX.1-2024 XSH unsetenv |
+| [`utimes`](../spec/functions/sys/time/utimes.toml) | `<sys/time.h>` | `int utimes(const char *path, const struct timeval times[2])` | POSIX.1-2024 XSH utimes |
 | [`vasprintf`](../spec/functions/stdio/vasprintf.toml) | `<stdio.h>` | `int vasprintf(char **restrict result, const char *restrict format, va_list args)` | Extension ABI vasprintf |
 | [`vfprintf`](../spec/functions/stdio/vfprintf.toml) | `<stdio.h>` | `int vfprintf(FILE *restrict stream, const char *restrict format, va_list args)` | C17 7.21.6.8 |
 | [`vfscanf`](../spec/functions/stdio/vfscanf.toml) | `<stdio.h>` | `int vfscanf(FILE *restrict stream, const char *restrict format, va_list args)` | C17 7.21.6.9 |

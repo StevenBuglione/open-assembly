@@ -6,7 +6,7 @@ import subprocess
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "transcendental"))
-from oracle import EDOM, OBSERVATION, REQUEST, TEST_ERRNO
+from oracle import OBSERVATION, TEST_ERRNO
 
 
 class OracleMismatch(ValueError):
@@ -21,26 +21,14 @@ def checked(command, *, data=None):
     return result.stdout
 
 
-def produce(helper, folder, operation, start, count, mode):
+def produce(helper, folder, start, count, mode):
     request = folder / "requests"
     expected = folder / "expected"
-    checked([helper, operation, start, count, mode, request, expected])
+    checked([helper, start, count, mode, request, expected])
     return request.read_bytes(), expected.read_bytes()
 
 
-def exact_result(operation, input_bits):
-    magnitude = input_bits & 0x7fffffff
-    exponent = magnitude >> 23
-    if operation == "exp2":
-        return (not magnitude or exponent >= 150 or
-                exponent >= 127 and not magnitude & ((1 << (150 - exponent)) - 1))
-    if operation != "log2":
-        raise ValueError(f"unknown native oracle operation {operation}")
-    fraction = magnitude & 0x7fffff
-    return (not fraction if exponent else bool(fraction and not fraction & (fraction - 1)))
-
-
-def compare_native(actual, expected, operation, start, count):
+def compare_native(actual, expected, start, count):
     if len(actual) != len(expected) or len(expected) != count * OBSERVATION.size:
         raise RuntimeError("wrong response length")
     maximum = 0
@@ -52,21 +40,21 @@ def compare_native(actual, expected, operation, start, count):
             raise OracleMismatch(f"environment or representation mismatch at {start + index:#x}")
         if value == reference:
             continue
-        if operation == "log2" and wanted_error == EDOM and value & 0x7fc00000 == 0x7fc00000:
-            continue
-        same_sign = (reference ^ value) >> 31 == 0
-        normal = all(0x00800000 <= (bits & 0x7fffffff) < 0x7f800000 for bits in (reference, value))
+        input_bits = (start + index) & 0x7fffffff
+        exponent = input_bits >> 23
+        integral = (not input_bits or exponent >= 150 or
+                    exponent >= 127 and not input_bits & ((1 << (150 - exponent)) - 1))
+        finite_normal = 0x00800000 <= reference < 0x7f800000 and 0x00800000 <= value < 0x7f800000
         distance = abs(value - reference)
-        if (exact_result(operation, start + index) or wanted_error != TEST_ERRNO or
-                not same_sign or not normal or distance > 1):
+        if integral or wanted_error != TEST_ERRNO or not finite_normal or distance > 1:
             raise OracleMismatch(f"value mismatch at {start + index:#x}: {value:#x} != {reference:#x}")
         maximum = max(maximum, distance)
     return maximum
 
 
-def evaluate(helper, candidate, folder, operation, start, count, mode):
-    requests, expected = produce(helper, folder, operation, start, count, mode)
-    if len(requests) != count * REQUEST.size or len(expected) != count * OBSERVATION.size:
+def evaluate(helper, candidate, folder, start, count, mode):
+    requests, expected = produce(helper, folder, start, count, mode)
+    if len(requests) != count * 32 or len(expected) != count * OBSERVATION.size:
         raise RuntimeError("wrong request or oracle packet length")
     result = subprocess.run([candidate], input=requests, capture_output=True,
                             env={"LC_ALL": "C"}, timeout=180)

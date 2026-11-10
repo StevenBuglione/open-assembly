@@ -4,6 +4,7 @@ default rel
 
 global __al_tls_init:function
 global __al_tls_template:data
+global __al_runtime_load_bias:data
 extern __al_syscall:function
 extern __al_tls_new:function
 extern __al_panic:function
@@ -90,7 +91,9 @@ __al_tls_init:
     jmp .allocate
 
 .have_tls:
-    mov rsi, [r8 + 16]             ; p_vaddr (ET_EXEC has zero load bias)
+    mov rsi, [r8 + 16]             ; p_vaddr
+    add rsi, [rel __al_runtime_load_bias]
+    jc .fail
     mov [rel __al_tls_template], rsi
     mov rdx, [r8 + 32]             ; p_filesz
     mov [rel __al_tls_template + 8], rdx
@@ -163,5 +166,7 @@ tls_error:
 section .bss.__al_tls_init alloc noexec write nobits align=8
 __al_tls_template:
     resq 7                         ; image, size, displacement, alignment, guards, page
+
+__al_runtime_load_bias: resq 1
 
 section .note.GNU-stack noalloc noexec nowrite progbits

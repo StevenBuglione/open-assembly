@@ -1,0 +1,18 @@
+name = "epoll_ctl"
+header = "sys/epoll.h"
+prototype = "int epoll_ctl(int epfd, int operation, int fd, struct epoll_event *event)"
+standard = ["Extension ABI epoll_ctl"]
+deps = ["__errno_location"]
+errno = ["EBADF", "EEXIST", "EINVAL", "ELOOP", "ENOENT", "ENOMEM", "ENOSPC", "EPERM"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:linux-x86-64-network-abi", "diff:glibc", "diff:musl"]
+provenance = "original"
+semantics = [
+  "Add, modify or remove a descriptor registration.",
+  "Return the Linux result or minus one with TLS errno. Preserve errno on success.",
+]
+
+[abi]
+narrow_args = ["edi:s32", "esi:s32", "edx:s32"]
+variadic = false

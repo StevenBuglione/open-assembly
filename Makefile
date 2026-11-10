@@ -1,12 +1,15 @@
 RUNTIME_BUILD ?= build/runtime
 RUNTIME_SRC := src/x86_64-linux
 RUNTIME_START := $(RUNTIME_SRC)/rt/_start.asm
-RUNTIME_SOURCES := $(filter-out $(RUNTIME_START),$(sort $(wildcard $(RUNTIME_SRC)/*/*.asm)))
+RUNTIME_PIE_START := $(RUNTIME_SRC)/rt/__al_pie_entry.asm
+RUNTIME_SOURCES := $(filter-out $(RUNTIME_START) $(RUNTIME_PIE_START),$(sort $(wildcard $(RUNTIME_SRC)/*/*.asm)))
 RUNTIME_OBJECTS := $(patsubst $(RUNTIME_SRC)/%.asm,$(RUNTIME_BUILD)/obj/%.o,$(RUNTIME_SOURCES))
 ASM_INCLUDES := $(wildcard include/asm/*.inc include/asm/*/*.inc)
-RUNTIME_APPS := $(addprefix $(RUNTIME_BUILD)/apps/,cat wc)
+RUNTIME_APPS := $(addprefix $(RUNTIME_BUILD)/apps/,cat wc httpd)
+HTTPD_SOURCES := $(sort $(wildcard apps/httpd/*.asm))
+HTTPD_OBJECTS := $(patsubst apps/httpd/%.asm,$(RUNTIME_BUILD)/app-obj/httpd/%.o,$(HTTPD_SOURCES))
 
-.PHONY: phase0 phase1 phase2 phase3 phase4 phase5 phase6-files phase6-compat phase6-busybox phase6-process phase6-signal phase6-jump phase6-time phase6-calendar phase6-luafiles phase6-spawn phase6-shell phase6-path runtime apps gate FORCE phase7-exact phase7-transcendental phase7-complex phase6-lua phase6-strftime phase6-zone phase8-lifecycle phase8-openposix phase8-detectors phase8-sync phase8-c11 phase9-wctype phase9-multibyte phase9-bulk phase9-worker phase9-worker-sync phase9-wide phase9-libc-test phase9-stdio
+.PHONY: phase0 phase1 phase2 phase3 phase4 phase5 phase6-files phase6-compat phase6-busybox phase6-process phase6-signal phase6-jump phase6-time phase6-calendar phase6-luafiles phase6-spawn phase6-shell phase6-path runtime apps gate FORCE phase7-exact phase7-transcendental phase7-complex phase6-lua phase6-strftime phase8-lifecycle phase8-openposix phase8-detectors phase9-wctype phase9-multibyte phase9-bulk phase9-worker phase6-fcntl phase6-zone phase9-worker-sync phase9-wide phase10-http phase9-libc-test phase6-zlib phase8-sync phase8-c11 runtime-pie phase10-endpoints phase10-inet phase10-dns phase6-sqlite phase10-netdb phase10-terminal phase9-stdio phase11-static-pie
 
 phase0:
 	tools/gate --phase0
@@ -29,6 +32,9 @@ phase5:
 phase6-files:
 	python3 tools/phase6.py
 
+phase6-fcntl:
+	python3 tools/phase6.py --fcntl
+
 phase6-compat:
 	python3 tools/phase6.py --compat
 
@@ -37,6 +43,12 @@ phase6-busybox:
 
 phase6-lua:
 	python3 tools/lua.py
+
+phase6-zlib:
+	python3 tools/phase6_zlib.py
+
+phase6-sqlite:
+	python3 tools/sqlite.py
 
 phase6-process:
 	python3 tools/phase6.py --process
@@ -120,15 +132,51 @@ phase9-stdio:
 phase9-wctype:
 	python3 tools/phase9_wctype.py
 
+phase10-http:
+	python3 tools/phase10_http.py
+
+phase10-endpoints:
+	python3 tools/phase10.py --suite endpoints
+
+phase10-inet:
+	python3 tools/phase10.py --suite inet
+
+phase10-dns:
+	python3 tools/phase10_dns.py
+
+phase10-netdb:
+	python3 tools/phase10.py --suite netdb
+
+phase10-terminal:
+	python3 tools/phase10.py --suite terminal
+
+phase11-static-pie:
+	python3 tools/phase11_pie.py
+
 runtime: $(RUNTIME_BUILD)/crt1.o $(RUNTIME_BUILD)/libopenasm.a
 
+runtime-pie: runtime $(RUNTIME_BUILD)/crt1-pie.o
+
 apps: $(RUNTIME_APPS)
+
+$(RUNTIME_BUILD)/app-obj/httpd/%.o: apps/httpd/%.asm $(ASM_INCLUDES) Makefile
+	mkdir -p $(@D)
+	tmp=$$(mktemp "$@.XXXXXX") && trap 'rm -f "$$tmp"' EXIT && \
+		nasm -f elf64 -Wall -Werror -Wno-reloc-rel-dword -I include/asm/ -o "$$tmp" $< && \
+		tools/elf-audit --assembly-object "$$tmp" && mv -f "$$tmp" $@
 
 $(RUNTIME_BUILD)/app-obj/%.o: apps/%/main.asm $(ASM_INCLUDES) Makefile
 	mkdir -p $(@D)
 	tmp=$$(mktemp "$@.XXXXXX") && trap 'rm -f "$$tmp"' EXIT && \
 		nasm -f elf64 -Wall -Werror -Wno-reloc-rel-dword -I include/asm/ -o "$$tmp" $< && \
 		tools/elf-audit --assembly-object "$$tmp" && mv -f "$$tmp" $@
+
+$(RUNTIME_BUILD)/apps/httpd: $(HTTPD_OBJECTS) $(RUNTIME_BUILD)/crt1.o $(RUNTIME_BUILD)/libopenasm.a
+	mkdir -p $(@D)
+	tmp=$$(mktemp -d "$(@D)/.app.XXXXXX") && trap 'rm -rf "$$tmp"' EXIT && \
+		ld -m elf_x86_64 -static -no-pie -z noexecstack --fatal-warnings --no-undefined --gc-sections \
+			-e _start -o "$$tmp/$(@F)" $(RUNTIME_BUILD)/crt1.o $(HTTPD_OBJECTS) $(RUNTIME_BUILD)/libopenasm.a && \
+		tools/elf-audit "$$tmp/$(@F)" && mv -f "$$tmp/$(@F)" $@
 
 $(RUNTIME_BUILD)/apps/%: $(RUNTIME_BUILD)/app-obj/%.o $(RUNTIME_BUILD)/crt1.o $(RUNTIME_BUILD)/libopenasm.a
 	mkdir -p $(@D)
@@ -141,6 +189,13 @@ $(RUNTIME_BUILD)/crt1.o: $(RUNTIME_START) $(ASM_INCLUDES) Makefile
 	mkdir -p $(@D)
 	tmp=$$(mktemp "$@.XXXXXX") && trap 'rm -f "$$tmp"' EXIT && \
 		nasm -f elf64 -Wall -Werror -Wno-reloc-rel-dword -I include/asm/ -o "$$tmp" $< && mv -f "$$tmp" $@
+
+$(RUNTIME_BUILD)/crt1-pie.o: $(RUNTIME_PIE_START) $(RUNTIME_BUILD)/crt1.o $(ASM_INCLUDES) Makefile
+	mkdir -p $(@D)
+	tmp=$$(mktemp -d "$(@D)/.pie.XXXXXX") && trap 'rm -rf "$$tmp"' EXIT && \
+		nasm -f elf64 -Wall -Werror -Wno-reloc-rel-dword -I include/asm/ -o "$$tmp/entry.o" $(RUNTIME_PIE_START) && \
+		ld -r -z noexecstack --fatal-warnings -o "$$tmp/crt1-pie.o" $(RUNTIME_BUILD)/crt1.o "$$tmp/entry.o" && \
+		mv -f "$$tmp/crt1-pie.o" "$@"
 
 $(RUNTIME_BUILD)/obj/%.o: $(RUNTIME_SRC)/%.asm $(ASM_INCLUDES) Makefile
 	mkdir -p $(@D)

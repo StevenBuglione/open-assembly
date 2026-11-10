@@ -20,7 +20,7 @@ bits 64
 default rel
 
 global time:function
-extern __al_clock_parts:function
+extern __al_realtime_parts:function
 extern __al_syscall_result:function
 
 section .text.time alloc exec nowrite progbits
@@ -30,8 +30,7 @@ time:
     push rbx
     sub rsp, 8
     mov rbx, rdi
-    xor edi, edi                  ; CLOCK_REALTIME
-    call __al_clock_parts
+    call __al_realtime_parts
     cmp rax, -4095
     jae .error
     mov rax, rdx                  ; signed seconds

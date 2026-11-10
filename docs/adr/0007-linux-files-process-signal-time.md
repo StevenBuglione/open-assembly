@@ -110,6 +110,28 @@ ownership. A malformed kernel record reports EIO and discards the
 remaining entries in that batch.
 [Linux getdents64](https://man7.org/linux/man-pages/man2/getdents.2.html) · [POSIX readdir](https://pubs.opengroup.org/onlinepubs/9799919799/functions/readdir.html)
 
+## Variadic descriptor control
+
+`fcntl` chooses its variadic argument type from the command. Descriptor
+and status queries and pipe-size queries take no argument. Descriptor
+duplication, flag setters, simple owner setting, and pipe-size setting
+take a promoted signed `int`. Process and OFD record locking use a
+pointer to `struct flock`. Extended owner operations use a pointer
+to `struct f_owner_ex`. Unknown commands return EINVAL before
+forwarding anything to Linux.
+
+The public LP64 lock record occupies 32 bytes. Lock type and origin
+are signed shorts at offsets 0 and 2. The signed start and length
+are eight-byte values at offsets 8 and 16. The process ID is a
+signed int at offset 24. The owner record uses two signed ints at
+offsets 0 and 4. F_GETOWN obtains the typed owner record first, then
+returns the signed process or group ID separately from the kernel
+status. If the group ID would produce the reserved return value -1,
+report EOVERFLOW and use F_GETOWN_EX to obtain the identity.
+Blocking lock calls retain Linux EINTR behavior.
+[Linux fcntl UAPI](https://github.com/torvalds/linux/blob/master/include/uapi/asm-generic/fcntl.h) ·
+[POSIX fcntl](https://pubs.opengroup.org/onlinepubs/9799919799/functions/fcntl.html)
+
 ## Processes and spawning
 
 Use the x86-64 `fork` syscall for the initial single-thread runtime.
@@ -161,6 +183,47 @@ signal mask. Child signal delivery stays blocked through descriptor and
 attribute setup. The parent restores its own mask and publishes a child
 ID only after the handshake succeeds.
 [POSIX posix_spawn](https://pubs.opengroup.org/onlinepubs/9799919799/functions/posix_spawn.html)
+
+## Positional I/O, mapping, and wall time
+
+The Linux AMD64 LP64 interface exports pread, pwrite, ftruncate,
+access, fchmod, fchown, geteuid, and fsync. The generated declarations
+keep file offsets and transfer sizes at 64 bits. Descriptor and
+access-mode arguments retain their C integer widths. The value
+(uid_t)-1 or (gid_t)-1 keeps the corresponding ownership field.
+Access queries real IDs. The selected sysconf queries are
+_SC_PAGESIZE and _SC_PAGE_SIZE, both sourced from AT_PAGESZ.
+Other names return EINVAL in this scope.
+
+Positional I/O keeps the open file description's current offset.
+A negative pwrite offset returns EINVAL even for zero bytes. A
+zero-byte pwrite uses the kernel positional write boundary and
+does not change the contents or offset of a regular file. Nonempty
+pwrite uses pwrite64 on a description without O_APPEND. A description
+with O_APPEND uses pwritev2 with RWF_NOAPPEND on a supported filesystem.
+When the kernel lacks this operation or the file is on OverlayFS,
+the append case returns EOPNOTSUPP before any data transfer. On Linux
+6.18.59 with the pinned container, a raw RWF_NOAPPEND control honored
+the position on tmpfs and the ext-family checkout mount. On OverlayFS
+it returned success while appending instead. This scope does not
+serialize changes to O_APPEND made concurrently by another owner of
+the open file description.
+[Linux positional writes](https://man7.org/linux/man-pages/man2/writev.2.html)
+
+The mapping interface uses byte offsets and returns MAP_FAILED for
+kernel errors. The Linux mremap extension reads its optional new
+address only with MREMAP_FIXED. It retains the native kernel behavior
+for overlap, alignment, and resize flags.
+
+The generated sys/types.h uses project LP64 types throughout. The
+sys/time.h and time.h declarations share the time_t type. timeval contains
+two signed eight-byte fields for seconds and microseconds. The
+gettimeofday compatibility function retains the historical Linux
+timezone argument. utimes accepts either two timeval values or a
+null pointer for the current time. The C17 localtime entry uses
+static result storage and the same civil-time engine as localtime_r.
+[Linux gettimeofday](https://man7.org/linux/man-pages/man2/gettimeofday.2.html) ·
+[Linux mremap](https://man7.org/linux/man-pages/man2/mremap.2.html)
 
 ## Shell commands and pipe streams
 

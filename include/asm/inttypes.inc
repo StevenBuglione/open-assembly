@@ -2,6 +2,8 @@
 %ifndef OPEN_ASSEMBLY_696E7474797065732E68
 %define OPEN_ASSEMBLY_696E7474797065732E68
 
+extern imaxabs
+extern imaxdiv
 extern strtoimax
 extern strtoumax
 extern wcstoimax

@@ -10,7 +10,7 @@ import tomllib
 ROOT = Path(__file__).resolve().parent.parent
 IDENTIFIER = r"[A-Za-z_][A-Za-z0-9_]*"
 HEADER = r"[a-z][a-z0-9_]*(?:/[a-z][a-z0-9_]*)*\.h"
-STANDARD = r"(?:C17 7(?:\.[0-9]+)+|POSIX\.1-2024 (?:XBD|XSH) [A-Za-z0-9_./<>-]+|Runtime ABI [A-Za-z_<>.]+|Extension ABI [A-Za-z_<>./]+)"
+STANDARD = r"(?:C17 7(?:\.[0-9]+)+|POSIX\.1-2024 (?:XBD|XSH) [A-Za-z0-9_./<>-]+|Runtime ABI [A-Za-z_<>.]+|Extension ABI [A-Za-z0-9_<>./]+)"
 C17_HEADERS = dict(zip(
     ("assert complex ctype errno fenv float inttypes iso646 limits locale math "
      "setjmp signal stdalign stdarg stdatomic stdbool stddef stdint stdio stdlib "
@@ -30,11 +30,24 @@ LICENSES = {"MIT", "BSD-2-Clause", "BSD-3-Clause", "CC0-1.0", "Apache-2.0", "BSL
 C17_SOURCE = "https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2310.pdf"
 POSIX_SOURCE = "https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/unistd.h.html"
 POSIX_FDS = {"STDIN_FILENO": 0, "STDOUT_FILENO": 1, "STDERR_FILENO": 2}
-FILE_TYPES = {"off_t": "long", "mode_t": "unsigned int"}
+FILE_TYPES = {"off_t": "long", "mode_t": "unsigned int", "uid_t": "unsigned int", "gid_t": "unsigned int"}
+ACCESS_MODES = {"F_OK", "R_OK", "W_OK", "X_OK"}
+SYSCONF_NAMES = {"_SC_PAGESIZE", "_SC_PAGE_SIZE"}
+MMAP_POSIX = {"PROT_NONE", "PROT_READ", "PROT_WRITE", "PROT_EXEC",
+              "MAP_SHARED", "MAP_PRIVATE", "MAP_FIXED", "MAP_ANONYMOUS"}
+MMAP_LINUX = {"MAP_SHARED_VALIDATE", "MAP_FIXED_NOREPLACE",
+              "MREMAP_MAYMOVE", "MREMAP_FIXED", "MREMAP_DONTUNMAP"}
 SEEK_ORIGINS = {"SEEK_SET", "SEEK_CUR", "SEEK_END"}
 OPEN_FLAGS = {"AT_FDCWD", "AT_SYMLINK_NOFOLLOW", "O_RDONLY", "O_WRONLY", "O_RDWR", "O_ACCMODE", "O_CREAT",
               "O_EXCL", "O_NOCTTY", "O_TRUNC", "O_APPEND", "O_NONBLOCK", "O_DSYNC",
               "O_DIRECTORY", "O_NOFOLLOW", "O_CLOEXEC", "O_SYNC"}
+FCNTL_POSIX = {
+    "F_DUPFD", "F_DUPFD_CLOEXEC", "F_GETFD", "F_SETFD", "F_GETFL", "F_SETFL",
+    "F_GETLK", "F_SETLK", "F_SETLKW", "F_OFD_GETLK", "F_OFD_SETLK", "F_OFD_SETLKW",
+    "F_GETOWN", "F_SETOWN", "F_GETOWN_EX", "F_SETOWN_EX", "F_RDLCK", "F_WRLCK",
+    "F_UNLCK", "F_OWNER_PID", "F_OWNER_PGRP", "FD_CLOEXEC",
+}
+FCNTL_LINUX = {"F_GETPIPE_SZ", "F_SETPIPE_SZ", "F_OWNER_TID"}
 MODE_BITS = {"S_IRWXU", "S_IRUSR", "S_IWUSR", "S_IXUSR", "S_IRWXG", "S_IRGRP",
              "S_IWGRP", "S_IXGRP", "S_IRWXO", "S_IROTH", "S_IWOTH", "S_IXOTH",
              "S_ISUID", "S_ISGID", "S_ISVTX"}
@@ -58,22 +71,88 @@ PTHREAD_TSD_LIMITS = {"PTHREAD_KEYS_MAX": 128, "PTHREAD_DESTRUCTOR_ITERATIONS": 
 SPAWN_FLAGS = {"POSIX_SPAWN_RESETIDS", "POSIX_SPAWN_SETPGROUP", "POSIX_SPAWN_SETSIGDEF", "POSIX_SPAWN_SETSIGMASK"}
 SIGNAL_MASK_OPERATIONS = {"SIG_BLOCK", "SIG_UNBLOCK", "SIG_SETMASK"}
 SIGNAL_ACTION_FLAGS = {"SA_NOCLDSTOP", "SA_NOCLDWAIT", "SA_SIGINFO", "SA_ONSTACK", "SA_RESTART", "SA_NODEFER", "SA_RESETHAND"}
+NETDB_CONSTANTS = {
+    "AI_PASSIVE": 1, "AI_CANONNAME": 2, "AI_NUMERICHOST": 4, "AI_V4MAPPED": 8,
+    "AI_ALL": 16, "AI_ADDRCONFIG": 32, "AI_NUMERICSERV": 1024,
+    "EAI_BADFLAGS": -1, "EAI_NONAME": -2, "EAI_AGAIN": -3, "EAI_FAIL": -4,
+    "EAI_FAMILY": -6, "EAI_SOCKTYPE": -7, "EAI_SERVICE": -8,
+    "EAI_MEMORY": -10, "EAI_SYSTEM": -11, "EAI_OVERFLOW": -12,
+    "NI_NUMERICHOST": 1, "NI_NUMERICSERV": 2, "NI_NOFQDN": 4,
+    "NI_NAMEREQD": 8, "NI_DGRAM": 16,
+}
+TERMIOS_POSIX_CONSTANTS = {
+    "NCCS": 0x13, "VINTR": 0, "VQUIT": 1, "VERASE": 2, "VKILL": 3, "VEOF": 4, "VTIME": 5,
+    "VMIN": 6, "VSTART": 8, "VSTOP": 9, "VSUSP": 10, "VEOL": 11, "IGNBRK": 1, "BRKINT": 2,
+    "IGNPAR": 4, "PARMRK": 8, "INPCK": 0x10, "ISTRIP": 0x20, "INLCR": 0x40, "IGNCR": 0x80,
+    "ICRNL": 0x100, "IXON": 0x400, "IXANY": 0x800, "IXOFF": 0x1000, "OPOST": 1, "ONLCR": 4,
+    "OCRNL": 8, "ONOCR": 0x10, "ONLRET": 0x20, "OFILL": 0x40, "OFDEL": 0x80, "NLDLY": 0x100,
+    "NL0": 0, "NL1": 0x100, "CRDLY": 0x600, "CR0": 0, "CR1": 0x200, "CR2": 0x400, "CR3": 0x600,
+    "TABDLY": 0x1800, "TAB0": 0, "TAB1": 0x800, "TAB2": 0x1000, "TAB3": 0x1800, "BSDLY": 0x2000,
+    "BS0": 0, "BS1": 0x2000, "VTDLY": 0x4000, "VT0": 0, "VT1": 0x4000, "FFDLY": 0x8000, "FF0": 0,
+    "FF1": 0x8000, "CSIZE": 0x30, "CS5": 0, "CS6": 0x10, "CS7": 0x20, "CS8": 0x30, "CSTOPB": 0x40,
+    "CREAD": 0x80, "PARENB": 0x100, "PARODD": 0x200, "HUPCL": 0x400, "CLOCAL": 0x800, "ISIG": 1,
+    "ICANON": 2, "ECHO": 8, "ECHOE": 0x10, "ECHOK": 0x20, "ECHONL": 0x40, "NOFLSH": 0x80,
+    "TOSTOP": 0x100, "IEXTEN": 0x8000, "TCSANOW": 0, "TCSADRAIN": 1, "TCSAFLUSH": 2, "B0": 0,
+    "B50": 1, "B75": 2, "B110": 3, "B134": 4, "B150": 5, "B200": 6, "B300": 7, "B600": 8,
+    "B1200": 9, "B1800": 10, "B2400": 11, "B4800": 12, "B9600": 13, "B19200": 14, "B38400": 15,
+    "TCIFLUSH": 0, "TCOFLUSH": 1, "TCIOFLUSH": 2,
+    "TCOOFF": 0, "TCOON": 1, "TCIOFF": 2, "TCION": 3,
+}
+TERMIOS_LINUX_SPEEDS = {
+    "B57600": 0x1001, "B115200": 0x1002, "B230400": 0x1003, "B460800": 0x1004, "B500000": 0x1005,
+    "B576000": 0x1006, "B921600": 0x1007, "B1000000": 0x1008, "B1152000": 0x1009,
+    "B1500000": 0x100a, "B2000000": 0x100b, "B2500000": 0x100c, "B3000000": 0x100d,
+    "B3500000": 0x100e, "B4000000": 0x100f,
+}
 LANGINFO_CONSTANTS = {"CODESET": 14}
 MATH_XSI_CONSTANTS = {"M_PI": "3.141592653589793238462643383279502884"}
+FNM_CONSTANTS = {"FNM_PATHNAME": 1, "FNM_NOESCAPE": 2, "FNM_PERIOD": 4, "FNM_CASEFOLD": 16,
+                 "FNM_IGNORECASE": 16, "FNM_NOMATCH": 1}
 POSIX_SCOPE = {
+    "fnmatch.h": {"functions": {"fnmatch"}, "macros": set(FNM_CONSTANTS)},
     "langinfo.h": {"functions": {"nl_langinfo"}, "types": {"nl_item"}, "macros": set(LANGINFO_CONSTANTS)},
     "math.h": {"macros": set(MATH_XSI_CONSTANTS)},
+    "termios.h": {
+        "functions": {"cfgetispeed", "cfgetospeed", "cfsetispeed", "cfsetospeed", "tcgetattr", "tcsetattr",
+                      "tcdrain", "tcflow", "tcflush", "tcsendbreak", "tcgetsid"},
+        "types": {"cc_t", "pid_t", "speed_t", "tcflag_t", "struct termios"},
+        "macros": set(TERMIOS_POSIX_CONSTANTS),
+    },
+    "sched.h": {"functions": {"sched_yield"}},
+    "netdb.h": {"functions": {"freeaddrinfo", "gai_strerror", "getaddrinfo", "getnameinfo"},
+                "types": {"struct addrinfo"}, "macros": set(NETDB_CONSTANTS)},
+    "sys/socket.h": {"functions": {"accept", "bind", "connect", "getpeername", "getsockname", "getsockopt", "listen", "recv", "recvfrom", "recvmsg", "send", "sendmsg", "sendto", "setsockopt", "shutdown", "socket", "socketpair"},
+        "types": {"sa_family_t", "socklen_t", "struct cmsghdr", "struct linger", "struct msghdr", "struct sockaddr", "struct sockaddr_storage"},
+        "macros": {"AF_INET", "AF_INET6", "AF_UNIX", "AF_UNSPEC", "CMSG_DATA", "CMSG_FIRSTHDR", "CMSG_LEN", "CMSG_NXTHDR", "CMSG_SPACE", "MSG_CTRUNC", "MSG_DONTROUTE", "MSG_EOR", "MSG_NOSIGNAL", "MSG_OOB", "MSG_PEEK", "MSG_TRUNC", "MSG_WAITALL", "SCM_RIGHTS", "SHUT_RD", "SHUT_RDWR", "SHUT_WR", "SOCK_DGRAM", "SOCK_RAW", "SOCK_SEQPACKET", "SOCK_STREAM", "SOL_SOCKET", "SO_ACCEPTCONN", "SO_BROADCAST", "SO_ERROR", "SO_KEEPALIVE", "SO_LINGER", "SO_RCVBUF", "SO_REUSEADDR", "SO_SNDBUF", "SO_TYPE"}},
+    "sys/un.h": {"types": {"struct sockaddr_un"}},
+    "sys/uio.h": {"types": {"struct iovec"}},
+    "netinet/in.h": {"types": {"in_addr_t", "in_port_t", "struct in6_addr", "struct in_addr", "struct sockaddr_in", "struct sockaddr_in6"},
+        "macros": {"IN6ADDR_ANY_INIT", "IN6ADDR_LOOPBACK_INIT", "INADDR_ANY", "INADDR_BROADCAST", "INADDR_LOOPBACK", "INADDR_NONE", "INET_ADDRSTRLEN", "INET6_ADDRSTRLEN", "IPPROTO_ICMP", "IPPROTO_IP", "IPPROTO_IPV6", "IPPROTO_TCP", "IPPROTO_UDP"}},
+    "arpa/inet.h": {"functions": {"htonl", "htons", "inet_ntop", "inet_pton", "ntohl", "ntohs"}},
+    "poll.h": {"functions": {"poll"},
+        "types": {"nfds_t", "struct pollfd"},
+        "macros": {"POLLERR", "POLLHUP", "POLLIN", "POLLNVAL", "POLLOUT", "POLLPRI", "POLLRDBAND", "POLLRDNORM", "POLLWRBAND", "POLLWRNORM"}},
     "unistd.h": {"functions": {"_exit", "close", "dup", "dup2", "execv", "execve", "execvp", "fork", "getcwd", "getopt",
                                "getpid", "getppid", "isatty", "lseek", "pipe", "pipe2", "read", "readlink",
-                               "rmdir", "unlink", "write"},
-                 "types": {"size_t", "ssize_t", "off_t", "pid_t"}, "macros": set(POSIX_FDS) | SEEK_ORIGINS,
+                               "rmdir", "unlink", "write", "access", "fchown", "fsync", "ftruncate", "geteuid",
+                               "pread", "pwrite", "sysconf"},
+                 "types": {"size_t", "ssize_t", "off_t", "pid_t", "uid_t", "gid_t"},
+                 "macros": set(POSIX_FDS) | SEEK_ORIGINS | ACCESS_MODES | SYSCONF_NAMES,
                  "objects": {"environ", "optarg", "opterr", "optind", "optopt"}},
+    "string.h": {"functions": {"strdup", "strerror_r"}},
     "stdlib.h": {"functions": {"mkstemp", "posix_memalign", "putenv", "setenv", "unsetenv"}},
-    "fcntl.h": {"functions": {"creat", "open", "openat"}, "types": {"mode_t"},
-                "macros": OPEN_FLAGS},
-    "sys/stat.h": {"functions": {"chmod", "fstat", "fstatat", "lstat", "mkdir", "stat", "umask"},
-                   "types": {"mode_t", "struct stat"},
+    "fcntl.h": {"functions": {"creat", "fcntl", "open", "openat"},
+                "types": {"mode_t", "off_t", "pid_t", "struct flock", "struct f_owner_ex"},
+                "macros": OPEN_FLAGS | SEEK_ORIGINS | FCNTL_POSIX},
+    "sys/stat.h": {"functions": {"chmod", "fchmod", "fstat", "fstatat", "lstat", "mkdir", "stat", "umask"},
+                   "types": {"mode_t", "uid_t", "gid_t", "struct stat"},
                    "macros": MODE_BITS | STAT_MODE_BITS | {"S_IS" + kind for kind in STAT_FILE_KINDS}},
+    "sys/mman.h": {"functions": {"mmap", "munmap"}, "types": {"off_t", "size_t"},
+                   "macros": MMAP_POSIX | {"MAP_FAILED"}},
+    "sys/time.h": {"functions": {"utimes"}, "types": {"time_t", "suseconds_t", "struct timeval"}},
+    "sys/types.h": {"types": {"blkcnt_t", "blksize_t", "clock_t", "clockid_t", "dev_t", "gid_t",
+                             "ino_t", "mode_t", "nlink_t", "off_t", "pid_t", "size_t",
+                             "ssize_t", "suseconds_t", "time_t", "uid_t"}},
     "dirent.h": {"functions": {"closedir", "dirfd", "fdopendir", "opendir", "readdir"},
                  "types": {"DIR", "struct dirent"}},
     "sys/wait.h": {"functions": {"wait", "waitpid"}, "types": {"pid_t"},
@@ -114,14 +193,24 @@ POSIX_SCOPE = {
                  "macros": SIGNAL_MASK_OPERATIONS | SIGNAL_ACTION_FLAGS | {"SIGRTMIN", "SIGRTMAX"}},
     "libgen.h": {"functions": {"dirname"}},
     "stdio.h": {"functions": {"fileno", "flockfile", "fseeko", "ftello", "funlockfile", "getc_unlocked", "pclose", "popen", "putchar_unlocked"}},
-    "string.h": {"functions": {"strdup"}},
 }
 EXTENSION_SCOPE = {
-    "setjmp.h": {"_longjmp", "_setjmp"},
-    "stdio.h": {"ferror_unlocked", "fputs_unlocked", "vasprintf"},
-    "sys/ioctl.h": {"ioctl"},
+    "termios.h": {"macros": set(TERMIOS_LINUX_SPEEDS)},
+    "setjmp.h": {"functions": {"_longjmp", "_setjmp"}},
+    "stdio.h": {"functions": {"ferror_unlocked", "fputs_unlocked", "vasprintf"}},
+    "sys/ioctl.h": {"functions": {"ioctl"}},
+    "sys/socket.h": {"functions": {"accept4"},
+        "macros": {"AF_LOCAL", "CMSG_ALIGN", "MSG_CMSG_CLOEXEC", "MSG_DONTWAIT", "SCM_CREDENTIALS", "SOCK_CLOEXEC", "SOCK_NONBLOCK", "SO_PASSCRED", "SO_PEERCRED", "SO_REUSEPORT"},
+        "types": {"struct ucred"}},
+    "poll.h": {"functions": {"ppoll"},
+        "macros": {"POLLRDHUP"}},
+    "sys/epoll.h": {"functions": {"epoll_create", "epoll_create1", "epoll_ctl", "epoll_pwait", "epoll_wait"},
+        "types": {"epoll_data_t", "struct epoll_event"},
+        "macros": {"EPOLLERR", "EPOLLET", "EPOLLEXCLUSIVE", "EPOLLHUP", "EPOLLIN", "EPOLLONESHOT", "EPOLLOUT", "EPOLLPRI", "EPOLLRDBAND", "EPOLLRDHUP", "EPOLLRDNORM", "EPOLLWAKEUP", "EPOLLWRBAND", "EPOLLWRNORM", "EPOLL_CLOEXEC", "EPOLL_CTL_ADD", "EPOLL_CTL_DEL", "EPOLL_CTL_MOD"}},
+    "sys/mman.h": {"functions": {"mremap"}},
+    "sys/time.h": {"functions": {"gettimeofday"}},
 }
-RUNTIME_ABI = {"compiler_rt.h": "__stack_chk_fail", "errno.h": "__errno_location"}
+RUNTIME_ABI = {"assert.h": "__al_assert_fail", "compiler_rt.h": "__stack_chk_fail", "errno.h": "__errno_location"}
 MACRO_BACKED_ABI = {("setjmp.h", "setjmp")}
 
 
@@ -229,22 +318,52 @@ def version_one(value, where):
         fail(where, "unsupported schema version; expected integer 1")
 
 
+def load_network_abi(root):
+    path = regular_file(root, "spec/types/linux-x86_64-net.toml", "network ABI")
+    document = read_toml(path)
+    keys(document, {"schema_version", "types", "syscalls", "socket", "poll", "epoll", "inet", "layout"}, path)
+    version_one(document["schema_version"], path)
+    expected_types = {"socklen_t": "unsigned int", "sa_family_t": "unsigned short",
+                      "nfds_t": "unsigned long", "in_port_t": "uint16_t", "in_addr_t": "uint32_t"}
+    if document["types"] != expected_types:
+        fail(path, "network ABI types must match the selected Linux LP64 types")
+    groups = {
+        "syscalls": {"accept", "accept4", "bind", "connect", "epoll_create", "epoll_create1", "epoll_ctl", "epoll_pwait", "epoll_wait", "getpeername", "getsockname", "getsockopt", "listen", "poll", "ppoll", "recvfrom", "recvmsg", "sendmsg", "sendto", "setsockopt", "shutdown", "socket", "socketpair"},
+        "socket": {"AF_INET", "AF_INET6", "AF_LOCAL", "AF_UNIX", "AF_UNSPEC", "MSG_CMSG_CLOEXEC", "MSG_CTRUNC", "MSG_DONTROUTE", "MSG_DONTWAIT", "MSG_EOR", "MSG_NOSIGNAL", "MSG_OOB", "MSG_PEEK", "MSG_TRUNC", "MSG_WAITALL", "SCM_CREDENTIALS", "SCM_RIGHTS", "SHUT_RD", "SHUT_RDWR", "SHUT_WR", "SOCK_CLOEXEC", "SOCK_DGRAM", "SOCK_NONBLOCK", "SOCK_RAW", "SOCK_SEQPACKET", "SOCK_STREAM", "SOL_SOCKET", "SO_ACCEPTCONN", "SO_BROADCAST", "SO_ERROR", "SO_KEEPALIVE", "SO_LINGER", "SO_PASSCRED", "SO_PEERCRED", "SO_RCVBUF", "SO_REUSEADDR", "SO_REUSEPORT", "SO_SNDBUF", "SO_TYPE"},
+        "poll": {"POLLERR", "POLLHUP", "POLLIN", "POLLNVAL", "POLLOUT", "POLLPRI", "POLLRDBAND", "POLLRDHUP", "POLLRDNORM", "POLLWRBAND", "POLLWRNORM"},
+        "epoll": {"EPOLLERR", "EPOLLET", "EPOLLEXCLUSIVE", "EPOLLHUP", "EPOLLIN", "EPOLLONESHOT", "EPOLLOUT", "EPOLLPRI", "EPOLLRDBAND", "EPOLLRDHUP", "EPOLLRDNORM", "EPOLLWAKEUP", "EPOLLWRBAND", "EPOLLWRNORM", "EPOLL_CLOEXEC", "EPOLL_CTL_ADD", "EPOLL_CTL_DEL", "EPOLL_CTL_MOD"},
+        "inet": {"INADDR_ANY", "INADDR_BROADCAST", "INADDR_LOOPBACK", "INADDR_NONE", "INET_ADDRSTRLEN", "INET6_ADDRSTRLEN", "IPPROTO_ICMP", "IPPROTO_IP", "IPPROTO_IPV6", "IPPROTO_TCP", "IPPROTO_UDP"},
+        "layout": {"cmsghdr_size", "epoll_event_data", "epoll_event_size", "iovec_size", "kernel_sigset_size", "msghdr_size", "pollfd_size", "sockaddr_in6_size", "sockaddr_in_size", "sockaddr_size", "sockaddr_storage_align", "sockaddr_storage_size", "sockaddr_un_path"},
+    }
+    for name, expected in groups.items():
+        constants = document[name]
+        keys(constants, expected, f"{path}: {name}")
+        if any(type(value) is not int or not 0 <= value <= 0xffffffff for value in constants.values()):
+            fail(path, f"{name} values must be unsigned 32-bit integer constants")
+    return document
+
+
 def load_file_abi(root):
     path = regular_file(root, "spec/types/linux-x86_64-files.toml", "file ABI")
     document = read_toml(path)
     keys(document, {"schema_version", "types", "syscalls", "seek", "open_flags", "mode_bits",
-                    "dirent_types", "descriptor_flags"}, path)
+                    "dirent_types", "descriptor_flags", "access_modes", "sysconf_names", "mapping"}, path)
     version_one(document["schema_version"], path)
     if document["types"] != FILE_TYPES:
         fail(path, "file ABI types must match the selected Linux LP64 types")
     groups = {
         "syscalls": {"fstat", "lseek", "ioctl", "pipe", "dup", "dup2", "fcntl", "getcwd", "rename", "mkdir", "rmdir",
-                     "unlink", "readlink", "chmod", "umask", "getdents64", "openat", "newfstatat", "getrandom"},
+                     "unlink", "readlink", "chmod", "umask", "getdents64", "openat", "newfstatat", "getrandom",
+                     "mmap", "munmap", "pread64", "pwrite64", "mremap", "fsync", "ftruncate",
+                     "fchmod", "fchown", "fstatfs", "pwritev2"},
         "seek": SEEK_ORIGINS | {"SEEK_DATA", "SEEK_HOLE"},
         "open_flags": OPEN_FLAGS | {"AT_EMPTY_PATH", "O_PATH", "O_TMPFILE"},
         "mode_bits": MODE_BITS | STAT_MODE_BITS,
         "dirent_types": DIRENT_TYPES,
-        "descriptor_flags": {"F_GETFD", "F_SETFD", "F_GETFL", "F_DUPFD_CLOEXEC", "FD_CLOEXEC"},
+        "descriptor_flags": FCNTL_POSIX | FCNTL_LINUX,
+        "access_modes": ACCESS_MODES,
+        "sysconf_names": SYSCONF_NAMES,
+        "mapping": MMAP_POSIX | MMAP_LINUX,
     }
     for name, expected in groups.items():
         constants = document[name]
@@ -262,7 +381,7 @@ def load_process_abi(root):
     version_one(document["schema_version"], path)
     if document["types"] != {"pid_t": "int"}:
         fail(path, "process IDs must use the selected signed 32-bit type")
-    keys(document["syscalls"], {"access", "getpid", "fork", "execve", "wait4", "getrlimit", "getuid", "getgid",
+    keys(document["syscalls"], {"access", "getpid", "fork", "execve", "wait4", "getrlimit", "getuid", "getgid", "geteuid",
                                 "setpgid", "getppid", "setresuid", "setresgid", "pipe2"}, path)
     keys(document["wait_flags"], {"WNOHANG", "WUNTRACED", "WCONTINUED"}, path)
     keys(document["spawn_flags"], SPAWN_FLAGS, path)
@@ -292,9 +411,9 @@ def load_time_abi(root):
     document = read_toml(path)
     keys(document, {"schema_version", "types", "syscalls", "constants"}, path)
     version_one(document["schema_version"], path)
-    if document["types"] != {"time_t": "long", "clock_t": "long", "clockid_t": "int"}:
+    if document["types"] != {"time_t": "long", "clock_t": "long", "clockid_t": "int", "suseconds_t": "long"}:
         fail(path, "time ABI types must match Linux x86-64 time64")
-    keys(document["syscalls"], {"nanosleep", "clock_gettime", "clock_getres", "clock_nanosleep"}, path)
+    keys(document["syscalls"], {"nanosleep", "gettimeofday", "utimes", "clock_gettime", "clock_getres", "clock_nanosleep"}, path)
     keys(document["constants"], CLOCK_POSIX | {"CLOCKS_PER_SEC", "TIME_UTC", "CLOCK_MONOTONIC_RAW",
          "CLOCK_REALTIME_COARSE", "CLOCK_MONOTONIC_COARSE", "CLOCK_BOOTTIME", "CLOCK_REALTIME_ALARM",
          "CLOCK_BOOTTIME_ALARM", "CLOCK_TAI"}, path)
@@ -393,7 +512,7 @@ def load_inventory(root):
         if edition == "Runtime" and [(i.kind, i.name) for i in found] != [("functions", RUNTIME_ABI[name])]:
             fail(where, "expected only the named runtime ABI entry")
         if edition == "Extension" and {(i.kind, i.name) for i in found} != {
-                ("functions", function) for function in EXTENSION_SCOPE[name]}:
+                (kind, item) for kind, entries in EXTENSION_SCOPE[name].items() for item in entries}:
             fail(where, "expected only the named Linux compatibility extension entries")
         if edition == "POSIX.1-2024" and {(i.kind, i.name) for i in found} != {
                 (kind, item) for kind, entries in POSIX_SCOPE[name].items() for item in entries}:
@@ -486,11 +605,11 @@ def builtin_abi_class(declaration):
     words = [word for word in declaration.split() if word not in qualifiers]
     if len(words) > 1 and words[-1] not in type_words:
         words.pop()
-    if words in (["off_t"], ["time_t"], ["clock_t"], ["__al_sighandler_t"], ["jmp_buf"], ["sigjmp_buf"], ["wctype_t"], ["wctrans_t"]):
+    if words in (["off_t"], ["time_t"], ["clock_t"], ["__al_sighandler_t"], ["jmp_buf"], ["sigjmp_buf"], ["wctype_t"], ["wctrans_t"], ["nfds_t"], ["ssize_t"]):
         return "wide", ()
-    if words in (["mode_t"], ["wint_t"], ["char32_t"]):
+    if words in (["mode_t"], ["wint_t"], ["char32_t"], ["socklen_t"], ["in_addr_t"], ["uint32_t"]):
         return "narrow", ("u32",)
-    if words == ["char16_t"]:
+    if words in (["char16_t"], ["sa_family_t"], ["in_port_t"], ["uint16_t"]):
         return "narrow", ("u16",)
     if words in (["pid_t"], ["clockid_t"], ["wchar_t"], ["nl_item"]):
         return "narrow", ("s32",)
@@ -682,7 +801,7 @@ def load_project(root=ROOT):
 
 def nasm_name(name):
     # NASM strips the identifier escape for reserved words in ELF.
-    return "$" + name if name in {"abs", "wait"} else name
+    return "$" + name if name in {"abs", "div", "wait"} else name
 
 
 def comment_header(spec):
@@ -733,7 +852,7 @@ PHASE0_FIXED_INPUTS = (
     "docs/adr/0001-project-scope.md", "docs/plan.md", "docs/api-index.md",
     "docs/cookbook/phase0-contract.md", "docs/cookbook/specifications.md",
     "docs/cookbook/test-oracles.md", "docs/cookbook/verification.md",
-    "build/include/c/string.h", ".github/CODEOWNERS", ".github/workflows/phase0.yml",
+    "build/include/c/string.h", "build/include/c/inttypes.h", ".github/CODEOWNERS", ".github/workflows/phase0.yml",
 )
 
 

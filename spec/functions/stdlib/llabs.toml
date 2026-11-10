@@ -1,0 +1,15 @@
+name = "llabs"
+header = "stdlib.h"
+prototype = "long long llabs(long long value)"
+standard = ["C17 7.22.6.1"]
+deps = ["labs"]
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:c17-integer-arithmetic"]
+provenance = "original"
+semantics = ["Return the signed long long absolute value when representable.", "The most negative value is outside the representable result domain.", "Preserve errno."]
+
+[abi]
+narrow_args = []
+variadic = false

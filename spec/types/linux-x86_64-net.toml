@@ -1,0 +1,135 @@
+schema_version = 1
+
+[types]
+socklen_t = "unsigned int"
+sa_family_t = "unsigned short"
+nfds_t = "unsigned long"
+in_port_t = "uint16_t"
+in_addr_t = "uint32_t"
+
+[syscalls]
+poll = 7
+socket = 41
+connect = 42
+accept = 43
+sendto = 44
+recvfrom = 45
+sendmsg = 46
+recvmsg = 47
+shutdown = 48
+bind = 49
+listen = 50
+getsockname = 51
+getpeername = 52
+socketpair = 53
+setsockopt = 54
+getsockopt = 55
+epoll_create = 213
+epoll_wait = 232
+epoll_ctl = 233
+ppoll = 271
+epoll_pwait = 281
+accept4 = 288
+epoll_create1 = 291
+
+[socket]
+AF_UNSPEC = 0
+AF_UNIX = 1
+AF_LOCAL = 1
+AF_INET = 2
+AF_INET6 = 10
+SOCK_STREAM = 1
+SOCK_DGRAM = 2
+SOCK_RAW = 3
+SOCK_SEQPACKET = 5
+SOCK_NONBLOCK = 2048
+SOCK_CLOEXEC = 524288
+SOL_SOCKET = 1
+SO_REUSEADDR = 2
+SO_TYPE = 3
+SO_ERROR = 4
+SO_BROADCAST = 6
+SO_SNDBUF = 7
+SO_RCVBUF = 8
+SO_KEEPALIVE = 9
+SO_LINGER = 13
+SO_REUSEPORT = 15
+SO_PASSCRED = 16
+SO_PEERCRED = 17
+SO_ACCEPTCONN = 30
+SHUT_RD = 0
+SHUT_WR = 1
+SHUT_RDWR = 2
+MSG_OOB = 1
+MSG_PEEK = 2
+MSG_DONTROUTE = 4
+MSG_CTRUNC = 8
+MSG_TRUNC = 32
+MSG_DONTWAIT = 64
+MSG_EOR = 128
+MSG_WAITALL = 256
+MSG_NOSIGNAL = 16384
+MSG_CMSG_CLOEXEC = 1073741824
+SCM_RIGHTS = 1
+SCM_CREDENTIALS = 2
+
+[poll]
+POLLIN = 1
+POLLPRI = 2
+POLLOUT = 4
+POLLERR = 8
+POLLHUP = 16
+POLLNVAL = 32
+POLLRDNORM = 64
+POLLRDBAND = 128
+POLLWRNORM = 256
+POLLWRBAND = 512
+POLLRDHUP = 8192
+
+[epoll]
+EPOLL_CLOEXEC = 524288
+EPOLL_CTL_ADD = 1
+EPOLL_CTL_DEL = 2
+EPOLL_CTL_MOD = 3
+EPOLLIN = 1
+EPOLLPRI = 2
+EPOLLOUT = 4
+EPOLLERR = 8
+EPOLLHUP = 16
+EPOLLRDNORM = 64
+EPOLLRDBAND = 128
+EPOLLWRNORM = 256
+EPOLLWRBAND = 512
+EPOLLRDHUP = 8192
+EPOLLEXCLUSIVE = 268435456
+EPOLLWAKEUP = 536870912
+EPOLLONESHOT = 1073741824
+EPOLLET = 2147483648
+
+[inet]
+INADDR_ANY = 0
+INADDR_LOOPBACK = 2130706433
+INADDR_BROADCAST = 4294967295
+INADDR_NONE = 4294967295
+INET_ADDRSTRLEN = 16
+INET6_ADDRSTRLEN = 46
+IPPROTO_IP = 0
+IPPROTO_ICMP = 1
+IPPROTO_TCP = 6
+IPPROTO_UDP = 17
+IPPROTO_IPV6 = 41
+
+[layout]
+sockaddr_size = 16
+sockaddr_storage_size = 128
+sockaddr_storage_align = 8
+sockaddr_in_size = 16
+sockaddr_in6_size = 28
+sockaddr_un_path = 108
+msghdr_size = 56
+cmsghdr_size = 16
+iovec_size = 16
+pollfd_size = 8
+epoll_event_size = 12
+epoll_event_data = 4
+kernel_sigset_size = 8
