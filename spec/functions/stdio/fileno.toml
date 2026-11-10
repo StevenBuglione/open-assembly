@@ -1,0 +1,19 @@
+name = "fileno"
+header = "stdio.h"
+prototype = "int fileno(FILE *stream)"
+standard = ["POSIX.1-2024 XSH fileno"]
+deps = ["__errno_location"]
+errno = ["EBADF"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:stream-ownership"]
+provenance = "original"
+semantics = [
+  "Read the stream's associated descriptor under recursive stream ownership.",
+  "Preserve stream position, buffered contents, status indicators, and errno on success.",
+  "Return -1 with EBADF when the stream has no associated descriptor.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

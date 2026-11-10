@@ -8,7 +8,7 @@ import os
 import sys
 import tempfile
 
-from spec import (POSIX_FDS, PTHREAD_CREATION, PTHREAD_MUTEX_TYPES, PTHREAD_ONCE_CONSTANTS, PTHREAD_TSD_LIMITS, ROOT, SEEK_ORIGINS, STAT_FILE_KINDS, SpecError, comment_header, has_runtime_entry,
+from spec import (LANGINFO_CONSTANTS, MATH_XSI_CONSTANTS, POSIX_FDS, PTHREAD_CREATION, PTHREAD_MUTEX_TYPES, PTHREAD_ONCE_CONSTANTS, PTHREAD_TSD_LIMITS, ROOT, SEEK_ORIGINS, STAT_FILE_KINDS, SpecError, comment_header, has_runtime_entry,
                   load_file_abi, load_process_abi, load_project, load_signal_abi, load_time_abi, nasm_name)
 
 
@@ -100,6 +100,8 @@ def make_outputs(project, include_tracked=True, include_test=True):
     signal_abi = load_signal_abi(project.root)
     time_abi = load_time_abi(project.root)
     header_constants = {
+        "langinfo.h": LANGINFO_CONSTANTS,
+        "math.h": MATH_XSI_CONSTANTS,
         "unistd.h": file_abi["seek"],
         "fcntl.h": file_abi["open_flags"] | file_abi["descriptor_flags"],
         "sys/stat.h": file_abi["mode_bits"],
@@ -259,6 +261,8 @@ def make_outputs(project, include_tracked=True, include_test=True):
                               "typedef struct { unsigned char x87[28]; unsigned int mxcsr; } fenv_t;", ""))
                 lines.extend(f"#define {name} ({value})" for name, value in FENV_CONSTANTS.items())
                 lines.extend(("#define FE_DFL_ENV ((const fenv_t *)-1)", ""))
+            elif header == "langinfo.h":
+                lines.extend(("typedef int nl_item;", ""))
             elif header == "locale.h":
                 lines.extend(f"#define {name} {value}" for name, value in LOCALE_CONSTANTS.items())
                 lines.extend(("", "struct lconv {"))

@@ -27,6 +27,7 @@ extern fflush
 extern fgetc
 extern fgetpos
 extern fgets
+extern fileno
 extern flockfile
 extern fopen
 extern fprintf

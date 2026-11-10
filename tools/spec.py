@@ -58,7 +58,11 @@ PTHREAD_TSD_LIMITS = {"PTHREAD_KEYS_MAX": 128, "PTHREAD_DESTRUCTOR_ITERATIONS": 
 SPAWN_FLAGS = {"POSIX_SPAWN_RESETIDS", "POSIX_SPAWN_SETPGROUP", "POSIX_SPAWN_SETSIGDEF", "POSIX_SPAWN_SETSIGMASK"}
 SIGNAL_MASK_OPERATIONS = {"SIG_BLOCK", "SIG_UNBLOCK", "SIG_SETMASK"}
 SIGNAL_ACTION_FLAGS = {"SA_NOCLDSTOP", "SA_NOCLDWAIT", "SA_SIGINFO", "SA_ONSTACK", "SA_RESTART", "SA_NODEFER", "SA_RESETHAND"}
+LANGINFO_CONSTANTS = {"CODESET": 14}
+MATH_XSI_CONSTANTS = {"M_PI": "3.141592653589793238462643383279502884"}
 POSIX_SCOPE = {
+    "langinfo.h": {"functions": {"nl_langinfo"}, "types": {"nl_item"}, "macros": set(LANGINFO_CONSTANTS)},
+    "math.h": {"macros": set(MATH_XSI_CONSTANTS)},
     "unistd.h": {"functions": {"_exit", "close", "dup", "dup2", "execv", "execve", "execvp", "fork", "getcwd", "getopt",
                                "getpid", "getppid", "isatty", "lseek", "pipe", "pipe2", "read", "readlink",
                                "rmdir", "unlink", "write"},
@@ -109,7 +113,7 @@ POSIX_SCOPE = {
                  "types": {"pid_t", "siginfo_t", "sigset_t", "struct sigaction"},
                  "macros": SIGNAL_MASK_OPERATIONS | SIGNAL_ACTION_FLAGS | {"SIGRTMIN", "SIGRTMAX"}},
     "libgen.h": {"functions": {"dirname"}},
-    "stdio.h": {"functions": {"flockfile", "fseeko", "ftello", "funlockfile", "getc_unlocked", "pclose", "popen", "putchar_unlocked"}},
+    "stdio.h": {"functions": {"fileno", "flockfile", "fseeko", "ftello", "funlockfile", "getc_unlocked", "pclose", "popen", "putchar_unlocked"}},
     "string.h": {"functions": {"strdup"}},
 }
 EXTENSION_SCOPE = {
@@ -488,7 +492,7 @@ def builtin_abi_class(declaration):
         return "narrow", ("u32",)
     if words == ["char16_t"]:
         return "narrow", ("u16",)
-    if words in (["pid_t"], ["clockid_t"], ["wchar_t"]):
+    if words in (["pid_t"], ["clockid_t"], ["wchar_t"], ["nl_item"]):
         return "narrow", ("s32",)
     counts = {word: words.count(word) for word in set(words)}
     if not words or counts.keys() - type_words:

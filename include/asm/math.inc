@@ -13,6 +13,8 @@
 %define FP_ILOGB0 -2147483648
 %define FP_ILOGBNAN -2147483648
 
+%define M_PI 3.141592653589793238462643383279502884
+
 extern acos
 extern acosf
 extern acosh
