@@ -4,6 +4,7 @@
 import argparse
 import sys
 
+from extensions import extension_functions, extension_sources, load_packages
 from spec import ROOT, SpecError, check_comment_header, load_project, production_sources
 
 
@@ -13,13 +14,15 @@ def main():
     parser.parse_args()
     try:
         project = load_project(ROOT)
-        sources = production_sources(project)
+        packages = load_packages(project)
+        functions = project.functions | extension_functions(packages)
+        sources = production_sources(project) | extension_sources(project, packages)
         for name, source in sources.items():
-            check_comment_header(source, project.functions[name])
+            check_comment_header(source, functions[name])
     except (SpecError, OSError) as error:
         print(f"provenance: {error}", file=sys.stderr)
         return 1
-    print(f"provenance: checked {len(project.functions)} specification(s) and {len(sources)} production source header(s)")
+    print(f"provenance: checked {len(functions)} specification(s) and {len(sources)} production source header(s)")
     return 0
 
 

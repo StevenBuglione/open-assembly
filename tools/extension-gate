@@ -1,0 +1,146 @@
+#!/usr/bin/env python3
+"""Build and verify one extension package with the independent runtime harness."""
+
+import argparse
+from dataclasses import replace
+from functools import partial
+from pathlib import Path
+import shutil
+import sys
+import tempfile
+
+from extensions import NAME, extension_functions, extension_sources, load_packages
+from gate import BUILD, GateError, checked, identify_tools, nm_symbols, source_policy, verify_setup, write_evidence
+from phase1 import NASM, build_runtime, phase1_inputs
+from phase4 import load_probes, parse_probe
+from phase6 import run_cases, run_stubs
+from spec import ROOT, SpecError, load_project, matching, sha256_file
+
+
+def dependency_order(packages, name):
+    order, seen = [], set()
+
+    def visit(item):
+        if item not in seen:
+            seen.add(item)
+            for dependency in packages[item].dependencies:
+                visit(dependency)
+            order.append(packages[item])
+
+    visit(name)
+    return order
+
+
+def build_extension(directory, packages, sources, log):
+    startup, core, exports, hashes = build_runtime(directory, log)
+    archive = directory / "libopenasm-extension.a"
+    shutil.copyfile(core, archive)
+    objects = []
+    for package in packages:
+        for symbol, spec in package.functions.items():
+            obj = directory / f"{symbol}.o"
+            checked(log, [*NASM, "-o", obj, sources[symbol]])
+            checked(log, ["tools/elf-audit", "--assembly-object", obj])
+            definitions = nm_symbols(log, obj, ["-g", "--defined-only"])
+            references = nm_symbols(log, obj, ["-g", "-u"])
+            if definitions != {symbol: "T"} or symbol in exports:
+                raise GateError(f"{symbol}: expected one new namespaced function export")
+            if set(references) != set(spec.deps) or any(kind != "U" for kind in references.values()):
+                raise GateError(f"{symbol}: object dependencies differ from the declared strong references")
+            exports.update(definitions)
+            objects.append(obj)
+            hashes[obj.name] = sha256_file(obj)
+    if any(dependency not in exports for package in packages for spec in package.functions.values()
+           for dependency in spec.deps):
+        raise GateError("the extension references a specified dependency with no linked implementation")
+    before = checked(log, ["ar", "t", archive]).splitlines()
+    if {obj.name for obj in objects} & set(before):
+        raise GateError("the extension has a colliding archive member")
+    checked(log, ["ar", "rD", archive, *objects])
+    if checked(log, ["ar", "t", archive]).splitlines() != before + [obj.name for obj in objects]:
+        raise GateError("the extension archive did not retain exact member order")
+    hashes[archive.name] = sha256_file(archive)
+    return startup, archive, exports, hashes
+
+
+def execute(name, require_production):
+    scope = f"extension-{name}"
+    checks = {"full_production": {
+        "outcome": "pending",
+        "reason": "Extension package coverage, mutation and timed fuzzing require a per-function production gate.",
+    }}
+    evidence = {"schema_version": 1, "scope": "extension-package", "package": name, "outcome": "fail",
+                "production_verified": False, "checks": checks}
+    try:
+        project = load_project()
+        packages = load_packages(project)
+        if name not in packages:
+            raise GateError(f"unknown extension package {name}")
+        package = packages[name]
+        closure = dependency_order(packages, name)
+        evidence.update(stability=package.stability, dependencies=package.dependencies, oracle=package.oracle)
+        functions = extension_functions({item.name: item for item in closure})
+        sources = extension_sources(project, packages)
+        for item in closure:
+            if not item.functions:
+                raise GateError(f"extension package {item.name} has no function specifications")
+        missing = [item.source(symbol).as_posix() for item in closure for symbol in item.functions
+                   if symbol not in sources]
+        if missing:
+            checks["implementations"] = {"outcome": "fail", "missing": missing}
+            raise GateError("unimplemented extension functions: " + ", ".join(missing))
+        checks["implementations"] = {"outcome": "pass", "symbols": sorted(functions)}
+        parse = partial(parse_probe, suite=package.tests, programs=(), fault_wrappers={},
+                        asm_fixtures=(Path("tests/phase2/abi.asm"),))
+        probes, controls = load_probes(package.tests / "manifest.toml", set(package.functions), parse)
+        for probe in probes:
+            if probe.case.oracle != (package.oracle,) or probe.host_skip is None:
+                raise GateError(f"{probe.case.name}: expected the package's named independent oracle")
+        if require_production:
+            raise GateError(checks["full_production"]["reason"])
+        evidence["toolchain"] = identify_tools("ar", "make", "qemu-x86_64")
+        evidence["inputs"] = verify_setup(checks, False, snapshot=phase1_inputs)
+        workspace = BUILD / scope
+        workspace.mkdir(parents=True, exist_ok=True)
+        runners = {"native": [], "qemu": [shutil.which("qemu-x86_64")],
+                   "valgrind": [shutil.which("valgrind"), "--quiet", "--error-exitcode=99",
+                                "--leak-check=full", "--errors-for-leak-kinds=all"]}
+        with tempfile.TemporaryDirectory(dir=workspace, prefix="run-") as temporary:
+            directory = Path(temporary).resolve().relative_to(ROOT)
+            source_policy(checks, directory)
+            build = checks["package_build"] = {"outcome": "fail", "commands": []}
+            first = build_extension(directory / "first", closure, sources, build["commands"])
+            second = build_extension(directory / "second", closure, sources, build["commands"])
+            if first[3] != second[3]:
+                raise GateError("two isolated extension builds differ")
+            build.update(outcome="pass", artifacts=first[3])
+            cases = checks["cases"] = {}
+            run_cases(probes, directory, first, second, runners, cases, "OA_EXTENSION_HOST")
+            stubs = checks["stub_controls"] = {"outcome": "fail", "symbols": {}}
+            run_stubs(controls, replace(project, functions=project.functions | functions), directory, first, stubs)
+        if evidence["inputs"] != phase1_inputs():
+            raise GateError("inputs changed during extension verification")
+        evidence["outcome"] = "pass"
+        print(f"PASS {scope} scoped checks", flush=True)
+    except (GateError, OSError, SpecError, ValueError) as error:
+        evidence["error"] = str(error)
+        print(f"extension-gate: {error}", file=sys.stderr)
+    report = write_evidence(scope, evidence)
+    print(f"{scope} evidence: {report}", flush=True)
+    return 0 if evidence["outcome"] == "pass" else 1
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("package")
+    parser.add_argument("--require-production", action="store_true")
+    args = parser.parse_args()
+    try:
+        name = matching(args.package, NAME, "package name")
+    except SpecError as error:
+        parser.error(str(error))
+    return execute(name, args.require_production)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

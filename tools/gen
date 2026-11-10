@@ -8,6 +8,7 @@ import os
 import sys
 import tempfile
 
+from extensions import extension_functions, load_packages
 from spec import (FNM_CONSTANTS, LANGINFO_CONSTANTS, MATH_XSI_CONSTANTS, NETDB_CONSTANTS, POSIX_FDS, PTHREAD_CREATION, PTHREAD_MUTEX_TYPES, PTHREAD_ONCE_CONSTANTS, PTHREAD_TSD_LIMITS, ROOT, SEEK_ORIGINS, STAT_FILE_KINDS, SpecError, comment_header, has_runtime_entry,
                   TERMIOS_LINUX_SPEEDS, TERMIOS_POSIX_CONSTANTS,
                   load_file_abi, load_network_abi, load_process_abi, load_project, load_signal_abi, load_time_abi, nasm_name)
@@ -148,7 +149,8 @@ def make_outputs(project, include_tracked=True, include_test=True):
         "stdlib.h": {"EXIT_SUCCESS": 0, "EXIT_FAILURE": 1, "RAND_MAX": 2147483647},
     }
     grouped = defaultdict(list)
-    for spec in project.functions.values():
+    extensions = extension_functions(load_packages(project))
+    for spec in (*project.functions.values(), *extensions.values()):
         grouped[spec.header].append(spec)
     grouped["limits.h"] = []
     network_abi = load_network_abi(project.root) if "socket" in project.functions else None
@@ -523,6 +525,14 @@ def make_outputs(project, include_tracked=True, include_test=True):
             f"| [`{spec.name}`](../{spec.path.as_posix()}) | `<{spec.header}>` | `{spec.prototype}` | {', '.join(spec.standard)} |"
             for spec in project.functions.values()
         )
+        if extensions:
+            lines.extend(("", "## Extension packages", "",
+                          "| Function | Header | Prototype | Standard |", "| --- | --- | --- | --- |"))
+            lines.extend(
+                f"| [`{spec.name}`](../{spec.path.as_posix()}) | `<{spec.header}>` | `{spec.prototype}` | "
+                f"{', '.join(spec.standard)} |"
+                for spec in extensions.values()
+            )
         outputs[INDEX] = "\n".join(lines + [""])
     return outputs
 
@@ -603,7 +613,8 @@ def main():
     try:
         project = load_project(ROOT)
         if args.comment_header:
-            spec = project.functions.get(args.comment_header)
+            functions = project.functions | extension_functions(load_packages(project))
+            spec = functions.get(args.comment_header)
             if not spec:
                 raise SpecError(f"no specification for {args.comment_header}")
             print(comment_header(spec), end="")

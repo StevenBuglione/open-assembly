@@ -1,0 +1,39 @@
+schema = 1
+
+[[case]]
+name = "word-math-model"
+sources = ["tests/ext/word_math/check.c", "tests/phase2/abi.asm"]
+requires = ["word_math_clamp_u32"]
+args = ["model"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:unsigned-minimum"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The mathematical unsigned minimum is the independent reference."
+
+[[case]]
+name = "word-math-abi"
+sources = ["tests/ext/word_math/check.c", "tests/phase2/abi.asm"]
+requires = ["word_math_clamp_u32"]
+args = ["abi"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:unsigned-minimum"]
+backends = ["native", "qemu"]
+host_skip = "The mathematical unsigned minimum and project System V ABI supply the reference."
+
+[case.skip]
+valgrind = "The pinned no-op SysV trampoline observes changed x87 control under Memcheck."
+
+[[stub]]
+symbol = "word_math_clamp_u32"
+case = "word-math-model"
+status = 11
+stdout = ""
+stderr = ""

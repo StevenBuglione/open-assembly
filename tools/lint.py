@@ -1274,10 +1274,12 @@ def verify(program, syscall_boundary, x87_return):
 
 
 def project_functions():
+    from extensions import extension_functions, load_packages
     from spec import SpecError, load_project
 
     try:
-        return MappingProxyType(load_project(ROOT).functions), None
+        project = load_project(ROOT)
+        return MappingProxyType(project.functions | extension_functions(load_packages(project))), None
     except SpecError as error:
         return None, str(error)
 
