@@ -9,7 +9,7 @@ RUNTIME_APPS := $(addprefix $(RUNTIME_BUILD)/apps/,cat wc httpd)
 HTTPD_SOURCES := $(sort $(wildcard apps/httpd/*.asm))
 HTTPD_OBJECTS := $(patsubst apps/httpd/%.asm,$(RUNTIME_BUILD)/app-obj/httpd/%.o,$(HTTPD_SOURCES))
 
-.PHONY: phase0 phase1 phase2 phase3 phase4 phase5 phase6-files phase6-compat phase6-busybox phase6-process phase6-signal phase6-jump phase6-time phase6-calendar phase6-luafiles phase6-spawn phase6-shell phase6-path runtime apps gate FORCE phase7-exact phase7-transcendental phase7-complex phase6-lua phase6-strftime phase8-lifecycle phase8-openposix phase8-detectors phase9-wctype phase9-multibyte phase9-bulk phase9-worker phase6-fcntl phase6-zone phase9-worker-sync phase9-wide phase10-http phase9-libc-test phase6-zlib phase8-sync phase8-c11 runtime-pie phase10-endpoints phase10-inet phase10-dns phase6-sqlite phase10-netdb phase10-terminal phase9-stdio phase11-static-pie phase11-copy phase9-narrow-wide phase11-vdso phase10-libc-test phase11-allocator
+.PHONY: phase0 phase1 phase2 phase3 phase4 phase5 phase6-files phase6-compat phase6-busybox phase6-process phase6-signal phase6-jump phase6-time phase6-calendar phase6-luafiles phase6-spawn phase6-shell phase6-path runtime apps gate FORCE phase7-exact phase7-transcendental phase7-complex phase6-lua phase6-strftime phase8-lifecycle phase8-openposix phase8-detectors phase9-wctype phase9-multibyte phase9-bulk phase9-worker phase6-fcntl phase6-zone phase9-worker-sync phase9-wide phase10-http phase9-libc-test phase6-zlib phase8-sync phase8-c11 runtime-pie phase10-endpoints phase10-inet phase10-dns phase6-sqlite phase10-netdb phase10-terminal phase9-stdio phase11-static-pie phase11-copy phase9-narrow-wide phase11-vdso phase10-libc-test phase11-allocator phase8-compiler-atomics
 
 phase0:
 	tools/gate --phase0
@@ -121,6 +121,9 @@ phase8-sync:
 
 phase8-c11:
 	python3 tools/phase8.py --c11
+
+phase8-compiler-atomics:
+	python3 tools/phase8_compiler_atomics.py
 
 phase8-openposix:
 	python3 tools/phase8_openposix.py

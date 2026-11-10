@@ -102,7 +102,7 @@ jobs:
           persist-credentials: false
       - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b
       - name: Run lifecycle, synchronization, C11, and detector gates
-        run: ./tools/container make -k phase8-lifecycle phase8-sync phase8-c11 phase8-openposix phase8-detectors
+        run: ./tools/container make -k phase8-lifecycle phase8-sync phase8-c11 phase8-openposix phase8-detectors phase8-compiler-atomics
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:

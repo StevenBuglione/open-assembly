@@ -1,0 +1,374 @@
+schema = 1
+
+[[case]]
+name = "atomics-load"
+sources = ["tests/phase8/atomics/generic.c"]
+requires = ["__atomic_load"]
+args = ["load"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:compiler-atomic-abi", "reference:c17-atomic-representations"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Uses the project-specific libcall aliases and baseline compiler contract."
+env = {}
+
+[[case]]
+name = "atomics-store"
+sources = ["tests/phase8/atomics/generic.c"]
+requires = ["__atomic_store"]
+args = ["store"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:compiler-atomic-abi", "reference:c17-atomic-representations"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Uses the project-specific libcall aliases and baseline compiler contract."
+env = {}
+
+[[case]]
+name = "atomics-exchange"
+sources = ["tests/phase8/atomics/generic.c"]
+requires = ["__atomic_exchange"]
+args = ["exchange"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:compiler-atomic-abi", "reference:c17-atomic-representations"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Uses the project-specific libcall aliases and baseline compiler contract."
+env = {}
+
+[[case]]
+name = "atomics-compare"
+sources = ["tests/phase8/atomics/generic.c"]
+requires = ["__atomic_compare_exchange"]
+args = ["compare"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:compiler-atomic-abi", "reference:c17-atomic-representations"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Uses the project-specific libcall aliases and baseline compiler contract."
+env = {}
+
+[[case]]
+name = "atomics-lock-free"
+sources = ["tests/phase8/atomics/generic.c"]
+requires = ["__atomic_is_lock_free"]
+args = ["lock-free"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:compiler-atomic-abi", "reference:c17-atomic-representations"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Uses the project-specific libcall aliases and baseline compiler contract."
+env = {}
+
+[[case]]
+name = "atomics-zero"
+sources = ["tests/phase8/atomics/generic.c"]
+requires = ["__atomic_load", "__atomic_store", "__atomic_exchange", "__atomic_compare_exchange"]
+args = ["zero"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:compiler-atomic-abi", "reference:c17-atomic-representations"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Uses the project-specific libcall aliases and baseline compiler contract."
+env = {}
+
+[[case]]
+name = "atomics-overlap"
+sources = ["tests/phase8/atomics/generic.c"]
+requires = ["__atomic_exchange"]
+args = ["overlap"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:compiler-atomic-abi", "reference:c17-atomic-representations"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Uses the project-specific libcall aliases and baseline compiler contract."
+env = {}
+
+[[case]]
+name = "atomics-load16"
+sources = ["tests/phase8/atomics/wide.c"]
+requires = ["__atomic_load_16"]
+args = ["load16"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:compiler-atomic-abi", "reference:c17-atomic-representations"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Uses the project-specific libcall aliases and baseline compiler contract."
+env = {}
+
+[[case]]
+name = "atomics-store16"
+sources = ["tests/phase8/atomics/wide.c"]
+requires = ["__atomic_store_16"]
+args = ["store16"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:compiler-atomic-abi", "reference:c17-atomic-representations"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Uses the project-specific libcall aliases and baseline compiler contract."
+env = {}
+
+[[case]]
+name = "atomics-exchange16"
+sources = ["tests/phase8/atomics/wide.c"]
+requires = ["__atomic_exchange_16"]
+args = ["exchange16"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:compiler-atomic-abi", "reference:c17-atomic-representations"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Uses the project-specific libcall aliases and baseline compiler contract."
+env = {}
+
+[[case]]
+name = "atomics-compare16"
+sources = ["tests/phase8/atomics/wide.c"]
+requires = ["__atomic_compare_exchange_16"]
+args = ["compare16"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:compiler-atomic-abi", "reference:c17-atomic-representations"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Uses the project-specific libcall aliases and baseline compiler contract."
+env = {}
+
+[[case]]
+name = "atomics-add16"
+sources = ["tests/phase8/atomics/wide.c"]
+requires = ["__atomic_fetch_add_16"]
+args = ["add16"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:compiler-atomic-abi", "reference:c17-atomic-representations"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Uses the project-specific libcall aliases and baseline compiler contract."
+env = {}
+
+[[case]]
+name = "atomics-sub16"
+sources = ["tests/phase8/atomics/wide.c"]
+requires = ["__atomic_fetch_sub_16"]
+args = ["sub16"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:compiler-atomic-abi", "reference:c17-atomic-representations"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Uses the project-specific libcall aliases and baseline compiler contract."
+env = {}
+
+[[case]]
+name = "atomics-and16"
+sources = ["tests/phase8/atomics/wide.c"]
+requires = ["__atomic_fetch_and_16"]
+args = ["and16"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:compiler-atomic-abi", "reference:c17-atomic-representations"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Uses the project-specific libcall aliases and baseline compiler contract."
+env = {}
+
+[[case]]
+name = "atomics-or16"
+sources = ["tests/phase8/atomics/wide.c"]
+requires = ["__atomic_fetch_or_16"]
+args = ["or16"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:compiler-atomic-abi", "reference:c17-atomic-representations"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Uses the project-specific libcall aliases and baseline compiler contract."
+env = {}
+
+[[case]]
+name = "atomics-xor16"
+sources = ["tests/phase8/atomics/wide.c"]
+requires = ["__atomic_fetch_xor_16"]
+args = ["xor16"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:compiler-atomic-abi", "reference:c17-atomic-representations"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Uses the project-specific libcall aliases and baseline compiler contract."
+env = {}
+
+[[case]]
+name = "atomics-nand16"
+sources = ["tests/phase8/atomics/wide.c"]
+requires = ["__atomic_fetch_nand_16"]
+args = ["nand16"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:compiler-atomic-abi", "reference:c17-atomic-representations"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Uses the project-specific libcall aliases and baseline compiler contract."
+env = {}
+
+[[case]]
+name = "atomics-threads"
+sources = ["tests/phase8/atomics/threads.c"]
+requires = ["__atomic_load", "__atomic_compare_exchange", "__atomic_fetch_add_16"]
+args = []
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:compiler-atomic-abi", "reference:c17-atomic-representations"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Uses the project-specific libcall aliases and baseline compiler contract."
+env = {}
+
+[[case]]
+name = "atomics-abi"
+sources = ["tests/phase8/atomics/abi.c", "tests/phase2/abi.asm"]
+requires = ["__atomic_load", "__atomic_store", "__atomic_exchange", "__atomic_compare_exchange", "__atomic_is_lock_free", "__atomic_load_16", "__atomic_store_16", "__atomic_exchange_16", "__atomic_compare_exchange_16", "__atomic_fetch_add_16", "__atomic_fetch_sub_16", "__atomic_fetch_and_16", "__atomic_fetch_or_16", "__atomic_fetch_xor_16", "__atomic_fetch_nand_16"]
+args = []
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:compiler-atomic-abi", "reference:c17-atomic-representations"]
+backends = ["native", "qemu"]
+host_skip = "Uses the project-specific libcall aliases and baseline compiler contract."
+env = {}
+[case.skip]
+valgrind = "The calibrated no-op SysV probe observes altered x87 control under pinned Memcheck. Direct semantics run under Memcheck."
+
+[[stub]]
+symbol = "__atomic_load"
+case = "atomics-load"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "__atomic_store"
+case = "atomics-store"
+status = 12
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "__atomic_exchange"
+case = "atomics-exchange"
+status = 13
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "__atomic_compare_exchange"
+case = "atomics-compare"
+status = 14
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "__atomic_is_lock_free"
+case = "atomics-lock-free"
+status = 16
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "__atomic_load_16"
+case = "atomics-load16"
+status = 21
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "__atomic_store_16"
+case = "atomics-store16"
+status = 22
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "__atomic_exchange_16"
+case = "atomics-exchange16"
+status = 23
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "__atomic_compare_exchange_16"
+case = "atomics-compare16"
+status = 24
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "__atomic_fetch_add_16"
+case = "atomics-add16"
+status = 30
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "__atomic_fetch_sub_16"
+case = "atomics-sub16"
+status = 31
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "__atomic_fetch_and_16"
+case = "atomics-and16"
+status = 32
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "__atomic_fetch_or_16"
+case = "atomics-or16"
+status = 33
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "__atomic_fetch_xor_16"
+case = "atomics-xor16"
+status = 34
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "__atomic_fetch_nand_16"
+case = "atomics-nand16"
+status = 35
+stdout = ""
+stderr = ""
