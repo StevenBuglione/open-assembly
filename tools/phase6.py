@@ -32,6 +32,7 @@ LUAFILES = {"mkstemp", "remove", "rename", "tmpfile"}
 SHELL = {"system", "popen", "pclose"}
 PATH_EXEC = {"execv", "execvp", "posix_spawnp"}
 STRFTIME = {"strftime"}
+ZONE = {"localtime_r", "mktime"}
 SPAWN = {
     "posix_spawn", "posix_spawn_file_actions_init", "posix_spawn_file_actions_destroy",
     "posix_spawn_file_actions_addclose", "posix_spawn_file_actions_adddup2", "posix_spawn_file_actions_addopen",
@@ -98,7 +99,7 @@ def execute_phase6(suite_name):
     suite = SUITE if suite_name == "files" else SUITE / suite_name
     public = {"files": PUBLIC, "compat": COMPAT, "process": PROCESS, "signal": SIGNAL, "jump": JUMP,
               "time": TIME, "calendar": CALENDAR, "luafiles": LUAFILES, "spawn": SPAWN,
-              "shell": SHELL, "path": PATH_EXEC, "strftime": STRFTIME}[suite_name]
+              "shell": SHELL, "path": PATH_EXEC, "strftime": STRFTIME, "zone": ZONE}[suite_name]
     fault_wrappers = {
         SUITE / "fault.c": ("__al_syscall",),
         SUITE / "compat/vasprintf_fault.c": ("realloc", "free"),
@@ -110,7 +111,7 @@ def execute_phase6(suite_name):
     }
     evidence = {"schema_version": 1, "scope": scope, "production_verified": False,
                 "outcome": "fail", "checks": {},
-                "pending_phase6": ["local time and TZif", "remaining spawn attributes and file actions"]}
+                "pending_phase6": ["remaining spawn attributes and file actions"]}
     checks = evidence["checks"]
     try:
         evidence["toolchain"] = identify_tools("ar", "make", "qemu-x86_64", "musl-gcc")
@@ -178,5 +179,7 @@ if __name__ == "__main__":
                       help="run the PATH execution and spawn probes")
     mode.add_argument("--strftime", dest="suite", action="store_const", const="strftime",
                       help="run the C-locale date-formatting probes")
+    mode.add_argument("--zone", dest="suite", action="store_const", const="zone",
+                      help="run the local civil time and TZif probes")
     parser.set_defaults(suite="files")
     raise SystemExit(execute_phase6(parser.parse_args().suite))

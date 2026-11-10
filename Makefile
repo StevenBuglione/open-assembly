@@ -6,7 +6,7 @@ RUNTIME_OBJECTS := $(patsubst $(RUNTIME_SRC)/%.asm,$(RUNTIME_BUILD)/obj/%.o,$(RU
 ASM_INCLUDES := $(wildcard include/asm/*.inc include/asm/*/*.inc)
 RUNTIME_APPS := $(addprefix $(RUNTIME_BUILD)/apps/,cat wc)
 
-.PHONY: phase0 phase1 phase2 phase3 phase4 phase5 phase6-files phase6-compat phase6-busybox phase6-process phase6-signal phase6-jump phase6-time phase6-calendar phase6-luafiles phase6-spawn phase6-shell phase6-path runtime apps gate FORCE phase7-exact phase7-transcendental phase7-complex phase6-lua phase6-strftime
+.PHONY: phase0 phase1 phase2 phase3 phase4 phase5 phase6-files phase6-compat phase6-busybox phase6-process phase6-signal phase6-jump phase6-time phase6-calendar phase6-luafiles phase6-spawn phase6-shell phase6-path runtime apps gate FORCE phase7-exact phase7-transcendental phase7-complex phase6-lua phase6-strftime phase6-zone
 
 phase0:
 	tools/gate --phase0
@@ -53,6 +53,9 @@ phase6-time:
 
 phase6-calendar:
 	python3 tools/phase6.py --calendar
+
+phase6-zone:
+	python3 tools/phase6.py --zone
 
 phase6-luafiles:
 	python3 tools/phase6.py --luafiles

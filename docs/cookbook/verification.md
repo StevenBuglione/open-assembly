@@ -36,6 +36,13 @@ kernel restorer, saved-mask semantics, and the non-local jump register state.
 Their manifests record exact stub outcomes and measured host or backend
 differences.
 
+`./tools/container make phase6-zone` checks local civil conversion,
+TZif versions 1 through 4, malformed and missing zone files, transition
+folds and gaps, and overflow without partially publishing a result.
+The inputs include the exact RFC 9636 examples and a pinned IANA zone.
+The report records the shared host comparisons and exact stub outcomes.
+[Zone fixtures](../../tests/phase6/zone/README.md)
+
 The next scoped targets are `phase6-time`, `phase6-calendar`,
 `phase6-luafiles`, `phase6-spawn`, `phase6-shell`, and `phase6-path`.
 They cover real and injected clock
