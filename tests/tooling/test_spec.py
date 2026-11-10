@@ -16,7 +16,7 @@ from extension_abi import COMPILERS, fixture, load_baselines
 from failure_journal import JournalError, load_history, run_with_journal
 from extensions import load_packages
 from spec import (COMPILER_ATOMIC_ABI, PHASE0_FIXED_INPUTS, SpecError, check_comment_header,
-                  comment_header, load_project, phase0_input_paths, snapshot_inputs)
+                  comment_header, load_project, phase0_input_paths, regular_file, relative_path, snapshot_inputs)
 
 
 STRLEN = Path("spec/functions/string/strlen.toml")
@@ -494,6 +494,71 @@ member = [
         self.edit(STRLEN, "deps = []", 'deps = ["strncat"]')
         self.assertIn("strncat: todo; specification pending", self.run_tool("queue", "status", "strncat"))
         self.assertIn("no eligible specified function", self.run_tool("queue", "next", expect=1))
+
+
+class RegularFileBoundary(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name) / "repo"
+        self.root.mkdir()
+        self.inside = self.root / "inside"
+        self.inside.write_text("inside")
+        self.outside = self.root.parent / "outside"
+        self.outside.write_text("outside")
+
+    def rejected_promptly(self, path):
+        code = """
+from pathlib import Path
+import sys
+sys.path.insert(0, sys.argv[1])
+from spec import SpecError, regular_file
+try:
+    regular_file(Path(sys.argv[2]), Path(sys.argv[3]), 'boundary control')
+except SpecError:
+    print('rejected')
+else:
+    raise SystemExit('unexpectedly accepted outside path')
+"""
+        result = subprocess.run([sys.executable, "-c", code, str(ROOT / "tools"), str(self.root), str(path)],
+                                capture_output=True, text=True, timeout=2, check=False)
+        self.assertEqual((result.returncode, result.stdout, result.stderr), (0, "rejected\n", ""))
+
+    def test_absolute_outside_rejected_before_parent_walk(self):
+        self.rejected_promptly(self.outside)
+
+    def test_filesystem_root_path_rejected_before_parent_walk(self):
+        self.rejected_promptly(Path("/"))
+
+    def test_absolute_and_relative_inside_paths(self):
+        self.assertEqual(regular_file(self.root, self.inside, "boundary"), self.inside)
+        self.assertEqual(regular_file(self.root, "inside", "boundary"), self.inside)
+
+    def test_filesystem_root_as_project_root(self):
+        self.assertEqual(regular_file(Path("/"), self.inside, "boundary"), self.inside)
+        with self.assertRaisesRegex(SpecError, "missing regular file"):
+            regular_file(Path("/"), Path("/"), "boundary")
+
+    def test_parent_components_rejected(self):
+        (self.root / "nest").mkdir()
+        for path in (Path("../outside"), Path("nest/../inside")):
+            with self.subTest(path=path), self.assertRaises(SpecError):
+                regular_file(self.root, path, "boundary")
+
+    def test_symlink_leaf_and_parent_rejected(self):
+        (self.root / "link").symlink_to(self.inside)
+        directory = self.root / "directory"
+        directory.mkdir()
+        (directory / "file").write_text("inside")
+        (self.root / "linkdir").symlink_to(directory, target_is_directory=True)
+        for path in (Path("link"), Path("linkdir/file")):
+            with self.subTest(path=path), self.assertRaisesRegex(SpecError, "symbolic links are unsupported"):
+                regular_file(self.root, path, "boundary")
+
+    def test_external_relative_path_policy_retained(self):
+        for path in ("../inside", "nest/../inside", "/inside", "nest/./inside"):
+            with self.subTest(path=path), self.assertRaises(SpecError):
+                relative_path(path, "boundary")
 
 
 if __name__ == "__main__":

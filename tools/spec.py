@@ -457,6 +457,8 @@ def relative_path(value, where):
 
 def regular_file(root, relative, where):
     path = root / relative
+    if not path.is_relative_to(root) or ".." in path.relative_to(root).parts:
+        fail(where, f"expected a repository-contained path without parent components: {relative}")
     current = path
     while current != root:
         if current.is_symlink():

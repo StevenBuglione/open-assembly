@@ -107,7 +107,7 @@ def production_status(project, spec, implementation):
     try:
         from production import REQUIRED_CHECKS, SUITE_CASES, phase2_inputs
         from runtime_gate import ERRNO, REQUIRED_CHECKS as RUNTIME_CHECKS
-        from runtime_manifest_gate import (PLANS, REQUIRED_CHECKS as MANIFEST_CHECKS, STAT_ENGINE,
+        from runtime_manifest_gate import (PLANS, REQUIRED_CHECKS as MANIFEST_CHECKS, STAT_ENGINE, WIDE_SPAN_ENGINE,
                                            check_stat_dependency_binding, manifest_dependency_bindings, manifest_inputs)
 
         source = regular_file(project.root, relative, "production evidence")
@@ -172,6 +172,9 @@ def production_status(project, spec, implementation):
             return False, "production evidence does not bind the candidate"
         if manifest and PLANS[spec.name].private_engine == STAT_ENGINE:
             check_stat_dependency_binding(checks)
+        if manifest and PLANS[spec.name].private_engine == WIDE_SPAN_ENGINE:
+            from wide_span_production import check_span_dependency_binding
+            check_span_dependency_binding(checks)
         if manifest and PLANS[spec.name].required_production:
             dependencies = manifest_dependency_bindings(PLANS[spec.name].required_production)
             if checks.get("production_dependencies") != dependencies:

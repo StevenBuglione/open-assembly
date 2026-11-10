@@ -53,6 +53,7 @@ class Plan:
     abi_result: bool = False
     required_production: tuple = ()
     original_host_macro: str = "OA_PHASE6_HOST"
+    extra_manifests: tuple = ()
 
 
 FCNTL = Path("tests/phase6/fcntl")
@@ -140,6 +141,23 @@ STAT_SEMANTIC_MUTANTS = {
     "fstatat": (("fstatat-drop-flags", "    movsxd rcx, ecx\n", "    xor ecx, ecx\n"),),
 }
 WIDE_CORE = ("wcslen", "wcscmp", "wcsncmp", "wmemchr")
+WIDE_SEARCH_COPY = ("wcschr", "wcsrchr", "wcscpy", "wcsncpy")
+WIDE_SEARCH_COPY_SUITE = Path("tests/phase9/wide_search_copy")
+WIDE_MEMORY = ("wmemcmp", "wmemcpy", "wmemmove", "wmemset")
+WIDE_MEMORY_SUITE = Path("tests/phase9/wide_memory")
+WIDE_MEMORY_DEPENDENCIES = {"wmemcpy": "memcpy", "wmemmove": "memmove"}
+WIDE_MEMORY_SUFFIX = "wide-memory-wrapper"
+WIDE_MEMORY_MUTANTS = (("count-wide-elements-as-bytes", "    shl rdx, 2\n", "    nop\n"),)
+WIDE_MATCHING = ("wcsspn", "wcscspn", "wcspbrk")
+WIDE_MATCHING_SUITE = Path("tests/phase9/wide_matching")
+WIDE_MATCHING_SUFFIX = "wide-matching-wrapper"
+WIDE_SPAN_ENGINE = "__al_wide_span"
+WIDE_MATCHING_ENGINES = dict.fromkeys(WIDE_MATCHING, WIDE_SPAN_ENGINE)
+WIDE_MATCHING_MUTANTS = {
+    "wcsspn": (("reverse-membership-mode", "    mov edx, 1\n", "    mov edx, 0\n"),),
+    "wcscspn": (("reverse-membership-mode", "    mov edx, 0\n", "    mov edx, 1\n"),),
+    "wcspbrk": (("halve-wide-result-offset", "    lea rax, [rbx + rax*4]\n", "    lea rax, [rbx + rax*2]\n"),),
+}
 WIDE_SUITE = Path("tests/phase9/wide")
 WIDE_SUPPLEMENT = Path("tests/phase9/wide_core")
 WIDE_CONTRACT = Path("docs/adr/0012-c-utf8-multibyte.md")
@@ -190,7 +208,7 @@ FILENO_DOMAIN_FIXED_INPUTS = (
     "Makefile", "tools/gen", "tools/phase1.py", "tools/spec.py",
     *(str(path) for path in (*STREAM_CONTRACTS, *FILENO_DOMAIN_CONTRACTS)),
 )
-FILENO_DOMAIN_SHA256 = "e3ddd8d9541f121d2dd599efd804eff5201306f09a3c228b521bd77ea6aad36f"
+FILENO_DOMAIN_SHA256 = "ae58e23dccecaf6064898da7c151ec2497bffa11c7b7997f6fa214f8498a1ffa"
 PLANS = {
     **{name: Plan(FILE_SUITE, frozenset(FILE_PUBLIC), ABI_FIXTURES,
                   "file-abi", f"file-{name}", ((f"file-{name}", codes),),
@@ -270,6 +288,40 @@ PLANS = {
                   ((f"wide-core-{name}-typed-abi", (11, 12, 13)),), f"wide-core-{name}-fuzz", (16, 64),
                   (WIDE_CONTRACT,), supplement=WIDE_SUPPLEMENT, abi_result=True, original_host_macro="OA_PHASE9_HOST")
        for name in WIDE_CORE},
+    **{name: Plan(WIDE_SUITE, frozenset(WIDE_PUBLIC), (Path("tests/phase2/abi.asm"),),
+                  f"wide-search-copy-{name}-typed-abi", f"wide-search-copy-{name}-guard",
+                  ((("wide-wcsncpy", (14, 44)),) if name == "wcsncpy" else ()) +
+                  ((f"wide-search-copy-{name}-typed-abi", (11, 12, 13)),),
+                  f"wide-search-copy-{name}-fuzz", (16, 64), (WIDE_CONTRACT,),
+                  supplement=WIDE_SEARCH_COPY_SUITE, abi_result=True, original_host_macro="OA_PHASE9_HOST")
+       for name in WIDE_SEARCH_COPY},
+    **{name: Plan(WIDE_SUITE, frozenset(WIDE_PUBLIC), (Path("tests/phase2/abi.asm"),),
+                  f"wide-memory-{name}-typed-abi", f"wide-memory-{name}-guard",
+                  ((f"wide-memory-{name}-typed-abi", (11, 12, 13)),),
+                  f"wide-memory-{name}-fuzz", (16, 64), (WIDE_CONTRACT,),
+                  supplement=WIDE_MEMORY_SUITE, abi_result=True, original_host_macro="OA_PHASE9_HOST",
+                  private_engine=WIDE_MEMORY_DEPENDENCIES.get(name, ""), wrapper_suffix=WIDE_MEMORY_SUFFIX,
+                  private_helpers=("__al_memcpy_bulk",) if name == "wmemcpy" else (),
+                  semantic_mutants=WIDE_MEMORY_MUTANTS if name in WIDE_MEMORY_DEPENDENCIES else ())
+       for name in WIDE_MEMORY},
+    **{name: Plan(WIDE_SUITE, frozenset(WIDE_PUBLIC), (Path("tests/phase2/abi.asm"),),
+                  f"wide-matching-{name}-typed-abi", f"wide-matching-{name}-guard",
+                  ((f"wide-matching-{name}-typed-abi", (11, 12, 13)),),
+                  f"wide-matching-{name}-fuzz", (16, 64),
+                  (WIDE_CONTRACT, Path("docs/cookbook/wide-span-helper.md")),
+                  supplement=WIDE_MATCHING_SUITE, abi_result=True, original_host_macro="OA_PHASE9_HOST",
+                  private_engine=WIDE_MATCHING_ENGINES[name], wrapper_suffix=WIDE_MATCHING_SUFFIX,
+                  private_helpers=("wcscspn",) if name == "wcspbrk" else (),
+                  semantic_mutants=WIDE_MATCHING_MUTANTS[name],
+                  required_production=("wcscspn",) if name == "wcspbrk" else ())
+       for name in WIDE_MATCHING},
+    "wcsstr": Plan(WIDE_SUITE, frozenset(WIDE_PUBLIC), (Path("tests/phase2/abi.asm"),),
+                    "wide-matching-wcsstr-typed-abi", "wide-matching-wcsstr-guard",
+                    (("wide-matching-wcsstr-ordinary", (21, 22, 23)),
+                     ("wide-matching-wcsstr-typed-abi", (11, 12, 13))),
+                    "wide-matching-wcsstr-fuzz", (16, 64), (WIDE_CONTRACT,),
+                    supplement=WIDE_MATCHING_SUITE, abi_result=True, original_host_macro="OA_PHASE9_HOST",
+                    extra_manifests=(Path("tests/phase9/wide_matching_control"),)),
     "fcntl": Plan(
         FCNTL, frozenset({"fcntl"}), (Path("tests/phase2/abi.asm"), FCNTL / "variadic.asm"),
         "fcntl-abi", "fcntl-dispatch",
@@ -359,6 +411,9 @@ def manifest_dependency_bindings(names):
             raise ValueError(f"{name}: manifest production dependency does not bind the source and archive")
         if PLANS[name].private_engine == STAT_ENGINE:
             check_stat_dependency_binding(checks)
+        if PLANS[name].private_engine == WIDE_SPAN_ENGINE:
+            from wide_span_production import check_span_dependency_binding
+            check_span_dependency_binding(checks)
         bindings[name] = {"evidence": relative.as_posix(), "evidence_sha256": sha256(raw).hexdigest(),
                           "archive_sha256": archive}
     return {"outcome": "pass", "functions": bindings}
@@ -369,14 +424,19 @@ def phase1_probe(case):
                  "Phase 1 fixture links the Open Assembly runtime directly.")
 
 
-def load_plan_probes(function, plan, *, required_cases=None):
+def load_plan_probes(function, plan, *, required_cases=None, extra_controls=None):
     parse = partial(parse_probe, suite=plan.suite, programs=(), asm_fixtures=plan.assembly,
                     fault_wrappers=dict(plan.fault_wrappers), allow_fixture_files=True)
     probes, controls = load_probes(plan.suite / "manifest.toml", plan.public, parse)
     selected = {probe.case.name: probe for probe in probes if function in probe.case.requires}
-    if plan.supplement is not None and (required_cases is None or required_cases - selected.keys()):
-        supplemental, _ = load_probes(plan.supplement / "manifest.toml", plan.public,
-                                       partial(parse, suite=plan.supplement), supplement=True)
+    for index, suite in enumerate((plan.supplement, *plan.extra_manifests)):
+        if suite is None or (required_cases is not None and not required_cases - selected.keys()):
+            continue
+        supplemental, supplemental_controls = load_probes(suite / "manifest.toml",
+                                       plan.public if index == 0 else frozenset({function}),
+                                       partial(parse, suite=suite), supplement=index == 0)
+        if index > 0 and extra_controls is not None and function in supplemental_controls:
+            extra_controls[suite.as_posix()] = supplemental_controls[function]
         additional = {probe.case.name: probe for probe in supplemental if function in probe.case.requires}
         if selected.keys() & additional.keys():
             raise GateError(f"{function}: overlapping original and supplemental cases")
@@ -649,17 +709,20 @@ def runtime_manifest_production(function, only=None, *, attempt=None, wrapper_on
             raise GateError("scoped wrapper verification requires a private-engine plan and no production attempt")
         if plan.private_engine:
             checks["dependency_closure"] = pending_dependency(plan)
-            if only is None and not wrapper_only and plan.private_engine != STAT_ENGINE:
+            if only is None and not wrapper_only and plan.private_engine not in {STAT_ENGINE, WIDE_SPAN_ENGINE}:
                 raise GateError(f"{function}: shared implementation {plan.private_engine} needs separate production proof")
         evidence["toolchain"] = identify_tools("ar", "make", "objdump", "qemu-x86_64", "musl-gcc")
         evidence["inputs"] = verify_setup(checks, False, snapshot=snapshot)
         project = load_project()
         spec = project.functions[function]
         source = source_paths()[function]
-        stat_binding = dependencies = None
+        stat_binding = span_binding = dependencies = None
         if only is None and not wrapper_only:
             if plan.private_engine == STAT_ENGINE:
                 stat_binding = checks["dependency_closure"] = manifest_stat_binding()
+            if plan.private_engine == WIDE_SPAN_ENGINE:
+                from wide_span_production import span_dependency_bindings
+                span_binding = checks["dependency_closure"] = span_dependency_bindings()
             if plan.required_production:
                 if not set(plan.required_production) <= set(spec.deps):
                     raise GateError(f"{function}: undeclared required production dependency")
@@ -667,7 +730,9 @@ def runtime_manifest_production(function, only=None, *, attempt=None, wrapper_on
         required_cases = {"coverage": {plan.trace}, "mutation": {case for case, _ in plan.mutations},
                           "stub": set(), "fuzz": {plan.fuzz}}
         selected = {plan.abi}.union(*required_cases.values()) if only is None else required_cases[only]
-        probes, controls = load_plan_probes(function, plan, required_cases=selected if only is not None else None)
+        extra_controls = {}
+        probes, controls = load_plan_probes(function, plan, required_cases=selected if only is not None else None,
+                                            extra_controls=extra_controls)
         if not selected <= probes.keys() or function not in controls:
             raise GateError(f"{function}: incomplete function coverage in the runtime manifest")
         runners = {"native": [], "qemu": [shutil.which("qemu-x86_64")],
@@ -690,6 +755,9 @@ def runtime_manifest_production(function, only=None, *, attempt=None, wrapper_on
                     raise GateError(f"{function}: runtime archive differs from its production dependency")
                 if stat_binding is not None:
                     check_stat_archive(stat_binding, runtime[3])
+                if span_binding is not None:
+                    from wide_span_production import check_span_archive
+                    check_span_archive(span_binding, runtime[3])
             build["outcome"] = "pass"
             original = directory / "runtime/obj" / source.relative_to("src/x86_64-linux").with_suffix(".o")
             candidate = checks["candidate_build"] = {"outcome": "fail", "commands": []}
@@ -724,6 +792,11 @@ def runtime_manifest_production(function, only=None, *, attempt=None, wrapper_on
             if only in (None, "stub"):
                 stub = checks["generated_stub"] = {"outcome": "fail", "symbols": {}}
                 run_stubs({function: controls[function]}, project, directory, runtime, stub)
+                for index, (suite, control) in enumerate(extra_controls.items()):
+                    target = directory / f"extra-stub-{index}"
+                    target.mkdir()
+                    additional = stub.setdefault("additional_controls", {})[suite] = {"outcome": "fail", "symbols": {}}
+                    run_stubs({function: control}, project, target, runtime, additional)
             if only in (None, "mutation"):
                 mutation = checks["production_mutation"] = {"outcome": "fail", "operators": []}
                 mutate_function(function, spec, source, original, probes, plan,
@@ -736,6 +809,8 @@ def runtime_manifest_production(function, only=None, *, attempt=None, wrapper_on
             raise GateError("runtime manifest verification inputs changed during the run")
         if stat_binding is not None:
             check_stat_dependency_binding(checks)
+        if span_binding is not None and span_binding != span_dependency_bindings():
+            raise GateError("wide span dependency evidence changed during verification")
         if dependencies is not None and dependencies != manifest_dependency_bindings(plan.required_production):
             raise GateError(f"{function}: production dependency evidence changed during verification")
         required = REQUIRED_CHECKS - {"branch_coverage"} if function == "fileno" and wrapper_only else REQUIRED_CHECKS
@@ -794,6 +869,8 @@ if __name__ == "__main__":
     modes.add_argument("--getcwd-wrapper", action="store_true")
     modes.add_argument("--execvp-wrapper", action="store_true")
     modes.add_argument("--stat-wrappers", action="store_true")
+    modes.add_argument("--wide-memory-wrappers", action="store_true")
+    modes.add_argument("--wide-matching-wrappers", action="store_true")
     parser.add_argument("functions", nargs="*")
     args = parser.parse_args()
     if args.getcwd_wrapper or args.execvp_wrapper:
@@ -803,6 +880,10 @@ if __name__ == "__main__":
         raise SystemExit(runtime_manifest_production(name, wrapper_only=True))
     if args.allocator_wrappers:
         available, suffix, label = ALLOCATOR_FUNCTIONS, "allocator-wrapper", "Allocator"
+    elif args.wide_memory_wrappers:
+        available, suffix, label = WIDE_MEMORY_DEPENDENCIES.keys(), WIDE_MEMORY_SUFFIX, "Wide memory"
+    elif args.wide_matching_wrappers:
+        available, suffix, label = frozenset(WIDE_MATCHING), WIDE_MATCHING_SUFFIX, "Wide matching"
     elif args.stat_wrappers:
         available, suffix, label = STAT_SEMANTIC_MUTANTS.keys(), STAT_WRAPPER_SUFFIX, "Stat"
     else:

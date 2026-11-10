@@ -18,11 +18,11 @@ from production import libfuzzer_seconds
 from spec import sha256_file, snapshot_inputs
 from musl_authorship import ARCHIVE_SHA256, POLICY
 from runtime_manifest_gate import (FILENO_DESCRIPTORLESS, FILENO_REVIEW, FUZZ_SEED, PLANS as MANIFEST_PLANS,
-                                   REQUIRED_CHECKS as MANIFEST_CHECKS, STAT_ENGINE, bind_descriptorless_scope,
+                                   REQUIRED_CHECKS as MANIFEST_CHECKS, STAT_ENGINE, WIDE_SPAN_ENGINE, bind_descriptorless_scope,
                                    manifest_dependency_bindings, pending_dependency)
 from verify_tiers import (MANIFEST_PRODUCTION_GROUPS, PHASES, SCOPED_WRAPPER_BATCHES, check_allocator_benchmark,
                           check_authorship, evidence_json, fresh_report, gate, invoke, manifest_production_reports,
-                          math_wrapper_report, scoped_wrapper_report, stat_tier_binding)
+                          math_wrapper_report, scoped_wrapper_report, span_tier_binding, stat_tier_binding)
 
 
 class TierEvidence(unittest.TestCase):
@@ -130,6 +130,23 @@ class TierEvidence(unittest.TestCase):
                              "runtime_artifacts_sha256": hash_json(archive)}
         self.enterContext(patch("verify_tiers.manifest_stat_binding", return_value=self.stat_binding))
         self.enterContext(patch("runtime_manifest_gate.manifest_stat_binding", return_value=self.stat_binding))
+        span_path = self.report.parent / f"{WIDE_SPAN_ENGINE}.production.json"
+        span_path.write_text(json.dumps({**self.data, "scope": "production-private-dependency", "function": WIDE_SPAN_ENGINE}))
+        self.span_binding = {"outcome": "pass", "engine": WIDE_SPAN_ENGINE,
+                             "functions": {WIDE_SPAN_ENGINE: {"evidence": span_path.relative_to(self.root).as_posix(),
+                                 "evidence_sha256": sha256_file(span_path), "archive_sha256": "d" * 64}},
+                             "runtime_artifacts_sha256": hash_json(archive)}
+        self.enterContext(patch("verify_tiers.span_dependency_bindings", return_value=self.span_binding))
+
+        def span_check(checks):
+            builds = checks["runtime_build"]["artifacts"]
+            if (checks.get("dependency_closure") != self.span_binding or builds["first"] != builds["second"]
+                    or hash_json(builds["first"]) != self.span_binding["runtime_artifacts_sha256"]):
+                raise GateError("span dependency binding differs")
+            return self.span_binding
+
+        self.enterContext(patch("verify_tiers.check_span_dependency_binding", side_effect=span_check))
+        self.enterContext(patch("wide_span_production.check_span_dependency_binding", side_effect=span_check))
         for symbols in MANIFEST_PRODUCTION_GROUPS.values():
             for name in symbols:
                 source = Path(f"src/x86_64-linux/posix/{name}.asm")
@@ -145,6 +162,8 @@ class TierEvidence(unittest.TestCase):
                 checks["runtime_build"]["artifacts"] = {"first": archive, "second": archive}
                 if MANIFEST_PLANS[name].private_engine == STAT_ENGINE:
                     checks["dependency_closure"] = self.stat_binding
+                if MANIFEST_PLANS[name].private_engine == WIDE_SPAN_ENGINE:
+                    checks["dependency_closure"] = self.span_binding
                 if required := MANIFEST_PLANS[name].required_production:
                     checks["production_dependencies"] = manifest_dependency_bindings(required)
                 record = {**self.data, "scope": "production-runtime-manifest-function", "function": name,
@@ -161,7 +180,8 @@ class TierEvidence(unittest.TestCase):
         self.assertEqual({name for group in MANIFEST_PRODUCTION_GROUPS.values() for name in group},
                          {"getpid", "getppid", "pipe", "pipe2", "open", "openat", "readlink", "unlink", "rmdir",
                           "waitpid", "wait", "execve", "execv", "fstat", "fstatat", "stat", "lstat",
-                          "wcslen", "wcscmp", "wcsncmp", "wmemchr"})
+                          "wcslen", "wcscmp", "wcsncmp", "wmemchr", "wcschr", "wcsrchr", "wcscpy", "wcsncpy",
+                          "wmemcmp", "wmemset", "wcsspn", "wcscspn", "wcspbrk", "wcsstr"})
         with patch("verify_tiers.time_ns", return_value=self.started):
             for group, symbols in MANIFEST_PRODUCTION_GROUPS.items():
                 with self.subTest(group=group), patch("verify_tiers.invoke") as invoke_gate:
@@ -291,6 +311,38 @@ class TierEvidence(unittest.TestCase):
         path.write_text(json.dumps(record))
         with self.assertRaisesRegex(ValueError, "archive or object differs"):
             manifest_production_reports(self.started, group)
+
+    def test_span_tier_requires_fresh_exact_helper(self):
+        self.manifest_reports()
+        path=self.report.parent/f"{WIDE_SPAN_ENGINE}.production.json"
+        self.assertEqual(span_tier_binding(self.started),self.span_binding)
+        raw=path.read_bytes()
+        path.unlink()
+        with self.assertRaises((GateError,ValueError)):
+            span_tier_binding(self.started)
+        path.write_bytes(raw)
+        os.utime(path,ns=(self.started-1,self.started-1))
+        with self.assertRaisesRegex(GateError,"no fresh report"):
+            span_tier_binding(self.started)
+        os.utime(path,ns=(self.started+1,self.started+1))
+        self.span_binding['functions'][WIDE_SPAN_ENGINE]['evidence_sha256']='0'*64
+        with self.assertRaisesRegex(GateError,"changed after binding"):
+            span_tier_binding(self.started)
+
+    def test_span_group_rejects_changed_binding_and_runtime_map(self):
+        records=self.manifest_reports()
+        name='wcsspn';path=self.report.parent/f"{name}.production.json"
+        original=deepcopy(records[name])
+        bad=deepcopy(original)
+        bad['checks']['dependency_closure']['runtime_artifacts_sha256']='0'*64
+        path.write_text(json.dumps(bad))
+        with self.assertRaisesRegex(GateError,'span dependency binding differs'):
+            manifest_production_reports(self.started,'production-wide-matching')
+        bad=deepcopy(original)
+        bad['checks']['runtime_build']['artifacts']['second']['obj/posix/wcsspn.o']='0'*64
+        path.write_text(json.dumps(bad))
+        with self.assertRaisesRegex(GateError,'span dependency binding differs'):
+            manifest_production_reports(self.started,'production-wide-matching')
 
     def scoped_reports(self):
         sources, records, groups = {}, {}, {}
