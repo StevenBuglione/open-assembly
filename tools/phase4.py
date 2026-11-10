@@ -9,7 +9,7 @@ import subprocess
 import sys
 import tempfile
 
-from gate import BUILD, COMPILE_FLAGS, GateError, checked, identify_tools, source_policy, verify_setup, write_evidence
+from gate import BUILD, COMPILE_FLAGS, CandidateFailure, GateError, checked, identify_tools, source_policy, verify_setup, write_evidence
 from phase1 import BACKENDS, Case, build_case, build_runtime, expected_result, generate_stub, phase1_inputs
 from spec import (IDENTIFIER, ROOT, SpecError, keys, load_project, matching, read_toml,
                   regular_file, relative_path, sha256_file, snapshot_inputs, string_list, version_one)
@@ -157,7 +157,7 @@ def observation(command, cwd, input_bytes, environment, timeout=30):
     }
 
 
-def execute_probe(probe, binary, work, record, runners, expected=None):
+def execute_probe(probe, binary, work, record, runners, expected=None, *, classify_native=False):
     work.mkdir()
     for name, contents in probe.files.items():
         (work / name).write_bytes(contents)
@@ -169,7 +169,8 @@ def execute_probe(probe, binary, work, record, runners, expected=None):
         match = observed == expected
         record[backend] = {**run, "outcome": "pass" if match else "fail"}
         if not match:
-            raise GateError(f"{probe.case.name} under {backend}: expected {expected!r}, got {observed!r}")
+            error = CandidateFailure if classify_native and backend == "native" and 0 <= observed[0] < 126 else GateError
+            raise error(f"{probe.case.name} under {backend}: expected {expected!r}, got {observed!r}")
         print(f"PASS {probe.case.name} {backend}", flush=True)
 
 

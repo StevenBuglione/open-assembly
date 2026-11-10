@@ -5,6 +5,7 @@ bits 64
 default rel
 
 global __al_vscan:function
+extern __al_fork_scratch_locks:data
 extern __al_stream_lock:function
 extern __al_stream_unlock:function
 extern __al_lock:function
@@ -73,7 +74,7 @@ __al_vscan:
     mov r14d, -1
     jmp .stream_unlock
 .scratch_lock:
-    lea rdi, [rel scan_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 8]
     call __al_lock
     lea r13, [rel input]
     mov rax, [rsp]
@@ -504,7 +505,7 @@ __al_vscan:
 .clear_eof:
     and qword [rdi + 8], -17
 .unlock:
-    lea rdi, [rel scan_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 8]
     call __al_unlock
     cmp qword [rsp + 8], 1
     je .stream_unlock
@@ -530,7 +531,5 @@ input:
 scan_set:
     resb 256
 
-scan_lock:
-    resd 1
 
 section .note.GNU-stack noalloc noexec nowrite progbits

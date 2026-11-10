@@ -40,6 +40,10 @@ class GateError(Exception):
     pass
 
 
+class CandidateFailure(GateError):
+    """A linked candidate disagreed with an applicable oracle."""
+
+
 def run(command, *, timeout=30, environment=None, cwd=ROOT):
     command = list(map(str, command))
     try:
@@ -72,6 +76,20 @@ def write_evidence(name, evidence):
         handle.write("\n")
     temporary.replace(target)
     return target
+
+
+def finish_function_gate(function, only, evidence, attempt, snapshot):
+    if attempt is not None:
+        attempt.bind_result(evidence, snapshot)
+    report = write_evidence(f"{function}.{only or 'production'}", evidence)
+    if attempt is not None:
+        from failure_journal import suspension
+
+        history = attempt.record(evidence, report)
+        if history.blocked:
+            print(f"gate: {suspension(attempt.root, function, history)}", file=sys.stderr)
+    print(f"{evidence['scope']} evidence: {report}", flush=True)
+    return 0 if evidence["outcome"] == "pass" else 1
 
 
 def identify_tools(*additional):
@@ -413,6 +431,24 @@ def execute(phase0, fixture, default_fixture):
     return 0 if evidence["outcome"] == "pass" else 1
 
 
+def run_function_gate(function, only=None, *, attempt=None):
+    from runtime_manifest_gate import PLANS, runtime_manifest_production
+
+    if function in PLANS:
+        return runtime_manifest_production(function, only, attempt=attempt)
+    from math_production import WRAPPERS, execute as execute_math_wrapper, require_production
+
+    if function in WRAPPERS:
+        return require_production(function, attempt) if only is None else execute_math_wrapper(function, only)
+    from runtime_gate import ERRNO, runtime_production
+
+    if function == ERRNO:
+        return runtime_production(function, only, attempt=attempt)
+    from production import production
+
+    return production(function, only, attempt=attempt)
+
+
 def main(default_fixture=None):
     os.chdir(ROOT)
     parser = argparse.ArgumentParser(description=__doc__)
@@ -450,14 +486,16 @@ def main(default_fixture=None):
         parser.error("invalid function name")
     if args.production or (args.function is not None and args.fixture is None
                            and any(Path("src/x86_64-linux").glob(f"*/{args.function}.asm"))):
-        from runtime_manifest_gate import PLANS, runtime_manifest_production
-        if args.function in PLANS:
-            return runtime_manifest_production(args.function, default_fixture)
-        from runtime_gate import ERRNO, runtime_production
-        if args.function == ERRNO:
-            return runtime_production(args.function, default_fixture)
-        from production import production
-        return production(args.function, default_fixture)
+        if default_fixture is not None:
+            return run_function_gate(args.function, default_fixture)
+        from failure_journal import JournalError, run_with_journal
+
+        try:
+            return run_with_journal(ROOT, args.function,
+                                    lambda attempt: run_function_gate(args.function, attempt=attempt))
+        except (ImportError, JournalError, OSError) as error:
+            print(f"gate: {error}", file=sys.stderr)
+            return 1
     if args.function not in (None, "strlen"):
         print(f"{args.function}: no Phase 0 fixture or verification harness", file=sys.stderr)
         return 1

@@ -3,6 +3,7 @@ bits 64
 default rel
 
 global __al_complex_log:function
+extern __al_fork_scratch_locks:data
 extern __al_fp_decode:function
 extern __al_math_atan:function
 extern __al_complex_norm:function
@@ -72,7 +73,7 @@ __al_complex_log:
     cmp dword [rsp + 36], 0
     je .pole
 .finite:
-    lea rdi, [rel complex_log_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 84]
     call __al_lock
     lea rdi, [rel norm]
     lea rsi, [rel norm_scratch]
@@ -228,7 +229,7 @@ __al_complex_log:
     mov r12, rax
     mov r13d, edx
     mov [rsp + 72], ecx
-    lea rdi, [rel complex_log_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 84]
     call __al_unlock
     mov edi, [rsp + 72]
     xor esi, esi
@@ -241,7 +242,7 @@ __al_complex_log:
     mov edx, r13d
     jmp .return
 .exact_zero:
-    lea rdi, [rel complex_log_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 84]
     call __al_unlock
     xor eax, eax
     xor edx, edx
@@ -274,8 +275,7 @@ __al_complex_log:
     ret
 
 section .bss.__al_complex_log alloc noexec write nobits align=8
-complex_log_lock:
-    resq 1
+    resq 1                    ; preserve scratch record offsets
 metadata:
     resq 6
 norm:

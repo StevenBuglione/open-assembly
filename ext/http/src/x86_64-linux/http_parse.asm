@@ -42,12 +42,14 @@ http_parse:
     mov eax, 431
     jmp .return
 .start_line:
+    ; A nonzero finder result covers the first CRLF CRLF within the
+    ; bounded span. The mandatory CRLF at r14-2 stops each byte scan.
+    ; Version and field transitions consume at most through that CRLF
+    ; and test the resulting cursor before starting another field.
     lea r14, [r12 + rax - 2]    ; CR of the terminal empty line
     mov rbx, r12
     xor r15d, r15d              ; GET, HEAD, root, HTTP/1.1, Host, length
 .method_byte:
-    cmp rbx, r14
-    jae .invalid
     movzx edi, byte [rbx]
     cmp edi, 32
     je .method_end
@@ -74,14 +76,10 @@ http_parse:
     or r15d, 2
 .target_start:
     inc rbx
-    cmp rbx, r14
-    jae .invalid
     cmp byte [rbx], 47
     jne .invalid
     mov r13, rbx
 .target_byte:
-    cmp rbx, r14
-    jae .invalid
     movzx eax, byte [rbx]
     cmp eax, 32
     je .target_end
@@ -121,8 +119,6 @@ http_parse:
     je .finished
     mov r13, rbx
 .field_name_byte:
-    cmp rbx, r14
-    jae .invalid
     movzx edi, byte [rbx]
     cmp edi, 58
     je .field_name_end
@@ -191,8 +187,6 @@ http_parse:
     inc rbx
     mov r13, rbx
 .value_byte:
-    cmp rbx, r14
-    jae .invalid
     movzx eax, byte [rbx]
     cmp eax, 13
     je .value_end

@@ -1,0 +1,270 @@
+schema = 1
+
+[[case]]
+name = "map-init-unit"
+sources = ["tests/ext/map/unit.c"]
+requires = ["map_init"]
+args = ["init"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:bounded-map-model"]
+host_skip = "The independent slot and arena state model is the oracle."
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "map-init-abi"
+sources = ["tests/ext/map/abi.c", "tests/phase2/abi.asm"]
+requires = ["map_init"]
+args = ["init"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:bounded-map-model"]
+host_skip = "The independent slot and arena state model is the oracle."
+backends = ["native", "qemu"]
+[case.skip]
+valgrind = "Shared nondefault x87 ABI probe exceeds Memcheck emulation."
+
+[[case]]
+name = "map-init-packets"
+sources = ["tests/ext/map/packets.c"]
+requires = ["map_init"]
+args = ["init"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:bounded-map-model"]
+host_skip = "The independent slot and arena state model is the oracle."
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "map-probe-unit"
+sources = ["tests/ext/map/unit.c"]
+requires = ["map_probe"]
+args = ["probe"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:bounded-map-model"]
+host_skip = "The independent slot and arena state model is the oracle."
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "map-probe-abi"
+sources = ["tests/ext/map/abi.c", "tests/phase2/abi.asm"]
+requires = ["map_probe"]
+args = ["probe"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:bounded-map-model"]
+host_skip = "The independent slot and arena state model is the oracle."
+backends = ["native", "qemu"]
+[case.skip]
+valgrind = "Shared nondefault x87 ABI probe exceeds Memcheck emulation."
+
+[[case]]
+name = "map-probe-packets"
+sources = ["tests/ext/map/packets.c"]
+requires = ["map_probe"]
+args = ["probe"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:bounded-map-model"]
+host_skip = "The independent slot and arena state model is the oracle."
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "map-get-unit"
+sources = ["tests/ext/map/unit.c"]
+requires = ["map_get"]
+args = ["get"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:bounded-map-model"]
+host_skip = "The independent slot and arena state model is the oracle."
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "map-get-abi"
+sources = ["tests/ext/map/abi.c", "tests/phase2/abi.asm"]
+requires = ["map_get"]
+args = ["get"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:bounded-map-model"]
+host_skip = "The independent slot and arena state model is the oracle."
+backends = ["native", "qemu"]
+[case.skip]
+valgrind = "Shared nondefault x87 ABI probe exceeds Memcheck emulation."
+
+[[case]]
+name = "map-get-packets"
+sources = ["tests/ext/map/packets.c"]
+requires = ["map_get"]
+args = ["get"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:bounded-map-model"]
+host_skip = "The independent slot and arena state model is the oracle."
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "map-put-unit"
+sources = ["tests/ext/map/unit.c"]
+requires = ["map_put"]
+args = ["put"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:bounded-map-model"]
+host_skip = "The independent slot and arena state model is the oracle."
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "map-put-abi"
+sources = ["tests/ext/map/abi.c", "tests/phase2/abi.asm"]
+requires = ["map_put"]
+args = ["put"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:bounded-map-model"]
+host_skip = "The independent slot and arena state model is the oracle."
+backends = ["native", "qemu"]
+[case.skip]
+valgrind = "Shared nondefault x87 ABI probe exceeds Memcheck emulation."
+
+[[case]]
+name = "map-put-packets"
+sources = ["tests/ext/map/packets.c"]
+requires = ["map_put"]
+args = ["put"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:bounded-map-model"]
+host_skip = "The independent slot and arena state model is the oracle."
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "map-remove-unit"
+sources = ["tests/ext/map/unit.c"]
+requires = ["map_remove"]
+args = ["remove"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:bounded-map-model"]
+host_skip = "The independent slot and arena state model is the oracle."
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "map-remove-abi"
+sources = ["tests/ext/map/abi.c", "tests/phase2/abi.asm"]
+requires = ["map_remove"]
+args = ["remove"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:bounded-map-model"]
+host_skip = "The independent slot and arena state model is the oracle."
+backends = ["native", "qemu"]
+[case.skip]
+valgrind = "Shared nondefault x87 ABI probe exceeds Memcheck emulation."
+
+[[case]]
+name = "map-remove-packets"
+sources = ["tests/ext/map/packets.c"]
+requires = ["map_remove"]
+args = ["remove"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:bounded-map-model"]
+host_skip = "The independent slot and arena state model is the oracle."
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "map-guard-pages"
+sources = ["tests/ext/map/guards.c"]
+requires = ["map_init", "map_probe", "map_get", "map_put", "map_remove"]
+args = []
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:bounded-map-model"]
+host_skip = "The independent slot and arena state model is the oracle."
+backends = ["native", "qemu", "valgrind"]
+
+[[stub]]
+symbol = "map_init"
+case = "map-init-unit"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "map_probe"
+case = "map-probe-unit"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "map_get"
+case = "map-get-unit"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "map_put"
+case = "map-put-unit"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "map_remove"
+case = "map-remove-unit"
+status = 11
+stdout = ""
+stderr = ""

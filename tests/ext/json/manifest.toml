@@ -1,0 +1,219 @@
+schema = 1
+
+[[case]]
+name = "json-string-unit"
+sources = ["tests/ext/json/unit.c"]
+requires = ["json_scan_string"]
+args = ["string"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:json-token-model"]
+host_skip = "The independent RFC grammar and source token model is the oracle."
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "json-string-abi"
+sources = ["tests/ext/json/abi.c", "tests/phase2/abi.asm"]
+requires = ["json_scan_string"]
+args = ["string"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:json-token-model"]
+host_skip = "The independent RFC grammar and source token model is the oracle."
+backends = ["native", "qemu"]
+[case.skip]
+valgrind = "Shared nondefault x87 ABI probe exceeds Memcheck emulation."
+
+[[case]]
+name = "json-string-packets"
+sources = ["tests/ext/json/packets.c"]
+requires = ["json_scan_string"]
+args = ["string"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:json-token-model"]
+host_skip = "The independent RFC grammar and source token model is the oracle."
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "json-number-unit"
+sources = ["tests/ext/json/unit.c"]
+requires = ["json_scan_number"]
+args = ["number"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:json-token-model"]
+host_skip = "The independent RFC grammar and source token model is the oracle."
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "json-number-abi"
+sources = ["tests/ext/json/abi.c", "tests/phase2/abi.asm"]
+requires = ["json_scan_number"]
+args = ["number"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:json-token-model"]
+host_skip = "The independent RFC grammar and source token model is the oracle."
+backends = ["native", "qemu"]
+[case.skip]
+valgrind = "Shared nondefault x87 ABI probe exceeds Memcheck emulation."
+
+[[case]]
+name = "json-number-packets"
+sources = ["tests/ext/json/packets.c"]
+requires = ["json_scan_number"]
+args = ["number"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:json-token-model"]
+host_skip = "The independent RFC grammar and source token model is the oracle."
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "json-lex-unit"
+sources = ["tests/ext/json/unit.c"]
+requires = ["json_lex"]
+args = ["lex"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:json-token-model"]
+host_skip = "The independent RFC grammar and source token model is the oracle."
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "json-lex-abi"
+sources = ["tests/ext/json/abi.c", "tests/phase2/abi.asm"]
+requires = ["json_lex"]
+args = ["lex"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:json-token-model"]
+host_skip = "The independent RFC grammar and source token model is the oracle."
+backends = ["native", "qemu"]
+[case.skip]
+valgrind = "Shared nondefault x87 ABI probe exceeds Memcheck emulation."
+
+[[case]]
+name = "json-lex-packets"
+sources = ["tests/ext/json/packets.c"]
+requires = ["json_lex"]
+args = ["lex"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:json-token-model"]
+host_skip = "The independent RFC grammar and source token model is the oracle."
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "json-parse-unit"
+sources = ["tests/ext/json/unit.c"]
+requires = ["json_parse"]
+args = ["parse"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:json-token-model"]
+host_skip = "The independent RFC grammar and source token model is the oracle."
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "json-parse-abi"
+sources = ["tests/ext/json/abi.c", "tests/phase2/abi.asm"]
+requires = ["json_parse"]
+args = ["parse"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:json-token-model"]
+host_skip = "The independent RFC grammar and source token model is the oracle."
+backends = ["native", "qemu"]
+[case.skip]
+valgrind = "Shared nondefault x87 ABI probe exceeds Memcheck emulation."
+
+[[case]]
+name = "json-parse-packets"
+sources = ["tests/ext/json/packets.c"]
+requires = ["json_parse"]
+args = ["parse"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:json-token-model"]
+host_skip = "The independent RFC grammar and source token model is the oracle."
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "json-guard-pages"
+sources = ["tests/ext/json/guards.c"]
+requires = ["json_scan_string", "json_scan_number", "json_lex", "json_parse"]
+args = []
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:json-token-model"]
+host_skip = "The independent RFC grammar and source token model is the oracle."
+backends = ["native", "qemu", "valgrind"]
+
+[[stub]]
+symbol = "json_scan_string"
+case = "json-string-unit"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "json_scan_number"
+case = "json-number-unit"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "json_lex"
+case = "json-lex-unit"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "json_parse"
+case = "json-parse-unit"
+status = 11
+stdout = ""
+stderr = ""

@@ -3,6 +3,7 @@ bits 64
 default rel
 
 global __al_complex_tangent:function
+extern __al_fork_scratch_locks:data
 extern __al_fp_decode:function
 extern __al_math_hyperbolic:function
 extern __al_math_trig:function
@@ -84,7 +85,7 @@ __al_complex_tangent:
     cmp dword [rsp + 44], -80
     jl .tiny_pair
 .begin:
-    lea rdi, [rel tangent_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 112]
     call __al_lock
     cmp dword [rsp + 44], -80
     jl .tiny_trig
@@ -375,7 +376,7 @@ __al_complex_tangent:
     mov r14, rax
     mov r15d, edx
     or [rsp + 104], ecx
-    lea rdi, [rel tangent_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 112]
     call __al_unlock
     cmp dword [rsp + 52], 5
     jl .effects
@@ -494,7 +495,7 @@ __al_complex_tangent:
     mov [rsp + 60], eax
     jmp .infinite_limit
 .limit:
-    lea rdi, [rel tangent_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 112]
     call __al_unlock
 .infinite_limit:
     mov edi, ebx
@@ -541,7 +542,7 @@ metadata:
 
 section .bss alloc noexec write nobits
 alignb 16
-tangent_lock: resd 1
+    resd 1                    ; preserve scratch record offsets
 alignb 16
 hyper_export: resq 3
 sine: resb 64

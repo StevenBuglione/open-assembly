@@ -7,6 +7,7 @@ default rel
 
 global __al_heap:function
 global __al_heap_seed:data
+global __al_heap_lock:data
 extern __al_auxv:data
 extern __al_lock:function
 extern __al_unlock:function
@@ -34,7 +35,7 @@ __al_heap:
     mov r13, rdx                  ; alignment
     mov r14, rcx                  ; operation
     xor r15d, r15d                ; result
-    lea rdi, [rel heap_lock]
+    lea rdi, [rel __al_heap_lock]
     call __al_lock
 
     cmp qword [rel __al_heap_seed], 0
@@ -122,7 +123,7 @@ __al_heap:
     mov rdi, rbx
     call __al_heap_free
 .unlock:
-    lea rdi, [rel heap_lock]
+    lea rdi, [rel __al_heap_lock]
     call __al_unlock
     mov rax, r15
     add rsp, 8
@@ -140,7 +141,7 @@ __al_heap:
 section .bss.__al_heap alloc noexec write nobits align=8
 __al_heap_seed:
     resq 1
-heap_lock:
+__al_heap_lock:
     resd 1
 
 section .note.GNU-stack noalloc noexec nowrite progbits

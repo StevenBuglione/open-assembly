@@ -11,6 +11,7 @@ from spec import ROOT, snapshot_inputs
 SUITE = Path("tests/phase8")
 CONTRACT = Path("docs/adr/0010-thread-lifecycle-locks.md")
 PUBLIC = {
+    "fork": {"fork", "_Fork", "pthread_atfork"},
     "lifecycle": {"pthread_create", "pthread_detach", "pthread_equal", "pthread_exit", "pthread_join", "pthread_self"},
     "sync": {
         "pthread_attr_destroy", "pthread_attr_getdetachstate", "pthread_attr_getguardsize", "pthread_attr_getstacksize",
@@ -33,13 +34,17 @@ PUBLIC = {
 FAULT_WRAPPERS = {
     SUITE / "lifecycle/fault.c": ("__al_syscall",),
     SUITE / "c11/fault.c": ("__al_syscall",),
+    SUITE / "fork/fault.c": ("_Fork",),
 }
 
 
 def inputs(scope="lifecycle"):
     bound = phase1_inputs()
     suite = SUITE / scope
-    bound.update(snapshot_inputs(ROOT, [CONTRACT, *sorted(suite.rglob("*.*"))]))
+    contracts = [CONTRACT]
+    if scope == "fork":
+        contracts.append(Path("docs/adr/0043-threaded-fork.md"))
+    bound.update(snapshot_inputs(ROOT, [*contracts, *sorted(suite.rglob("*.*"))]))
     return dict(sorted(bound.items()))
 
 
@@ -50,6 +55,8 @@ if __name__ == "__main__":
                       help="verify the pthread synchronization and attribute slice")
     mode.add_argument("--c11", dest="scope", action="store_const", const="c11",
                       help="verify the C11 threads interfaces")
+    mode.add_argument("--fork", dest="scope", action="store_const", const="fork",
+                      help="verify threaded fork and at-fork registration")
     parser.set_defaults(scope="lifecycle")
     scope = parser.parse_args().scope
     raise SystemExit(execute_manifest_gate(

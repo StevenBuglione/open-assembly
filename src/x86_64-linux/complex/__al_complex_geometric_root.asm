@@ -3,6 +3,7 @@ bits 64
 default rel
 
 global __al_complex_geometric_root:function
+extern __al_fork_scratch_locks:data
 extern __al_lock:function
 extern __al_unlock:function
 extern __al_big_copy:function
@@ -24,7 +25,7 @@ __al_complex_geometric_root:
     mov r14, rcx
     mov r15, r8
     mov [rsp], r9
-    lea rdi, [rel geometric_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 72]
     call __al_lock
     lea rdi, [rel low_factor]
     mov rsi, r12
@@ -61,7 +62,7 @@ __al_complex_geometric_root:
     lea r8, [rel trial]
     call __al_complex_scaled_sqrt
     mov rbx, rax
-    lea rdi, [rel geometric_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 72]
     call __al_unlock
     mov rax, rbx
     add rsp, 32
@@ -74,7 +75,7 @@ __al_complex_geometric_root:
 
 section .bss alloc noexec write nobits
 alignb 16
-geometric_lock: resd 1
+    resd 1                    ; preserve scratch record offsets
 alignb 16
 low_factor: resb 10248
 high_factor: resb 10248

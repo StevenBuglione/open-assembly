@@ -8,7 +8,7 @@ import shutil
 import sys
 import tempfile
 
-from gate import (BUILD, COMPILE_FLAGS, GateError, checked, identify_tools, inputs, nm_symbols,
+from gate import (BUILD, COMPILE_FLAGS, CandidateFailure, GateError, checked, identify_tools, inputs, nm_symbols,
                   run, source_policy, verify_setup, write_evidence)
 from lint import PRIVATE_DATA
 from spec import (IDENTIFIER, ROOT, SpecError, comment_header, keys, load_project, nasm_name, matching,
@@ -320,7 +320,7 @@ def check_stubs(controls, directory, runtime, record):
     record["outcome"] = "pass"
 
 
-def execute_case(case, binary, record):
+def execute_case(case, binary, record, *, classify_native=False):
     runners = {
         "native": [],
         "qemu": [shutil.which("qemu-x86_64")],
@@ -334,7 +334,8 @@ def execute_case(case, binary, record):
         outcome = "pass" if observed == expected else "fail"
         record["runs"][backend] = {**result, "outcome": outcome}
         if outcome != "pass":
-            raise GateError(f"{case.name} under {backend}: expected {expected!r}, got {observed!r}")
+            error = CandidateFailure if classify_native and backend == "native" and 0 <= observed[0] < 126 else GateError
+            raise error(f"{case.name} under {backend}: expected {expected!r}, got {observed!r}")
         print(f"PASS {case.name} {backend} ({', '.join(case.oracle)})", flush=True)
 
 

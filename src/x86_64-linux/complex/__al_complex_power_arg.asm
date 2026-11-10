@@ -3,6 +3,7 @@ bits 64
 default rel
 
 global __al_complex_power_arg:function
+extern __al_fork_scratch_locks:data
 extern __al_lock:function
 extern __al_unlock:function
 extern __al_big_copy:function
@@ -55,7 +56,7 @@ __al_complex_power_arg:
     mov r12, r13
     mov r13, rax
 .small_first:
-    lea rdi, [rel angle_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 92]
     call __al_lock
     lea rdi, [rel smaller]
     mov rsi, r13
@@ -171,7 +172,7 @@ __al_complex_power_arg:
     mov rax, [rsp + 32]
     mov [rsp + 16], rax
 .unlock:
-    lea rdi, [rel angle_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 92]
     call __al_unlock
     jmp .result
 
@@ -218,7 +219,7 @@ __al_complex_power_arg:
 
 section .bss alloc noexec write nobits
 alignb 16
-angle_lock: resd 1
+    resd 1                    ; preserve scratch record offsets
 alignb 16
 smaller: resb 10248
 larger: resb 10248

@@ -3,6 +3,7 @@ bits 64
 default rel
 
 global __al_complex_exp:function
+extern __al_fork_scratch_locks:data
 extern __al_fp_decode:function
 extern __al_math_exp:function
 extern __al_math_trig:function
@@ -75,7 +76,7 @@ __al_complex_exp:
     jl .tiny_pair
 
 .finite_product:
-    lea rdi, [rel exp_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 68]
     call __al_lock
     cmp dword [rsp + 48], 15
     jge .extreme_real
@@ -196,7 +197,7 @@ __al_complex_exp:
     mov r14, rax
     mov r15d, edx
     or [rsp + 64], ecx
-    lea rdi, [rel exp_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 68]
     call __al_unlock
     mov edi, [rsp + 64]
     xor esi, esi
@@ -215,7 +216,7 @@ __al_complex_exp:
 
     ; Compare 2a and 6a to b squared. At equality, the positive
     ; fourth-order correction to the two logarithms decides below.
-    lea rdi, [rel exp_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 68]
     call __al_lock
     mov rax, [rsp + 24]
     mul rax
@@ -255,7 +256,7 @@ __al_complex_exp:
     jle .tiny_unlock
     mov dword [rsp + 68], 1
 .tiny_unlock:
-    lea rdi, [rel exp_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 68]
     call __al_unlock
 .round_tiny_pair:
     mov edi, ebx
@@ -309,7 +310,7 @@ __al_complex_exp:
     jmp .factor_signs
 .infinite_real:
     mov dword [rsp + 72], 0
-    lea rdi, [rel exp_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 68]
     call __al_lock
 .factor_signs:
     mov dword [rsp + 64], 0
@@ -332,7 +333,7 @@ __al_complex_exp:
     call __al_math_trig
     mov [rsp + 68], eax
 .unlock_signs:
-    lea rdi, [rel exp_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 68]
     call __al_unlock
     cmp dword [rsp + 72], 0
     jne .scale_extreme
@@ -462,7 +463,7 @@ metadata:
 
 section .bss alloc noexec write nobits
 alignb 16
-exp_lock: resd 1
+    resd 1                    ; preserve scratch record offsets
 alignb 16
 exponential: resb 64
 term: resb 10248

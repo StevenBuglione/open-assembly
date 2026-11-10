@@ -3,6 +3,7 @@ bits 64
 default rel
 
 global __al_complex_square_cmp:function
+extern __al_fork_scratch_locks:data
 extern __al_lock:function
 extern __al_unlock:function
 extern __al_big_init128:function
@@ -24,7 +25,7 @@ __al_complex_square_cmp:
     mov r13, rdx
     mov r14, rcx
     mov r15d, r8d
-    lea rdi, [rel square_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 108]
     call __al_lock
     mov rax, rbx
     mul rbx
@@ -60,7 +61,7 @@ __al_complex_square_cmp:
     lea rsi, [rel right_square]
     call __al_big_cmp
     mov ebx, eax
-    lea rdi, [rel square_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 108]
     call __al_unlock
     mov eax, ebx
     add rsp, 0
@@ -73,7 +74,7 @@ __al_complex_square_cmp:
 
 section .bss alloc noexec write nobits
 alignb 16
-square_lock: resd 1
+    resd 1                    ; preserve scratch record offsets
 alignb 16
 left_square: resb 10248
 right_square: resb 10248

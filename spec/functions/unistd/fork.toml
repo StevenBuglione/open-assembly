@@ -2,17 +2,17 @@ name = "fork"
 header = "unistd.h"
 prototype = "pid_t fork(void)"
 standard = ["POSIX.1-2024 XSH fork"]
-deps = ["__errno_location"]
-errno = ["EAGAIN", "ENOMEM", "ENOSYS"]
+deps = ["_Fork", "__errno_location", "pthread_self"]
+errno = ["EAGAIN", "ENOMEM", "ENOSYS", "EPERM"]
 mt_safe = true
 as_safe = false
 oracles = ["diff:glibc", "diff:musl", "reference:linux-process-abi"]
 provenance = "original"
 semantics = [
-  "Create a child process in the initial single-threaded runtime.",
+  "Run at-fork callbacks around a Linux process snapshot with the runtime guards held.",
   "Return zero in the child and its process ID in the parent.",
   "Preserve errno on success in both processes. Return -1 and set errno on failure.",
-  "Threaded fork callbacks and child lock recovery belong to the later threading phase.",
+  "Repair enumerated private locks and the surviving child thread bookkeeping without changing application-owned locks.",
 ]
 
 [abi]

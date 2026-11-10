@@ -9,8 +9,8 @@ import sys
 import tempfile
 
 from branch_coverage import verify_coverage
-from gate import (BUILD, COMPILE_FLAGS, GateError, LINK_FLAGS, check_strlen_prototype, checked, identify_tools,
-                  inputs, nm_symbols, run, verify_setup, write_evidence)
+from gate import (BUILD, COMPILE_FLAGS, CandidateFailure, GateError, LINK_FLAGS, check_strlen_prototype, checked, identify_tools,
+                  finish_function_gate, inputs, nm_symbols, run, verify_setup)
 from lint import JCC
 from phase1 import NASM
 from spec import (IDENTIFIER, ROOT, comment_header, keys, load_project, matching, read_toml,
@@ -53,6 +53,32 @@ for left, right in CONDITIONS:
 SIGNED = dict(zip(("ja", "jae", "jb", "jbe", "jg", "jge", "jl", "jle"),
                   ("jg", "jge", "jl", "jle", "ja", "jae", "jb", "jbe"), strict=True))
 MUTATION_EQUIVALENCES = {
+    "http_find_header_end": ("ce3be959f11603bdd7a026a55e8522d88c1dbd7ec6da758b79eaa5ce5a34e807", {
+        "comparison-signedness-25": "A readable x86-64 Linux user byte span has length below 2^63. The length and threshold four have bit 63 clear.",
+        "comparison-signedness-33": "The remaining-start limit is the valid length minus three. The counter starts at zero and cannot exceed that limit. Both operands have bit 63 clear.",
+    }),
+    "http_is_token_byte": ("55dfcc73455cbfbef2c144e28ee3dac2da8661a0e1f97e2f9ca36f88d4183226", {
+        "comparison-minus-one-25": "The change reroutes only ASCII DEL, 127. Bit seven of the last in-bounds bitmap byte is zero, so both paths return zero.",
+        "comparison-signedness-26": "The ABI byte is zero-extended to 0 through 255 before comparing against 128. Both operands have bit 31 clear.",
+    }),
+    "json_scan_string": ("2b9d722dd0a6ed8d547b36f021327c7ba60ba3e4dde5ef8be5d76e9c77eda92e", {
+        "comparison-signedness-53": "The zero-extended input byte and the ASCII control boundary both have bit 31 clear.",
+        "comparison-signedness-55": "The zero-extended input byte and the ASCII high boundary both have bit 31 clear.",
+        "comparison-signedness-59": "The zero-extended UTF-8 lead byte and the lead lower bound both have bit 31 clear.",
+        "comparison-signedness-61": "The zero-extended UTF-8 lead byte and the lead upper bound both have bit 31 clear.",
+        "comparison-signedness-66": "The zero-extended UTF-8 lead byte and the three-byte lead boundary both have bit 31 clear.",
+        "comparison-signedness-79": "The zero-extended UTF-8 lead byte and the four-byte lead boundary both have bit 31 clear.",
+        "comparison-signedness-93": "The offset is at most the validated length at most LONG_MAX. The required continuation count is 1 through 3.",
+        "comparison-signedness-96": "The zero-extended first continuation byte and its lower bound, 0x80 through 0xa0, have bit 31 clear.",
+        "comparison-signedness-98": "The zero-extended first continuation byte and its upper bound, 0x8f through 0xbf, have bit 31 clear.",
+        "comparison-plus-one-139": "Exactly four bytes remain after the Unicode escape introducer on the changed path. Invalid hex rejects, and valid hex consumes all four bytes with no closing quote or required following surrogate left. Both paths return EILSEQ without writing.",
+        "comparison-signedness-140": "The offset is at most the validated length at most LONG_MAX. Its remaining length and the four-byte threshold have bit 63 clear.",
+        "comparison-signedness-162": "The parsed four hex digits give an integer from 0 through 65535. The surrogate boundary also has bit 31 clear.",
+        "comparison-signedness-164": "The parsed four hex digits give an integer from 0 through 65535. The surrogate boundary also has bit 31 clear.",
+        "comparison-signedness-166": "The parsed four hex digits give an integer from 0 through 65535. The surrogate boundary also has bit 31 clear.",
+        "comparison-plus-one-169": "Exactly two bytes remain after the high surrogate on the changed path. A wrong escape introducer rejects, and a correct introducer consumes both bytes with no hex digits left. Both paths return EILSEQ without writing.",
+        "comparison-signedness-170": "The offset is at most the validated length at most LONG_MAX. Its remaining length and the two-byte threshold have bit 63 clear.",
+    }),
     "memcpy": ("74ee3ddf94d9634b2f7997471965faa1adec9158e14bbe13babd8f2463554969", {
         "comparison-plus-one-29": "The one rerouted length 256 is copied byte for byte by the original baseline.",
         "comparison-minus-one-29": "The one rerouted length 255 is within the bulk helper's valid range and is copied byte for byte.",
@@ -296,12 +322,13 @@ def probe(plan, binary, mode, oracle=None, *, seconds=0, musl=False, prefix=()):
     return {**result, "outcome": "error"}
 
 
-def expect_probe(plan, record, binary, mode, oracle=None, *, expected="pass", **options):
+def expect_probe(plan, record, binary, mode, oracle=None, *, expected="pass", candidate=False, **options):
     item = probe(plan, binary, mode, oracle, **options)
     record["probes"].append(item)
     if item["outcome"] != expected:
         detail = (item["stderr"] or item["stdout"]).strip()
-        raise GateError(f"{plan.name} {mode}: expected {expected}, got {item['outcome']}. {detail}")
+        error = CandidateFailure if candidate and expected == "pass" and item["outcome"] == "fail" else GateError
+        raise error(f"{plan.name} {mode}: expected {expected}, got {item['outcome']}. {detail}")
     print((item["stdout"] or item["stderr"]).strip(), flush=True)
 
 
@@ -361,7 +388,7 @@ def variants(source, *, returns_value=True, result_pair=None):
                 yield name, "".join(mutated)
 
 
-def applicable_variants(function, source, record, *, returns_value=True, result_pair=None):
+def applicable_variants(function, source, record, *, returns_value=True, result_pair=None, run_equivalent=False):
     proof_hash, exclusions = MUTATION_EQUIVALENCES.get(function, ("", {}))
     if exclusions and sha256_file(source) != proof_hash:
         raise GateError(f"{function}: source changed since its reviewed mutation equivalence proofs")
@@ -372,7 +399,8 @@ def applicable_variants(function, source, record, *, returns_value=True, result_
             record["equivalent"].append({"operator": name, "source_sha256": proof_hash,
                                          "reason": exclusions[name]})
             applied_exclusions.add(name)
-            continue
+            if not run_equivalent:
+                continue
         yield name, contents
     if applied_exclusions != exclusions.keys():
         raise GateError(f"{function}: mutation equivalence proofs do not match generated operators")
@@ -557,7 +585,7 @@ def run_external(plan, candidate, stub, directory, record):
     record["outcome"] = "pass"
 
 
-def production(function, only=None):
+def production(function, only=None, *, attempt=None):
     scope = "production-function" if only is None else f"production-{only}"
     evidence = {"schema_version": 1, "scope": scope, "function": function, "outcome": "fail",
                 "production_verified": False, "checks": {}}
@@ -591,17 +619,12 @@ def production(function, only=None):
                 checks["dependency_coverage_mutation"] = dependency_evidence(
                     dependencies, evidence["inputs"])
 
-            if only in (None, "coverage"):
-                checks["branch_coverage"] = {"outcome": "fail", "commands": [], "runs": []}
-                verify_coverage(checks["branch_coverage"], directory, binary, function, source,
-                                [arguments(plan, mode, oracle) for mode in plan.coverage_modes],
-                                require_entry=function in SCALAR_FUNCTIONS)
             if only is None:
                 behavior = {"outcome": "fail", "probes": [], "oracle": plan.oracle}
                 checks["native_oracles"] = behavior
                 for mode in MODES:
                     if mode != "guard" or not plan.guard_skip:
-                        expect_probe(plan, behavior, binary, mode, oracle)
+                        expect_probe(plan, behavior, binary, mode, oracle, candidate=True)
                 behavior["outcome"] = "pass"
 
                 musl = {"outcome": "fail", "probes": [], "commands": []}
@@ -615,7 +638,7 @@ def production(function, only=None):
                     musl_binary = link_checks(plan, "musl-gcc", musl_objects, candidate,
                                               musl_directory / "checks", musl["commands"])
                     musl_oracle = None
-                expect_probe(plan, musl, musl_binary, "differential", musl_oracle, musl=True)
+                expect_probe(plan, musl, musl_binary, "differential", musl_oracle, musl=True, candidate=True)
                 if ("diff:musl" in plan.oracle and
                         not musl["probes"][-1]["stdout"].startswith("PASS differential diff:musl ")):
                     raise GateError("musl differential did not name its oracle")
@@ -627,11 +650,17 @@ def production(function, only=None):
                 mode = "unit" if plan.guard_skip else "guard"
                 if function in SCALAR_FUNCTIONS:
                     mode = "differential"
-                expect_probe(plan, platform, binary, mode,
+                expect_probe(plan, platform, binary, mode, candidate=True,
                              prefix=("valgrind", "--quiet", "--error-exitcode=99", "--leak-check=full"))
                 platform.update(outcome="pass", scope="pinned local native, QEMU user mode, Valgrind")
                 if plan.guard_skip:
                     platform["guard_skip"] = plan.guard_skip
+
+            if only in (None, "coverage"):
+                checks["branch_coverage"] = {"outcome": "fail", "commands": [], "runs": []}
+                verify_coverage(checks["branch_coverage"], directory, binary, function, source,
+                                [arguments(plan, mode, oracle) for mode in plan.coverage_modes],
+                                require_entry=function in SCALAR_FUNCTIONS)
 
             stub = None
             if only in (None, "stub"):
@@ -672,7 +701,6 @@ def production(function, only=None):
         evidence["production_verified"] = only is None
     except (GateError, OSError, KeyError, ValueError) as error:
         evidence["error"] = str(error)
+        evidence["failure_class"] = "semantic" if isinstance(error, CandidateFailure) else "harness"
         print(f"gate: {error}", file=sys.stderr)
-    report = write_evidence(f"{function}.production" if only is None else f"{function}.{only}", evidence)
-    print(f"{scope} evidence: {report}", flush=True)
-    return 0 if evidence["outcome"] == "pass" else 1
+    return finish_function_gate(function, only, evidence, attempt, phase2_inputs)

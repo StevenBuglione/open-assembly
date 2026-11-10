@@ -3,6 +3,7 @@ bits 64
 default rel
 
 global __al_complex_power_log:function
+extern __al_fork_scratch_locks:data
 extern __al_lock:function
 extern __al_unlock:function
 extern __al_big_copy:function
@@ -31,7 +32,7 @@ __al_complex_power_log:
     mov r12, rsi
     mov r13, rdx
     mov r14, rcx
-    lea rdi, [rel log_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 96]
     call __al_lock
     lea rdi, [rel term]
     mov rsi, r12
@@ -161,7 +162,7 @@ __al_complex_power_log:
     mov qword [rbx], 0
     mov qword [rsp + 16], 0
 .unlock:
-    lea rdi, [rel log_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 96]
     call __al_unlock
     mov rax, [rsp + 16]
     mov edx, [rsp + 12]
@@ -175,7 +176,7 @@ __al_complex_power_log:
 
 section .bss alloc noexec write nobits
 alignb 16
-log_lock: resd 1
+    resd 1                    ; preserve scratch record offsets
 alignb 16
 term: resb 10248
 unit: resb 10248

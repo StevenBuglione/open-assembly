@@ -129,8 +129,9 @@ ownership can span the first thread creation without changing meaning.
 No application callback runs under an allocator, stream registry, or
 termination registry lock. Audit lock nesting and all public paths that
 call a locked helper. A child after a multi-threaded `fork` uses the
-existing async-signal-safe path to exec or `_exit`. At-fork registrations
-and recovery for broader child-side runtime use require a separate contract.
+existing async-signal-safe path to exec or `_exit`. The
+[threaded fork contract](0043-threaded-fork.md) defines callbacks,
+the runtime guard set, and the surviving child descriptor.
 Future recursive public stdio locking must share ownership with implicit
 I/O without making the unlocked entry points reacquire that lock.
 [Linux futex](https://man7.org/linux/man-pages/man2/futex.2.html)

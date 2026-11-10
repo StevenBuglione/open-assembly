@@ -23,6 +23,7 @@ bits 64
 default rel
 
 global system:function
+extern __al_fork_scratch_locks:data
 extern __al_syscall:function
 extern __al_syscall_result:function
 extern __al_system_restore:function
@@ -69,7 +70,7 @@ system:
     jz .allocation_failed
     mov r12, rax
     xor r13d, r13d                ; number of successful setup steps
-    lea rdi, [rel system_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 0]
     call __al_lock
     mov edi, 13                   ; __NR_rt_sigaction
     mov esi, 2                    ; SIGINT
@@ -140,7 +141,7 @@ system:
     jb .release
     mov r14, rax
 .release:
-    lea rdi, [rel system_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 0]
     call __al_unlock
     mov rdi, r12
     call free
@@ -182,7 +183,5 @@ ignored_action:
     dq 1, 0, 0, 0                 ; SIG_IGN
 
 section .bss.system alloc noexec write nobits align=4
-system_lock:
-    resd 1
 
 section .note.GNU-stack noalloc noexec nowrite progbits

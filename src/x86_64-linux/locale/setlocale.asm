@@ -22,6 +22,7 @@ default rel
 
 global setlocale:function
 global __al_locale_flags:data
+global __al_setlocale_lock:data
 extern getenv:function
 extern strlen:function
 extern strncmp:function
@@ -170,7 +171,7 @@ setlocale:
 
 .single_selection:
     mov r14d, eax
-    lea rdi, [rel locale_lock]
+    lea rdi, [rel __al_setlocale_lock]
     call __al_lock
     mov eax, 1
     mov ecx, ebx
@@ -183,14 +184,14 @@ setlocale:
     or eax, edx
     jmp .commit
 .all_selection:
-    lea rdi, [rel locale_lock]
+    lea rdi, [rel __al_setlocale_lock]
     call __al_lock
     mov eax, r14d
 .commit:
     mov [rel __al_locale_flags], eax
     jmp .report
 .query:
-    lea rdi, [rel locale_lock]
+    lea rdi, [rel __al_setlocale_lock]
     call __al_lock
     mov eax, [rel __al_locale_flags]
 .report:
@@ -258,7 +259,7 @@ setlocale:
     jmp .unlock
 .unlock:
     mov [rsp + 8], rax
-    lea rdi, [rel locale_lock]
+    lea rdi, [rel __al_setlocale_lock]
     call __al_unlock
     mov rax, [rsp + 8]
     jmp .done
@@ -292,7 +293,7 @@ language_name: db "LANG", 0
 section .bss alloc noexec write nobits
 alignb 16
 __al_locale_flags: resd 1
-locale_lock: resd 1
+__al_setlocale_lock: resd 1
 mixed_name: resb 128
 
 section .note.GNU-stack noalloc noexec nowrite progbits

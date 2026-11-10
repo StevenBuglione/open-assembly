@@ -3,6 +3,7 @@ bits 64
 default rel
 
 global __al_complex_inverse_tangent:function
+extern __al_fork_scratch_locks:data
 extern __al_fp_decode:function
 extern __al_fp_pack_exact:function
 extern __al_fp_special:function
@@ -102,7 +103,7 @@ __al_complex_inverse_tangent:
     jmp .results
 
 .evaluate:
-    lea rdi, [rel inverse_tangent_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 80]
     call __al_lock
     lea rdi, [rel norm]
     lea rsi, [rel temporary]
@@ -334,7 +335,7 @@ __al_complex_inverse_tangent:
     mov r14, rax
     mov r15d, edx
     or [rsp + 76], ecx
-    lea rdi, [rel inverse_tangent_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 80]
     call __al_unlock
     mov edi, [rsp + 76]
     xor esi, esi
@@ -479,7 +480,7 @@ metadata:
 
 section .bss alloc noexec write nobits
 alignb 16
-inverse_tangent_lock: resd 1
+    resd 1                    ; preserve scratch record offsets
 alignb 16
 norm: resb 10248
 unit: resb 10248

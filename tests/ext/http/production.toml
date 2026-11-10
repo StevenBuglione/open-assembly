@@ -1,0 +1,31 @@
+schema = 1
+
+[[function]]
+symbol = "http_is_token_byte"
+abi = "http-token-abi"
+trace = "http-token-unit"
+mutations = { http-token-unit = [11, 12], http-token-abi = [13] }
+fuzz = "http-token-packets"
+model = "tests/oracle/http/model.py"
+record_size = 64
+result_size = 16
+
+[[function]]
+symbol = "http_find_header_end"
+abi = "http-find-abi"
+trace = "http-find-unit"
+mutations = { http-find-unit = [11, 12, 13, 14] }
+fuzz = "http-find-packets"
+model = "tests/oracle/http/model.py"
+record_size = 64
+result_size = 16
+
+[[function]]
+symbol = "http_parse"
+abi = "http-parse-abi"
+trace = "http-parse-unit"
+mutations = { http-parse-unit = [11, 12, 13, 14, 15, 16, 17, 18] }
+fuzz = "http-parse-packets"
+model = "tests/oracle/http/model.py"
+record_size = 64
+result_size = 16

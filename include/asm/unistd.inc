@@ -23,6 +23,7 @@ extern optopt:data
 %define _SC_PAGESIZE 30
 %define _SC_PAGE_SIZE 30
 
+extern _Fork
 extern _exit
 extern access
 extern close

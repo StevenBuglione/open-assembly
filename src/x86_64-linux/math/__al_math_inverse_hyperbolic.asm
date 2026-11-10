@@ -3,6 +3,7 @@ bits 64
 default rel
 
 global __al_math_inverse_hyperbolic:function
+extern __al_fork_scratch_locks:data
 extern __al_fp_decode:function
 extern __al_fp_quiet:function
 extern __al_fp_special:function
@@ -88,7 +89,7 @@ __al_math_inverse_hyperbolic:
     mov [rsp], rax
     mov [rsp + 8], edx
     mov [rsp + 16], r10d
-    lea rdi, [rel inverse_hyper_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 40]
     call __al_lock
     cmp dword [rsp + 16], 96
     jge .asymptote
@@ -224,7 +225,7 @@ __al_math_inverse_hyperbolic:
     mov r12, rax
     mov r13d, edx
     mov [rsp + 28], ecx
-    lea rdi, [rel inverse_hyper_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 40]
     call __al_unlock
     mov edi, [rsp + 28]
     xor esi, esi
@@ -286,8 +287,7 @@ __al_math_inverse_hyperbolic:
     ret
 
 section .bss.__al_math_inverse_hyperbolic alloc noexec write nobits align=8
-inverse_hyper_lock:
-    resq 1
+    resq 1                    ; preserve scratch record offsets
 metadata:
     resq 6
 argument:

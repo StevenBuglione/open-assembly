@@ -1,0 +1,51 @@
+schema = 1
+
+[[function]]
+symbol = "map_init"
+abi = "map-init-abi"
+trace = "map-init-unit"
+mutations = { map-init-unit = [11, 12, 13, 14, 15, 16, 17, 18, 19] }
+fuzz = "map-init-packets"
+model = "tests/oracle/map/model.py"
+record_size = 32
+result_size = 216
+
+[[function]]
+symbol = "map_probe"
+abi = "map-probe-abi"
+trace = "map-probe-unit"
+mutations = { map-probe-unit = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22] }
+fuzz = "map-probe-packets"
+model = "tests/oracle/map/model.py"
+record_size = 32
+result_size = 216
+
+[[function]]
+symbol = "map_get"
+abi = "map-get-abi"
+trace = "map-get-unit"
+mutations = { map-get-unit = [11, 12, 13, 14, 15] }
+fuzz = "map-get-packets"
+model = "tests/oracle/map/model.py"
+record_size = 32
+result_size = 216
+
+[[function]]
+symbol = "map_put"
+abi = "map-put-abi"
+trace = "map-put-unit"
+mutations = { map-put-unit = [11, 12, 13, 14, 15, 16] }
+fuzz = "map-put-packets"
+model = "tests/oracle/map/model.py"
+record_size = 32
+result_size = 216
+
+[[function]]
+symbol = "map_remove"
+abi = "map-remove-abi"
+trace = "map-remove-unit"
+mutations = { map-remove-unit = [11, 12, 13, 14, 15] }
+fuzz = "map-remove-packets"
+model = "tests/oracle/map/model.py"
+record_size = 32
+result_size = 216

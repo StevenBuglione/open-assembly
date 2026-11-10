@@ -1,6 +1,7 @@
 """Tests for schema, generated artifacts, provenance, and queue trust boundaries."""
 
 from collections import Counter
+from concurrent.futures import ThreadPoolExecutor
 import json
 from pathlib import Path
 import shutil
@@ -12,6 +13,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
 from extension_abi import COMPILERS, fixture, load_baselines
+from failure_journal import JournalError, load_history, run_with_journal
 from extensions import load_packages
 from spec import (COMPILER_ATOMIC_ABI, PHASE0_FIXED_INPUTS, SpecError, check_comment_header,
                   comment_header, load_project, phase0_input_paths, snapshot_inputs)
@@ -27,7 +29,8 @@ class ProjectTest(unittest.TestCase):
         self.root = Path(self.tmp.name)
         shutil.copytree(ROOT / "spec", self.root / "spec")
         (self.root / "tools").mkdir()
-        for name in ("spec.py", "extensions.py", "extension_abi.py", "gen", "queue", "provenance"):
+        for name in ("spec.py", "extensions.py", "extension_abi.py", "failure_journal.py",
+                     "gen", "queue", "provenance"):
             shutil.copy(ROOT / "tools" / name, self.root / "tools" / name)
 
     def write(self, path, content):
@@ -194,6 +197,25 @@ class ProjectTest(unittest.TestCase):
         outputs[1].unlink()
         self.run_tool("gen", "--check", "--tracked-only")
         self.assertIn("missing output: build/include/c/string.h", self.run_tool("gen", "--check", expect=1))
+
+    def test_concurrent_test_header_writers_and_checkers(self):
+        command = [sys.executable, str(self.root / "tools/gen"), "--test-headers"]
+        self.assertFalse((self.root / "build/include/c").exists())
+        for options in ([()] * 6, [(), ("--check",)] * 3):
+            processes = [subprocess.Popen([*command, *args], cwd=self.root, text=True,
+                                          stdout=subprocess.PIPE, stderr=subprocess.PIPE) for args in options]
+            try:
+                for process in processes:
+                    stdout, stderr = process.communicate(timeout=60)
+                    self.assertEqual(0, process.returncode, stdout + stderr)
+            finally:
+                for process in processes:
+                    if process.poll() is None:
+                        process.kill()
+                    process.wait()
+                    process.stdout.close()
+                    process.stderr.close()
+        self.run_tool("gen", "--check", "--test-headers")
 
     def test_obsolete_output_detected_without_deleting_unrelated_file(self):
         self.run_tool("gen")
@@ -363,6 +385,89 @@ member = [
         spec = load_project(self.root).functions["strlen"]
         self.write("src/x86_64-linux/string/strlen.asm", comment_header(spec))
         self.assertIn("no eligible specified function", self.run_tool("queue", "next", expect=1))
+
+    def attempt_fixture(self):
+        self.phase0_queue_specs()
+        self.write("devenv.lock", "pinned identity")
+        spec = load_project(self.root).functions["strlen"]
+        path = "src/x86_64-linux/string/strlen.asm"
+        source = self.write(path, comment_header(spec))
+        return source, self.write("build/evidence/attempt-control.json", "{}")
+
+    def record_attempt(self, source, report, category, *, change_inputs=False):
+        def run(attempt):
+            inputs = snapshot_inputs(self.root, [STRLEN, source.relative_to(self.root), "devenv.lock"])
+            evidence = {
+                "scope": "production-function", "function": "strlen", "inputs": inputs,
+                "checks": {"candidate_build": {"outcome": "pass",
+                                               "source": attempt.source["path"],
+                                               "source_sha256": attempt.source["sha256"]}},
+                "toolchain": {"nasm": {"sha256": "1" * 64, "version": "seeded tool identity"}},
+                "outcome": "pass" if category is None else "fail",
+                "production_verified": category is None,
+                "failure_class": category,
+                "error": "seeded gate rejection" if category is not None else None,
+            }
+            snapshot = {} if change_inputs else inputs
+            attempt.bind_result(evidence, lambda: snapshot)
+            attempt.record(evidence, report)
+            return int(category is not None)
+
+        return run_with_journal(self.root, "strlen", run)
+
+    def test_attempts_suspend_and_require_review_note(self):
+        source, report = self.attempt_fixture()
+        legacy = {"scope": "production-function", "function": "strlen",
+                  "outcome": "fail", "error": "old unclassified result"}
+        self.write("build/evidence/strlen.production.json", json.dumps(legacy))
+        self.assertIn("strlen: implemented", self.run_tool("queue", "status", "strlen"))
+        self.assertEqual(load_history(self.root, "strlen").count, 0)
+        for category in ("semantic", "harness", "semantic", "semantic"):
+            self.assertEqual(self.record_attempt(source, report, category), 1)
+        first = self.root / "build/attempts/strlen/00000001.json"
+        first_bytes = first.read_bytes()
+        self.assertIn("strlen: blocked", self.run_tool("queue", "status", "strlen"))
+        self.assertIn("write docs/blocked/strlen.md", self.run_tool("queue", "status", "strlen"))
+        with self.assertRaisesRegex(JournalError, "semantic attempts 1, 3, 4"):
+            run_with_journal(self.root, "strlen", lambda _: self.fail("suspended gate ran"))
+        self.assertEqual(load_history(self.root, "strlen").count, 4)
+        self.assertIn("write docs/blocked/strlen.md", self.run_tool(
+            "queue", "resume", "strlen", "--reason", "reviewed", expect=1))
+        self.write("docs/blocked/strlen.md", "# Investigate attempts 1, 3 and 4\n")
+        self.assertIn("review docs/blocked/strlen.md", self.run_tool("queue", "status", "strlen"))
+        self.assertIn("resumed at journal record 5", self.run_tool("queue", "resume", "strlen",
+                                                                  "--reason", "reviewed"))
+        self.assertIn("strlen: implemented", self.run_tool("queue", "status", "strlen"))
+        self.assertEqual(first.read_bytes(), first_bytes)
+
+    def test_pass_resets_semantic_count_and_changed_inputs_do_not_count(self):
+        source, report = self.attempt_fixture()
+        self.record_attempt(source, report, "semantic", change_inputs=True)
+        self.record_attempt(source, report, "semantic")
+        self.assertEqual(load_history(self.root, "strlen").failures, (2,))
+        source.write_text(source.read_text() + "; revised implementation\n")
+        self.record_attempt(source, report, "semantic")
+        self.assertEqual(load_history(self.root, "strlen").failures, (2, 3))
+        self.record_attempt(source, report, None)
+        self.record_attempt(source, report, "semantic")
+        self.assertEqual(load_history(self.root, "strlen").failures, (5,))
+        self.write("build/attempts/strlen/00000007.json", "{}")
+        self.assertIn("nonconsecutive journal sequence", self.run_tool(
+            "queue", "status", "strlen", expect=1))
+
+    def test_same_function_attempts_cannot_race_the_suspension(self):
+        source, report = self.attempt_fixture()
+
+        def candidate(_):
+            try:
+                return self.record_attempt(source, report, "semantic")
+            except JournalError as error:
+                self.assertIn("suspended after semantic attempts 1, 2, 3", str(error))
+                return 2
+
+        with ThreadPoolExecutor(max_workers=4) as workers:
+            self.assertEqual(sorted(workers.map(candidate, range(4))), [1, 1, 1, 2])
+        self.assertEqual(load_history(self.root, "strlen").failures, (1, 2, 3))
 
     def test_dependency_on_inventoried_but_unspecified_function_is_pending(self):
         self.phase0_queue_specs()

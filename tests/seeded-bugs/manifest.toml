@@ -210,3 +210,17 @@ syscall_boundary = true
 [[positive]]
 path = "tests/seeded-bugs/valid_fp_control_restore.asm"
 description = "Accept caller floating-point control state restored from saved stack slots."
+
+[[case]]
+path = "tests/seeded-bugs/sse2_scalar_crosses_frame.asm"
+description = "Read an eight-byte SSE operand with only four bytes left in the local frame."
+rule = "STACK_ACCESS"
+
+[[case]]
+path = "tests/seeded-bugs/sse2_conversion_clobbers_rbx.asm"
+description = "Convert a double to EBX and implicitly overwrite the preserved full RBX."
+rule = "CALLEE_SAVED"
+
+[[positive]]
+path = "tests/seeded-bugs/valid_sse2_scalar_stack.asm"
+description = "Widen a four-byte single-precision value at the end of the local frame."

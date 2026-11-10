@@ -3,6 +3,7 @@ bits 64
 default rel
 
 global __al_math_fma:function
+extern __al_fork_scratch_locks:data
 extern __al_fp_decode:function
 extern __al_fp_pack_exact:function
 extern __al_fp_special:function
@@ -119,7 +120,7 @@ __al_math_fma:
     mov eax, [rsp + 32]
 .common_exponent:
     mov [rsp + 60], eax          ; minimum addend exponent
-    lea rdi, [rel scratch_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 28]
     call __al_lock
     mov rax, [rsp]
     mov r10, [rsp + 8]
@@ -207,7 +208,7 @@ __al_math_fma:
 .unlock_result:
     mov r12, rax
     mov r13d, edx
-    lea rdi, [rel scratch_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 28]
     call __al_unlock
     mov edi, [rsp + 64]
     xor esi, esi
@@ -218,7 +219,7 @@ __al_math_fma:
     call __al_math_effects
     jmp .original
 .unlock_cancellation:
-    lea rdi, [rel scratch_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 28]
     call __al_unlock
 .signed_cancellation:
     call fegetround
@@ -292,8 +293,7 @@ __al_math_fma:
     ret
 
 section .bss.__al_math_fma alloc noexec write nobits align=8
-scratch_lock:
-    resq 1
+    resq 1                    ; preserve scratch record offsets
 metadata:
     resq 6
 product:

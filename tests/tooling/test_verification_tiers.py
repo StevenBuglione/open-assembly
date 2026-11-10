@@ -12,10 +12,11 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "tools"))
 from gate import GateError
+from math_production import SCOPE as MATH_WRAPPER_SCOPE, SECONDS as MATH_WRAPPER_SECONDS, WRAPPERS
 from production import libfuzzer_seconds
-from spec import snapshot_inputs
+from spec import sha256_file, snapshot_inputs
 from musl_authorship import ARCHIVE_SHA256, POLICY
-from verify_tiers import check_allocator_benchmark, check_authorship, evidence_json, fresh_report, invoke
+from verify_tiers import check_allocator_benchmark, check_authorship, evidence_json, fresh_report, invoke, math_wrapper_report
 
 
 class TierEvidence(unittest.TestCase):
@@ -61,6 +62,44 @@ class TierEvidence(unittest.TestCase):
                 with self.assertRaisesRegex(GateError, "expected a passing phase report"):
                     self.check()
                 self.data[key] = good
+
+    def test_math_wrapper_batch_requires_all_fresh_scoped_children(self):
+        directory = self.report.parent
+        batch = directory / "math-wrappers.json"
+        children = {}
+        aggregate = {"schema_version": 1, "scope": f"{MATH_WRAPPER_SCOPE}-batch", "outcome": "pass",
+                     "production_verified": False, "full_scope": True, "total": 4, "passed": 4,
+                     "functions": children}
+        for name, (operation, width, engine) in WRAPPERS.items():
+            child = directory / f"{name}.math-wrapper.json"
+            checks = {key: {"outcome": "pass"} for key in (
+                "abi", "branch_coverage", "candidate_build", "differential_fuzz", "generated_outputs",
+                "generated_stub", "native_oracles", "production_mutation")}
+            checks["candidate_build"]["archive_sha256"] = "0" * 64
+            checks["dependency_closure"] = {"outcome": "pending", "engine": engine}
+            checks["differential_fuzz"].update(oracle="reference:mpfr", requested_seconds=MATH_WRAPPER_SECONDS,
+                                               elapsed_s=MATH_WRAPPER_SECONDS, records=512)
+            record = {**self.data, "scope": MATH_WRAPPER_SCOPE, "function": name, "operation": operation,
+                      "format_bits": width, "production_verified": False, "wrapper_checks_passed": True,
+                      "checks": checks}
+            child.write_text(json.dumps(record))
+            children[name] = {"evidence": child.relative_to(self.root).as_posix(), "outcome": "pass",
+                              "evidence_sha256": sha256_file(child)}
+        batch.write_text(json.dumps(aggregate))
+        with patch("verify_tiers.ROOT", self.root), patch("verify_tiers.math_wrapper_inputs", return_value=self.data["inputs"]):
+            self.assertEqual(math_wrapper_report(self.started), (batch, aggregate))
+            child = directory / "exp2f.math-wrapper.json"
+            original = evidence_json(child)
+            for changed in ({**original, "production_verified": True},
+                            {**original, "checks": {**original["checks"], "dependency_closure": {"outcome": "pass"}}}):
+                child.write_text(json.dumps(changed))
+                children["exp2f"]["evidence_sha256"] = sha256_file(child)
+                batch.write_text(json.dumps(aggregate))
+                with self.assertRaisesRegex(GateError, "pending engine closure"):
+                    math_wrapper_report(self.started)
+            os.utime(child, ns=(self.started - 1, self.started - 1))
+            with self.assertRaisesRegex(GateError, "no fresh report"):
+                math_wrapper_report(self.started)
 
     def test_rejects_changed_or_omitted_inputs(self):
         (self.root / "Makefile").write_text("changed\n")

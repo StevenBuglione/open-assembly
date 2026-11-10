@@ -3,6 +3,7 @@ bits 64
 default rel
 
 global __al_math_exp:function
+extern __al_fork_scratch_locks:data
 extern __al_fp_decode:function
 extern __al_fp_quiet:function
 extern __al_fp_pack_exact:function
@@ -90,7 +91,7 @@ __al_math_exp:
     test rax, rax
     jz .integral
     mov [rsp + 8], rax
-    lea rdi, [rel exp_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 24]
     call __al_lock
     lea rdi, [rel parameter]
     mov rsi, [rsp + 8]
@@ -107,7 +108,7 @@ __al_math_exp:
 .natural_reduction:
     mov [rsp + 8], rax
     mov [rsp + 16], edx
-    lea rdi, [rel exp_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 24]
     call __al_lock
     lea rdi, [rel parameter]
     mov rsi, [rsp + 8]
@@ -138,7 +139,7 @@ __al_math_exp:
     ; unrounded result like mode 4.
     mov r15d, edx
 .copy_parameter:
-    lea rdi, [rel exp_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 24]
     call __al_lock
     lea rdi, [rel parameter]
     mov rsi, r12
@@ -297,7 +298,7 @@ __al_math_exp:
     call __al_fp_pack_biased
     mov r12, rax
     mov r13d, edx
-    lea rdi, [rel exp_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 24]
     call __al_unlock
     mov ecx, [rsp + 24]
     cmp dword [rsp + 28], 3
@@ -316,13 +317,13 @@ __al_math_exp:
     mov rdi, [rsp + 40]
     lea rsi, [rel series]
     call __al_big_copy
-    lea rdi, [rel exp_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 24]
     call __al_unlock
     mov rax, r14
     jmp .done
 
 .unlock_extreme:
-    lea rdi, [rel exp_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 24]
     call __al_unlock
 .extreme:
     mov r14d, 65536
@@ -380,7 +381,7 @@ __al_math_exp:
     jmp .original
 
 .unlock_minus_one:
-    lea rdi, [rel exp_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 24]
     call __al_unlock
 .near_minus_one:
     call fegetround
@@ -460,8 +461,7 @@ log2e_lower:
     dd 0xd23a7d11, 0x7d0ffda0, 0xb82fe177, 0x71547652, 0x00000001
 
 section .bss.__al_math_exp alloc noexec write nobits align=8
-exp_lock:
-    resq 1
+    resq 1                    ; preserve scratch record offsets
 metadata:
     resq 6
 parameter:

@@ -33,6 +33,10 @@ production-linux-files:
 production-linux-io:
 	python3 tools/phase2.py --linux-io
 
+.PHONY: verify-math-wrappers
+verify-math-wrappers:
+	python3 tools/math_production.py --batch
+
 phase3:
 	python3 tools/phase3.py
 
@@ -62,6 +66,10 @@ phase6-zlib:
 
 phase6-sqlite:
 	python3 tools/sqlite.py
+
+.PHONY: phase6-sqlite-concurrency
+phase6-sqlite-concurrency:
+	python3 tools/sqlite_concurrency.py
 
 phase6-process:
 	python3 tools/phase6.py --process
@@ -128,6 +136,10 @@ phase7-complex:
 
 phase8-lifecycle:
 	python3 tools/phase8.py
+
+.PHONY: phase8-fork
+phase8-fork:
+	python3 tools/phase8.py --fork
 
 phase8-sync:
 	python3 tools/phase8.py --sync
@@ -294,3 +306,7 @@ phase10-native-ltp:
 .PHONY: phase11-vdso-benchmark
 phase11-vdso-benchmark:
 	python3 tools/phase11_vdso_benchmark.py
+
+.PHONY: extension-json-upstream
+extension-json-upstream:
+	python3 tools/extension_json_upstream.py

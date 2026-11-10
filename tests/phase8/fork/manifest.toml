@@ -1,0 +1,149 @@
+schema = 1
+
+[[case]]
+name = "fork-ordered"
+sources = ["tests/phase8/fork/callbacks.c"]
+requires = ["fork", "pthread_atfork"]
+args = ["ordered"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:threaded-fork"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "fork-dynamic"
+sources = ["tests/phase8/fork/callbacks.c"]
+requires = ["fork", "pthread_atfork"]
+args = ["dynamic"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:threaded-fork"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Registration during prepare and exact snapshot visibility are project policy."
+
+[[case]]
+name = "fork-capacity"
+sources = ["tests/phase8/fork/callbacks.c"]
+requires = ["pthread_atfork"]
+args = ["capacity"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:threaded-fork"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The fixed 32-registration capacity is project policy."
+
+[[case]]
+name = "fork-concurrent"
+sources = ["tests/phase8/fork/callbacks.c"]
+requires = ["pthread_atfork"]
+args = ["concurrent"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:threaded-fork"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The fixed 32-registration capacity is project policy."
+
+[[case]]
+name = "fork-raw"
+sources = ["tests/phase8/fork/bypass.c"]
+requires = ["_Fork"]
+args = ["raw"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:threaded-fork"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "fork-shell-spawn"
+sources = ["tests/phase8/fork/bypass.c"]
+requires = ["posix_spawn", "system"]
+args = ["spawn"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:threaded-fork"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The project promises no at-fork callbacks on internal spawn and shell paths."
+
+[[case]]
+name = "fork-worker"
+sources = ["tests/phase8/fork/worker.c"]
+requires = ["fork"]
+args = []
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:threaded-fork"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "fork-error"
+sources = ["tests/phase8/fork/fault.c"]
+requires = ["fork"]
+args = []
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:threaded-fork"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Exact raw failure injection and project fork mask and errno policy."
+link_wraps = ["_Fork"]
+
+[[stub]]
+symbol = "fork"
+case = "fork-ordered"
+status = 19
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "_Fork"
+case = "fork-raw"
+status = 19
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "pthread_atfork"
+case = "fork-capacity"
+status = 18
+stdout = ""
+stderr = ""
+
+[[case]]
+name = "fork-popen-bypass"
+sources = ["tests/phase8/fork/popen.c"]
+requires = ["pthread_atfork", "fork", "popen", "pclose"]
+args = []
+env = {}
+status = 0
+stdin_hex = ""
+stdout = "popen-bypass\n"
+stderr = ""
+oracle = ["contract:threaded-fork", "posix:popen"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The project promises the internal shell child path bypasses public at-fork callbacks."

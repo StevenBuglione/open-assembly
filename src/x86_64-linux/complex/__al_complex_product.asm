@@ -3,6 +3,7 @@ bits 64
 default rel
 
 global __al_complex_product:function
+extern __al_fork_scratch_locks:data
 extern __al_fp_decode:function
 extern __al_math_hyperbolic:function
 extern __al_math_trig:function
@@ -107,7 +108,7 @@ __al_complex_product:
 .tiny_pair:
     mov dword [rsp + 120], 1     ; product of two tiny arguments
 .begin:
-    lea rdi, [rel product_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 100]
     call __al_lock
     lea rax, [rel hyperbolic]
     mov [rel hyperbolic_export], rax
@@ -306,7 +307,7 @@ __al_complex_product:
     jne .zero_factor
     ; The even factor equals one. Use the scalar directed-rounding
     ; path for the complete component, with no lock held.
-    lea rdi, [rel product_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 100]
     call __al_unlock
     mov edi, ebx
     mov rsi, r14
@@ -316,7 +317,7 @@ __al_complex_product:
     call __al_math_trig
     mov [rsp + 128], rax
     mov [rsp + 136], edx
-    lea rdi, [rel product_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 100]
     call __al_lock
     mov rax, [rsp + 128]
     mov edx, [rsp + 136]
@@ -343,7 +344,7 @@ __al_complex_product:
 .second_component:
     mov [rsp + 96], rax
     mov [rsp + 104], edx
-    lea rdi, [rel product_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 100]
     call __al_unlock
     mov edi, [rsp + 76]
     test edi, edi
@@ -473,7 +474,7 @@ metadata:
 
 section .bss alloc noexec write nobits
 alignb 16
-product_lock: resd 1
+    resd 1                    ; preserve scratch record offsets
 alignb 16
 hyperbolic_export: resq 3
 circular: resb 64

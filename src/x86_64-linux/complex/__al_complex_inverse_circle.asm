@@ -3,6 +3,7 @@ bits 64
 default rel
 
 global __al_complex_inverse_circle:function
+extern __al_fork_scratch_locks:data
 extern __al_fp_decode:function
 extern __al_fp_pack_exact:function
 extern __al_fp_special:function
@@ -198,7 +199,7 @@ __al_complex_inverse_circle:
     jmp .store_angle
 
 .geometry:
-    lea rdi, [rel circle_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 76]
     call __al_lock
     lea rdi, [rel horizontal]
     mov rsi, [rsp]
@@ -524,7 +525,7 @@ __al_complex_inverse_circle:
     mov r12, rax
     mov r13d, edx
     or [rsp + 60], ecx
-    lea rdi, [rel circle_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 76]
     call __al_unlock
     mov edi, [rsp + 60]
     xor esi, esi
@@ -633,7 +634,7 @@ metadata:
 
 section .bss alloc noexec write nobits
 alignb 16
-circle_lock: resd 1
+    resd 1                    ; preserve scratch record offsets
 alignb 16
 horizontal: resb 10248
 unit: resb 10248

@@ -3,6 +3,7 @@ bits 64
 default rel
 
 global __al_math_log:function
+extern __al_fork_scratch_locks:data
 extern __al_fp_decode:function
 extern __al_fp_pack_exact:function
 extern __al_fp_pack_biased:function
@@ -101,7 +102,7 @@ __al_math_log:
     test edx, edx
     jz .exact_exponent
 .series_start:
-    lea rdi, [rel log_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 44]
     call __al_lock
     mov rsi, r15
     mov r9, 0x8000000000000000
@@ -238,7 +239,7 @@ __al_math_log:
     call __al_fp_pack_biased
     mov r12, rax
     mov r13d, edx
-    lea rdi, [rel log_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 44]
     call __al_unlock
     mov edi, 32
     xor esi, esi
@@ -249,7 +250,7 @@ __al_math_log:
     mov rdi, [rsp + 40]
     mov rsi, r12
     call __al_big_copy
-    lea rdi, [rel log_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 44]
     call __al_unlock
     mov eax, [rsp + 20]
     jmp .done
@@ -275,7 +276,7 @@ __al_math_log:
     ; binary exponent in edx. Return the magnitude of its natural log
     ; on the Q256 grid through the pointer saved from r8.
     mov [rsp + 8], edx
-    lea rdi, [rel log_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 44]
     call __al_lock
     lea rdi, [rel term]
     mov rsi, r12
@@ -310,7 +311,7 @@ __al_math_log:
     mov [rsp], rax
     mov [rsp + 8], edx
     mov [rsp + 12], ecx
-    lea rdi, [rel log_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 44]
     call __al_lock
     lea rdi, [rel power]
     mov rsi, [rsp]
@@ -458,8 +459,7 @@ inverse_ln10:
     dd 0xd699ee19, 0x9aadd557, 0x9b9438ca, 0x6f2dec54
 
 section .bss.__al_math_log alloc noexec write nobits align=8
-log_lock:
-    resq 1
+    resq 1                    ; preserve scratch record offsets
 metadata:
     resq 6
 power:

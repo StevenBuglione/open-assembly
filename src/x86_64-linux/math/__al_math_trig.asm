@@ -3,6 +3,7 @@ bits 64
 default rel
 
 global __al_math_trig:function
+extern __al_fork_scratch_locks:data
 extern __al_fp_decode:function
 extern __al_fp_pack_exact:function
 extern __al_fp_pack_biased:function
@@ -71,7 +72,7 @@ __al_math_trig:
     mov dword [rsp + 56], 1
     mov dword [rsp + 60], 1
 .reduce:
-    lea rdi, [rel trig_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 56]
     call __al_lock
     mov rdi, [rsp]
     mov rsi, [rsp + 8]
@@ -209,7 +210,7 @@ __al_math_trig:
     call __al_fp_pack_biased
     mov r12, rax
     mov r13d, edx
-    lea rdi, [rel trig_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 56]
     call __al_unlock
     mov edi, [rsp + 32]
     jmp .effects
@@ -234,7 +235,7 @@ __al_math_trig:
 .export_copy:
     mov rdi, [rsp + 48]
     call __al_big_copy
-    lea rdi, [rel trig_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 56]
     call __al_unlock
     mov eax, [rsp + 24]
     mov rdx, [rsp + 64]
@@ -379,8 +380,7 @@ __al_math_trig:
     ret
 
 section .bss.__al_math_trig alloc noexec write nobits align=8
-trig_lock:
-    resq 1
+    resq 1                    ; preserve scratch record offsets
 metadata:
     resq 6
 remainder:
