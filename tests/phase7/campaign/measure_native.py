@@ -1,4 +1,4 @@
-"""Compare a native MPFR exp2f packet producer with the Python oracle."""
+"""Compare a native MPFR unary packet producer with the Python oracle."""
 
 import argparse
 import hashlib
@@ -17,13 +17,17 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "transcendental"
 from oracle import MODES, OBSERVATION, TEST_ERRNO, shard
 from verify import compare
 
-PROOF_RANGES = (0, 0x80000000, 0x3f000000, 0x42fffe00, 0xc315fe00,
-                0x7f7ffe00, 0xff7ffe00, 0x7fbffe00, 0xffbffe00)
+PROOF_RANGES = {
+    "exp2": (0, 0x80000000, 0x3f000000, 0x42fffe00, 0xc315fe00,
+             0x7f7ffe00, 0xff7ffe00, 0x7fbffe00, 0xffbffe00),
+    "log2": (0, 0x80000000, 0x007ffe00, 0x00800000, 0x3f7ffe00, 0x3ffffe00, 0x5f000000,
+             0x7f7ffe00, 0xff7ffe00, 0x7fbffe00, 0xffbffe00),
+}
 
 
-def prove(helper, folder, start, count, mode):
-    requests, expected = produce(helper, folder, start, count, mode)
-    rows = list(shard("exp2", start, count, MODES[mode]))
+def prove(helper, folder, operation, start, count, mode):
+    requests, expected = produce(helper, folder, operation, start, count, mode)
+    rows = list(shard(operation, start, count, MODES[mode]))
     python_requests = b"".join(row.wire() for row in rows)
     python_expected = b"".join(OBSERVATION.pack(row.expected.result.low, row.expected.result.high,
                                                row.expected.flags | row.seed,
@@ -40,15 +44,15 @@ def prove(helper, folder, start, count, mode):
             "expected_sha256": hashlib.sha256(expected).hexdigest()}
 
 
-def measure(helper, candidate, folder, start, count):
+def measure(helper, candidate, folder, operation, start, count):
     began = monotonic()
-    requests, expected = produce(helper, folder, start, count, 0)
+    requests, expected = produce(helper, folder, operation, start, count, 0)
     actual = checked([candidate], data=requests)
-    maximum = compare_native(actual, expected, start, count)
+    maximum = compare_native(actual, expected, operation, start, count)
     native_elapsed = monotonic() - began
 
     began = monotonic()
-    rows = list(shard("exp2", start, count, MODES[0]))
+    rows = list(shard(operation, start, count, MODES[0]))
     python_requests = b"".join(row.wire() for row in rows)
     python_actual = checked([candidate], data=python_requests)
     if requests != python_requests or actual != python_actual:
@@ -70,6 +74,7 @@ def main():
     parser.add_argument("helper", type=Path)
     parser.add_argument("headers", type=Path)
     parser.add_argument("report", type=Path)
+    parser.add_argument("--operation", choices=PROOF_RANGES, default="exp2")
     args = parser.parse_args()
     root = Path.cwd().resolve()
     gate = json.loads(args.gate.read_text())
@@ -79,17 +84,18 @@ def main():
     candidate = (args.artifacts / "trans-f32").resolve(strict=True)
     inputs = [helper, candidate, args.gate, args.headers / "mpfr.h", args.headers / "gmp.h",
               Path(os.environ["OPEN_ASSEMBLY_MPFR"]).resolve(strict=True),
-              Path(__file__), Path(__file__).with_name("native_exp2.c")]
+              Path(__file__), Path(__file__).with_name("native_unary.c")]
     hashes = {str(path): digest(path) for path in inputs}
-    with tempfile.TemporaryDirectory(dir="build", prefix="native-exp2-") as temporary:
+    with tempfile.TemporaryDirectory(dir="build", prefix="native-unary-") as temporary:
         folder = Path(temporary)
-        proof = [prove(helper, folder, start, 1024, mode)
-                 for start in PROOF_RANGES for mode in range(4)]
-        timing = measure(helper, candidate, folder, 0x3f000000, 65536)
+        proof = [prove(helper, folder, args.operation, start, 1024, mode)
+                 for start in PROOF_RANGES[args.operation] for mode in range(4)]
+        timing = measure(helper, candidate, folder, args.operation, 0x3f000000, 65536)
     assert all(digest(path) == hashes[str(path)] for path in inputs)
     assert source_inputs(gate, root) == artifacts
     args.report.parent.mkdir(parents=True, exist_ok=True)
-    args.report.write_text(json.dumps({"schema": 1, "scope": "native MPFR exp2f prototype",
+    args.report.write_text(json.dumps({"schema": 1, "scope": "native MPFR unary oracle measurement",
+                                       "operation": args.operation,
                                        "complete_domain": False, "sha256": hashes, "proof": proof,
                                        "timing": timing}, indent=2) + "\n")
     print(f"PASS {sum(item['count'] for item in proof)} native/Python oracle agreements; "
