@@ -128,6 +128,56 @@ jobs:
             build/evidence/execvp.execvp-wrapper.json
           if-no-files-found: error
 
+  stat_production:
+    name: Stat production and shared record conversion
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b
+      - name: Verify exact stat dependencies and full public gates
+        timeout-minutes: 35
+        run: ./tools/container sh -ec 'python3 tests/tooling/test_stat_dependencies.py && python3 tests/tooling/test_verification_tiers.py && make production-stat'
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: stat-production-evidence
+          path: |
+            build/evidence/__errno_location.production.json
+            build/evidence/__al_stat_query.production.json
+            build/evidence/fstat.production.json
+            build/evidence/fstatat.production.json
+            build/evidence/stat.production.json
+            build/evidence/lstat.production.json
+          if-no-files-found: error
+
+  wide_core_production:
+    name: Wide string core production gates
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b
+      - name: Verify full wide string core gates
+        timeout-minutes: 25
+        run: ./tools/container make production-wide-core
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: wide-core-production-evidence
+          path: |
+            build/evidence/wcslen.production.json
+            build/evidence/wcscmp.production.json
+            build/evidence/wcsncmp.production.json
+            build/evidence/wmemchr.production.json
+          if-no-files-found: error
+
   stream_indicators:
     name: Scoped stdio stream indicator checks
     runs-on: ubuntu-24.04
@@ -349,7 +399,7 @@ jobs:
   acceptance:
     name: acceptance
     if: always()
-    needs: [core, integration, process_production, pathname_production, wait_exec_production, stream_indicators, mathematics, applications, threads, locale, real_programs, network, platform, extensions, extension_formats]
+    needs: [core, integration, process_production, pathname_production, wait_exec_production, stat_production, wide_core_production, stream_indicators, mathematics, applications, threads, locale, real_programs, network, platform, extensions, extension_formats]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions: {}
@@ -359,6 +409,8 @@ jobs:
       PROCESS_PRODUCTION_RESULT: ${{ needs.process_production.result }}
       PATHNAME_PRODUCTION_RESULT: ${{ needs.pathname_production.result }}
       WAIT_EXEC_PRODUCTION_RESULT: ${{ needs.wait_exec_production.result }}
+      STAT_PRODUCTION_RESULT: ${{ needs.stat_production.result }}
+      WIDE_CORE_PRODUCTION_RESULT: ${{ needs.wide_core_production.result }}
       STREAM_INDICATORS_RESULT: ${{ needs.stream_indicators.result }}
       MATH_RESULT: ${{ needs.mathematics.result }}
       APPLICATION_RESULT: ${{ needs.applications.result }}
@@ -383,6 +435,9 @@ jobs:
           printf 'Pathname production: %s\nWait and exec production: %s\n' "$PATHNAME_PRODUCTION_RESULT" "$WAIT_EXEC_PRODUCTION_RESULT"
           test "$PATHNAME_PRODUCTION_RESULT" = success
           test "$WAIT_EXEC_PRODUCTION_RESULT" = success
+          printf 'Stat production: %s\nWide core production: %s\n' "$STAT_PRODUCTION_RESULT" "$WIDE_CORE_PRODUCTION_RESULT"
+          test "$STAT_PRODUCTION_RESULT" = success
+          test "$WIDE_CORE_PRODUCTION_RESULT" = success
           printf 'Scoped stream indicators: %s\n' "$STREAM_INDICATORS_RESULT"
           test "$STREAM_INDICATORS_RESULT" = success
           test "$MATH_RESULT" = success

@@ -72,6 +72,30 @@ production-exec:
 verify-execvp-wrapper:
 	python3 tools/runtime_manifest_gate.py --execvp-wrapper
 
+.PHONY: verify-stat-wrappers
+verify-stat-wrappers:
+	python3 tools/runtime_manifest_gate.py --stat-wrappers
+
+.PHONY: verify-stat-query
+verify-stat-query:
+	python3 tools/stat_query_production.py
+
+.PHONY: production-stat
+production-stat:
+	tools/gate __errno_location
+	python3 tools/stat_query_production.py
+	tools/gate fstat
+	tools/gate fstatat
+	tools/gate stat
+	tools/gate lstat
+
+.PHONY: production-wide-core
+production-wide-core:
+	tools/gate wcslen
+	tools/gate wcscmp
+	tools/gate wcsncmp
+	tools/gate wmemchr
+
 .PHONY: verify-math-wrappers
 verify-math-wrappers:
 	python3 tools/math_production.py --batch

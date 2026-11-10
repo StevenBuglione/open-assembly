@@ -32,15 +32,16 @@ from production import SCALAR_FUNCTIONS, source_paths
 from runtime_manifest_gate import (ALLOCATOR_FUNCTIONS, FILE_MUTATION_FAILURES, IO_FUNCTIONS,
                                    FUZZ_SECONDS as PACKET_FUZZ_SECONDS, FUZZ_SEED as PACKET_FUZZ_SEED,
                                    PLANS as MANIFEST_PLANS,
-                                   REQUIRED_CHECKS as MANIFEST_CHECKS, STREAM_FAILURES, STREAM_WRAPPER_SUFFIX,
-                                   bind_descriptorless_scope, manifest_dependency_bindings, manifest_inputs, pending_dependency)
+                                   REQUIRED_CHECKS as MANIFEST_CHECKS, STAT_ENGINE, STREAM_FAILURES, STREAM_WRAPPER_SUFFIX,
+                                   bind_descriptorless_scope, check_stat_archive, manifest_dependency_bindings,
+                                   manifest_inputs, manifest_stat_binding, pending_dependency)
 from upstream_conformance import PINS as UPSTREAM_PINS, inputs as upstream_inputs
 from spec import ROOT, SpecError, has_runtime_entry, load_project, regular_file, relative_path, sha256_file, snapshot_inputs
 
 PHASES = (
     "phase0", "phase1", "phase2", "production-scalars", "production-linux-files", "production-linux-io",
     "phase3", "verify-allocator-wrappers", "phase4", "verify-stream-indicators", "phase5",
-    "phase6-files", "production-open", "production-paths", "phase6-fcntl", "phase6-compat", "phase6-busybox",
+    "phase6-files", "production-stat", "production-open", "production-paths", "phase6-fcntl", "phase6-compat", "phase6-busybox",
     "phase6-lua", "phase6-zlib", "phase6-sqlite", "phase6-sqlite-concurrency", "phase6-process",
     "production-process-identity", "production-pipes", "production-wait", "production-exec",
     "phase6-signal", "phase6-jump", "phase6-time", "phase6-calendar",
@@ -48,7 +49,7 @@ PHASES = (
     "phase7-exact", "phase7-transcendental", "phase7-complex", "verify-math-wrappers",
     "phase8-lifecycle", "phase8-fork", "phase8-sync", "phase8-c11", "phase8-openposix", "phase8-detectors",
     "phase8-compiler-atomics",
-    "phase9-multibyte", "phase9-bulk", "phase9-worker", "phase9-worker-sync", "phase9-wide",
+    "phase9-multibyte", "phase9-bulk", "phase9-worker", "phase9-worker-sync", "phase9-wide", "production-wide-core",
     "phase9-libc-test", "phase9-stdio", "phase9-narrow-wide", "phase9-wctype",
     "phase10-endpoints", "phase10-inet", "phase10-netdb", "phase10-dns", "phase10-addrconfig",
     "phase10-dns-failover", "phase10-dns-options",
@@ -68,6 +69,8 @@ MANIFEST_PRODUCTION_GROUPS = {
     "production-paths": ("readlink", "unlink", "rmdir"),
     "production-wait": ("waitpid", "wait"),
     "production-exec": ("execve", "execv"),
+    "production-stat": ("fstat", "fstatat", "stat", "lstat"),
+    "production-wide-core": ("wcslen", "wcscmp", "wcsncmp", "wmemchr"),
 }
 SCOPED_WRAPPER_BATCHES = {
     "verify-allocator-wrappers": ("allocator-wrapper", ALLOCATOR_FUNCTIONS),
@@ -163,9 +166,22 @@ def packet_fuzz(record, name, *, production_verified=True):
         raise GateError(f"missing timed candidate/glibc/musl packet evidence for {name}")
 
 
+def stat_tier_binding(started):
+    binding = manifest_stat_binding()
+    scopes = {STAT_ENGINE: "production-private-dependency", "__errno_location": "production-runtime-function"}
+    if binding["functions"].keys() != scopes.keys():
+        raise GateError("stat tier requires the exact helper and errno dependency proofs")
+    for name, scope in scopes.items():
+        path, _ = fresh_report(ROOT, f"{name}.production.json", scope, started)
+        if binding["functions"][name]["evidence_sha256"] != sha256_file(path):
+            raise GateError(f"{name}: stat tier dependency report changed after binding")
+    return binding
+
+
 def manifest_production_reports(started, group):
     children = {}
     sources = source_paths()
+    stat_binding = stat_tier_binding(started) if group == "production-stat" else None
     for name in MANIFEST_PRODUCTION_GROUPS[group]:
         path, record = fresh_report(ROOT, f"{name}.production.json", "production-runtime-manifest-function", started)
         hashes, checks = record["inputs"], record.get("checks")
@@ -181,6 +197,14 @@ def manifest_production_reports(started, group):
                 or type(object_hash) is not str or re.fullmatch(r"[0-9a-f]{64}", object_hash) is None):
             raise GateError(f"{name}: manifest production evidence does not bind the candidate source and object")
         packet_fuzz(record, name)
+        if stat_binding is not None:
+            if checks.get("dependency_closure") != stat_binding:
+                raise GateError(f"{name}: stat tier dependency binding differs from the fresh proofs")
+            builds = checks["runtime_build"].get("artifacts")
+            if (type(builds) is not dict or builds.keys() != {"first", "second"}
+                    or builds["first"] != builds["second"]):
+                raise GateError(f"{name}: stat tier requires complete matching candidate runtime builds")
+            check_stat_archive(stat_binding, builds["first"])
         if required := MANIFEST_PLANS[name].required_production:
             bindings = manifest_dependency_bindings(required)
             builds = checks["runtime_build"].get("artifacts")
@@ -794,6 +818,8 @@ def gate(name, record):
         path, _ = supplemental_batch(started, name)
     elif name in MANIFEST_PRODUCTION_GROUPS:
         record["children"] = manifest_production_reports(started, name)
+        if name == "production-stat":
+            record["dependencies"] = stat_tier_binding(started)["functions"]
         return
     elif name == "verify-math-wrappers":
         path, _ = math_wrapper_report(started)
