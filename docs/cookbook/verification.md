@@ -401,6 +401,18 @@ inputs return the outcome to pending. [Descriptor domain review](fileno-descript
 Full per-function production verification also requires separate
 proof for the shared ownership helpers.
 
+Run `./tools/container make production-open production-paths` for `open`,
+`openat`, `readlink`, `unlink`, and `rmdir`. Run `./tools/container make
+production-wait production-exec` for `waitpid`, `wait`, `execve`, and
+`execv`. Each child report binds its source and compiled object and
+includes at least 60 seconds of shared candidate, glibc, and musl packets.
+The `wait` and `execv` proofs also bind the fresh report for their
+public dependency and the same reproducible runtime archive.
+
+The adjacent `verify-getcwd-wrapper` and `verify-execvp-wrapper` targets
+run the public checks and independent allocation-failure cases. Their
+reports retain pending allocator or search-engine dependencies.
+
 ## Nightly and tagged verification
 
 ```sh
@@ -411,8 +423,9 @@ proof for the shared ownership helpers.
 The nightly entry point runs the available matrix, including Phase 2
 production mutation and 300-second libFuzzer observations, the eight
 scalar arithmetic production gates with the same libFuzzer floor, the
-three Linux descriptor gates with timed glibc and musl packet comparisons,
-exact binary32 rounding groups, selected transcendental shards, the
+Linux descriptor, process identity, pipe, pathname, wait, and exec gates
+with timed glibc and musl packet comparisons, exact binary32 rounding
+groups, selected transcendental shards, the
 pinned application and upstream suites, and independent address-family
 selection. The isolated memcpy, allocator, and warmed vDSO time benchmarks
 measure the named workloads against musl. The extension smoke control
@@ -435,6 +448,11 @@ two independently built and audited sets of runtime, PIE startup and
 application artifacts. Its JSON evidence includes fresh per-function
 coverage, mutation summaries, the outstanding inventory, and the declared
 deviations. Both workflows upload evidence even when verification fails.
+
+Both tiers replay the scoped allocator wrapper and stream indicator batches.
+Each batch validates every fresh child report and its timed packet comparisons
+against the current inputs. The reports retain the pending shared heap and
+stream ownership dependencies.
 
 The binary32 campaign check independently audits checkpoint files under
 `build/phase7-campaign` by default. Use `--campaign-root build/...` for a

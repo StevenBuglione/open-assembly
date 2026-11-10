@@ -1,0 +1,173 @@
+schema = 1
+stub = []
+
+[[case]]
+name = "path-getcwd-abi"
+sources = ["tests/phase6/path_identity/abi.c", "tests/phase2/abi.asm"]
+requires = ["getcwd"]
+args = ["getcwd"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["abi:sysv-amd64", "reference:linux-file-abi"]
+backends = ["native", "qemu"]
+host_skip = "The direct ABI trampoline inspects machine state in the candidate's call."
+[case.skip]
+valgrind = "A no-op callback reports x87 and MXCSR control differences (probe mask 0x300) in Valgrind and zero on native Linux and QEMU."
+
+[[case]]
+name = "path-getcwd-fuzz"
+sources = ["tests/phase6/path_identity/packets.c"]
+requires = ["getcwd"]
+args = ["getcwd"]
+env = {}
+status = 0
+stdin_hex = "00000000000000000000000000000000"
+stdout = ""
+stdout_hex = "0000000000000000b30300000000000000000000000000000200000000000000010000000000000061000000000000000100000000000000b303000000000000"
+stderr = ""
+oracle = ["reference:linux-file-abi", "diff:glibc", "diff:musl"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "path-readlink-abi"
+sources = ["tests/phase6/path_identity/abi.c", "tests/phase2/abi.asm"]
+requires = ["readlink"]
+args = ["readlink"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["abi:sysv-amd64", "reference:linux-file-abi"]
+backends = ["native", "qemu"]
+host_skip = "The direct ABI trampoline inspects machine state in the candidate's call."
+[case.skip]
+valgrind = "A no-op callback reports x87 and MXCSR control differences (probe mask 0x300) in Valgrind and zero on native Linux and QEMU."
+
+[[case]]
+name = "path-readlink-fuzz"
+sources = ["tests/phase6/path_identity/packets.c"]
+requires = ["readlink"]
+args = ["readlink"]
+env = {}
+status = 0
+stdin_hex = "00000000000000000000000000000000"
+stdout = ""
+stdout_hex = "0100000000000000b30300000000000000000000000000004000000000000000010000000000000001000000000000000100000000000000b303000000000000"
+stderr = ""
+oracle = ["reference:linux-file-abi", "diff:glibc", "diff:musl"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "path-unlink-abi"
+sources = ["tests/phase6/path_identity/abi.c", "tests/phase2/abi.asm"]
+requires = ["unlink"]
+args = ["unlink"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["abi:sysv-amd64", "reference:linux-file-abi"]
+backends = ["native", "qemu"]
+host_skip = "The direct ABI trampoline inspects machine state in the candidate's call."
+[case.skip]
+valgrind = "A no-op callback reports x87 and MXCSR control differences (probe mask 0x300) in Valgrind and zero on native Linux and QEMU."
+
+[[case]]
+name = "path-unlink-fuzz"
+sources = ["tests/phase6/path_identity/packets.c"]
+requires = ["unlink"]
+args = ["unlink"]
+env = {}
+status = 0
+stdin_hex = "00000000000000000000000000000000"
+stdout = ""
+stdout_hex = "0000000000000000b30300000000000000000000000000000000000000000000010000000000000000000000000000000600000000000000b303000000000000"
+stderr = ""
+oracle = ["reference:linux-file-abi", "diff:glibc", "diff:musl"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "path-rmdir-abi"
+sources = ["tests/phase6/path_identity/abi.c", "tests/phase2/abi.asm"]
+requires = ["rmdir"]
+args = ["rmdir"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["abi:sysv-amd64", "reference:linux-file-abi"]
+backends = ["native", "qemu"]
+host_skip = "The direct ABI trampoline inspects machine state in the candidate's call."
+[case.skip]
+valgrind = "A no-op callback reports x87 and MXCSR control differences (probe mask 0x300) in Valgrind and zero on native Linux and QEMU."
+
+[[case]]
+name = "path-rmdir-fuzz"
+sources = ["tests/phase6/path_identity/packets.c"]
+requires = ["rmdir"]
+args = ["rmdir"]
+env = {}
+status = 0
+stdin_hex = "00000000000000000000000000000000"
+stdout = ""
+stdout_hex = "0000000000000000b30300000000000000000000000000000100000000000000010000000000000000000000000000000300000000000000b303000000000000"
+stderr = ""
+oracle = ["reference:linux-file-abi", "diff:glibc", "diff:musl"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "path-getcwd-fault"
+sources = ["tests/phase6/path_identity/getcwd_fault.c"]
+requires = ["getcwd"]
+args = []
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-busybox-abi"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "This scoped witness controls the Open Assembly raw syscall and allocator boundary."
+link_wraps = ["malloc", "free", "__al_syscall"]
+
+[[case]]
+name = "path-getcwd-seccomp-4095"
+sources = ["tests/phase6/path_identity/getcwd_seccomp.c"]
+requires = ["getcwd"]
+args = []
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-busybox-abi"]
+backends = ["native"]
+host_skip = "This profile qualifies the candidate directly under a real installed native Linux filter."
+[case.skip]
+qemu = "QEMU user mode does not reproduce the native guest seccomp installation."
+valgrind = "This case qualifies the installed filter on the native runtime syscall profile."
+
+[[case]]
+name = "path-readlink-zero"
+sources = ["tests/phase6/path_identity/readlink_zero.c"]
+requires = ["readlink"]
+args = []
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stdout_hex = "ffffffffffffffff1600000000000000eaffffffffffffff52214c000000000052214c0000000000"
+stderr = ""
+oracle = ["reference:linux-busybox-abi"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Pinned musl returns zero with unchanged errno for a zero count, while raw Linux and pinned glibc return EINVAL."

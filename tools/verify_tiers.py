@@ -28,17 +28,22 @@ from phase1 import RUNTIME_SRC, build_runtime, phase1_inputs
 from phase2 import phase2_functions
 from phase11_platform import SECCOMP_CASES, boot_cases, inputs as platform_inputs, verify_boot_cases, write_boot_header
 from phase11_vdso_benchmark import inputs as vdso_inputs
-from production import SCALAR_FUNCTIONS
-from runtime_manifest_gate import FILE_MUTATION_FAILURES, IO_FUNCTIONS
+from production import SCALAR_FUNCTIONS, source_paths
+from runtime_manifest_gate import (ALLOCATOR_FUNCTIONS, FILE_MUTATION_FAILURES, IO_FUNCTIONS,
+                                   FUZZ_SECONDS as PACKET_FUZZ_SECONDS, FUZZ_SEED as PACKET_FUZZ_SEED,
+                                   PLANS as MANIFEST_PLANS,
+                                   REQUIRED_CHECKS as MANIFEST_CHECKS, STREAM_FAILURES, STREAM_WRAPPER_SUFFIX,
+                                   bind_descriptorless_scope, manifest_dependency_bindings, manifest_inputs, pending_dependency)
 from upstream_conformance import PINS as UPSTREAM_PINS, inputs as upstream_inputs
 from spec import ROOT, SpecError, has_runtime_entry, load_project, regular_file, relative_path, sha256_file, snapshot_inputs
 
 PHASES = (
     "phase0", "phase1", "phase2", "production-scalars", "production-linux-files", "production-linux-io",
-    "phase3", "phase4", "phase5",
-    "phase6-files", "phase6-fcntl", "phase6-compat", "phase6-busybox", "phase6-lua", "phase6-zlib",
-    "phase6-sqlite", "phase6-sqlite-concurrency", "phase6-process", "phase6-signal", "phase6-jump",
-    "phase6-time", "phase6-calendar",
+    "phase3", "verify-allocator-wrappers", "phase4", "verify-stream-indicators", "phase5",
+    "phase6-files", "production-open", "production-paths", "phase6-fcntl", "phase6-compat", "phase6-busybox",
+    "phase6-lua", "phase6-zlib", "phase6-sqlite", "phase6-sqlite-concurrency", "phase6-process",
+    "production-process-identity", "production-pipes", "production-wait", "production-exec",
+    "phase6-signal", "phase6-jump", "phase6-time", "phase6-calendar",
     "phase6-zone", "phase6-luafiles", "phase6-spawn", "phase6-shell", "phase6-path", "phase6-strftime",
     "phase7-exact", "phase7-transcendental", "phase7-complex", "verify-math-wrappers",
     "phase8-lifecycle", "phase8-fork", "phase8-sync", "phase8-c11", "phase8-openposix", "phase8-detectors",
@@ -56,6 +61,18 @@ PHASES = (
 EXTRA = ("fcntl-production", "extension-control", "extension-packages", "math-campaigns")
 FUZZ_SECONDS = 300
 DEFAULT_CAMPAIGN_ROOT = "build/phase7-campaign"
+MANIFEST_PRODUCTION_GROUPS = {
+    "production-process-identity": ("getpid", "getppid"),
+    "production-pipes": ("pipe", "pipe2"),
+    "production-open": ("open", "openat"),
+    "production-paths": ("readlink", "unlink", "rmdir"),
+    "production-wait": ("waitpid", "wait"),
+    "production-exec": ("execve", "execv"),
+}
+SCOPED_WRAPPER_BATCHES = {
+    "verify-allocator-wrappers": ("allocator-wrapper", ALLOCATOR_FUNCTIONS),
+    "verify-stream-indicators": (STREAM_WRAPPER_SUFFIX, frozenset(STREAM_FAILURES)),
+}
 
 
 def evidence_json(path):
@@ -128,15 +145,54 @@ def engine_fuzz(record, name):
         raise GateError(f"missing timed libFuzzer evidence for {name}")
 
 
-def packet_fuzz(record, name):
+def packet_fuzz(record, name, *, production_verified=True):
     fuzz = record.get("checks", {}).get("differential_fuzz", {})
-    hashes = fuzz.get("sha256", {})
-    if (record.get("production_verified") is not True or fuzz.get("outcome") != "pass"
-            or type(fuzz.get("elapsed_s")) not in (int, float) or fuzz["elapsed_s"] < 60
+    if type(fuzz) is not dict:
+        raise GateError(f"invalid timed packet check for {name}")
+    hashes = fuzz.get("sha256")
+    elapsed = fuzz.get("elapsed_s")
+    if (record.get("production_verified") is not production_verified or fuzz.get("outcome") != "pass"
+            or type(elapsed) not in (int, float) or elapsed < PACKET_FUZZ_SECONDS
+            or (type(elapsed) is float and not math.isfinite(elapsed))
             or type(fuzz.get("records")) is not int or fuzz["records"] < 1
-            or set(hashes) != {"candidate", "glibc", "musl", "input"}
+            or fuzz.get("runs") != ["candidate", "glibc", "musl"]
+            or type(hashes) is not dict or hashes.keys() != {"candidate", "glibc", "musl", "input"}
+            or any(type(value) is not str or re.fullmatch(r"[0-9a-f]{64}", value) is None
+                   for value in hashes.values())
             or len({hashes[key] for key in ("candidate", "glibc", "musl")}) != 1):
         raise GateError(f"missing timed candidate/glibc/musl packet evidence for {name}")
+
+
+def manifest_production_reports(started, group):
+    children = {}
+    sources = source_paths()
+    for name in MANIFEST_PRODUCTION_GROUPS[group]:
+        path, record = fresh_report(ROOT, f"{name}.production.json", "production-runtime-manifest-function", started)
+        hashes, checks = record["inputs"], record.get("checks")
+        if record.get("function") != name or hashes != manifest_inputs(name):
+            raise GateError(f"{name}: incomplete manifest production identity or input snapshot")
+        if (type(checks) is not dict or not MANIFEST_CHECKS <= checks.keys()
+                or any(type(item) is not dict or item.get("outcome") != "pass" for item in checks.values())):
+            raise GateError(f"{name}: incomplete manifest production checks")
+        source = sources[name].as_posix()
+        candidate = checks["candidate_build"]
+        object_hash = candidate.get("object_sha256")
+        if (candidate.get("source") != source or source not in hashes or candidate.get("source_sha256") != hashes[source]
+                or type(object_hash) is not str or re.fullmatch(r"[0-9a-f]{64}", object_hash) is None):
+            raise GateError(f"{name}: manifest production evidence does not bind the candidate source and object")
+        packet_fuzz(record, name)
+        if required := MANIFEST_PLANS[name].required_production:
+            bindings = manifest_dependency_bindings(required)
+            builds = checks["runtime_build"].get("artifacts")
+            first = builds.get("first") if type(builds) is dict else None
+            archive = first.get("libopenasm.a") if type(first) is dict else None
+            if (checks.get("production_dependencies") != bindings
+                    or any(dep not in children or item["evidence_sha256"] != children[dep]["evidence_sha256"]
+                           or item["archive_sha256"] != archive for dep, item in bindings["functions"].items())):
+                raise GateError(f"{name}: manifest production dependency differs from this invocation's child and archive")
+        children[name] = {"outcome": "pass", "evidence": path.relative_to(ROOT).as_posix(),
+                          "evidence_sha256": sha256_file(path)}
+    return children
 
 
 def supplemental_batch(started, name):
@@ -149,6 +205,75 @@ def supplemental_batch(started, name):
     for symbol, item in data["functions"].items():
         check(production_child(started, symbol, scope, item), symbol)
     return path, data
+
+
+def scoped_wrapper_report(started, target):
+    suffix, functions = SCOPED_WRAPPER_BATCHES[target]
+    scope = f"{suffix}-verification"
+    filename = f"{suffix}s.json"
+    batch, data = report_file(ROOT, filename, started)
+    children = data.get("functions")
+    if (data.get("scope") != f"{scope}-batch" or data.get("outcome") != "pass"
+            or data.get("production_verified") is not False or data.get("full_scope") is not True
+            or any(type(data.get(key)) is not int or data[key] != len(functions) for key in ("total", "passed"))
+            or type(children) is not dict or children.keys() != functions):
+        raise GateError(f"{filename}: incomplete scoped wrapper batch")
+    sources = source_paths()
+    runtimes = set()
+    for name, item in children.items():
+        child, record = fresh_report(ROOT, f"{name}.{suffix}.json", scope, started)
+        inputs, checks = record["inputs"], record.get("checks")
+        required = MANIFEST_CHECKS - {"branch_coverage"} if name == "fileno" else MANIFEST_CHECKS
+        if (type(item) is not dict or item.get("outcome") != "pass"
+                or item.get("evidence") != child.relative_to(ROOT).as_posix()
+                or item.get("evidence_sha256") != sha256_file(child)
+                or record.get("function") != name or record.get("production_verified") is not False
+                or inputs != manifest_inputs(name) or type(checks) is not dict
+                or checks.get("dependency_closure") != pending_dependency(MANIFEST_PLANS[name])
+                or any(type(checks.get(key)) is not dict or checks[key].get("outcome") != "pass"
+                       for key in required)):
+            raise GateError(f"{name}: invalid fresh scoped wrapper evidence or missing pending shared closure")
+        source = sources.get(name)
+        if source is None:
+            raise GateError(f"{name}: missing scoped wrapper source")
+        if name == "fileno":
+            branch = checks.get("branch_coverage")
+            edges = branch.get("edges") if type(branch) is dict else None
+            if (type(edges) is not list or len(edges) != 2
+                    or any(type(edge) is not dict or type(edge.get("covered")) is not bool
+                           or edge.get("source") != source.as_posix()
+                           or edge.get("branch") not in ("taken", "fallthrough") for edge in edges)
+                    or edges[0]["branch"] == edges[1]["branch"]):
+                raise GateError("fileno: missing raw descriptor branch evidence")
+            expected = branch.copy()
+            try:
+                bind_descriptorless_scope(ROOT / source, expected, inputs)
+            except (GateError, KeyError, TypeError) as error:
+                raise GateError("fileno: invalid raw descriptor branch evidence") from error
+            if expected != branch:
+                raise GateError("fileno: descriptor branch scope differs from the current source review")
+        candidate = checks["candidate_build"]
+        artifacts = checks["runtime_build"].get("artifacts")
+        if type(artifacts) is not dict or artifacts.keys() != {"first", "second"}:
+            raise GateError(f"{name}: missing reproducible scoped runtime artifacts")
+        first = artifacts["first"]
+        object_path = Path("obj") / source.relative_to(RUNTIME_SRC).with_suffix(".o")
+        if (type(first) is not dict or first != artifacts["second"]
+                or candidate.get("source") != source.as_posix()
+                or source.as_posix() not in inputs
+                or candidate.get("source_sha256") != inputs.get(source.as_posix())
+                or candidate.get("object_sha256") != first.get(object_path.as_posix())
+                or any(type(digest) is not str or re.fullmatch(r"[0-9a-f]{64}", digest) is None
+                       for digest in (first.get("crt1.o"), first.get("libopenasm.a"), candidate.get("object_sha256")))):
+            raise GateError(f"{name}: scoped wrapper evidence does not bind the source, object, and runtime")
+        runtimes.add((first["crt1.o"], first["libopenasm.a"]))
+        packet_fuzz(record, name, production_verified=False)
+        fuzz = checks["differential_fuzz"]
+        if fuzz.get("seed") != PACKET_FUZZ_SEED or fuzz["records"] % 512:
+            raise GateError(f"{name}: incomplete seeded packet batches")
+    if len(runtimes) != 1:
+        raise GateError(f"{filename}: scoped checks used different runtime artifacts")
+    return batch, data
 
 
 def math_wrapper_report(started):
@@ -667,8 +792,14 @@ def gate(name, record):
         path, _ = phase2_report(started)
     elif name in ("production-scalars", "production-linux-files", "production-linux-io"):
         path, _ = supplemental_batch(started, name)
+    elif name in MANIFEST_PRODUCTION_GROUPS:
+        record["children"] = manifest_production_reports(started, name)
+        return
     elif name == "verify-math-wrappers":
         path, _ = math_wrapper_report(started)
+    elif name in SCOPED_WRAPPER_BATCHES:
+        path, data = scoped_wrapper_report(started, name)
+        record.update(children=data["functions"], production_verified=False, dependency_closure={"outcome": "pending"})
     else:
         path, data = fresh_report(ROOT, filename, scope, started)
         if name == "fcntl-production" and data.get("production_verified") is not True:

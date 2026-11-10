@@ -275,7 +275,7 @@ class Attempt:
 def run_with_journal(root, function, run):
     directory(root, function)
     sources = sorted((root / "src/x86_64-linux").glob(f"*/{function}.asm"))
-    specifications = sorted((root / "spec/functions").glob(f"*/{function}.toml"))
+    specifications = sorted((root / "spec/functions").rglob(f"{function}.toml"))
     if not sources and not specifications:
         return run(None)
     with lock_history(root, function) as (path, history):

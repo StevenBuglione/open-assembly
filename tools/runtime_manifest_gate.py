@@ -10,6 +10,7 @@ import json
 import os
 from pathlib import Path
 import random
+import re
 import shutil
 import struct
 import subprocess
@@ -22,10 +23,10 @@ from gate import (BUILD, COMPILE_FLAGS, EVIDENCE, LINK_FLAGS, CandidateFailure, 
                   finish_function_gate, identify_tools, nm_symbols, verify_setup, write_evidence)
 from phase1 import NASM, build_case, build_runtime, load_manifest as load_phase1_manifest
 from phase4 import Probe, load_probes, observation, parse_probe
-from phase6 import (ABI_FIXTURES, PROCESS as PROCESS_PUBLIC, PUBLIC as FILE_PUBLIC,
-                    SUITE as FILE_SUITE, run_cases, run_stubs)
-from production import applicable_variants, phase2_inputs, result_type, source_paths
-from spec import ROOT, load_project, sha256_file, snapshot_inputs
+from phase6 import (ABI_FIXTURES, COMPAT as COMPAT_PUBLIC, COMPAT_FAULT_WRAPPERS, PATH_EXEC,
+                    PROCESS as PROCESS_PUBLIC, PUBLIC as FILE_PUBLIC, SUITE as FILE_SUITE, run_cases, run_stubs)
+from production import CANDIDATE_ROOT, applicable_variants, phase2_inputs, result_type, source_paths
+from spec import ROOT, load_project, regular_file, sha256_file, snapshot_inputs
 
 
 @dataclass(frozen=True)
@@ -47,6 +48,7 @@ class Plan:
     wrapper_suffix: str = "allocator-wrapper"
     private_helpers: tuple = ()
     abi_result: bool = False
+    required_production: tuple = ()
 
 
 FCNTL = Path("tests/phase6/fcntl")
@@ -76,6 +78,54 @@ PIPE_IDENTITY = Path("tests/phase6/pipe_identity")
 PIPE_RECORD = (16, 64)
 NULL_PIPE_OUTPUT = ("null-pipe-output", "    mov rsi, rdi", "    xor esi, esi")
 DROP_PIPE2_FLAGS = ("drop-pipe2-flags", "    movsxd rdx, esi\n", "    xor edx, edx\n")
+OPEN_IDENTITY = Path("tests/phase6/open_identity")
+OPEN_FAILURES = {"open": tuple(range(12, 23)), "openat": tuple(range(33, 41))}
+OPEN_SEMANTIC_MUTANTS = {
+    "open": (("discard-open-mode", "    mov r8d, edx", "    xor r8d, r8d"),),
+    "openat": (("discard-openat-mode", "    mov r8d, ecx", "    xor r8d, r8d"),
+               ("ignore-openat-dirfd", "    mov rsi, rdi", "    mov rsi, -100")),
+}
+PATH_IDENTITY = Path("tests/phase6/path_identity")
+PATH_MUTATIONS = {
+    "getcwd": (("path-getcwd-fault", tuple(range(21, 29))), ("compat-getcwd", (31, 32, 33, 34))),
+    "readlink": (("compat-readlink", (61, 62, 63)),),
+    "unlink": (("file-unlink", (132, 133, 134)),),
+    "rmdir": (("file-rmdir", (123, 125, 126)),),
+}
+UNLINK_SYSCALL = "    mov edi, 87                    ; __NR_unlink\n"
+RMDIR_SYSCALL = "    mov edi, 84                    ; __NR_rmdir\n"
+PATH_SEMANTIC_MUTANTS = {
+    "readlink": (("drop-readlink-capacity", "    mov rcx, rdx", "    xor ecx, ecx"),),
+    "unlink": (("swap-unlink-for-rmdir", UNLINK_SYSCALL, RMDIR_SYSCALL),),
+    "rmdir": (("swap-rmdir-for-unlink", RMDIR_SYSCALL, UNLINK_SYSCALL),),
+}
+PATH_FAULT_WRAPPERS = (*COMPAT_FAULT_WRAPPERS.items(), (FILE_SUITE / "fault.c", ("__al_syscall",)),
+                       (PATH_IDENTITY / "getcwd_fault.c", ("malloc", "free", "__al_syscall")))
+WAIT_STATUS = Path("tests/phase6/wait_status")
+WAIT_MUTATIONS = {
+    "waitpid": (("process-waitpid", (51, 52, 54, 56, 57)),),
+    "wait": (("process-wait", (62, 64, 65)), ("process-wait-two-children", (21, 22, 23))),
+}
+WAIT_SEMANTIC_MUTANTS = {
+    "waitpid": (("drop-waitpid-status", "    mov rdx, rsi\n", "    xor edx, edx\n"),
+                ("replace-waitpid-options", "    movsxd rcx, edx\n", "    mov ecx, 0x02000000\n")),
+    "wait": (("drop-wait-status", "    mov rsi, rdi\n", "    xor esi, esi\n"),
+             ("restrict-wait-to-own-group", "    mov edi, -1\n", "    xor edi, edi\n")),
+}
+EXEC_IDENTITY = Path("tests/phase6/exec_identity")
+EXEC_MUTATIONS = {
+    "execve": (("process-exec-failure", (82, 84, 85)),),
+    "execv": (("path-execv-missing", (41, 42)),),
+    "execvp": (("path-execvp-denied", (53, 54)), ("path-execvp-fallback", (61, 62))),
+}
+EXEC_SEMANTIC_MUTANTS = {
+    "execve": (("hide-returned-execve-error", "    mov rdi, rax\n", "    xor edi, edi\n"),),
+    "execv": (("discard-execv-path", "    call execve\n", "    xor edi, edi\n    call execve\n"),),
+    "execvp": (("omit-execvp-shell-fallback", "    mov r9d, 1                    ; execvp interprets ENOEXEC via the shell\n",
+                "    xor r9d, r9d\n"),),
+}
+EXECVP_FAULT = ((EXEC_IDENTITY / "allocation_fault.c", ("malloc", "free")),)
+EXECVP_HELPERS = ("__al_exec_path_env", "__al_heap", "getenv", "malloc", "free")
 FILE_CONTRACTS = (Path("docs/adr/0007-linux-files-process-signal-time.md"),
                   Path("docs/cookbook/linux-file-verification.md"))
 ALLOCATOR = Path("tests/allocator-production")
@@ -123,7 +173,7 @@ FILENO_DOMAIN_FIXED_INPUTS = (
     "Makefile", "tools/gen", "tools/phase1.py", "tools/spec.py",
     *(str(path) for path in (*STREAM_CONTRACTS, *FILENO_DOMAIN_CONTRACTS)),
 )
-FILENO_DOMAIN_SHA256 = "53b69c3d3be0625e99942b3f19cc26e83b380664820956413cf43b3fab8dcd5f"
+FILENO_DOMAIN_SHA256 = "2826cbb0a797195dfde1165cb2585fba70471254138976105e4d19f3eaa2c3f7"
 PLANS = {
     **{name: Plan(FILE_SUITE, frozenset(FILE_PUBLIC), ABI_FIXTURES,
                   "file-abi", f"file-{name}", ((f"file-{name}", codes),),
@@ -162,6 +212,35 @@ PLANS = {
                   "pipe2-typed-abi", "process-pipe2", (("process-pipe2", (41, 42, 43, 44)),),
                   "pipe2-fuzz", PIPE_RECORD, FILE_CONTRACTS[:1],
                   semantic_mutants=(NULL_PIPE_OUTPUT, DROP_PIPE2_FLAGS), supplement=PIPE_IDENTITY, abi_result=True),
+    **{name: Plan(FILE_SUITE, frozenset(FILE_PUBLIC), ABI_FIXTURES,
+                  f"{name}-variadic-abi", "file-open" if name == "open" else "openat-variadic-abi",
+                  ((f"file-{name}", codes), (f"{name}-variadic-abi", tuple(range(11, 17)))),
+                  f"{name}-fuzz", (16, 64), FILE_CONTRACTS,
+                  ((FILE_SUITE / "fault.c", ("__al_syscall",)),),
+                  semantic_mutants=OPEN_SEMANTIC_MUTANTS[name], supplement=OPEN_IDENTITY, abi_result=True)
+       for name, codes in OPEN_FAILURES.items()},
+    **{name: Plan(FILE_SUITE / "compat" if name in COMPAT_PUBLIC else FILE_SUITE,
+                  frozenset(COMPAT_PUBLIC if name in COMPAT_PUBLIC else FILE_PUBLIC), ABI_FIXTURES,
+                  f"path-{name}-abi", mutations[0][0], mutations, f"path-{name}-fuzz", (16, 64),
+                  FILE_CONTRACTS, PATH_FAULT_WRAPPERS, private_engine="__al_heap" if name == "getcwd" else "",
+                  semantic_mutants=PATH_SEMANTIC_MUTANTS.get(name, ()), supplement=PATH_IDENTITY,
+                  wrapper_suffix="getcwd-wrapper", private_helpers=("malloc", "free") if name == "getcwd" else (),
+                  abi_result=True)
+       for name, mutations in PATH_MUTATIONS.items()},
+    **{name: Plan(FILE_SUITE / "process", frozenset(PROCESS_PUBLIC), (Path("tests/phase2/abi.asm"),),
+                  f"process-{name}-typed-abi", f"process-{name}", mutations, f"process-{name}-fuzz", (16, 64),
+                  FILE_CONTRACTS[:1], semantic_mutants=WAIT_SEMANTIC_MUTANTS[name], supplement=WAIT_STATUS,
+                  abi_result=True, required_production=("waitpid",) if name == "wait" else ())
+       for name, mutations in WAIT_MUTATIONS.items()},
+    **{name: Plan(FILE_SUITE / ("process" if name == "execve" else "path"),
+                  frozenset(PROCESS_PUBLIC if name == "execve" else PATH_EXEC), (Path("tests/phase2/abi.asm"),),
+                  f"process-{name}-typed-abi", "process-execvp-allocation-fault" if name == "execvp" else mutations[0][0],
+                  mutations, f"process-{name}-fuzz", (16, 64), FILE_CONTRACTS[:1], EXECVP_FAULT,
+                  private_engine="__al_exec_search" if name == "execvp" else "",
+                  semantic_mutants=EXEC_SEMANTIC_MUTANTS[name], supplement=EXEC_IDENTITY,
+                  wrapper_suffix="execvp-wrapper", private_helpers=EXECVP_HELPERS if name == "execvp" else (),
+                  abi_result=True, required_production=("execve",) if name == "execv" else ())
+       for name, mutations in EXEC_MUTATIONS.items()},
     "fcntl": Plan(
         FCNTL, frozenset({"fcntl"}), (Path("tests/phase2/abi.asm"), FCNTL / "variadic.asm"),
         "fcntl-abi", "fcntl-dispatch",
@@ -185,17 +264,50 @@ def manifest_inputs(function):
     return dict(sorted(inputs.items()))
 
 
+def manifest_dependency_bindings(names):
+    bindings = {}
+    for name in names:
+        relative = EVIDENCE / f"{name}.production.json"
+        raw = regular_file(ROOT, relative, "manifest production dependency").read_bytes()
+        record = json.loads(raw)
+        inputs = manifest_inputs(name)
+        if (type(record) is not dict or type(record.get("schema_version")) is not int
+                or record["schema_version"] != 1 or record.get("function") != name
+                or record.get("scope") != "production-runtime-manifest-function"
+                or record.get("outcome") != "pass" or record.get("production_verified") is not True
+                or record.get("inputs") != inputs):
+            raise ValueError(f"{name}: no exact passing manifest production dependency report")
+        checks = record.get("checks")
+        if (type(checks) is not dict or not REQUIRED_CHECKS <= checks.keys()
+                or any(type(item) is not dict or item.get("outcome") != "pass" for item in checks.values())):
+            raise ValueError(f"{name}: incomplete manifest production dependency checks")
+        source, = (path for path in inputs if Path(path).is_relative_to(CANDIDATE_ROOT)
+                   and Path(path).name == f"{name}.asm")
+        candidate = checks["candidate_build"]
+        builds = checks["runtime_build"].get("artifacts")
+        first = builds.get("first") if type(builds) is dict else None
+        archive = first.get("libopenasm.a") if type(first) is dict else None
+        object_hash = candidate.get("object_sha256")
+        if (candidate.get("source") != source or candidate.get("source_sha256") != inputs[source]
+                or any(type(value) is not str or re.fullmatch(r"[0-9a-f]{64}", value) is None
+                       for value in (archive, object_hash)) or first != builds.get("second")):
+            raise ValueError(f"{name}: manifest production dependency does not bind the source and archive")
+        bindings[name] = {"evidence": relative.as_posix(), "evidence_sha256": sha256(raw).hexdigest(),
+                          "archive_sha256": archive}
+    return {"outcome": "pass", "functions": bindings}
+
+
 def phase1_probe(case):
     return Probe(case, b"", case.stdout.encode(), case.stderr.encode(), {}, (),
                  "Phase 1 fixture links the Open Assembly runtime directly.")
 
 
-def load_plan_probes(function, plan, *, include_supplement=True):
+def load_plan_probes(function, plan, *, required_cases=None):
     parse = partial(parse_probe, suite=plan.suite, programs=(), asm_fixtures=plan.assembly,
                     fault_wrappers=dict(plan.fault_wrappers), allow_fixture_files=True)
     probes, controls = load_probes(plan.suite / "manifest.toml", plan.public, parse)
     selected = {probe.case.name: probe for probe in probes if function in probe.case.requires}
-    if plan.supplement is not None and include_supplement:
+    if plan.supplement is not None and (required_cases is None or required_cases - selected.keys()):
         supplemental, _ = load_probes(plan.supplement / "manifest.toml", plan.public,
                                        partial(parse, suite=plan.supplement), supplement=True)
         additional = {probe.case.name: probe for probe in supplemental if function in probe.case.requires}
@@ -471,10 +583,15 @@ def runtime_manifest_production(function, only=None, *, attempt=None, wrapper_on
         project = load_project()
         spec = project.functions[function]
         source = source_paths()[function]
-        probes, controls = load_plan_probes(function, plan, include_supplement=only in (None, "fuzz"))
+        dependencies = None
+        if only is None and plan.required_production:
+            if not set(plan.required_production) <= set(spec.deps):
+                raise GateError(f"{function}: undeclared required production dependency")
+            dependencies = checks["production_dependencies"] = manifest_dependency_bindings(plan.required_production)
         required_cases = {"coverage": {plan.trace}, "mutation": {case for case, _ in plan.mutations},
                           "stub": set(), "fuzz": {plan.fuzz}}
         selected = {plan.abi}.union(*required_cases.values()) if only is None else required_cases[only]
+        probes, controls = load_plan_probes(function, plan, required_cases=selected if only is not None else None)
         if not selected <= probes.keys() or function not in controls:
             raise GateError(f"{function}: incomplete function coverage in the runtime manifest")
         runners = {"native": [], "qemu": [shutil.which("qemu-x86_64")],
@@ -492,6 +609,9 @@ def runtime_manifest_production(function, only=None, *, attempt=None, wrapper_on
                 build["artifacts"]["second"] = second[3]
                 if runtime[3] != second[3]:
                     raise GateError(f"{function}: repeated runtime artifacts differ")
+                if dependencies is not None and any(item["archive_sha256"] != runtime[3]["libopenasm.a"]
+                                                    for item in dependencies["functions"].values()):
+                    raise GateError(f"{function}: runtime archive differs from its production dependency")
             build["outcome"] = "pass"
             original = directory / "runtime/obj" / source.relative_to("src/x86_64-linux").with_suffix(".o")
             candidate = checks["candidate_build"] = {"outcome": "fail", "commands": []}
@@ -536,6 +656,8 @@ def runtime_manifest_production(function, only=None, *, attempt=None, wrapper_on
                 timed_fuzz(function, probes[plan.fuzz], plan, directory / "fuzz", runtime, fuzz)
         if evidence["inputs"] != snapshot():
             raise GateError("runtime manifest verification inputs changed during the run")
+        if dependencies is not None and dependencies != manifest_dependency_bindings(plan.required_production):
+            raise GateError(f"{function}: production dependency evidence changed during verification")
         required = REQUIRED_CHECKS - {"branch_coverage"} if function == "fileno" and wrapper_only else REQUIRED_CHECKS
         if only is None and (not required <= checks.keys()
                              or any(checks[name]["outcome"] != "pass" for name in required)):
@@ -589,8 +711,15 @@ if __name__ == "__main__":
     modes = parser.add_mutually_exclusive_group(required=True)
     modes.add_argument("--allocator-wrappers", action="store_true")
     modes.add_argument("--stream-indicators", action="store_true")
+    modes.add_argument("--getcwd-wrapper", action="store_true")
+    modes.add_argument("--execvp-wrapper", action="store_true")
     parser.add_argument("functions", nargs="*")
     args = parser.parse_args()
+    if args.getcwd_wrapper or args.execvp_wrapper:
+        name = "getcwd" if args.getcwd_wrapper else "execvp"
+        if args.functions:
+            parser.error(f"the {name} wrapper check takes no function names")
+        raise SystemExit(runtime_manifest_production(name, wrapper_only=True))
     if args.allocator_wrappers:
         available, suffix, label = ALLOCATOR_FUNCTIONS, "allocator-wrapper", "Allocator"
     else:

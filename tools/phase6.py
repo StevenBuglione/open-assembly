@@ -22,6 +22,10 @@ COMPAT = {
     "chmod", "dirname", "ferror_unlocked", "fputs_unlocked", "getc_unlocked", "getcwd", "getopt", "ioctl",
     "isatty", "putchar_unlocked", "readlink", "strdup", "umask", "vasprintf",
 }
+COMPAT_FAULT_WRAPPERS = {
+    SUITE / "compat/vasprintf_fault.c": ("realloc", "free"),
+    SUITE / "compat/unlocked_lock.c": ("__al_lock", "__al_unlock"),
+}
 PROCESS = {"execve", "fork", "getpid", "getppid", "pipe2", "wait", "waitpid"}
 SIGNAL = {"kill", "raise", "sigaction", "sigaddset", "sigdelset", "sigemptyset", "sigfillset", "sigismember",
           "signal", "sigpending", "sigprocmask", "sigsuspend"}
@@ -104,8 +108,7 @@ def execute_phase6(suite_name):
               "shell": SHELL, "path": PATH_EXEC, "strftime": STRFTIME, "fcntl": FCNTL, "zone": ZONE}[suite_name]
     fault_wrappers = {
         SUITE / "fault.c": ("__al_syscall",),
-        SUITE / "compat/vasprintf_fault.c": ("realloc", "free"),
-        SUITE / "compat/unlocked_lock.c": ("__al_lock", "__al_unlock"),
+        **COMPAT_FAULT_WRAPPERS,
         SUITE / "time/clock_fault.c": ("__al_syscall",),
         SUITE / "luafiles/fault.c": ("__al_syscall",),
         SUITE / "spawn/lifetime.c": ("malloc", "calloc", "realloc", "free"),
