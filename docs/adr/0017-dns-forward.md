@@ -61,8 +61,9 @@ reads or writes. A transport error or timeout yields EAI_AGAIN.
 [DNS response matching](https://www.rfc-editor.org/rfc/rfc5452.html#section-9.1).
 
 Forward lookup accepts AI_PASSIVE, AI_CANONNAME, AI_NUMERICHOST,
-AI_NUMERICSERV, AI_V4MAPPED and AI_ALL. AI_ALL applies only
-with AI_V4MAPPED for AF_INET6. AI_ADDRCONFIG remains unsupported.
+AI_NUMERICSERV, AI_V4MAPPED, AI_ALL and AI_ADDRCONFIG. AI_ALL applies
+only with AI_V4MAPPED for AF_INET6. AI_ADDRCONFIG uses the Linux
+[address configuration snapshot](0038-address-configuration.md).
 The configuration parser uses one nameserver and does not apply
 search, domain, ndots, attempts, rotate, or timeout directives.
 Numeric IPv6 zone suffixes and interface names remain separate.

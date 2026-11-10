@@ -31,11 +31,16 @@ __al_dns_lookup:
     call __al_dns_server
     mov r15d, eax
     mov dword [rsp], -2        ; first unsuccessful family status
+    mov dword [rsp + 4], -2
     cmp dword [rbx + 12], 2    ; AF_INET requests only A
     je .ipv4
+    test dword [rbx + 48], 2   ; configured IPv6 source
+    jz .maybe_ipv4
     mov r12d, 28               ; AAAA
     jmp .query
 .ipv4:
+    test dword [rbx + 48], 1   ; configured IPv4 source
+    jz .select_result
     mov r12d, 1                ; A
 .query:
     lea rdi, [r14 + 1032]
@@ -58,6 +63,7 @@ __al_dns_lookup:
     mov [rsp], eax
     cmp eax, -10               ; allocation failure need not try another family
     je .select_result
+.maybe_ipv4:
     cmp dword [rbx + 12], 0    ; AF_UNSPEC tries both families
     je .ipv4
     test dword [rbx + 16], 8   ; AI_V4MAPPED

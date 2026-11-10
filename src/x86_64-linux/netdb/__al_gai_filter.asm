@@ -1,5 +1,5 @@
 ; Filter the resolver context's 24-byte address records in place.
-; The requested family and flags are at offsets 12 and 16.
+; The requested family and flags are at 12 and 16, the source mask at 48.
 bits 64
 default rel
 
@@ -8,8 +8,12 @@ global __al_gai_filter:function
 section .text.__al_gai_filter alloc exec nowrite progbits
 __al_gai_filter:
     mov r8d, [rdi + 12]
-    test r8d, r8d              ; AF_UNSPEC retains all families
-    jz .success
+    mov r11d, [rdi + 48]
+    test r8d, r8d
+    jnz .records
+    cmp r11d, 3                ; AF_UNSPEC with both source families
+    je .success
+.records:
     mov ecx, [rdi]
     imul ecx, 24
     lea rdx, [rdi + 64]
@@ -23,6 +27,8 @@ __al_gai_filter:
     mov r9d, 1
     test dword [rdi + 16], 16   ; AI_ALL
     jnz .compact_start
+    test r11d, 2                ; an unavailable IPv6 source cannot win
+    jz .compact_start
     mov rax, rdx
 .look_for_ipv6:
     cmp rax, rcx
@@ -39,6 +45,17 @@ __al_gai_filter:
     cmp rsi, rcx
     jae .finish
     mov eax, [rsi]
+    cmp eax, 2
+    jne .check_ipv6
+    test r11d, 1
+    jz .advance
+    jmp .eligible
+.check_ipv6:
+    test r11d, 2
+    jz .advance
+.eligible:
+    test r8d, r8d
+    jz .copy
     cmp eax, r8d
     je .copy
     test r9d, r9d

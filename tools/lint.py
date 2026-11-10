@@ -134,6 +134,7 @@ PRIVATE_FUNCTIONS = {
     "netdb/__al_gai_port", "netdb/__al_gai_word", "netdb/__al_gai_line",
     "netdb/__al_gai_equalname", "netdb/__al_gai_service", "netdb/__al_gai_hosts",
     "netdb/__al_gai_filter", "netdb/__al_gai_result",
+    "netdb/__al_gai_addrconfig", "netdb/__al_gai_addrconfig_parse",
     "netdb/__al_dns_build", "netdb/__al_dns_name", "netdb/__al_dns_parse",
     "netdb/__al_dns_now", "netdb/__al_dns_wait", "netdb/__al_dns_open",
     "netdb/__al_dns_transfer", "netdb/__al_dns_query",
