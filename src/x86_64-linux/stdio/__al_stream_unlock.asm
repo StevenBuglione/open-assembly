@@ -3,14 +3,14 @@ bits 64
 default rel
 
 global __al_stream_unlock:function
-extern __errno_location:function
+extern __al_stream_owner:function
 extern __al_stream_unlock_all:function
 
 section .text.__al_stream_unlock alloc exec nowrite progbits
 __al_stream_unlock:
     push rbx
     mov rbx, rdi
-    call __errno_location
+    call __al_stream_owner
     cmp [rbx + 104], rax
     jne .done
     sub qword [rbx + 112], 1

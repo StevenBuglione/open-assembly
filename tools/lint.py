@@ -122,6 +122,7 @@ PRIVATE_FUNCTIONS = {
     "stdio/__al_stdio_seek", "stdio/__al_stdio_open", "stdio/__al_stdio_errno",
     "stdio/__al_stream_flush", "stdio/__al_stream_read", "stdio/__al_stream_write",
     "stdio/__al_stream_close", "stdio/__al_stream_init", "stdio/__al_stream_rebind",
+    "rt/__al_stream_owner",
     "stdio/__al_stream_lock", "stdio/__al_stream_unlock", "stdio/__al_stream_unlock_all",
     "stdio/__al_stream_snapshot", "stdio/__al_stream_unpin",
     "stdio/__al_va_next", "stdio/__al_vformat", "stdio/__al_fmt_emit",
@@ -1071,7 +1072,7 @@ def check_file(path, function, fixture_syscall, functions_snapshot=project_funct
         program.extended_arguments = EXTENDED_ARGUMENTS.get(path.stem, 0)
     elif relative_runtime == f"complex/{path.stem}":
         program.extended_arguments = COMPLEX_EXTENDED_ARGUMENTS.get(path.stem, 0)
-    program.tls_self = relative_runtime == "rt/__errno_location"
+    program.tls_self = relative_runtime in {"rt/__errno_location", "rt/__al_stream_owner"}
     program.callback_table = relative_runtime == "stdlib/exit"
     program.comparator_argument = COMPARATOR_ARGUMENTS.get(function)
     program.callback_dispatch = program.callback_table or program.comparator_argument is not None
