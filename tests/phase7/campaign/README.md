@@ -48,10 +48,13 @@ can independently read the published coverage while the runner works.
 ```
 
 The journal checks complete, disjoint coverage before marking the full
-binary32 unary domain complete. The native helper is scoped to `exp2f`.
+binary32 unary domain complete. The native helper covers `exp2f` and `log2f`. Each operation and rounding
+mode uses its own campaign identity and checkpoint directory.
 The benchmark in `measure_native.py` compares its request and expected
 response bytes with the independent Python path at directed boundaries
-in all four modes. Any nonzero checker result preserves its first
+in all four modes. Select `--operation log2` to measure the logarithm
+against the same candidate ELF. Its exact powers and signed pole cases
+are checked separately from the one-ULP normal-value allowance. Any nonzero checker result preserves its first
 diagnostic and prevents silently resuming past a known semantic mismatch.
 Candidate outputs, errno, exceptions and control-state bits are all
 checked. Campaign counts stay separate across candidate artifacts,

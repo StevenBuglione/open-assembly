@@ -5,11 +5,12 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 _Static_assert(FLT_MANT_DIG == 24 && sizeof(float) == 4, "binary32");
 
 enum { INVALID = 1, DIVBYZERO = 4, OVERFLOW = 8, UNDERFLOW = 16, INEXACT = 32, TEST_ERRNO = 947 };
-enum { BATCH = 512 };
+enum { EXP2 = 0, LOG2 = 1, BATCH = 512 };
 
 struct request {
     uint64_t low;
@@ -31,7 +32,8 @@ union binary32 {
     float value;
 };
 
-static struct response expected(uint32_t bits, mpfr_t input, mpfr_t output, mpfr_rnd_t rounding)
+static struct response expected(unsigned operation, uint32_t bits, mpfr_t input,
+                                mpfr_t output, mpfr_rnd_t rounding)
 {
     const uint32_t magnitude = bits & UINT32_C(0x7fffffff);
     const uint32_t infinity = UINT32_C(0x7f800000);
@@ -41,15 +43,26 @@ static struct response expected(uint32_t bits, mpfr_t input, mpfr_t output, mpfr
         result.low = bits | quiet;
         if (!(bits & quiet))
             result.flags |= INVALID;
+    } else if (operation == LOG2 && !magnitude) {
+        result.low = UINT32_C(0xff800000);
+        result.flags = DIVBYZERO | UNDERFLOW;
+        result.error = ERANGE;
+    } else if (operation == LOG2 && bits >> 31) {
+        result.low = UINT32_C(0x7fc00000);
+        result.flags |= INVALID;
+        result.error = EDOM;
     } else if (magnitude == infinity) {
         result.low = bits == infinity ? infinity : 0;
     } else if (!magnitude) {
         result.low = UINT32_C(0x3f800000);
+    } else if (operation == LOG2 && bits == UINT32_C(0x3f800000)) {
+        result.low = 0;
     } else {
         union binary32 value = {.bits = bits};
         mpfr_set_flt(input, value.value, MPFR_RNDN);
         mpfr_clear_flags();
-        int ternary = mpfr_exp2(output, input, rounding);
+        int ternary = operation == EXP2 ? mpfr_exp2(output, input, rounding) :
+                                          mpfr_log2(output, input, rounding);
         ternary = mpfr_subnormalize(output, ternary, rounding);
         int overflowed = mpfr_overflow_p();
         value.value = mpfr_get_flt(output, MPFR_RNDN);
@@ -59,7 +72,7 @@ static struct response expected(uint32_t bits, mpfr_t input, mpfr_t output, mpfr
             result.error = ERANGE;
         } else if (ternary) {
             result.flags |= INEXACT;
-            if (value.bits < UINT32_C(0x00800000)) {
+            if ((value.bits & UINT32_C(0x7fffffff)) < UINT32_C(0x00800000)) {
                 result.flags |= UNDERFLOW;
                 result.error = ERANGE;
             }
@@ -82,14 +95,21 @@ static int index_argument(const char *text, uint64_t *value)
 int main(int argc, char **argv)
 {
     uint64_t first, count, mode;
-    if (argc != 6 || !index_argument(argv[1], &first) || !index_argument(argv[2], &count) ||
-        !index_argument(argv[3], &mode) || !count || count > (UINT64_C(1) << 32) - first || mode > 3)
+    if (argc != 7 || !index_argument(argv[2], &first) || !index_argument(argv[3], &count) ||
+        !index_argument(argv[4], &mode) || !count || count > (UINT64_C(1) << 32) - first || mode > 3)
+        return 2;
+    unsigned operation;
+    if (strcmp(argv[1], "exp2") == 0)
+        operation = EXP2;
+    else if (strcmp(argv[1], "log2") == 0)
+        operation = LOG2;
+    else
         return 2;
     static const mpfr_rnd_t roundings[] = {MPFR_RNDN, MPFR_RNDD, MPFR_RNDU, MPFR_RNDZ};
     if (mpfr_set_emin(-148) || mpfr_set_emax(128))
         return 3;
-    FILE *request_file = fopen(argv[4], "wb");
-    FILE *response_file = fopen(argv[5], "wb");
+    FILE *request_file = fopen(argv[5], "wb");
+    FILE *response_file = fopen(argv[6], "wb");
     if (!request_file || !response_file)
         return 4;
 
@@ -102,9 +122,11 @@ int main(int argc, char **argv)
         size_t size = count - offset < BATCH ? (size_t)(count - offset) : BATCH;
         for (size_t i = 0; i < size; ++i) {
             uint32_t bits = (uint32_t)(first + offset + i);
+            responses[i] = expected(operation, bits, input, output, roundings[mode]);
+            unsigned seed = operation == LOG2 && (bits & UINT32_C(0x7fffffff)) == 0 ?
+                            UNDERFLOW : DIVBYZERO;
             requests[i] = (struct request){.low = bits, .mode = (uint16_t)(mode << 10),
-                                           .seed = DIVBYZERO};
-            responses[i] = expected(bits, input, output, roundings[mode]);
+                                           .operation = operation, .seed = (uint16_t)seed};
         }
         if (fwrite(requests, sizeof requests[0], size, request_file) != size ||
             fwrite(responses, sizeof responses[0], size, response_file) != size)

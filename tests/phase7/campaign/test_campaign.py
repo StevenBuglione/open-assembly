@@ -89,7 +89,7 @@ def exercise(root, gate, artifacts, headers):
     assert status(native)["covered_patterns"] == 24 and digest(native_first) == before
     invoke("run", native, "--workers", 2, "--limit", 1)
     result = status(native)
-    assert result["oracle_backend"] == "native-mpfr-exp2"
+    assert result["oracle_backend"] == "native-mpfr-unary"
     assert result["covered_patterns"] == 32 and result["requested_interval_complete"]
     assert result["campaign_id"] != status(target)["campaign_id"]
     assert not result["complete_domain"]
@@ -102,7 +102,7 @@ def exercise(root, gate, artifacts, headers):
     native_first.write_text(json.dumps(transplant))
     invoke("run", native, "--limit", 0, expect=1, diagnostic="invalid checkpoint")
     native_first.write_bytes(original)
-    for artifact in ("native-exp2", "mpfr.h", "trans-f32"):
+    for artifact in ("native-unary", "mpfr.h", "trans-f32"):
         path = native / "artifacts" / artifact
         original = path.read_bytes()
         path.write_bytes(original + b"\0")
@@ -111,7 +111,26 @@ def exercise(root, gate, artifacts, headers):
     invoke("run", native, "--limit", 0)
     invoke("prepare", root / "unsupported-native", gate, artifacts, "log",
            "--native-headers", headers, "--count", 8, "--width", 8,
-           expect=1, diagnostic="supports unary exp2 only")
+           expect=1, diagnostic="supports only unary exp2 and log2")
+    logarithm = root / "native-log2"
+    invoke("prepare", logarithm, gate, artifacts, "log2", "--native-headers", headers,
+           "--start", "0x3f000000", "--count", 32, "--width", 8)
+    invoke("run", logarithm, "--workers", 2, "--limit", 2)
+    log_first = logarithm / "checkpoints" / first.name
+    original = log_first.read_bytes()
+    before = digest(log_first)
+    invoke("run", logarithm, "--workers", 2, "--limit", 2)
+    log_status = status(logarithm)
+    assert log_status["covered_patterns"] == 32 and log_status["requested_interval_complete"]
+    assert log_status["campaign_id"] != result["campaign_id"] and digest(log_first) == before
+
+    bad = json.loads(original)
+    bad["report"]["operation"] = "exp2"
+    bad["report_sha256"] = identity(bad["report"])
+    log_first.write_text(json.dumps(bad))
+    invoke("run", logarithm, "--limit", 0, expect=1, diagnostic="invalid checkpoint")
+    log_first.write_bytes(original)
+    invoke("run", logarithm, "--limit", 0)
     print("PASS native resume, distinct ledger, transplant rejection, and native artifacts lock")
 
 
