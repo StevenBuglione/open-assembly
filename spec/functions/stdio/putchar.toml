@@ -1,0 +1,17 @@
+name = "putchar"
+header = "stdio.h"
+prototype = "int putchar(int c)"
+standard = ["C17 7.21.7.8"]
+deps = ["fputc"]
+errno = ["EBADF", "EIO"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:phase4-stdio"]
+provenance = "original"
+semantics = [
+  "Write one byte to stdout with fputc semantics.",
+]
+
+[abi]
+narrow_args = ["edi:s32"]
+variadic = false

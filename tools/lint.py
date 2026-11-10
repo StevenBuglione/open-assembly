@@ -58,6 +58,15 @@ DATA = frozenset(("db", "dw", "dd", "dq", "dt", "do", "dy", "dz", "resb",
 SIZE = {"byte": 1, "word": 2, "dword": 4, "qword": 8, "tword": 10, "oword": 16}
 RUNTIME = ("src", "x86_64-linux")
 PRIVATE_FUNCTIONS = {
+    "rt/__al_stdio_init", "stdio/__al_stdio_isatty", "stdio/__al_stdio_io",
+    "stdio/__al_stdio_seek", "stdio/__al_stdio_open", "stdio/__al_stdio_errno",
+    "stdio/__al_stream_flush", "stdio/__al_stream_read", "stdio/__al_stream_write",
+    "stdio/__al_stream_close", "stdio/__al_stream_init",
+    "stdio/__al_va_next", "stdio/__al_vformat", "stdio/__al_fmt_emit",
+    "stdio/__al_fmt_decimal", "stdio/__al_fmt_text", "stdio/__al_fmt_integer",
+    "stdio/__al_vscan", "stdio/__al_scan_peek", "stdio/__al_scan_take",
+    "stdio/__al_scan_space", "stdio/__al_scan_set", "stdio/__al_scan_chars",
+    "stdio/__al_scan_number", "stdio/__al_scan_store",
     "rt/__al_map_anon", "rt/__al_unmap_anon", "rt/__al_env_init",
     "stdlib/__al_heap", "stdlib/__al_heap_alloc", "stdlib/__al_heap_free",
     "stdlib/__al_heap_inspect", "stdlib/__al_heap_tag", "stdlib/__al_heap_bad",
@@ -70,6 +79,8 @@ PRIVATE_FUNCTIONS = {
 PRIVATE_NORETURN = {"_start", "__al_rt_sigreturn", "__al_panic", "__al_abort", "__al_heap_bad"}
 COMPARATOR_ARGUMENTS = {"bsearch": "r8", "qsort": "rcx"}
 PRIVATE_DATA = {
+    "stdin": "rt/__al_stdio_init", "stdout": "rt/__al_stdio_init", "stderr": "rt/__al_stdio_init",
+    "__al_stdio_lock": "rt/__al_stdio_init", "__al_streams": "rt/__al_stdio_init",
     "__al_heap_seed": "stdlib/__al_heap",
     "environ": "rt/__al_env_init",
     "__al_env_lock": "rt/__al_env_init",
@@ -82,6 +93,15 @@ DATA_SECTIONS = {
     ".rodata": {"progbits", "alloc", "noexec", "nowrite"},
     ".data": {"progbits", "alloc", "noexec", "write"},
     ".bss": {"nobits", "alloc", "noexec", "write"},
+}
+VARARGS_WRAPPERS = {
+    f"stdio/{name}": (target, fixed, register)
+    for name, target, fixed, register in (
+        ("printf", "vprintf", 1, "rsi"), ("fprintf", "vfprintf", 2, "rdx"),
+        ("sprintf", "vsprintf", 2, "rdx"), ("snprintf", "vsnprintf", 3, "rcx"),
+        ("scanf", "vscanf", 1, "rsi"), ("fscanf", "vfscanf", 2, "rdx"),
+        ("sscanf", "vsscanf", 2, "rdx"),
+    )
 }
 
 
@@ -193,6 +213,7 @@ class Program:
     callback_dispatch: bool = False
     callback_table: bool = False
     comparator_argument: str | None = None
+    varargs_frame: bool = False
 
 
 def parse(source, narrow, variadic, allow_seed_metadata):
@@ -522,12 +543,13 @@ def transfer_data(state, program, ins):
         elif src.kind == "mem":
             process_stack_address = (state.process_entry and state.rsp == 0 and
                                      re.fullmatch(r"rsp\s*\+\s*8", src.value, re.I))
-            if opcode == "lea" and not process_stack_address and set(src.address) & {"rsp", "rbp"}:
+            modeled_frame_address = process_stack_address or program.varargs_frame
+            if opcode == "lea" and not modeled_frame_address and set(src.address) & {"rsp", "rbp"}:
                 reject(line, "STACK_ACCESS", "stack address escape is unsupported")
             if opcode == "lea":
                 if src.segment:
                     reject(line, "TLS_ADDRESS", "LEA does not apply an FS segment base")
-                read_registers(state, src.address, line, allow_stack_register=bool(process_stack_address))
+                read_registers(state, src.address, line, allow_stack_register=bool(modeled_frame_address))
             else:
                 src_width = src.size if opcode in ("movzx", "movsx") else width(src) or width(dest)
                 state, _ = access_memory(state, src, src_width, line)
@@ -824,6 +846,22 @@ def check_file(path, function, fixture_syscall):
     program.callback_table = relative_runtime == "stdlib/exit"
     program.comparator_argument = COMPARATOR_ARGUMENTS.get(function)
     program.callback_dispatch = program.callback_table or program.comparator_argument is not None
+    if relative_runtime in VARARGS_WRAPPERS:
+        target, fixed, register = VARARGS_WRAPPERS[relative_runtime]
+        expected = [("push", ("rbp",)), ("mov", ("rbp", "rsp")), ("sub", ("rsp", "208"))]
+        expected += [("mov", (f"[rsp + {32 + index * 8}]", argument))
+                     for index, argument in enumerate(("rdi", "rsi", "rdx", "rcx", "r8", "r9"))]
+        expected += [
+            ("mov", ("dword [rsp]", str(fixed * 8))),
+            ("mov", ("dword [rsp + 4]", "48")),
+            ("lea", ("rax", "[rbp + 16]")), ("mov", ("[rsp + 8]", "rax")),
+            ("lea", ("rax", "[rsp + 32]")), ("mov", ("[rsp + 16]", "rax")),
+            ("lea", (register, "[rsp]")), ("call", (target,)),
+            ("add", ("rsp", "208")), ("pop", ("rbp",)), ("ret", ()),
+        ]
+        if [(ins.opcode, ins.operands) for ins in program.instructions] != expected:
+            reject(1, "STACK_ACCESS", "variadic wrapper must pass its bounded SysV register-save record")
+        program.varargs_frame = True
     if program.process_entry:
         program.external_signatures.add("main")
     if program.external_data - (PRIVATE_DATA.keys() if runtime or app else set()):

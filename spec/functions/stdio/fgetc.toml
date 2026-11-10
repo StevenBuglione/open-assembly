@@ -1,0 +1,17 @@
+name = "fgetc"
+header = "stdio.h"
+prototype = "int fgetc(FILE *stream)"
+standard = ["C17 7.21.7.1"]
+deps = []
+errno = ["EBADF", "EIO"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:phase4-stdio"]
+provenance = "original"
+semantics = [
+  "Read and return one byte as unsigned char converted to int, or EOF on end of file or error.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

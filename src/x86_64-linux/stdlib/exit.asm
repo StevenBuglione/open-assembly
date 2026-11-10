@@ -3,7 +3,7 @@
 ; header: stdlib.h
 ; prototype: _Noreturn void exit(int status)
 ; standard: C17 7.22.4.4
-; deps: atexit, _exit
+; deps: atexit, fflush, _exit
 ; errno: -
 ; mt_safe: false
 ; as_safe: false
@@ -16,7 +16,7 @@
 ; semantics: Callbacks may register more callbacks, which run before older pending callbacks.
 ; semantics: A repeated or recursive call to exit is outside the C17 contract.
 ; semantics: The low eight bits of status are available to the parent; the function never returns.
-; semantics: Phase 1 has no stdio streams or library-created temporary files to clean up.
+; semantics: After callbacks, flush all buffered stdio output. Library-created temporary files are deferred.
 ; END OPEN ASSEMBLY GENERATED SPEC
 
 bits 64
@@ -26,6 +26,7 @@ global exit:function
 extern __al_lock:function
 extern __al_unlock:function
 extern _exit:function
+extern fflush:function
 extern __al_atexit_state:data
 
 section .text.exit alloc exec nowrite progbits
@@ -60,6 +61,8 @@ exit:
 .finished:
     mov rdi, rcx
     call __al_unlock
+    xor edi, edi
+    call fflush
     mov rdi, [rsp]
     call _exit
     ud2

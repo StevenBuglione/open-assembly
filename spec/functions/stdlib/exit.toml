@@ -2,7 +2,7 @@ name = "exit"
 header = "stdlib.h"
 prototype = "_Noreturn void exit(int status)"
 standard = ["C17 7.22.4.4"]
-deps = ["atexit", "_exit"]
+deps = ["atexit", "fflush", "_exit"]
 errno = []
 mt_safe = false
 as_safe = false
@@ -13,7 +13,7 @@ semantics = [
   "Callbacks may register more callbacks, which run before older pending callbacks.",
   "A repeated or recursive call to exit is outside the C17 contract.",
   "The low eight bits of status are available to the parent; the function never returns.",
-  "Phase 1 has no stdio streams or library-created temporary files to clean up.",
+  "After callbacks, flush all buffered stdio output. Library-created temporary files are deferred.",
 ]
 
 [abi]

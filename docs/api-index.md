@@ -3,7 +3,7 @@
 
 This index lists authored function specifications. For implementation state, run `tools/queue status`.
 
-Specs: 66 of 511 inventoried functions. The inventory covers C17, the named POSIX subset, and runtime ABI entries; see [inventory scope](cookbook/specifications.md#inventory-scope).
+Specs: 107 of 511 inventoried functions. The inventory covers C17, the named POSIX subset, and runtime ABI entries; see [inventory scope](cookbook/specifications.md#inventory-scope).
 
 | Function | Header | Prototype | Standard |
 | --- | --- | --- | --- |
@@ -18,9 +18,30 @@ Specs: 66 of 511 inventoried functions. The inventory covers C17, the named POSI
 | [`atoll`](../spec/functions/stdlib/atoll.toml) | `<stdlib.h>` | `long long atoll(const char *s)` | C17 7.22.1.2 |
 | [`bsearch`](../spec/functions/stdlib/bsearch.toml) | `<stdlib.h>` | `void *bsearch(const void *key, const void *base, size_t nmemb, size_t size, int (*compar)(const void *, const void *))` | C17 7.22.5.1 |
 | [`calloc`](../spec/functions/stdlib/calloc.toml) | `<stdlib.h>` | `void *calloc(size_t nmemb, size_t size)` | C17 7.22.3.2 |
+| [`clearerr`](../spec/functions/stdio/clearerr.toml) | `<stdio.h>` | `void clearerr(FILE *stream)` | C17 7.21.10.1 |
 | [`close`](../spec/functions/unistd/close.toml) | `<unistd.h>` | `int close(int fd)` | POSIX.1-2024 XSH close |
 | [`exit`](../spec/functions/stdlib/exit.toml) | `<stdlib.h>` | `_Noreturn void exit(int status)` | C17 7.22.4.4 |
+| [`fclose`](../spec/functions/stdio/fclose.toml) | `<stdio.h>` | `int fclose(FILE *stream)` | C17 7.21.5.1 |
+| [`feof`](../spec/functions/stdio/feof.toml) | `<stdio.h>` | `int feof(FILE *stream)` | C17 7.21.10.2 |
+| [`ferror`](../spec/functions/stdio/ferror.toml) | `<stdio.h>` | `int ferror(FILE *stream)` | C17 7.21.10.3 |
+| [`fflush`](../spec/functions/stdio/fflush.toml) | `<stdio.h>` | `int fflush(FILE *stream)` | C17 7.21.5.2 |
+| [`fgetc`](../spec/functions/stdio/fgetc.toml) | `<stdio.h>` | `int fgetc(FILE *stream)` | C17 7.21.7.1 |
+| [`fgetpos`](../spec/functions/stdio/fgetpos.toml) | `<stdio.h>` | `int fgetpos(FILE *restrict stream, fpos_t *restrict pos)` | C17 7.21.9.1 |
+| [`fgets`](../spec/functions/stdio/fgets.toml) | `<stdio.h>` | `char * fgets(char *restrict dest, int n, FILE *restrict stream)` | C17 7.21.7.2 |
+| [`fopen`](../spec/functions/stdio/fopen.toml) | `<stdio.h>` | `FILE * fopen(const char *restrict path, const char *restrict mode)` | C17 7.21.5.3 |
+| [`fprintf`](../spec/functions/stdio/fprintf.toml) | `<stdio.h>` | `int fprintf(FILE *restrict stream, const char *restrict format, ...)` | C17 7.21.6.1 |
+| [`fputc`](../spec/functions/stdio/fputc.toml) | `<stdio.h>` | `int fputc(int c, FILE *stream)` | C17 7.21.7.3 |
+| [`fputs`](../spec/functions/stdio/fputs.toml) | `<stdio.h>` | `int fputs(const char *restrict s, FILE *restrict stream)` | C17 7.21.7.4 |
+| [`fread`](../spec/functions/stdio/fread.toml) | `<stdio.h>` | `size_t fread(void *restrict dest, size_t size, size_t count, FILE *restrict stream)` | C17 7.21.8.1 |
 | [`free`](../spec/functions/stdlib/free.toml) | `<stdlib.h>` | `void free(void *ptr)` | C17 7.22.3.3 |
+| [`freopen`](../spec/functions/stdio/freopen.toml) | `<stdio.h>` | `FILE * freopen(const char *restrict path, const char *restrict mode, FILE *restrict stream)` | C17 7.21.5.4 |
+| [`fscanf`](../spec/functions/stdio/fscanf.toml) | `<stdio.h>` | `int fscanf(FILE *restrict stream, const char *restrict format, ...)` | C17 7.21.6.2 |
+| [`fseek`](../spec/functions/stdio/fseek.toml) | `<stdio.h>` | `int fseek(FILE *stream, long offset, int whence)` | C17 7.21.9.2 |
+| [`fsetpos`](../spec/functions/stdio/fsetpos.toml) | `<stdio.h>` | `int fsetpos(FILE *stream, const fpos_t *pos)` | C17 7.21.9.3 |
+| [`ftell`](../spec/functions/stdio/ftell.toml) | `<stdio.h>` | `long ftell(FILE *stream)` | C17 7.21.9.4 |
+| [`fwrite`](../spec/functions/stdio/fwrite.toml) | `<stdio.h>` | `size_t fwrite(const void *restrict src, size_t size, size_t count, FILE *restrict stream)` | C17 7.21.8.2 |
+| [`getc`](../spec/functions/stdio/getc.toml) | `<stdio.h>` | `int getc(FILE *stream)` | C17 7.21.7.5 |
+| [`getchar`](../spec/functions/stdio/getchar.toml) | `<stdio.h>` | `int getchar(void)` | C17 7.21.7.6 |
 | [`getenv`](../spec/functions/stdlib/getenv.toml) | `<stdlib.h>` | `char *getenv(const char *name)` | C17 7.22.4.6 |
 | [`isalnum`](../spec/functions/ctype/isalnum.toml) | `<ctype.h>` | `int isalnum(int c)` | C17 7.4.1.1 |
 | [`isalpha`](../spec/functions/ctype/isalpha.toml) | `<ctype.h>` | `int isalpha(int c)` | C17 7.4.1.2 |
@@ -40,12 +61,24 @@ Specs: 66 of 511 inventoried functions. The inventory covers C17, the named POSI
 | [`memcpy`](../spec/functions/string/memcpy.toml) | `<string.h>` | `void *memcpy(void *restrict dest, const void *restrict src, size_t n)` | C17 7.24.2.1 |
 | [`memmove`](../spec/functions/string/memmove.toml) | `<string.h>` | `void *memmove(void *dest, const void *src, size_t n)` | C17 7.24.2.2 |
 | [`memset`](../spec/functions/string/memset.toml) | `<string.h>` | `void *memset(void *s, int c, size_t n)` | C17 7.24.6.1 |
+| [`perror`](../spec/functions/stdio/perror.toml) | `<stdio.h>` | `void perror(const char *s)` | C17 7.21.10.4 |
 | [`posix_memalign`](../spec/functions/stdlib/posix_memalign.toml) | `<stdlib.h>` | `int posix_memalign(void **out, size_t alignment, size_t size)` | POSIX.1-2024 XSH posix_memalign |
+| [`printf`](../spec/functions/stdio/printf.toml) | `<stdio.h>` | `int printf(const char *restrict format, ...)` | C17 7.21.6.3 |
+| [`putc`](../spec/functions/stdio/putc.toml) | `<stdio.h>` | `int putc(int c, FILE *stream)` | C17 7.21.7.7 |
+| [`putchar`](../spec/functions/stdio/putchar.toml) | `<stdio.h>` | `int putchar(int c)` | C17 7.21.7.8 |
 | [`putenv`](../spec/functions/stdlib/putenv.toml) | `<stdlib.h>` | `int putenv(char *string)` | POSIX.1-2024 XSH putenv |
+| [`puts`](../spec/functions/stdio/puts.toml) | `<stdio.h>` | `int puts(const char *s)` | C17 7.21.7.9 |
 | [`qsort`](../spec/functions/stdlib/qsort.toml) | `<stdlib.h>` | `void qsort(void *base, size_t nmemb, size_t size, int (*compar)(const void *, const void *))` | C17 7.22.5.2 |
 | [`read`](../spec/functions/unistd/read.toml) | `<unistd.h>` | `ssize_t read(int fd, void *buf, size_t count)` | POSIX.1-2024 XSH read |
 | [`realloc`](../spec/functions/stdlib/realloc.toml) | `<stdlib.h>` | `void *realloc(void *ptr, size_t size)` | C17 7.22.3.5 |
+| [`rewind`](../spec/functions/stdio/rewind.toml) | `<stdio.h>` | `void rewind(FILE *stream)` | C17 7.21.9.5 |
+| [`scanf`](../spec/functions/stdio/scanf.toml) | `<stdio.h>` | `int scanf(const char *restrict format, ...)` | C17 7.21.6.4 |
+| [`setbuf`](../spec/functions/stdio/setbuf.toml) | `<stdio.h>` | `void setbuf(FILE *restrict stream, char *restrict buffer)` | C17 7.21.5.5 |
 | [`setenv`](../spec/functions/stdlib/setenv.toml) | `<stdlib.h>` | `int setenv(const char *name, const char *value, int overwrite)` | POSIX.1-2024 XSH setenv |
+| [`setvbuf`](../spec/functions/stdio/setvbuf.toml) | `<stdio.h>` | `int setvbuf(FILE *restrict stream, char *restrict buffer, int mode, size_t size)` | C17 7.21.5.6 |
+| [`snprintf`](../spec/functions/stdio/snprintf.toml) | `<stdio.h>` | `int snprintf(char *restrict dest, size_t size, const char *restrict format, ...)` | C17 7.21.6.5 |
+| [`sprintf`](../spec/functions/stdio/sprintf.toml) | `<stdio.h>` | `int sprintf(char *restrict dest, const char *restrict format, ...)` | C17 7.21.6.6 |
+| [`sscanf`](../spec/functions/stdio/sscanf.toml) | `<stdio.h>` | `int sscanf(const char *restrict src, const char *restrict format, ...)` | C17 7.21.6.7 |
 | [`strcat`](../spec/functions/string/strcat.toml) | `<string.h>` | `char *strcat(char *restrict dest, const char *restrict src)` | C17 7.24.3.1 |
 | [`strchr`](../spec/functions/string/strchr.toml) | `<string.h>` | `char *strchr(const char *s, int c)` | C17 7.24.5.2 |
 | [`strcmp`](../spec/functions/string/strcmp.toml) | `<string.h>` | `int strcmp(const char *a, const char *b)` | C17 7.24.4.2 |
@@ -71,5 +104,13 @@ Specs: 66 of 511 inventoried functions. The inventory covers C17, the named POSI
 | [`strxfrm`](../spec/functions/string/strxfrm.toml) | `<string.h>` | `size_t strxfrm(char *restrict dest, const char *restrict src, size_t n)` | C17 7.24.4.5 |
 | [`tolower`](../spec/functions/ctype/tolower.toml) | `<ctype.h>` | `int tolower(int c)` | C17 7.4.2.1 |
 | [`toupper`](../spec/functions/ctype/toupper.toml) | `<ctype.h>` | `int toupper(int c)` | C17 7.4.2.2 |
+| [`ungetc`](../spec/functions/stdio/ungetc.toml) | `<stdio.h>` | `int ungetc(int c, FILE *stream)` | C17 7.21.7.10 |
 | [`unsetenv`](../spec/functions/stdlib/unsetenv.toml) | `<stdlib.h>` | `int unsetenv(const char *name)` | POSIX.1-2024 XSH unsetenv |
+| [`vfprintf`](../spec/functions/stdio/vfprintf.toml) | `<stdio.h>` | `int vfprintf(FILE *restrict stream, const char *restrict format, va_list args)` | C17 7.21.6.8 |
+| [`vfscanf`](../spec/functions/stdio/vfscanf.toml) | `<stdio.h>` | `int vfscanf(FILE *restrict stream, const char *restrict format, va_list args)` | C17 7.21.6.9 |
+| [`vprintf`](../spec/functions/stdio/vprintf.toml) | `<stdio.h>` | `int vprintf(const char *restrict format, va_list args)` | C17 7.21.6.10 |
+| [`vscanf`](../spec/functions/stdio/vscanf.toml) | `<stdio.h>` | `int vscanf(const char *restrict format, va_list args)` | C17 7.21.6.11 |
+| [`vsnprintf`](../spec/functions/stdio/vsnprintf.toml) | `<stdio.h>` | `int vsnprintf(char *restrict dest, size_t size, const char *restrict format, va_list args)` | C17 7.21.6.12 |
+| [`vsprintf`](../spec/functions/stdio/vsprintf.toml) | `<stdio.h>` | `int vsprintf(char *restrict dest, const char *restrict format, va_list args)` | C17 7.21.6.13 |
+| [`vsscanf`](../spec/functions/stdio/vsscanf.toml) | `<stdio.h>` | `int vsscanf(const char *restrict src, const char *restrict format, va_list args)` | C17 7.21.6.14 |
 | [`write`](../spec/functions/unistd/write.toml) | `<unistd.h>` | `ssize_t write(int fd, const void *buf, size_t count)` | POSIX.1-2024 XSH write |

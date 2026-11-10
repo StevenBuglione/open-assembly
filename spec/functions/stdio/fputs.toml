@@ -1,0 +1,17 @@
+name = "fputs"
+header = "stdio.h"
+prototype = "int fputs(const char *restrict s, FILE *restrict stream)"
+standard = ["C17 7.21.7.4"]
+deps = ["strlen"]
+errno = ["EBADF", "EIO"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:phase4-stdio"]
+provenance = "original"
+semantics = [
+  "Write the string without its terminating NUL. Return a nonnegative value or EOF on error.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

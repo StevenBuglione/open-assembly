@@ -1,0 +1,17 @@
+name = "rewind"
+header = "stdio.h"
+prototype = "void rewind(FILE *stream)"
+standard = ["C17 7.21.9.5"]
+deps = ["fseek", "clearerr"]
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:phase4-stdio"]
+provenance = "original"
+semantics = [
+  "Seek to the start and clear the error and EOF indicators.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

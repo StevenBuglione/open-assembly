@@ -1,0 +1,18 @@
+name = "fseek"
+header = "stdio.h"
+prototype = "int fseek(FILE *stream, long offset, int whence)"
+standard = ["C17 7.21.9.2"]
+deps = []
+errno = ["EINVAL", "ESPIPE", "EOVERFLOW"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:phase4-stdio"]
+provenance = "original"
+semantics = [
+  "Set the logical position relative to the specified origin. Flush pending output and discard input buffering on success.",
+  "Clear EOF and pushback on success. Return zero on success or nonzero on failure.",
+]
+
+[abi]
+narrow_args = ["edx:s32"]
+variadic = false

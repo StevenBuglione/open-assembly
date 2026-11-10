@@ -23,6 +23,10 @@ stack vector and its following auxiliary vector remain available through
 the established private pointers. See [the allocator and environment
 contract](0004-allocator-environment.md).
 
+Phase 4 initializes the three standard streams after the environment and
+before calling `main`. Normal exit flushes streams after the registered
+callbacks have run. [Byte streams and variadics](0005-stdio-varargs.md)
+
 The first thread has one anonymous writable allocation for the thread control
 block and optional executable `PT_TLS` image. FS base is the thread pointer,
 installed using [Linux `ARCH_SET_FS`](https://docs.kernel.org/6.6/arch/x86/x86_64/fsgs.html).

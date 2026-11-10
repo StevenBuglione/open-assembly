@@ -1,0 +1,20 @@
+name = "vscanf"
+header = "stdio.h"
+prototype = "int vscanf(const char *restrict format, va_list args)"
+standard = ["C17 7.21.6.11"]
+deps = ["vfscanf"]
+errno = ["EINVAL", "EIO"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:phase4-stdio"]
+provenance = "original"
+semantics = [
+  "Interpret the Phase 4 integer, byte, string, pointer, count, percent and bracket-set conversions.",
+  "Apply widths and assignment suppression. Preserve the first input byte after a matching item.",
+  "Return the number of assignments, or EOF if input fails before the first completed conversion.",
+  "Unsupported floating or wide conversions report EINVAL.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

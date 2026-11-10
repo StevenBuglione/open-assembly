@@ -1,0 +1,19 @@
+name = "vsprintf"
+header = "stdio.h"
+prototype = "int vsprintf(char *restrict dest, const char *restrict format, va_list args)"
+standard = ["C17 7.21.6.13"]
+deps = ["vsnprintf"]
+errno = ["EINVAL", "EOVERFLOW", "EIO"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:phase4-stdio"]
+provenance = "original"
+semantics = [
+  "Interpret the Phase 4 integer, string, byte, pointer, count, and percent conversions.",
+  "Return the byte count excluding the terminator on success, or a negative result on error.",
+  "Unsupported floating or wide conversions report EINVAL. Count overflow reports EOVERFLOW.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

@@ -1,0 +1,17 @@
+name = "feof"
+header = "stdio.h"
+prototype = "int feof(FILE *stream)"
+standard = ["C17 7.21.10.2"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:phase4-stdio"]
+provenance = "original"
+semantics = [
+  "Return nonzero if the EOF indicator is set, or zero otherwise.",
+]
+
+[abi]
+narrow_args = []
+variadic = false
