@@ -24,7 +24,7 @@ class ProjectTest(unittest.TestCase):
         self.root = Path(self.tmp.name)
         shutil.copytree(ROOT / "spec", self.root / "spec")
         (self.root / "tools").mkdir()
-        for name in ("spec.py", "gen", "queue", "provenance"):
+        for name in ("spec.py", "extensions.py", "gen", "queue", "provenance"):
             shutil.copy(ROOT / "tools" / name, self.root / "tools" / name)
 
     def write(self, path, content):
