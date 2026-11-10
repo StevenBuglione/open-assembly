@@ -184,6 +184,13 @@ phase10-inet:
 phase10-addrconfig:
 	python3 tools/phase10_addrconfig.py
 
+.PHONY: phase10-dns-failover phase10-dns-options
+phase10-dns-failover:
+	python3 tools/phase10_resolver_policy.py failover
+
+phase10-dns-options:
+	python3 tools/phase10_resolver_policy.py options
+
 phase10-dns:
 	python3 tools/phase10_dns.py
 

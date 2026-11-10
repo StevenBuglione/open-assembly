@@ -43,6 +43,7 @@ PHASES = (
     "phase9-multibyte", "phase9-bulk", "phase9-worker", "phase9-worker-sync", "phase9-wide",
     "phase9-libc-test", "phase9-stdio", "phase9-narrow-wide", "phase9-wctype",
     "phase10-endpoints", "phase10-inet", "phase10-netdb", "phase10-dns", "phase10-addrconfig",
+    "phase10-dns-failover", "phase10-dns-options",
     "phase10-http",
     "phase10-terminal", "phase10-libc-test", "phase10-glob", "phase10-regex",
     "phase10-gnulib", "phase10-native-ltp", "phase11-vdso",
