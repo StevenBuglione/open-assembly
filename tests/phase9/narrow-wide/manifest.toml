@@ -1,0 +1,374 @@
+schema = 1
+
+[[case]]
+name = "narrow-wide-printf"
+sources = ["tests/phase9/narrow-wide/print.c"]
+requires = ["printf"]
+args = ["printf"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-byte-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+stdout_hex = "cea97c2020202041e4b8ad7c3261"
+host = true
+env = {}
+
+[[case]]
+name = "narrow-wide-vprintf"
+sources = ["tests/phase9/narrow-wide/print.c"]
+requires = ["vprintf"]
+args = ["vprintf"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-byte-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+stdout_hex = "cea97c2020202041e4b8ad7c3261"
+host = true
+env = {}
+
+[[case]]
+name = "narrow-wide-fprintf"
+sources = ["tests/phase9/narrow-wide/print.c"]
+requires = ["fprintf"]
+args = ["fprintf"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-byte-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "narrow-wide-vfprintf"
+sources = ["tests/phase9/narrow-wide/print.c"]
+requires = ["vfprintf"]
+args = ["vfprintf"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-byte-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "narrow-wide-sprintf"
+sources = ["tests/phase9/narrow-wide/print.c"]
+requires = ["sprintf"]
+args = ["sprintf"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-byte-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "narrow-wide-vsprintf"
+sources = ["tests/phase9/narrow-wide/print.c"]
+requires = ["vsprintf"]
+args = ["vsprintf"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-byte-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "narrow-wide-snprintf"
+sources = ["tests/phase9/narrow-wide/print.c"]
+requires = ["snprintf"]
+args = ["snprintf"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-byte-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "narrow-wide-vsnprintf"
+sources = ["tests/phase9/narrow-wide/print.c"]
+requires = ["vsnprintf"]
+args = ["vsnprintf"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-byte-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "narrow-wide-vasprintf"
+sources = ["tests/phase9/narrow-wide/print.c"]
+requires = ["vasprintf"]
+args = ["vasprintf"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-byte-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "narrow-wide-output-policy"
+sources = ["tests/phase9/narrow-wide/print.c"]
+requires = ["snprintf", "vasprintf"]
+args = ["output-policy"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-byte-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Includes project vasprintf failure publication and strict C encoding policy."
+env = {}
+
+[[case]]
+name = "narrow-wide-guard"
+sources = ["tests/phase9/narrow-wide/print.c"]
+requires = ["snprintf"]
+args = ["guard"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-byte-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Raw mprotect supplies the project precision guard case."
+env = {}
+
+[[case]]
+name = "narrow-wide-scanf"
+sources = ["tests/phase9/narrow-wide/scan.c"]
+requires = ["scanf"]
+args = ["scanf"]
+status = 0
+stdin_hex = "517ccea9e4b8ad205a5d42413f"
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-byte-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "narrow-wide-vscanf"
+sources = ["tests/phase9/narrow-wide/scan.c"]
+requires = ["vscanf"]
+args = ["vscanf"]
+status = 0
+stdin_hex = "517ccea9e4b8ad205a5d42413f"
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-byte-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "narrow-wide-fscanf"
+sources = ["tests/phase9/narrow-wide/scan.c"]
+requires = ["fscanf"]
+args = ["fscanf"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-byte-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "narrow-wide-vfscanf"
+sources = ["tests/phase9/narrow-wide/scan.c"]
+requires = ["vfscanf"]
+args = ["vfscanf"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-byte-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "narrow-wide-sscanf"
+sources = ["tests/phase9/narrow-wide/scan.c"]
+requires = ["sscanf"]
+args = ["sscanf"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-byte-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "narrow-wide-vsscanf"
+sources = ["tests/phase9/narrow-wide/scan.c"]
+requires = ["vsscanf"]
+args = ["vsscanf"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-byte-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "narrow-wide-byte-width"
+sources = ["tests/phase9/narrow-wide/scan.c"]
+requires = ["sscanf"]
+args = ["byte-width"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-byte-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "C17 byte field-width and scanset semantics with multi-byte source characters."
+env = {}
+
+[[case]]
+name = "narrow-wide-failures"
+sources = ["tests/phase9/narrow-wide/scan.c"]
+requires = ["sscanf", "fscanf"]
+args = ["failures"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-byte-stdio", "reference:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "C17 byte field boundaries and project EILSEQ, atomic partial c and unconsumed stream byte policies."
+env = {}
+
+[[stub]]
+symbol = "printf"
+case = "narrow-wide-printf"
+status = 14
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "vprintf"
+case = "narrow-wide-vprintf"
+status = 14
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "fprintf"
+case = "narrow-wide-fprintf"
+status = 12
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "vfprintf"
+case = "narrow-wide-vfprintf"
+status = 12
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "sprintf"
+case = "narrow-wide-sprintf"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "vsprintf"
+case = "narrow-wide-vsprintf"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "snprintf"
+case = "narrow-wide-snprintf"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "vsnprintf"
+case = "narrow-wide-vsnprintf"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "vasprintf"
+case = "narrow-wide-vasprintf"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "scanf"
+case = "narrow-wide-scanf"
+status = 13
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "vscanf"
+case = "narrow-wide-vscanf"
+status = 13
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "fscanf"
+case = "narrow-wide-fscanf"
+status = 12
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "vfscanf"
+case = "narrow-wide-vfscanf"
+status = 12
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "sscanf"
+case = "narrow-wide-sscanf"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "vsscanf"
+case = "narrow-wide-vsscanf"
+status = 11
+stdout = ""
+stderr = ""
