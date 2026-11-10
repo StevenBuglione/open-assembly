@@ -10,11 +10,27 @@ Operations on the same map require caller synchronization.
 
 Map_init requires a positive power-of-two capacity and clears
 four slot words per entry. It publishes an empty state after
-checking the slot extent. Key lookup starts with 64-bit FNV-1a
-using the standard offset basis XOR the supplied seed. The low
-bits select the first slot. Probing wraps at capacity and visits
-each slot at most once. The first removed slot is available for
-insertion once the search establishes that a key is absent.
+checking the slot extent. Key lookup uses the original mixer below.
+The low bits select the first slot. Probing wraps at capacity and
+visits each slot at most once. The first removed slot is available
+for insertion once the search establishes that a key is absent.
+
+All hash operations use unsigned 64-bit arithmetic with wraparound
+and logical right shifts.
+
+```text
+h = seed XOR length XOR 0xd915b31d72a14e87
+for b in the key bytes:
+    h = (h + b + 1) * 0xb7192a6f49d38be5
+    h = h XOR (h >> 27)
+h = (h XOR (h >> 23)) * 0x9be540c7d2f163a9
+h = h XOR (h >> 31)
+first_slot = h AND (capacity - 1)
+```
+
+The mixer folds the high bits of each product into the lower bits.
+It provides deterministic table placement. Probing remains bounded
+even when keys collide.
 
 Map_probe returns twice the slot index plus one for a live key,
 or twice the reusable slot index for an absent key. A full
@@ -32,5 +48,3 @@ All calls preserve errno. A null required pointer, null key
 with nonzero length, or invalid capacity returns -EINVAL.
 A wrapping address or size returns -EOVERFLOW. A failed update
 preserves both states and any caller outputs.
-
-[FNV-1a, RFC 9923](https://www.rfc-editor.org/rfc/rfc9923.html#section-2).

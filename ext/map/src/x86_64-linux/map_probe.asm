@@ -43,19 +43,31 @@ map_probe:
     mov rbx, rdi
     mov r12, rsi
     mov r13, rdx
-    mov rax, 0xcbf29ce484222325
+    mov rax, 0xd915b31d72a14e87
     xor rax, [rbx + 24]
-    mov r8, 0x100000001b3
+    xor rax, r13
+    mov r8, 0xb7192a6f49d38be5
     xor ecx, ecx
 .hash:
     cmp rcx, r13
-    jae .first_slot
+    jae .final_mix
     movzx edx, byte [r12 + rcx]
-    xor rax, rdx
+    lea rax, [rax + rdx + 1]
     imul rax, r8
+    mov rdx, rax
+    shr rdx, 27
+    xor rax, rdx
     inc rcx
     jmp .hash
-.first_slot:
+.final_mix:
+    mov rdx, rax
+    shr rdx, 23
+    xor rax, rdx
+    mov r8, 0x9be540c7d2f163a9
+    imul rax, r8
+    mov rdx, rax
+    shr rdx, 31
+    xor rax, rdx
     mov rcx, [rbx + 8]
     mov [rsp], rcx             ; inspect at most one full cycle
     dec rcx
