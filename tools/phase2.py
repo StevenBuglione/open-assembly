@@ -8,6 +8,7 @@ import sys
 
 from gate import EVIDENCE, GateError, run, write_evidence
 from phase2_helpers import HELPER, WRAPPERS
+from phase11_copy import HELPER as COPY_HELPER
 from production import phase2_inputs
 from runtime_gate import ERRNO
 from spec import ROOT, load_project, sha256_file
@@ -60,10 +61,10 @@ def check_after(function, only, prerequisites):
     return check_function(function, only)
 
 
-def check_scanner():
-    report = EVIDENCE / f"{HELPER}.production.json"
+def check_private(helper, tool, timeout=240):
+    report = EVIDENCE / f"{helper}.production.json"
     try:
-        result = run(["python3", "tools/phase2_helpers.py"], timeout=SCANNER_TIMEOUT)
+        result = run(["python3", tool], timeout=timeout)
         result["outcome"] = "pass" if result["returncode"] == 0 and report.is_file() else "fail"
         if report.is_file():
             result.update(evidence=str(report), evidence_sha256=sha256_file(report))
@@ -86,8 +87,11 @@ def main():
     specs = load_project().functions
     results = {}
     with ThreadPoolExecutor(max_workers=args.jobs) as pool:
-        scanner = pool.submit(check_scanner) if not args.only and set(WRAPPERS) & set(functions) else None
+        scanner = (pool.submit(check_private, HELPER, "tools/phase2_helpers.py", SCANNER_TIMEOUT)
+                   if not args.only and set(WRAPPERS) & set(functions) else None)
         errno = pool.submit(check_function, ERRNO, None) if scanner else None
+        bulk_copy = (pool.submit(check_private, COPY_HELPER, "tools/phase11_copy.py")
+                     if not args.only and "memcpy" in functions else None)
         by_name = {}
 
         def submit(function):
@@ -100,6 +104,8 @@ def main():
                     dependencies.extend(submit(dep) for dep in spec.deps if dep in functions)
                 if scanner and function in WRAPPERS:
                     dependencies.extend((scanner, errno))
+                if bulk_copy and function == "memcpy":
+                    dependencies.append(bulk_copy)
             future = pool.submit(check_after, function, args.only, dependencies)
             by_name[function] = future
             return future
@@ -108,6 +114,8 @@ def main():
         if scanner:
             futures[scanner] = HELPER
             futures[errno] = ERRNO
+        if bulk_copy:
+            futures[bulk_copy] = COPY_HELPER
         for future in as_completed(futures):
             function = futures[future]
             result = future.result()
@@ -117,15 +125,18 @@ def main():
                 print(result.get("error") or result.get("stderr", "").strip(), file=sys.stderr, flush=True)
     helper = results.pop(HELPER, None)
     tls = results.pop(ERRNO, None)
+    copy = results.pop(COPY_HELPER, None)
     passed = sum(result["outcome"] == "pass" for result in results.values())
     success = passed == len(functions) and all(item is None or item["outcome"] == "pass"
-                                               for item in (helper, tls))
+                                               for item in (helper, tls, copy))
     evidence = {"schema_version": 1, "scope": "phase2-batch" if not args.only else f"phase2-batch-{args.only}",
                 "outcome": "pass" if success else "fail", "passed": passed,
                 "total": len(functions), "functions": results, "full_scope": set(functions) == set(available)}
     if helper is not None:
         evidence["shared_integer_scanner"] = helper
         evidence["runtime_tls_accessor"] = tls
+    if copy is not None:
+        evidence["bulk_memcpy"] = copy
     report = write_evidence(f"phase2.{args.only}" if args.only else "phase2", evidence)
     print(f"Phase 2 gate results {passed}/{len(functions)}. Evidence at {report}", flush=True)
     return 0 if success else 1

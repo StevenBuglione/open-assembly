@@ -146,6 +146,7 @@ PRIVATE_FUNCTIONS = {
     "rt/__al_stream_owner", "rt/__al_vdso_clock_entry", "rt/__al_vdso_lookup",
     "rt/__al_vdso_dynamic", "time/__al_realtime_parts",
     "rt/__al_pie_entry", "rt/__al_pie_relocate",
+    "string/__al_memcpy_bulk",
     "stdio/__al_stream_lock", "stdio/__al_stream_unlock", "stdio/__al_stream_unlock_all",
     "stdio/__al_stream_snapshot", "stdio/__al_stream_unpin",
     "stdio/__al_va_next", "stdio/__al_vformat", "stdio/__al_fmt_emit",
@@ -186,6 +187,57 @@ PRIVATE_FUNCTIONS = {
 }
 PRIVATE_NORETURN = {"_start", "__al_pie_entry", "__al_rt_sigreturn", "__al_panic", "__al_abort", "__al_heap_bad", "__al_big_bad", "__al_spawn_child",
                     "__al_shell_exec", "__al_popen_child", "__al_thread_start", "__al_thread_unmap_exit"}
+# The only optional instructions are in this closed feature decision and
+# bounded loop. Cache values come exclusively from the checks in this block.
+MEMCPY_OPTIONAL_PREFIX = """mov r8, rdx
+mov r9, rdi
+mov eax, [rel vector_mode]
+test eax, eax
+jnz .select
+push rbx
+mov eax, 1
+xor ecx, ecx
+cpuid
+and ecx, 0x1c000000
+cmp ecx, 0x1c000000
+jne .baseline
+xor ecx, ecx
+xgetbv
+and eax, 6
+cmp eax, 6
+jne .baseline
+mov eax, 2
+jmp .publish
+.baseline:
+mov eax, 1
+.publish:
+pop rbx
+mov [rel vector_mode], eax
+.select:
+cmp eax, 2
+jne .sse
+cmp r8, 128
+jb .avx_done
+.avx_loop:
+vmovdqu ymm0, [rsi]
+vmovdqu ymm1, [rsi + 32]
+vmovdqu ymm2, [rsi + 64]
+vmovdqu ymm3, [rsi + 96]
+vmovdqu [rdi], ymm0
+vmovdqu [rdi + 32], ymm1
+vmovdqu [rdi + 64], ymm2
+vmovdqu [rdi + 96], ymm3
+add rsi, 128
+add rdi, 128
+sub r8, 128
+cmp r8, 128
+jae .avx_loop
+.avx_done:
+vzeroupper
+.sse:
+"""
+OPTIONAL_MEMCPY_ISA = frozenset(("cpuid", "xgetbv", "vmovdqu", "vzeroupper"))
+
 CALLBACK_ARGUMENTS = {"bsearch": "r8", "qsort": "rcx", "pthread_once": "rsi"}
 ONCE_FRAME = (
     ("call", ("pthread_self",)), ("mov", ("r13", "rax")),
@@ -532,6 +584,7 @@ class Program:
     caller_stack_arg: int = 0
     extended_arguments: int = 0
     atomic_instructions: dict | None = None
+    optional_isa_lines: frozenset[int] = frozenset()
     tls_self: bool = False
     once_frame_line: int | None = None
     callback_dispatch: bool = False
@@ -1008,8 +1061,23 @@ def transfer_control(state, program, ins, syscall_boundary, x87_return):
                    syscall_clobbers=state.syscall_clobbers | {"rcx", "r11"})
 
 
+def transfer_optional_memcpy(state, ins):
+    opcode, line = ins.opcode, ins.line
+    if opcode == "vmovdqu":
+        target, source = ins.operands
+        write = target.startswith("[")
+        updated, _ = access_memory(state, operand(target if write else source, line), 32, line, write=write)
+        return updated
+    registers = {"cpuid": ("eax", "ebx", "ecx", "edx"), "xgetbv": ("eax", "edx"), "vzeroupper": ()}
+    for register in registers[opcode]:
+        state = write_gpr(state, operand(register, line), line)
+    return state
+
+
 def transfer(state, program, ins, syscall_boundary, x87_return):
     opcode, line = ins.opcode, ins.line
+    if line in program.optional_isa_lines:
+        return transfer_optional_memcpy(state, ins)
     if opcode.startswith(("v", "aes")) or opcode in AFTER_SSE2:
         reject(line, "ISA_BASELINE", f"{opcode} exceeds the SSE2 baseline")
     if opcode in MOVES | ARITH | UNARY | SSE_MOVE | SSE_ALU | {"cmp", "test"}:
@@ -1213,6 +1281,32 @@ def project_functions():
         return None, str(error)
 
 
+def verify_optional_memcpy(program, source):
+    expected = []
+    labels = {"__al_memcpy_bulk": 0}
+    for statement in MEMCPY_OPTIONAL_PREFIX.splitlines():
+        if statement.endswith(":"):
+            labels["__al_memcpy_bulk" + statement[:-1]] = len(expected)
+        else:
+            expected.append(statement)
+    end = len(expected)
+    instructions = program.instructions[:end]
+    actual = [ins.opcode + (" " + ", ".join(ins.operands) if ins.operands else "") for ins in instructions]
+    if (actual != expected or
+            {label: index for label, index in program.labels.items() if index <= end} != labels or
+            program.externs or program.external_data or
+            not re.search(r"^section \.bss\.__al_memcpy_bulk alloc noexec write nobits align=4\n"
+                          r"vector_mode: resd 1$", source, re.M)):
+        reject(1, "ISA_BASELINE", "optional memcpy must establish and cache usable AVX state")
+    for ins in program.instructions[end:]:
+        if ins.opcode in JCC | {"jmp"} and len(ins.operands) == 1:
+            label = ins.operands[0]
+            name = ins.scope + label if label.startswith(".") else label
+            if program.labels.get(name, end) < end:
+                reject(ins.line, "ISA_BASELINE", "baseline code cannot enter the optional memcpy block")
+    program.optional_isa_lines = frozenset(ins.line for ins in instructions if ins.opcode in OPTIONAL_MEMCPY_ISA)
+
+
 def check_file(path, function, fixture_syscall, functions_snapshot=project_functions):
     resolved = path.resolve()
     relative = resolved.relative_to(ROOT) if resolved.is_relative_to(ROOT) else resolved
@@ -1259,7 +1353,10 @@ def check_file(path, function, fixture_syscall, functions_snapshot=project_funct
         except SpecError as error:
             reject(1, "SPEC_HEADER", str(error))
     external_signatures.update(HTTP_APP_CALLS.get(relative.as_posix(), ()))
-    program = parse(path.read_text(), narrow, set(), in_seed)
+    source = path.read_text()
+    program = parse(source, narrow, set(), in_seed)
+    if relative_runtime == "string/__al_memcpy_bulk":
+        verify_optional_memcpy(program, source)
     if not in_seed or function is not None:
         program.external_signatures = external_signatures
     program.variadic.update(variadic & (set(program.entries) | program.externs))

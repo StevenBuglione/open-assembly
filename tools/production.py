@@ -51,6 +51,12 @@ for left, right in CONDITIONS:
 SIGNED = dict(zip(("ja", "jae", "jb", "jbe", "jg", "jge", "jl", "jle"),
                   ("jg", "jge", "jl", "jle", "ja", "jae", "jb", "jbe"), strict=True))
 MUTATION_EQUIVALENCES = {
+    "memcpy": ("74ee3ddf94d9634b2f7997471965faa1adec9158e14bbe13babd8f2463554969", {
+        "comparison-plus-one-29": "The one rerouted length 256 is copied byte for byte by the original baseline.",
+        "comparison-minus-one-29": "The one rerouted length 255 is within the bulk helper's valid range and is copied byte for byte.",
+        "invert-branch-30": "The baseline and bulk paths copy the same positive disjoint range. The unchanged zero test returns before selection.",
+        "comparison-signedness-30": "Any disjoint valid user object extent has bit 63 clear, so the dispatch comparison is unchanged.",
+    }),
     "__al_strtox": ("a5631fe7518c5ad2f1f484da046b77afd56621dc4cbc07e45e3aefa125155ba9", {
         "comparison-signedness-29": "A negative base reaches .zero_result through one of the two range checks with either comparison.",
         "comparison-signedness-139": "Code units below ASCII '0' remain invalid. The later unsigned digit/base comparison rejects the negative offset before accumulation.",
@@ -142,7 +148,8 @@ def read_plan(function):
 def phase2_inputs():
     bound = inputs()
     headers = sorted(path.relative_to(ROOT) for path in (ROOT / BUILD / "include/c").rglob("*.h"))
-    bound.update(snapshot_inputs(ROOT, [*headers, Path("docs/adr/0002-runtime-abi.md")]))
+    contracts = [Path("docs/adr/0002-runtime-abi.md"), Path("docs/adr/0035-memcpy-dispatch.md")]
+    bound.update(snapshot_inputs(ROOT, [*headers, *contracts]))
     return dict(sorted(bound.items()))
 
 
@@ -352,8 +359,8 @@ def applicable_variants(function, source, record, *, returns_value=True):
 
 def mutation_campaign(plan, spec, source, directory, test_objects, oracle, record):
     directory.mkdir()
-    for name, contents in applicable_variants(
-            plan.name, source, record, returns_value=not spec.prototype.startswith("void ")):
+    returns_void = re.match(rf"(?:_Noreturn )?void +{re.escape(spec.name)}\s*\(", spec.prototype) is not None
+    for name, contents in applicable_variants(plan.name, source, record, returns_value=not returns_void):
         work = directory / name
         work.mkdir()
         mutant = work / f"{plan.name}.asm"
@@ -404,7 +411,7 @@ def dependency_evidence(dependencies, inputs_snapshot):
                 and candidate.get("source") == source
                 and candidate.get("source_sha256") == inputs_snapshot.get(source)):
             item.update(outcome="pass", evidence=str(path), evidence_sha256=sha256_file(path))
-        elif (name == "__al_strtox" and record.get("scope") == "production-private-dependency"
+        elif (name in {"__al_strtox", "__al_memcpy_bulk"} and record.get("scope") == "production-private-dependency"
               and record.get("function") == name and record.get("outcome") == "pass"
               and record.get("inputs") == inputs_snapshot
               and record.get("source_sha256") == inputs_snapshot.get(source)
