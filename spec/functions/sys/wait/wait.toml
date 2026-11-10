@@ -1,0 +1,18 @@
+name = "wait"
+header = "sys/wait.h"
+prototype = "pid_t wait(int *wstatus)"
+standard = ["POSIX.1-2024 XSH wait"]
+deps = ["waitpid"]
+errno = ["ECHILD", "EFAULT", "EINTR"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-process-abi"]
+provenance = "original"
+semantics = [
+  "Wait for any child with the same semantics as waitpid with pid -1 and options zero.",
+  "A null status pointer is accepted. Return the child ID or -1 and errno on failure.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

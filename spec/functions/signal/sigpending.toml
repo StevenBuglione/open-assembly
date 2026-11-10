@@ -1,0 +1,18 @@
+name = "sigpending"
+header = "signal.h"
+prototype = "int sigpending(sigset_t *set)"
+standard = ["POSIX.1-2024 XSH sigpending"]
+deps = ["__errno_location"]
+errno = ["EFAULT", "EINVAL"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-signal-abi"]
+provenance = "original"
+semantics = [
+  "Report the calling thread pending signal mask from Linux and zero public bytes above the low word.",
+  "Return zero and preserve errno on success. Return -1 and set errno on failure.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

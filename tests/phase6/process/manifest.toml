@@ -1,0 +1,162 @@
+schema = 1
+
+[[case]]
+name = "process-getpid"
+sources = ["tests/phase6/process/process.c"]
+requires = ["getpid"]
+args = ["getpid"]
+env = { PARENT_ONLY = "must-not-inherit" }
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-process-abi", "posix:getpid"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "process-getppid"
+sources = ["tests/phase6/process/process.c"]
+requires = ["getppid"]
+args = ["getppid"]
+env = { PARENT_ONLY = "must-not-inherit" }
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-process-abi", "posix:getppid"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "process-fork"
+sources = ["tests/phase6/process/process.c"]
+requires = ["fork"]
+args = ["fork"]
+env = { PARENT_ONLY = "must-not-inherit" }
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-process-abi", "posix:fork"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "process-pipe2"
+sources = ["tests/phase6/process/process.c"]
+requires = ["pipe2"]
+args = ["pipe2"]
+env = { PARENT_ONLY = "must-not-inherit" }
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-process-abi", "posix:pipe2"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "process-waitpid"
+sources = ["tests/phase6/process/process.c"]
+requires = ["waitpid"]
+args = ["waitpid"]
+env = { PARENT_ONLY = "must-not-inherit" }
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-process-abi", "posix:waitpid"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "process-wait"
+sources = ["tests/phase6/process/process.c"]
+requires = ["wait"]
+args = ["wait"]
+env = { PARENT_ONLY = "must-not-inherit" }
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-process-abi", "posix:wait"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "process-exec-failure"
+sources = ["tests/phase6/process/process.c"]
+requires = ["execve"]
+args = ["exec-failure"]
+env = { PARENT_ONLY = "must-not-inherit" }
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-process-abi", "posix:execve"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "process-exec-success"
+sources = ["tests/phase6/process/process.c"]
+requires = ["execve"]
+args = ["exec-success"]
+env = { PARENT_ONLY = "must-not-inherit" }
+status = 0
+stdin_hex = ""
+stdout = "replaced\n"
+stderr = ""
+oracle = ["reference:linux-process-abi", "posix:execve"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[stub]]
+symbol = "getpid"
+case = "process-getpid"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "getppid"
+case = "process-getppid"
+status = 21
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "fork"
+case = "process-fork"
+status = 32
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "pipe2"
+case = "process-pipe2"
+status = 41
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "waitpid"
+case = "process-waitpid"
+status = 52
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "wait"
+case = "process-wait"
+status = 62
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "execve"
+case = "process-exec-failure"
+status = 82
+stdout = ""
+stderr = ""

@@ -1,0 +1,19 @@
+name = "execve"
+header = "unistd.h"
+prototype = "int execve(const char *path, char *const argv[], char *const envp[])"
+standard = ["POSIX.1-2024 XSH execve"]
+deps = ["__errno_location"]
+errno = ["E2BIG", "EACCES", "EFAULT", "EINVAL", "EIO", "EISDIR", "ELIBBAD", "ELOOP", "EMFILE", "ENAMETOOLONG", "ENFILE", "ENOENT", "ENOEXEC", "ENOMEM", "ENOTDIR", "EPERM", "ETXTBSY"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-process-abi"]
+provenance = "original"
+semantics = [
+  "Replace the process image with the given executable, argument vector, and environment vector.",
+  "Use the supplied pathname without PATH search and pass both vectors to the Linux kernel.",
+  "A successful replacement does not return. A returned error is -1 and sets errno.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

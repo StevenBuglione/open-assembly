@@ -81,7 +81,7 @@ PRIVATE_FUNCTIONS = {
     "stdlib/__al_env_change", "stdlib/__al_env_match", "stdlib/__al_env_name",
     "stdlib/__al_env_collect",
     "internal/__al_syscall", "internal/__al_syscall_result", "internal/__al_rt_sigreturn",
-    "internal/__al_fcntl", "internal/__al_stat_query",
+    "internal/__al_fcntl", "internal/__al_stat_query", "internal/__al_sigset_publish",
     "internal/__al_lock", "internal/__al_unlock", "rt/_start", "rt/__al_tls_init",
     "rt/__al_panic", "rt/__al_abort", "rt/__al_diagnostic", "stdlib/__al_strtox",
 }
@@ -93,8 +93,14 @@ COMPARATOR_ARGUMENTS = {"bsearch": "r8", "qsort": "rcx"}
 class KernelStackRecord:
     extent: int
     setup: tuple[tuple[str, tuple[str, ...]], ...]
+    finishes: tuple[tuple[tuple[str, tuple[str, ...]], ...], ...] = ((),)
 
 
+SIGACTION_STACK_RECORDS = {
+    ("rcx", "rsp + 40"): KernelStackRecord(32, (("mov", ("edi", "13")),),
+                                          ((), (("lea", ("rdx", "[rsp + 8]")),))),
+    ("rdx", "rsp + 8"): KernelStackRecord(32, (("mov", ("edi", "13")), ("lea", ("rcx", "[rsp + 40]")))),
+}
 KERNEL_STACK_RECORDS = {
     "internal/__al_stat_query": {
         ("rdx", "rsp + 8"): KernelStackRecord(144, (("mov", ("edi", "5")),)),
@@ -103,6 +109,8 @@ KERNEL_STACK_RECORDS = {
     "posix/isatty": {
         ("rcx", "rsp + 8"): KernelStackRecord(64, (("mov", ("edi", "16")), ("mov", ("edx", "0x5401")))),
     },
+    "signal/sigaction": SIGACTION_STACK_RECORDS,
+    "signal/signal": SIGACTION_STACK_RECORDS,
 }
 PRIVATE_DATA = {
     "stdin": "rt/__al_stdio_init", "stdout": "rt/__al_stdio_init", "stderr": "rt/__al_stdio_init",
@@ -116,6 +124,18 @@ PRIVATE_DATA = {
     "__al_auxv": "rt/_start",
     "__al_atexit_state": "stdlib/atexit",
 }
+JUMP_SAVED_REGISTERS = ("rbx", "rbp", "r12", "r13", "r14", "r15")
+JUMP_REGISTER_SLOTS = ("[rdi]", *(f"[rdi + {offset}]" for offset in range(8, 48, 8)))
+JUMP_SAVE = tuple(("mov", (slot, reg)) for slot, reg in zip(JUMP_REGISTER_SLOTS, JUMP_SAVED_REGISTERS)) + (
+    ("lea", ("rax", "[rsp + 8]")), ("mov", ("[rdi + 48]", "rax")),
+    ("mov", ("rax", "[rsp]")), ("mov", ("[rdi + 56]", "rax")),
+)
+JUMP_RESTORE = (
+    ("movsxd", ("rax", "esi")), ("test", ("eax", "eax")), ("jnz", (".restore",)),
+    ("mov", ("eax", "1")), ("mov", ("r11", "[rdi + 56]")), ("mov", ("r10", "[rdi + 48]")),
+) + tuple(("mov", (reg, slot)) for slot, reg in zip(JUMP_REGISTER_SLOTS, JUMP_SAVED_REGISTERS)) + (
+    ("mov", ("rsp", "r10")), ("jmp", ("r11",)),
+)
 DATA_SECTIONS = {
     ".rodata": {"progbits", "alloc", "noexec", "nowrite"},
     ".data": {"progbits", "alloc", "noexec", "write"},
@@ -219,6 +239,7 @@ class State:
     tls_self: bool = False
     callback_table_registers: frozenset[str] = frozenset()
     callback_registers: frozenset[str] = frozenset()
+    context_save: bool = False
 
 
 @dataclass
@@ -243,6 +264,7 @@ class Program:
     varargs_frame: bool = False
     fenv_access: bool = False
     fenv_controls: bool = False
+    context_save: bool = False
     kernel_stack_records: dict[tuple[str, str], KernelStackRecord] | None = None
 
 
@@ -283,6 +305,12 @@ def parse(source, narrow, variadic, allow_seed_metadata):
                     reject(line, "SYNTAX", f"invalid variadic symbol {value!r}")
 
         body = body.strip()
+        # NASM reserves WAIT as an x87 mnemonic. Recognize the escaped
+        # identifier only in positions that denote an ordinary ELF symbol.
+        if body == "$wait:":
+            body = "wait:"
+        elif escaped := re.fullmatch(r"(global|extern|call)\s+\$wait(:function)?", body):
+            body = f"{escaped[1]} wait{escaped[2] or ''}"
         if not body:
             continue
         directive, *fields = body.split()
@@ -459,7 +487,9 @@ def stack_location(state, op, width, line, *, write):
     offset = integer((match[2] or "+") + (match[3] or "0"))
     address = base + offset
     if not write and width == 8 and match[1].lower() == "rsp":
-        if (state.process_entry and address == 0) or (state.caller_stack_arg and address == 8):
+        if ((state.process_entry and address == 0)
+                or (state.context_save and state.rsp == 0 and address == 0)
+                or (state.caller_stack_arg and address == 8)):
             return None
     if address < state.rsp or address + width > 0:
         reject(line, "STACK_ACCESS", "stack access is outside the allocated frame")
@@ -577,7 +607,9 @@ def transfer_data(state, program, ins):
                 if src.segment:
                     reject(line, "TLS_ADDRESS", "LEA does not apply an FS segment base")
                 record = (program.kernel_stack_records or {}).get((dest.value, src.value))
-                modeled_frame_address = process_stack_address or program.varargs_frame or record
+                context_stack_address = (state.context_save and state.rsp == 0
+                                         and dest.value == "rax" and src.value == "rsp + 8")
+                modeled_frame_address = process_stack_address or context_stack_address or program.varargs_frame or record
                 if set(src.address) & {"rsp", "rbp"} and not modeled_frame_address:
                     reject(line, "STACK_ACCESS", "stack address escape is unsupported")
                 if record:
@@ -804,7 +836,7 @@ def verify(program, syscall_boundary, x87_return):
         states = {start: State(pending_args=frozenset(program.narrow),
                                process_entry=program.process_entry,
                                caller_stack_arg=program.caller_stack_arg, tls_self=program.tls_self,
-                               callback_registers=(frozenset({program.comparator_argument})
+                               context_save=program.context_save, callback_registers=(frozenset({program.comparator_argument})
                                                    if program.comparator_argument else frozenset()))}
         work = deque([start])
         terminal = False
@@ -926,10 +958,13 @@ def check_file(path, function, fixture_syscall):
                 continue
             start = index - len(record.setup)
             preceding = tuple((prior.opcode, prior.operands) for prior in instructions[max(0, start):index])
-            following = instructions[index + 1] if index + 1 < len(instructions) else None
-            if (preceding != record.setup or following is None or following.opcode != "call"
-                    or following.operands != ("__al_syscall",)
-                    or any(start < target <= index + 1 for target in program.labels.values())):
+            for finish in record.finishes:
+                call_index = index + len(finish) + 1
+                following = tuple((later.opcode, later.operands) for later in instructions[index + 1:call_index + 1])
+                if (preceding == record.setup and following == (*finish, ("call", ("__al_syscall",)))
+                        and not any(start < target <= call_index for target in program.labels.values())):
+                    break
+            else:
                 reject(ins.line, "STACK_ACCESS", "bounded kernel stack record must go directly to its modeled syscall")
     if relative_runtime in VARARGS_WRAPPERS:
         target, fixed, register = VARARGS_WRAPPERS[relative_runtime]
@@ -965,7 +1000,20 @@ def check_file(path, function, fixture_syscall):
             reject(1, "SYSCALL_BOUNDARY", "signal restorer must issue Linux rt_sigreturn and then trap")
     if function is not None and set(program.entries) != {function}:
         reject(1, "SYMBOL", f"expected exactly one export named {function}")
-    verify(program, internal or fixture_syscall, x87_return)
+    if relative_runtime in {"setjmp/setjmp", "setjmp/sigsetjmp"}:
+        prefix = JUMP_SAVE if function == "setjmp" else (("movsxd", ("rsi", "esi")), *JUMP_SAVE)
+        sequence = tuple((ins.opcode, ins.operands) for ins in program.instructions)
+        frame_lea = ("lea", ("rax", "[rsp + 8]"))
+        if (sequence[:len(prefix)] != prefix or sequence.count(frame_lea) != 1
+                or any(0 < label < len(prefix) for label in program.labels.values())):
+            reject(1, "CONTROL_FLOW", "context save must capture the caller registers and return point at entry")
+        program.context_save = True
+    if relative_runtime == "setjmp/longjmp":
+        sequence = tuple((ins.opcode, ins.operands) for ins in program.instructions)
+        if sequence != JUMP_RESTORE or program.labels != {"longjmp": 0, "longjmp.restore": 4}:
+            reject(1, "CONTROL_FLOW", "context resume must restore the exact saved registers and transfer to the saved PC")
+    else:
+        verify(program, internal or fixture_syscall, x87_return)
     # NASM is the authority for operand encodings. Preprocessor directives and
     # data emission were already rejected, so it assembles exactly this subset.
     with tempfile.TemporaryDirectory(prefix="al-lint-") as directory:

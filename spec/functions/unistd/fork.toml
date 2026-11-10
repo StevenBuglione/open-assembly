@@ -1,0 +1,20 @@
+name = "fork"
+header = "unistd.h"
+prototype = "pid_t fork(void)"
+standard = ["POSIX.1-2024 XSH fork"]
+deps = ["__errno_location"]
+errno = ["EAGAIN", "ENOMEM", "ENOSYS"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:linux-process-abi"]
+provenance = "original"
+semantics = [
+  "Create a child process in the initial single-threaded runtime.",
+  "Return zero in the child and its process ID in the parent.",
+  "Preserve errno on success in both processes. Return -1 and set errno on failure.",
+  "Threaded fork callbacks and child lock recovery belong to the later threading phase.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

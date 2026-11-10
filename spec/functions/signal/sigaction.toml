@@ -1,0 +1,21 @@
+name = "sigaction"
+header = "signal.h"
+prototype = "int sigaction(int sig, const struct sigaction *restrict act, struct sigaction *restrict oldact)"
+standard = ["POSIX.1-2024 XSH sigaction"]
+deps = ["__errno_location"]
+errno = ["EFAULT", "EINVAL"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-signal-abi"]
+provenance = "original"
+semantics = [
+  "Install a signal disposition when act is present and publish the prior disposition when oldact is present.",
+  "Marshal the public mask and flags to the Linux x86-64 kernel record and use the runtime signal restorer.",
+  "For an old disposition, clear reserved bytes, clear the private restorer flag and field, and expand the mask.",
+  "The oldact record remains untouched on failure. Return zero and preserve errno on success.",
+  "Use SA_SIGINFO for three-argument dispatch, and pass the Linux signal metadata and machine context.",
+]
+
+[abi]
+narrow_args = ["edi:s32"]
+variadic = false

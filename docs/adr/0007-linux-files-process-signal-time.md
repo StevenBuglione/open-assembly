@@ -103,8 +103,14 @@ space. The later threading work owns at-fork handlers and lock recovery.
 `execve` passes the supplied argument and environment vectors to the
 kernel. Its ordinary return is an error. Convenience wrappers can use
 the runtime's `environ` and implement PATH search separately.
+`pid_t` is a signed 32-bit integer. `getpid` and `getppid` make raw
+Linux queries and preserve errno. `pipe2` creates the two descriptors
+with atomic flags and preserves its output array on error. The selected
+POSIX flags are close-on-exec and nonblocking. Linux-specific flags are
+validated by the kernel, and close-on-fork is outside this Linux slice.
 `waitpid` uses `wait4` without a resource-usage result. Preserve
-the raw wait-status bits for the public macros. Test normal exit,
+the raw wait-status bits for the public macros. A zero `WNOHANG` result
+leaves output untouched, as does an error. Test normal exit,
 signaled exit, invalid child IDs, and `WNOHANG`.
 [Linux fork](https://man7.org/linux/man-pages/man2/fork.2.html) · [Linux execve](https://man7.org/linux/man-pages/man2/execve.2.html) · [Linux wait](https://man7.org/linux/man-pages/man2/wait.2.html)
 
@@ -131,14 +137,22 @@ has its handler, flags, restorer, and mask at bytes 0, 8, 16, and 24.
 The kernel call uses a mask size of eight. Handler installation adds
 the private restorer when needed and uses the existing
 `__al_rt_sigreturn` trampoline. User handlers enter through the
-kernel's System V ABI frame. Test mask round trips, real signal delivery,
-restart policy, and three-argument handler dispatch.
+kernel's System V ABI frame. The public `siginfo_t` is 128 bytes with an
+eight-byte alignment. The signal number, error, and code are 32-bit words
+at bytes 0, 4, and 8. For sender information, the process ID and user ID
+appear at bytes 16 and 20. Public signals occupy the full Linux range
+1 through 64. Host libraries may reserve their own internal signal numbers.
+A successful mask read clears the high public words. The kernel handles
+uncatchable dispositions and unmaskable signals. Test mask round trips,
+real signal delivery, restart policy, and three-argument handler dispatch.
 [Linux sigaction](https://man7.org/linux/man-pages/man2/sigaction.2.html) · [Linux sigreturn](https://man7.org/linux/man-pages/man2/sigreturn.2.html)
 
 A jump buffer stores RBX, RBP, R12 through R15, the caller's resumed RSP,
 and the return PC in eight successive words with eight-byte alignment.
-A signal-aware buffer adds a four-byte saved-mask indicator at byte 64
-and a 128-byte mask at byte 72. Test
+The ordinary buffer occupies 64 bytes. A signal-aware buffer adds a
+four-byte saved-mask indicator at byte 64 and a 128-byte mask at byte 72,
+for a total of 200 bytes. Both have eight-byte alignment. Jump targets
+must still be live in the same thread. Test
 declarations mark the save routines as returning twice and the restore
 routines as non-returning. Restore a zero requested result as one.
 Ordinary jumps preserve the current signal mask and floating-point

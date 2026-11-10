@@ -1,0 +1,287 @@
+schema = 1
+
+[[case]]
+name = "signal-sigemptyset"
+sources = ["tests/phase6/signal/signal_probe.c"]
+requires = ["sigemptyset"]
+args = ["sigemptyset"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-signal-abi", "posix:sigemptyset"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "signal-sigfillset"
+sources = ["tests/phase6/signal/signal_probe.c"]
+requires = ["sigfillset"]
+args = ["sigfillset"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-signal-abi", "posix:sigfillset"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "signal-sigaddset"
+sources = ["tests/phase6/signal/signal_probe.c"]
+requires = ["sigaddset"]
+args = ["sigaddset"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-signal-abi", "posix:sigaddset"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "signal-sigdelset"
+sources = ["tests/phase6/signal/signal_probe.c"]
+requires = ["sigdelset"]
+args = ["sigdelset"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-signal-abi", "posix:sigdelset"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "signal-sigismember"
+sources = ["tests/phase6/signal/signal_probe.c"]
+requires = ["sigismember"]
+args = ["sigismember"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-signal-abi", "posix:sigismember"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "signal-sigprocmask"
+sources = ["tests/phase6/signal/signal_probe.c"]
+requires = ["sigprocmask"]
+args = ["sigprocmask"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-signal-abi", "posix:sigprocmask"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "signal-sigpending"
+sources = ["tests/phase6/signal/signal_probe.c"]
+requires = ["sigpending"]
+args = ["sigpending"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-signal-abi", "posix:sigpending"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "signal-sigsuspend"
+sources = ["tests/phase6/signal/signal_probe.c"]
+requires = ["sigsuspend"]
+args = ["sigsuspend"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-signal-abi", "posix:sigsuspend"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "signal-sigaction"
+sources = ["tests/phase6/signal/signal_probe.c"]
+requires = ["sigaction"]
+args = ["sigaction"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-signal-abi", "posix:sigaction"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "signal-kill"
+sources = ["tests/phase6/signal/signal_probe.c"]
+requires = ["kill"]
+args = ["kill"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-signal-abi", "posix:kill"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "signal-raise"
+sources = ["tests/phase6/signal/signal_probe.c"]
+requires = ["raise"]
+args = ["raise"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-signal-abi", "posix:raise"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "signal-signal"
+sources = ["tests/phase6/signal/signal_probe.c"]
+requires = ["signal"]
+args = ["signal"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-signal-abi", "posix:signal"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "signal-sigprocmask-invalid"
+sources = ["tests/phase6/signal/signal_probe.c"]
+requires = ["sigprocmask"]
+args = ["sigprocmask-invalid"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-signal-abi", "posix:sigprocmask"]
+backends = ["native", "qemu"]
+host = true
+
+[case.skip]
+valgrind = "Memcheck emits a process-specific diagnostic for the deliberately invalid how. The ordinary mask case still runs there."
+
+[[case]]
+name = "signal-sigaction-handler-mask"
+sources = ["tests/phase6/signal/signal_probe.c"]
+requires = ["sigaction"]
+args = ["sigaction-handler-mask"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-signal-abi", "posix:sigaction"]
+backends = ["native", "qemu"]
+host = true
+
+[case.skip]
+valgrind = "The SA_SIGINFO handler observes SIGUSR2 unblocked under Memcheck despite the installed kernel action mask. The no-extra-mask action case still runs there."
+
+[[stub]]
+symbol = "sigemptyset"
+case = "signal-sigemptyset"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "sigfillset"
+case = "signal-sigfillset"
+status = 21
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "sigaddset"
+case = "signal-sigaddset"
+status = 31
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "sigdelset"
+case = "signal-sigdelset"
+status = 41
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "sigismember"
+case = "signal-sigismember"
+status = 51
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "sigprocmask"
+case = "signal-sigprocmask"
+status = 61
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "sigpending"
+case = "signal-sigpending"
+status = 72
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "sigsuspend"
+case = "signal-sigsuspend"
+status = 81
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "sigaction"
+case = "signal-sigaction"
+status = 91
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "kill"
+case = "signal-kill"
+status = 102
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "raise"
+case = "signal-raise"
+status = 103
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "signal"
+case = "signal-signal"
+status = 112
+stdout = ""
+stderr = ""

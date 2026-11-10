@@ -1,0 +1,21 @@
+name = "longjmp"
+header = "setjmp.h"
+prototype = "_Noreturn void longjmp(jmp_buf env, int val)"
+standard = ["C17 7.13.2.1"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:sysv-jump-abi"]
+provenance = "original"
+semantics = [
+  "Resume a still-live environment saved in the calling thread.",
+  "Restore the saved callee-saved registers and resume stack and instruction pointers.",
+  "Resume the save call with val when nonzero or one when val is zero.",
+  "Preserve the signal mask and current floating-point control state. The restore call does not return.",
+]
+
+[abi]
+narrow_args = ["esi:s32"]
+variadic = false
+noreturn = true

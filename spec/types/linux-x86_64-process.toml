@@ -1,0 +1,17 @@
+schema_version = 1
+
+[types]
+pid_t = "int"
+
+[syscalls]
+getpid = 39
+fork = 57
+execve = 59
+wait4 = 61
+getppid = 110
+pipe2 = 293
+
+[wait_flags]
+WNOHANG = 1
+WUNTRACED = 2
+WCONTINUED = 8

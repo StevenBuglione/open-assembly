@@ -42,10 +42,19 @@ STAT_FILE_KINDS = {"FIFO": "S_IFIFO", **{kind: "S_IF" + kind for kind in
                                        ("CHR", "DIR", "BLK", "REG", "LNK", "SOCK")}}
 STAT_MODE_BITS = {"S_IFMT", *STAT_FILE_KINDS.values()}
 DIRENT_TYPES = {"DT_UNKNOWN", "DT_FIFO", "DT_CHR", "DT_DIR", "DT_BLK", "DT_REG", "DT_LNK", "DT_SOCK"}
+SIGNAL_NAMES = {
+    "SIGHUP", "SIGINT", "SIGQUIT", "SIGILL", "SIGTRAP", "SIGABRT", "SIGBUS", "SIGFPE", "SIGKILL", "SIGUSR1",
+    "SIGSEGV", "SIGUSR2", "SIGPIPE", "SIGALRM", "SIGTERM", "SIGSTKFLT", "SIGCHLD", "SIGCONT", "SIGSTOP",
+    "SIGTSTP", "SIGTTIN", "SIGTTOU", "SIGURG", "SIGXCPU", "SIGXFSZ", "SIGVTALRM", "SIGPROF", "SIGWINCH",
+    "SIGIO", "SIGPWR", "SIGSYS", "SIGRTMIN", "SIGRTMAX",
+}
+SIGNAL_MASK_OPERATIONS = {"SIG_BLOCK", "SIG_UNBLOCK", "SIG_SETMASK"}
+SIGNAL_ACTION_FLAGS = {"SA_NOCLDSTOP", "SA_NOCLDWAIT", "SA_SIGINFO", "SA_ONSTACK", "SA_RESTART", "SA_NODEFER", "SA_RESETHAND"}
 POSIX_SCOPE = {
-    "unistd.h": {"functions": {"_exit", "close", "dup", "dup2", "getcwd", "getopt", "isatty", "lseek",
-                               "pipe", "read", "readlink", "rmdir", "unlink", "write"},
-                 "types": {"size_t", "ssize_t", "off_t"}, "macros": set(POSIX_FDS) | SEEK_ORIGINS,
+    "unistd.h": {"functions": {"_exit", "close", "dup", "dup2", "execve", "fork", "getcwd", "getopt",
+                               "getpid", "getppid", "isatty", "lseek", "pipe", "pipe2", "read", "readlink",
+                               "rmdir", "unlink", "write"},
+                 "types": {"size_t", "ssize_t", "off_t", "pid_t"}, "macros": set(POSIX_FDS) | SEEK_ORIGINS,
                  "objects": {"environ", "optarg", "opterr", "optind", "optopt"}},
     "stdlib.h": {"functions": {"posix_memalign", "putenv", "setenv", "unsetenv"}},
     "fcntl.h": {"functions": {"creat", "open", "openat"}, "types": {"mode_t"},
@@ -55,6 +64,14 @@ POSIX_SCOPE = {
                    "macros": MODE_BITS | STAT_MODE_BITS | {"S_IS" + kind for kind in STAT_FILE_KINDS}},
     "dirent.h": {"functions": {"closedir", "dirfd", "fdopendir", "opendir", "readdir"},
                  "types": {"DIR", "struct dirent"}},
+    "sys/wait.h": {"functions": {"wait", "waitpid"}, "types": {"pid_t"},
+                   "macros": {"WNOHANG", "WUNTRACED", "WCONTINUED", "WIFEXITED", "WEXITSTATUS",
+                              "WIFSIGNALED", "WTERMSIG", "WIFSTOPPED", "WSTOPSIG", "WIFCONTINUED"}},
+    "setjmp.h": {"functions": {"setjmp", "sigsetjmp", "siglongjmp"}, "types": {"sigjmp_buf"}},
+    "signal.h": {"functions": {"kill", "sigaction", "sigaddset", "sigdelset", "sigemptyset", "sigfillset",
+                               "sigismember", "sigpending", "sigprocmask", "sigsuspend"},
+                 "types": {"pid_t", "siginfo_t", "sigset_t", "struct sigaction"},
+                 "macros": SIGNAL_MASK_OPERATIONS | SIGNAL_ACTION_FLAGS | {"SIGRTMIN", "SIGRTMAX"}},
     "libgen.h": {"functions": {"dirname"}},
     "stdio.h": {"functions": {"getc_unlocked", "putchar_unlocked"}},
     "string.h": {"functions": {"strdup"}},
@@ -193,6 +210,36 @@ def load_file_abi(root):
         if any(type(value) is not int or not -(1 << 31) <= value < (1 << 31)
                for value in constants.values()):
             fail(path, f"{name} values must be signed 32-bit integer constants")
+    return document
+
+
+def load_process_abi(root):
+    path = regular_file(root, "spec/types/linux-x86_64-process.toml", "process ABI")
+    document = read_toml(path)
+    keys(document, {"schema_version", "types", "syscalls", "wait_flags"}, path)
+    version_one(document["schema_version"], path)
+    if document["types"] != {"pid_t": "int"}:
+        fail(path, "process IDs must use the selected signed 32-bit type")
+    keys(document["syscalls"], {"getpid", "fork", "execve", "wait4", "getppid", "pipe2"}, path)
+    keys(document["wait_flags"], {"WNOHANG", "WUNTRACED", "WCONTINUED"}, path)
+    if any(type(value) is not int or not 0 <= value < 1 << 31
+           for group in ("syscalls", "wait_flags") for value in document[group].values()):
+        fail(path, "process ABI constants must be nonnegative signed 32-bit integers")
+    return document
+
+
+def load_signal_abi(root):
+    path = regular_file(root, "spec/types/linux-x86_64-signal.toml", "signal ABI")
+    document = read_toml(path)
+    groups = {"syscalls": {"rt_sigaction", "rt_sigprocmask", "kill", "rt_sigpending", "rt_sigsuspend", "gettid", "tgkill"},
+              "signals": SIGNAL_NAMES, "mask_operations": SIGNAL_MASK_OPERATIONS, "action_flags": SIGNAL_ACTION_FLAGS,
+              "info_codes": {"SI_USER", "SI_KERNEL", "SI_QUEUE", "SI_TKILL"}}
+    keys(document, {"schema_version", *groups}, path)
+    version_one(document["schema_version"], path)
+    for group, names in groups.items():
+        keys(document[group], names, path)
+        if any(type(value) is not int or not -(1 << 31) <= value < 1 << 32 for value in document[group].values()):
+            fail(path, f"{group} values must fit in 32 bits")
     return document
 
 
@@ -378,10 +425,12 @@ def builtin_abi_class(declaration):
     words = [word for word in declaration.split() if word not in qualifiers]
     if len(words) > 1 and words[-1] not in type_words:
         words.pop()
-    if words == ["off_t"]:
+    if words in (["off_t"], ["__al_sighandler_t"], ["jmp_buf"], ["sigjmp_buf"]):
         return "wide", ()
     if words == ["mode_t"]:
         return "narrow", ("u32",)
+    if words == ["pid_t"]:
+        return "narrow", ("s32",)
     counts = {word: words.count(word) for word in set(words)}
     if not words or counts.keys() - type_words:
         return None, ()
@@ -561,6 +610,11 @@ def load_project(root=ROOT):
     for name in sorted(functions):
         visit(name)
     return Project(root, dict(sorted(functions.items())), inventory, load_deviations(root, functions))
+
+
+def nasm_name(name):
+    # WAIT is an x87 mnemonic. NASM strips the identifier escape in ELF.
+    return "$wait" if name == "wait" else name
 
 
 def comment_header(spec):

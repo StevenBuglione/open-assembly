@@ -493,9 +493,9 @@ types = ["wctrans_t", "wctype_t", "wint_t"]
 [[headers]]
 name = "unistd.h"
 standard = "POSIX.1-2024 XBD <unistd.h>"
-count = 28
-functions = ["_exit", "close", "dup", "dup2", "getcwd", "getopt", "isatty", "lseek", "pipe", "read", "readlink", "rmdir", "unlink", "write"]
-types = ["size_t", "ssize_t", "off_t"]
+count = 34
+functions = ["_exit", "close", "dup", "dup2", "execve", "fork", "getcwd", "getopt", "getpid", "getppid", "isatty", "lseek", "pipe", "pipe2", "read", "readlink", "rmdir", "unlink", "write"]
+types = ["size_t", "ssize_t", "off_t", "pid_t"]
 macros = ["STDIN_FILENO", "STDOUT_FILENO", "STDERR_FILENO", "SEEK_SET", "SEEK_CUR", "SEEK_END"]
 objects = ["environ", "optarg", "opterr", "optind", "optopt"]
 
@@ -521,6 +521,29 @@ standard = "POSIX.1-2024 XBD <dirent.h>"
 count = 7
 functions = ["closedir", "dirfd", "fdopendir", "opendir", "readdir"]
 types = ["DIR", "struct dirent"]
+
+[[headers]]
+name = "setjmp.h"
+standard = "POSIX.1-2024 XBD <setjmp.h>"
+count = 4
+functions = ["setjmp", "siglongjmp", "sigsetjmp"]
+types = ["sigjmp_buf"]
+
+[[headers]]
+name = "signal.h"
+standard = "POSIX.1-2024 XBD <signal.h>"
+count = 26
+functions = ["kill", "sigaction", "sigaddset", "sigdelset", "sigemptyset", "sigfillset", "sigismember", "sigpending", "sigprocmask", "sigsuspend"]
+types = ["pid_t", "siginfo_t", "sigset_t", "struct sigaction"]
+macros = ["SIG_BLOCK", "SIG_UNBLOCK", "SIG_SETMASK", "SIGRTMIN", "SIGRTMAX", "SA_NOCLDSTOP", "SA_NOCLDWAIT", "SA_SIGINFO", "SA_ONSTACK", "SA_RESTART", "SA_NODEFER", "SA_RESETHAND"]
+
+[[headers]]
+name = "sys/wait.h"
+standard = "POSIX.1-2024 XBD <sys/wait.h>"
+count = 13
+functions = ["wait", "waitpid"]
+types = ["pid_t"]
+macros = ["WNOHANG", "WUNTRACED", "WCONTINUED", "WIFEXITED", "WEXITSTATUS", "WIFSIGNALED", "WTERMSIG", "WIFSTOPPED", "WSTOPSIG", "WIFCONTINUED"]
 
 [[headers]]
 name = "stdlib.h"
