@@ -1,0 +1,177 @@
+schema = 1
+
+[[case]]
+name = "arena-init-unit"
+sources = ["tests/ext/arena/unit.c"]
+requires = ["arena_init"]
+args = ["init"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:arena-state-model"]
+host_skip = "The independent LP64 arena state model is the oracle."
+
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "arena-init-abi"
+sources = ["tests/ext/arena/abi.c", "tests/phase2/abi.asm"]
+requires = ["arena_init"]
+args = ["init"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:arena-state-model"]
+host_skip = "The independent LP64 arena state model is the oracle."
+
+backends = ["native", "qemu"]
+[case.skip]
+valgrind = "Shared nondefault x87 ABI probe exceeds Memcheck emulation."
+
+[[case]]
+name = "arena-init-packets"
+sources = ["tests/ext/arena/init_packets.c"]
+requires = ["arena_init"]
+args = []
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:arena-state-model"]
+host_skip = "The independent LP64 arena state model is the oracle."
+
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "arena-alloc-unit"
+sources = ["tests/ext/arena/unit.c"]
+requires = ["arena_alloc"]
+args = ["alloc"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:arena-state-model"]
+host_skip = "The independent LP64 arena state model is the oracle."
+
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "arena-alloc-abi"
+sources = ["tests/ext/arena/abi.c", "tests/phase2/abi.asm"]
+requires = ["arena_alloc"]
+args = ["alloc"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:arena-state-model"]
+host_skip = "The independent LP64 arena state model is the oracle."
+
+backends = ["native", "qemu"]
+[case.skip]
+valgrind = "Shared nondefault x87 ABI probe exceeds Memcheck emulation."
+
+[[case]]
+name = "arena-alloc-packets"
+sources = ["tests/ext/arena/alloc_packets.c"]
+requires = ["arena_alloc"]
+args = []
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:arena-state-model"]
+host_skip = "The independent LP64 arena state model is the oracle."
+
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "arena-reset-unit"
+sources = ["tests/ext/arena/unit.c"]
+requires = ["arena_reset"]
+args = ["reset"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:arena-state-model"]
+host_skip = "The independent LP64 arena state model is the oracle."
+
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "arena-reset-abi"
+sources = ["tests/ext/arena/abi.c", "tests/phase2/abi.asm"]
+requires = ["arena_reset"]
+args = ["reset"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:arena-state-model"]
+host_skip = "The independent LP64 arena state model is the oracle."
+
+backends = ["native", "qemu"]
+[case.skip]
+valgrind = "Shared nondefault x87 ABI probe exceeds Memcheck emulation."
+
+[[case]]
+name = "arena-reset-packets"
+sources = ["tests/ext/arena/reset_packets.c"]
+requires = ["arena_reset"]
+args = []
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:arena-state-model"]
+host_skip = "The independent LP64 arena state model is the oracle."
+
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "arena-guards"
+sources = ["tests/ext/arena/guards.c"]
+requires = ["arena_init", "arena_alloc", "arena_reset"]
+args = []
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:arena-state-model"]
+host_skip = "The independent LP64 arena state model is the oracle."
+backends = ["native", "qemu", "valgrind"]
+
+[[stub]]
+symbol = "arena_init"
+case = "arena-init-unit"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "arena_alloc"
+case = "arena-alloc-unit"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "arena_reset"
+case = "arena-reset-unit"
+status = 11
+stdout = ""
+stderr = ""
