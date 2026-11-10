@@ -179,7 +179,7 @@ def build_runtime(directory, log):
 
 
 def build_case(case, directory, runtime, log, stub=None, *, link_wraps=(), candidate=None,
-               c_include=()):
+               c_include=(), c_flags=()):
     startup, archive, exports, _ = runtime
     directory.mkdir()
     objects = []
@@ -188,7 +188,7 @@ def build_case(case, directory, runtime, log, stub=None, *, link_wraps=(), candi
         obj = directory / f"test-{index}.o"
         if source.suffix == ".c":
             include = [argument for path in c_include for argument in ("-I", path)]
-            checked(log, ["gcc", *TEST_C_FLAGS, *include, "-c", source, "-o", obj])
+            checked(log, ["gcc", *TEST_C_FLAGS, *include, *c_flags, "-c", source, "-o", obj])
             audit = "--test-object"
         else:
             checked(log, [*NASM, "-o", obj, source])
