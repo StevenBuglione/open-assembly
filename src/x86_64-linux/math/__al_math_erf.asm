@@ -3,6 +3,7 @@ bits 64
 default rel
 
 global __al_math_erf:function
+extern __al_fork_scratch_locks:data
 extern __al_fp_decode:function
 extern __al_fp_quiet:function
 extern __al_fp_pack_exact:function
@@ -63,7 +64,7 @@ __al_math_erf:
     jge .erfc_underflow
 .prepare:
     mov [rsp + 16], r9d
-    lea rdi, [rel erf_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 20]
     call __al_lock
     lea rdi, [rel argument]
     mov rsi, [rsp]
@@ -236,7 +237,7 @@ __al_math_erf:
     mov r12, rax
     mov r13d, edx
     mov [rsp + 32], ecx
-    lea rdi, [rel erf_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 20]
     call __al_unlock
     mov edi, [rsp + 32]
     xor esi, esi
@@ -250,7 +251,7 @@ __al_math_erf:
 .tiny:
     test r14d, r14d
     jnz .tiny_erfc
-    lea rdi, [rel erf_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 20]
     call __al_lock
     lea rdi, [rel series]
     lea rsi, [rel twice_inverse_sqrt_pi]
@@ -357,8 +358,7 @@ log2e_lower:
     dd 0xd23a7d11, 0x7d0ffda0, 0xb82fe177, 0x71547652, 0x00000001
 
 section .bss.__al_math_erf alloc noexec write nobits align=8
-erf_lock:
-    resq 1
+    resq 1                    ; preserve scratch record offsets
 metadata:
     resq 6
 argument:

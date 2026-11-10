@@ -3,7 +3,7 @@
 ; header: stdio.h
 ; prototype: FILE *popen(const char *command, const char *mode)
 ; standard: POSIX.1-2024 XSH popen
-; deps: malloc, free, pipe2, fork, close, _exit, __errno_location
+; deps: malloc, free, pipe2, _Fork, close, _exit, __errno_location
 ; errno: EAGAIN, EINVAL, EMFILE, ENFILE, ENOMEM
 ; mt_safe: true
 ; as_safe: false
@@ -33,7 +33,7 @@ extern __errno_location:function
 extern malloc:function
 extern free:function
 extern pipe2:function
-extern fork:function
+extern _Fork:function
 extern close:function
 extern kill:function
 
@@ -91,7 +91,7 @@ popen:
     mov r13, r14
     mov r14, rax
 .create_child:
-    call fork
+    call _Fork                   ; retain the registry snapshot without callbacks
     test eax, eax
     js .fork_failed
     jz .child

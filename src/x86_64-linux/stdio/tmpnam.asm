@@ -22,6 +22,7 @@ bits 64
 default rel
 
 global tmpnam:function
+global __al_tmpnam_lock:data
 extern __al_lock:function
 extern __al_unlock:function
 extern __al_syscall:function
@@ -43,7 +44,7 @@ tmpnam:
     mov r12, rdi
     call __errno_location
     mov r15d, [rax]
-    lea rdi, [rel name_lock]
+    lea rdi, [rel __al_tmpnam_lock]
     call __al_lock
 
     cmp dword [rel sequence], 32767
@@ -137,7 +138,7 @@ tmpnam:
 .failure:
     xor r12d, r12d
 .done:
-    lea rdi, [rel name_lock]
+    lea rdi, [rel __al_tmpnam_lock]
     call __al_unlock
     mov rax, r12
     add rsp, 16
@@ -158,7 +159,7 @@ working_name: db "/tmp/oa-00000000000000000000000000000000", 0
 section .bss.tmpnam alloc noexec write nobits align=8
 random_bytes: resq 1
 stat_record: resb 144
-name_lock: resd 1
+__al_tmpnam_lock: resd 1
 sequence: resd 1
 public_name: resb 41
 

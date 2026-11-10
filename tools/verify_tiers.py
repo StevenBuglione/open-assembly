@@ -20,6 +20,8 @@ from extension_abi import stable_abi_evidence
 from extension_build import dependency_order
 from extensions import load_packages
 from gate import BUILD, EVIDENCE, GateError, checked, identify_tools, verify_setup, write_evidence
+from math_production import SCOPE as MATH_WRAPPER_SCOPE, SECONDS as MATH_WRAPPER_SECONDS, WRAPPERS
+from math_production import math_inputs as math_wrapper_inputs
 from musl_authorship import ARCHIVE_SHA256 as MUSL_ARCHIVE_SHA, POLICY as AUTHORSHIP_POLICY
 from musl_authorship import inputs as authorship_inputs
 from phase1 import RUNTIME_SRC, build_runtime, phase1_inputs
@@ -35,10 +37,11 @@ PHASES = (
     "phase0", "phase1", "phase2", "production-scalars", "production-linux-files", "production-linux-io",
     "phase3", "phase4", "phase5",
     "phase6-files", "phase6-fcntl", "phase6-compat", "phase6-busybox", "phase6-lua", "phase6-zlib",
-    "phase6-sqlite", "phase6-process", "phase6-signal", "phase6-jump", "phase6-time", "phase6-calendar",
+    "phase6-sqlite", "phase6-sqlite-concurrency", "phase6-process", "phase6-signal", "phase6-jump",
+    "phase6-time", "phase6-calendar",
     "phase6-zone", "phase6-luafiles", "phase6-spawn", "phase6-shell", "phase6-path", "phase6-strftime",
-    "phase7-exact", "phase7-transcendental", "phase7-complex",
-    "phase8-lifecycle", "phase8-sync", "phase8-c11", "phase8-openposix", "phase8-detectors",
+    "phase7-exact", "phase7-transcendental", "phase7-complex", "verify-math-wrappers",
+    "phase8-lifecycle", "phase8-fork", "phase8-sync", "phase8-c11", "phase8-openposix", "phase8-detectors",
     "phase8-compiler-atomics",
     "phase9-multibyte", "phase9-bulk", "phase9-worker", "phase9-worker-sync", "phase9-wide",
     "phase9-libc-test", "phase9-stdio", "phase9-narrow-wide", "phase9-wctype",
@@ -46,7 +49,7 @@ PHASES = (
     "phase10-dns-failover", "phase10-dns-options",
     "phase10-http",
     "phase10-terminal", "phase10-libc-test", "phase10-glob", "phase10-regex",
-    "phase10-gnulib", "phase10-native-ltp", "phase11-vdso",
+    "phase10-gnulib", "phase10-native-ltp", "extension-json-upstream", "phase11-vdso",
     "phase11-static-pie", "phase11-allocator", "phase11-copy-benchmark", "phase11-allocator-benchmark",
     "phase11-vdso-benchmark", "phase11-seccomp", "phase11-old-kernel", "scan-musl-authorship",
 )
@@ -145,6 +148,44 @@ def supplemental_batch(started, name):
     check = engine_fuzz if scalars else packet_fuzz
     for symbol, item in data["functions"].items():
         check(production_child(started, symbol, scope, item), symbol)
+    return path, data
+
+
+def math_wrapper_report(started):
+    path, data = report_file(ROOT, "math-wrappers.json", started)
+    children = data.get("functions")
+    if (data.get("scope") != f"{MATH_WRAPPER_SCOPE}-batch" or data.get("outcome") != "pass"
+            or data.get("production_verified") is not False or data.get("full_scope") is not True
+            or data.get("total") != len(WRAPPERS) or data.get("passed") != len(WRAPPERS)
+            or type(children) is not dict or children.keys() != WRAPPERS.keys()):
+        raise GateError("math wrapper batch does not contain all four scoped results")
+    inputs = math_wrapper_inputs()
+    required = ("abi", "branch_coverage", "candidate_build", "differential_fuzz", "generated_outputs",
+                "generated_stub", "native_oracles", "production_mutation")
+    archives = set()
+    for name, (operation, width, engine) in WRAPPERS.items():
+        item = children[name]
+        report, record = fresh_report(ROOT, f"{name}.math-wrapper.json", MATH_WRAPPER_SCOPE, started)
+        checks = record.get("checks")
+        if (type(item) is not dict or item.get("outcome") != "pass"
+                or item.get("evidence") != report.relative_to(ROOT).as_posix()
+                or item.get("evidence_sha256") != sha256_file(report)
+                or record.get("function") != name or record.get("operation") != operation
+                or record.get("format_bits") != width or record.get("inputs") != inputs
+                or record.get("production_verified") is not False or record.get("wrapper_checks_passed") is not True
+                or type(checks) is not dict or checks.get("dependency_closure") != {"outcome": "pending", "engine": engine}
+                or any(type(checks.get(key)) is not dict or checks[key].get("outcome") != "pass" for key in required)):
+            raise GateError(f"{name}: invalid fresh scoped wrapper evidence or missing pending engine closure")
+        archive = checks["candidate_build"].get("archive_sha256")
+        fuzz = checks["differential_fuzz"]
+        if (type(archive) is not str or not re.fullmatch(r"[0-9a-f]{64}", archive)
+                or fuzz.get("oracle") != "reference:mpfr" or fuzz.get("requested_seconds") != MATH_WRAPPER_SECONDS
+                or type(fuzz.get("elapsed_s")) not in (int, float) or fuzz["elapsed_s"] < MATH_WRAPPER_SECONDS
+                or type(fuzz.get("records")) is not int or fuzz["records"] < 1):
+            raise GateError(f"{name}: missing archive identity or timed MPFR wrapper evidence")
+        archives.add(archive)
+    if len(archives) != 1:
+        raise GateError("math wrapper checks did not use the same reproducible runtime archive")
     return path, data
 
 
@@ -626,6 +667,8 @@ def gate(name, record):
         path, _ = phase2_report(started)
     elif name in ("production-scalars", "production-linux-files", "production-linux-io"):
         path, _ = supplemental_batch(started, name)
+    elif name == "verify-math-wrappers":
+        path, _ = math_wrapper_report(started)
     else:
         path, data = fresh_report(ROOT, filename, scope, started)
         if name == "fcntl-production" and data.get("production_verified") is not True:

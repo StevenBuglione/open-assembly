@@ -266,6 +266,99 @@ whose sign selects the correct side of an exact reciprocal tie.
 [NIST gamma recurrence and reflection](https://dlmf.nist.gov/5.5)
 and [NIST Stirling expansion and error bounds](https://dlmf.nist.gov/5.11).
 
+The binary32 `tgammaf` entry classifies provable extremes before the
+Q256 calculation. The Euler integral bounds the reciprocal growth
+by \(\Gamma(1+x) \ge 1 - \gamma x\), with Euler's constant \(\gamma\).
+This proves overflow for \(0 < |x| < 2^{-128}\) and at \(-2^{-128}\).
+Positive \(2^{-128}\) retains the general path because downward and
+toward-zero rounding produce max finite with INEXACT alone. A directed
+256-bit MPFR lower bound at float encoding `0x420c2910` exceeds
+\(2^{128}\). Monotonicity gives overflow for every larger finite
+positive input. [Euler integral](https://dlmf.nist.gov/5.2) ·
+[Log-convexity](https://dlmf.nist.gov/5.5.iv)
+
+For a negative noninteger below -42, the binary32 distance to the
+nearest integer is at least \(2^{-18}\). Reflection, the sine chord
+bound on that interval, and \(42! > 2^{169}\) place the nonzero
+result below half the least subnormal in magnitude. The integer part's
+parity determines the sign. The existing scaling helper applies the
+caller's rounding mode and publishes the corresponding range flags and
+errno. [Reflection formula](https://dlmf.nist.gov/5.5.ii)
+
+The finite binary32 fast path evaluates gamma in binary64 with an
+enclosure around the approximation. For \(|x| \ge 2^{-18}\), exact
+integer shifts reduce the argument to \([2.5, 3.5)\). The shifted
+binary32 arguments have at most 41 fractional bits and magnitude
+below 64, so each recurrence factor is exact in binary64. The
+degree-24 Taylor polynomial about 3 has absolute remainder at most
+\(2^{-45}\). On the radius-2 circle, Euler's integral bounds the
+complex gamma magnitude by 24. The weighted absolute sum of Taylor
+coefficients on the reduced interval is at most 32. Rounded
+coefficients and 48 Horner operations contribute less than
+\(2^{-42}\) absolute. The central gamma value exceeds one. At most
+45 recurrence products and a final multiplication or division keep
+the combined relative error below \(2^{-40}\). The relative radius
+\(2^{-39}\) leaves room for rounding both enclosure endpoints.
+[Euler integral](https://dlmf.nist.gov/5.2.i) ·
+[Gamma series and recurrence](https://dlmf.nist.gov/5.7)
+
+For smaller arguments, use the reciprocal plus three correction terms
+from the Taylor series of \(\Gamma(1+x)\). Cauchy's estimate on the
+radius-1/2 circle about 1 bounds the omitted correction by
+\(64 |x|^3\). Binary64 reciprocal and addition roundoff plus this
+remainder fit inside the relative radius \(2^{-49}\).
+
+The candidate converts both bounds under the caller's rounding mode
+and requires matching binary32 bits and overflow status. It accepts
+an inexact result only when the rounded value is outside the closed
+enclosure. Possible exact results and ambiguous rounding fall back
+to Q256. MXCSR is restored before returning, calling the fallback,
+or publishing the proved effects. Exact factorials and negative
+integers continue through the existing engine.
+
+The binary32 `lgammaf` entry uses separate enclosures for small
+arguments, the two positive roots, and positive arguments at or above
+8. For \(0 < |x| \le 1/16\), a degree-12 log-gamma series corrects
+\(-\log |x|\). The omitted series is bounded by \(2^{-54}\).
+Within 1/8 of 1 or 2, factor out the exact displacement before the
+degree-18 series evaluation. The leading coefficient in each factored
+series stays separated from zero, so relative accuracy is retained
+near the roots. [Gamma series](https://dlmf.nist.gov/5.7.E3)
+
+The binary64 logarithm reduces its input to \(2^e m\), with
+\(1 \le m < 2\). The 16-term odd series in \((m-1)/(m+1)\) has
+remainder below \(2^{-55}\). The coefficient rounding and SSE2
+evaluation give an absolute error below \(2^{-42}\) over the
+binary32 input exponent range. For positive inputs from 8, eight
+Stirling corrections leave a remainder below \(2^{-53}\). The
+combined error of the selected finite classes fits within the
+relative radius \(2^{-38}\), including rounding the endpoints.
+The positive-real Stirling lower bound gives overflow for every
+finite input at or above \(2^{122}\). [Logarithm series](https://dlmf.nist.gov/4.6.E4) ·
+[Stirling remainder](https://dlmf.nist.gov/5.11.ii)
+
+For the remaining arguments from -32 to 8, at most 40 exact
+unit shifts move the argument to \([8,9)\). One Stirling evaluation
+and one logarithm of the absolute recurrence product replace the
+chain of logarithms. The shifts and factors are exact in binary64.
+Product roundoff, the two log errors, and the final subtraction
+fit inside an absolute radius of \(2^{-36}\). This absolute bound
+keeps the test meaningful when the two terms nearly cancel.
+
+For larger negative nonintegers, reflection uses the exact distance
+\(d\) to the nearest integer. The correction is
+\(-\log d - \log(\sin(\pi d)/(\pi d))\). The even degree-20
+sinc series on \(0 < d \le 1/2\) has remainder below \(2^{-60}\).
+The resulting log-gamma magnitude exceeds twice \(1+|x|\) on this
+interval, so the relative radius \(2^{-38}\) also covers the
+reflected evaluation. [Reflection](https://dlmf.nist.gov/5.5.ii)
+
+The enclosure requires the same rounded bits and overflow status at
+both ends and excludes a possible exact result before publishing
+INEXACT. Poles, special values, and ambiguous enclosures continue
+through Q256. Local SSE control and status are restored before
+fallback or publishing effects.
+
 Run `tools/math-inventory` to compare authored specifications and
 production assembly against every inventoried math and complex
 function. Its counts describe source coverage. The scoped numerical

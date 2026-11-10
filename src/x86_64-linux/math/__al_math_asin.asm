@@ -3,6 +3,7 @@ bits 64
 default rel
 
 global __al_math_asin:function
+extern __al_fork_scratch_locks:data
 extern __al_fp_decode:function
 extern __al_fp_quiet:function
 extern __al_fp_special:function
@@ -70,7 +71,7 @@ __al_math_asin:
     mov [rsp + 8], edx
     mov [rsp + 16], r10d
     mov dword [rsp + 20], 0
-    lea rdi, [rel asin_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 12]
     call __al_lock
     lea rdi, [rel argument]
     mov rsi, [rsp]
@@ -200,7 +201,7 @@ __al_math_asin:
     mov eax, 4
 .constant:
     mov [rsp + 24], eax
-    lea rdi, [rel asin_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 12]
     call __al_lock
     lea rdi, [rel series]
     mov esi, [rsp + 24]
@@ -223,7 +224,7 @@ __al_math_asin:
     mov r12, rax
     mov r13d, edx
     mov [rsp + 28], ecx
-    lea rdi, [rel asin_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 12]
     call __al_unlock
     mov edi, [rsp + 28]
     xor esi, esi
@@ -265,8 +266,7 @@ __al_math_asin:
     ret
 
 section .bss.__al_math_asin alloc noexec write nobits align=8
-asin_lock:
-    resq 1
+    resq 1                    ; preserve scratch record offsets
 metadata:
     resq 6
 argument:

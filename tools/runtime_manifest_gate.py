@@ -12,8 +12,8 @@ import tempfile
 import time
 
 from branch_coverage import verify_coverage
-from gate import (BUILD, COMPILE_FLAGS, LINK_FLAGS, GateError, checked, identify_tools,
-                  nm_symbols, verify_setup, write_evidence)
+from gate import (BUILD, COMPILE_FLAGS, LINK_FLAGS, CandidateFailure, GateError, checked, finish_function_gate, identify_tools,
+                  nm_symbols, verify_setup)
 from phase1 import NASM, build_case, build_runtime, load_manifest as load_phase1_manifest
 from phase4 import Probe, load_probes, observation, parse_probe
 from phase6 import ABI_FIXTURES, PUBLIC as FILE_PUBLIC, SUITE as FILE_SUITE, run_cases, run_stubs
@@ -119,16 +119,21 @@ def candidate_object(path, source, name, original, log, *, debug=False):
     return path
 
 
-def trace_function(name, source, original, probe, directory, runtime, record):
-    if probe.files or probe.input_bytes or "qemu" not in probe.case.backends:
-        raise GateError(f"{probe.case.name}: trace case requires an argument-only QEMU probe")
-    directory.mkdir()
-    log = record["commands"]
+def debug_candidate(name, source, original, directory, log):
     debug = candidate_object(directory / f"{name}.debug.o", source, name, original, log, debug=True)
     text = [checked(log, ["objdump", "-dr", "-j", f".text.{name}", path])
             .partition("Disassembly of section ")[2] for path in (debug, original)]
     if not text[0] or text[0] != text[1]:
         raise GateError("traced candidate differs from the archived function")
+    return debug
+
+
+def trace_function(name, source, original, probe, directory, runtime, record):
+    if probe.files or probe.input_bytes or "qemu" not in probe.case.backends:
+        raise GateError(f"{probe.case.name}: trace case requires an argument-only QEMU probe")
+    directory.mkdir()
+    log = record["commands"]
+    debug = debug_candidate(name, source, original, directory, log)
     binary, artifacts = build_case(probe.case, directory / "linked", runtime, log,
                                   candidate=(name, debug), link_wraps=probe.wraps)
     record.update(debug_object_sha256=sha256_file(debug), linked_artifacts=artifacts,
@@ -149,10 +154,11 @@ def execute_native(probe, binary, directory):
     return observation(command, directory, probe.input_bytes, probe.case.env)
 
 
-def mutate_function(name, spec, source, original, probes, plan, directory, runtime, record):
+def mutate_function(name, spec, source, original, probes, plan, directory, runtime, record, *, run_equivalent=False):
     directory.mkdir()
     returns_value = not spec.prototype.startswith("void ") and not spec.abi.noreturn
-    for operator, contents in applicable_variants(name, source, record, returns_value=returns_value):
+    for operator, contents in applicable_variants(name, source, record, returns_value=returns_value,
+                                                  run_equivalent=run_equivalent):
         work = directory / operator
         work.mkdir()
         mutant = work / f"{name}.asm"
@@ -176,6 +182,13 @@ def mutate_function(name, spec, source, original, probes, plan, directory, runti
             break
     total = len(record["operators"])
     killed = sum(item["killed"] for item in record["operators"])
+    if run_equivalent:
+        record.update(raw_total=total, raw_killed=killed)
+        equivalent = {item["operator"] for item in record["equivalent"]}
+        for item in record["operators"]:
+            if item["killed"] and item["operator"] in equivalent:
+                raise GateError(f"{name}: mutation equivalence contradicted by {item['operator']}")
+        total -= len(equivalent)
     record.update(total=total, killed=killed, threshold_percent=90)
     if not total or 100 * killed < 90 * total:
         raise GateError(f"{name}: mutation killed {killed}/{total}, below 90%")
@@ -234,8 +247,10 @@ def timed_packets(name, probe, record_sizes, directory, commands, record):
                        for label, data in results.items()}
                 if len(set(row.values())) != 1:
                     stimulus = payload[i * seed_size:(i + 1) * seed_size].hex()
-                    raise GateError(f"timed differential seed {FUZZ_SEED:#x}, row {count + i}, "
-                                    f"input {stimulus}: {row}")
+                    oracle_values = {value for label, value in row.items() if label != "candidate"}
+                    error = CandidateFailure if len(oracle_values) == 1 else GateError
+                    raise error(f"timed differential seed {FUZZ_SEED:#x}, row {count + i}, "
+                                f"input {stimulus}: {row}")
         for label, result in results.items():
             digests[label].update(result)
         count += 512
@@ -246,16 +261,16 @@ def timed_packets(name, probe, record_sizes, directory, commands, record):
     print(f"PASS {name} timed differential {count} records", flush=True)
 
 
-def runtime_manifest_production(function, only=None):
+def runtime_manifest_production(function, only=None, *, attempt=None):
     scope = "production-runtime-manifest-function" if only is None else f"production-runtime-manifest-{only}"
     evidence = {"schema_version": 1, "scope": scope, "function": function, "outcome": "fail",
                 "production_verified": False, "checks": {}}
     checks = evidence["checks"]
+    snapshot = partial(manifest_inputs, function)
     try:
         if only not in (None, "coverage", "mutation", "stub", "fuzz"):
             raise GateError(f"unsupported manifest production check {only}")
         plan = PLANS[function]
-        snapshot = partial(manifest_inputs, function)
         evidence["toolchain"] = identify_tools("ar", "make", "objdump", "qemu-x86_64", "musl-gcc")
         evidence["inputs"] = verify_setup(checks, False, snapshot=snapshot)
         project = load_project()
@@ -296,7 +311,7 @@ def runtime_manifest_production(function, only=None):
                     target.mkdir()
                     record = checks[check] = {"outcome": "fail", "cases": {}}
                     run_cases(cases, target, runtime, second, runners, record["cases"],
-                              host_macro="OA_PHASE6_HOST")
+                              host_macro="OA_PHASE6_HOST", classify_native=True)
                     record["outcome"] = "pass"
             if only in (None, "coverage"):
                 trace = checks["branch_coverage"] = {"outcome": "fail", "commands": [], "runs": []}
@@ -319,7 +334,6 @@ def runtime_manifest_production(function, only=None):
         evidence.update(outcome="pass", production_verified=only is None)
     except (GateError, KeyError, OSError, ValueError, subprocess.SubprocessError) as error:
         evidence["error"] = str(error)
+        evidence["failure_class"] = "semantic" if isinstance(error, CandidateFailure) else "harness"
         print(f"gate: {error}", file=sys.stderr)
-    report = write_evidence(f"{function}.{only or 'production'}", evidence)
-    print(f"{scope} evidence: {report}", flush=True)
-    return 0 if evidence["outcome"] == "pass" else 1
+    return finish_function_gate(function, only, evidence, attempt, snapshot)

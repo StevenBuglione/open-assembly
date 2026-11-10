@@ -134,9 +134,10 @@ Blocking lock calls retain Linux EINTR behavior.
 
 ## Processes and spawning
 
-Use the x86-64 `fork` syscall for the initial single-thread runtime.
-The child inherits its stack and TLS values in a separate address
-space. The later threading work owns at-fork handlers and lock recovery.
+The x86-64 `fork` syscall supplies the raw process snapshot. The
+child inherits its stack and TLS values in a separate address space.
+Public `fork` uses the [threaded fork guards and callbacks](0043-threaded-fork.md).
+`_Fork` is the callback-free, async-signal-safe entry.
 `execve` passes the supplied argument and environment vectors to the
 kernel. Its ordinary return is an error. `execv` uses the runtime's
 `environ`. `execvp` and `posix_spawnp` search the calling environment's

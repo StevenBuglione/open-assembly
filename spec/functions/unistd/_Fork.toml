@@ -1,0 +1,19 @@
+name = "_Fork"
+header = "unistd.h"
+prototype = "pid_t _Fork(void)"
+standard = ["POSIX.1-2024 XSH _Fork"]
+deps = ["__errno_location"]
+errno = ["EAGAIN", "ENOMEM", "ENOSYS"]
+mt_safe = true
+as_safe = true
+oracles = ["reference:linux-process-abi", "diff:glibc", "diff:musl"]
+provenance = "original"
+semantics = [
+  "Create a child through the raw Linux process operation without callbacks or runtime locks.",
+  "Return zero in the child and its process ID in the parent.",
+  "Preserve errno on success. Return minus one with errno on failure.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

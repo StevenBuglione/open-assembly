@@ -3,6 +3,7 @@ bits 64
 default rel
 
 global __al_complex_power:function
+extern __al_fork_scratch_locks:data
 extern __al_fp_decode:function
 extern __al_fp_pack_exact:function
 extern __al_fp_special:function
@@ -210,7 +211,7 @@ __al_complex_power:
     add ecx, 671
     and ecx, -32
     mov [rsp + 120], rcx
-    lea rdi, [rel power_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 88]
     call __al_lock
     lea rax, [rel amplitude]
     mov [rel result_record], rax
@@ -396,7 +397,7 @@ __al_complex_power:
     mov r15d, r8d
     mov [rsp + 176], r9d
     mov [rsp + 180], r10d
-    lea rdi, [rel power_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 88]
     call __al_unlock
     mov edi, [rsp + 176]
     mov esi, [rsp + 180]
@@ -465,7 +466,7 @@ __al_complex_power:
 
 section .bss alloc noexec write nobits
 alignb 16
-power_lock: resd 1
+    resd 1                    ; preserve scratch record offsets
 alignb 16
 result_record: resb 48
 norm: resb 10248

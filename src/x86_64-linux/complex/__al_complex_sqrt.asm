@@ -3,6 +3,7 @@ bits 64
 default rel
 
 global __al_complex_sqrt:function
+extern __al_fork_scratch_locks:data
 extern __al_fp_decode:function
 extern __al_fp_quiet:function
 extern __al_fp_special:function
@@ -86,7 +87,7 @@ __al_complex_sqrt:
     sar r10d, 1
     mov [rsp + 88], r10d        ; final binary exponent scaling
     mov dword [rsp + 80], 0      ; omitted positive contribution to the large root
-    lea rdi, [rel complex_sqrt_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 104]
     call __al_lock
     lea rdi, [rel norm]
     lea rsi, [rel norm_scratch]
@@ -233,7 +234,7 @@ __al_complex_sqrt:
 .real_axis:
     cmp dword [rsp + 12], 0
     je .zero_pair
-    lea rdi, [rel complex_sqrt_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 104]
     call __al_lock
     lea rdi, [rel norm]
     mov rsi, [rsp]
@@ -261,7 +262,7 @@ __al_complex_sqrt:
     mov [rsp + 64], rax
     mov [rsp + 72], edx
 .unlock:
-    lea rdi, [rel complex_sqrt_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 104]
     call __al_unlock
     mov edi, [rsp + 84]
     xor esi, esi
@@ -359,8 +360,7 @@ __al_complex_sqrt:
     ret
 
 section .bss.__al_complex_sqrt alloc noexec write nobits align=8
-complex_sqrt_lock:
-    resq 1
+    resq 1                    ; preserve scratch record offsets
 metadata:
     resq 6
 norm:

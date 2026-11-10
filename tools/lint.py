@@ -47,6 +47,8 @@ SSE_ALU = frozenset(("pxor", "pand", "pandn", "por", "pcmpeqb", "pcmpeqw",
                      "pcmpeqd", "paddb", "paddw", "paddd", "paddq", "psubb",
                      "psubw", "psubd", "psubq", "pslldq", "psrldq", "divsd", "mulsd",
                      "addsd", "sqrtss", "sqrtsd"))
+SSE_SCALAR = {"subsd": ("xmm", 8), "ucomisd": ("xmm", 8), "cvtss2sd": ("xmm", 4),
+              "cvtsd2ss": ("xmm", 8), "cvttsd2si": ("gpr", 8)}
 AFTER_SSE2 = frozenset(("addsubpd", "addsubps", "haddpd", "haddps", "hsubpd",
                         "hsubps", "lddqu", "movddup", "movshdup", "movsldup",
                         "palignr", "pabsb", "pabsd", "pabsw", "pshufb",
@@ -77,6 +79,8 @@ COMPLEX_EXTENDED_ARGUMENTS = {**{name + "l": 2 for name in (
     "creal", "cimag", "conj", "cproj", "cabs", "carg", "clog", "csqrt", "cexp", "ccos", "csin", "ccosh", "csinh", "ctan", "ctanh", "catan", "catanh", "casin", "cacos", "casinh", "cacosh",
 )}, "cpowl": 4}
 PRIVATE_FUNCTIONS = {
+    "pthread/__al_atfork_dispatch", "pthread/__al_fork_child", "pthread/__al_fork_guard_at",
+    "pthread/__al_fork_guards", "pthread/__al_fork_scratch_reset",
     "regex/__al_regex_bounds", "regex/__al_regex_bracket", "regex/__al_regex_bracket_atom",
     "regex/__al_regex_branch", "regex/__al_regex_emit", "regex/__al_regex_node",
     "regex/__al_regex_parse", "regex/__al_regex_token",
@@ -112,7 +116,9 @@ PRIVATE_FUNCTIONS = {
     "math/__al_math_frexp", "math/__al_math_modf", "math/__al_math_scale",
     "math/__al_math_next", "math/__al_math_logb", "math/__al_fp_special",
     "math/__al_math_roundint", "math/__al_fp_compare", "math/__al_math_minmax",
-    "math/__al_math_gamma", "math/__al_log_gamma_positive", "math/__al_sinpi_q256", "math/__al_big_multiply",
+    "math/__al_math_gamma", "math/__al_tgammaf_fast", "math/__al_log_gamma_positive",
+    "math/__al_lgammaf_fast", "math/__al_log_f64_bounded", "math/__al_lgamma_f64_stirling",
+    "math/__al_sinpi_q256", "math/__al_big_multiply",
     "math/__al_math_erf", "math/__al_erfc_fraction",
     "math/__al_math_hyperbolic", "math/__al_math_inverse_hyperbolic",
     "math/__al_math_asin", "math/__al_big_isqrt",
@@ -264,6 +270,7 @@ ONCE_FRAME = (
     ("mov", ("rax", "[rsp]")), ("mov", ("[r13 + 0x910]", "rax")),
 )
 CALLBACK_TABLES = {
+    "pthread/__al_atfork_dispatch": ("__al_atfork_state", r"(\w+)\s*\+\s*rax\s*\*\s*8\s*\+\s*8"),
     "stdlib/exit": ("__al_atexit_state", r"(\w+)\s*\+\s*rax\s*\*\s*8\s*\+\s*8"),
     "stdlib/quick_exit": ("__al_quick_exit_state", r"(\w+)\s*\+\s*rax\s*\*\s*8\s*\+\s*8"),
     "pthread/__al_tsd_destruct": ("__al_tsd_keys", r"(\w+)\s*\+\s*r12\s*\+\s*8"),
@@ -345,6 +352,17 @@ SIGACTION_STACK_RECORDS = {
     ("rdx", "rsp + 8"): KernelStackRecord(32, (("mov", ("edi", "13")), ("lea", ("rcx", "[rsp + 40]")))),
 }
 KERNEL_STACK_RECORDS = {
+    "posix/fork": {
+        ("rcx", "rsp + 8"): KernelStackRecord(
+            8, (("mov", ("edi", "14")), ("xor", ("esi", "esi")),
+                ("lea", ("rdx", "[rel all_signals]"))),
+            ((("mov", ("r8d", "8")), ("xor", ("r9d", "r9d"))),),
+        ),
+        ("rdx", "rsp + 8"): KernelStackRecord(
+            8, (("mov", ("edi", "14")), ("mov", ("esi", "2"))),
+            ((("xor", ("ecx", "ecx")), ("mov", ("r8d", "8")), ("xor", ("r9d", "r9d"))),),
+        ),
+    },
     "rt/__al_vdso_clock_entry": {
         ("rdx", "rsp + 8"): KernelStackRecord(
             16, (("mov", ("edi", "310")),),
@@ -428,6 +446,12 @@ KERNEL_STACK_RECORDS = {
     },
 }
 PRIVATE_DATA = {
+    "__al_atfork_state": "pthread/pthread_atfork",
+    "__al_fork_scratch_locks": "pthread/__al_fork_scratch_reset",
+    "__al_setlocale_lock": "locale/setlocale",
+    "__al_localeconv_lock": "locale/localeconv",
+    "__al_tmpnam_lock": "stdio/tmpnam",
+    "__al_heap_lock": "stdlib/__al_heap",
     "__al_atomic_mutex": "compiler_rt/__al_atomic_bytes",
     "__al_locale_flags": "locale/setlocale",
     "stdin": "rt/__al_stdio_init", "stdout": "rt/__al_stdio_init", "stderr": "rt/__al_stdio_init",
@@ -1107,6 +1131,17 @@ def transfer(state, program, ins, syscall_boundary, x87_return):
         return transfer_optional_memcpy(state, ins)
     if opcode.startswith(("v", "aes")) or opcode in AFTER_SSE2:
         reject(line, "ISA_BASELINE", f"{opcode} exceeds the SSE2 baseline")
+    if opcode in SSE_SCALAR:
+        dest, src = check_operands(ins, {2})
+        kind, memory_size = SSE_SCALAR[opcode]
+        if (dest.kind != kind or src.kind not in {"xmm", "mem"}
+                or (kind == "gpr" and dest.width not in {32, 64})):
+            reject(line, "INSTRUCTION", f"invalid scalar SSE2 operands for {opcode}")
+        if src.kind == "mem":
+            if src.size not in {0, memory_size}:
+                reject(line, "INSTRUCTION", f"{opcode} requires a {memory_size}-byte memory operand")
+            state, _ = access_memory(state, src, memory_size, line)
+        return write_gpr(state, dest, line) if kind == "gpr" else state
     if opcode in MOVES | ARITH | UNARY | SSE_MOVE | SSE_ALU | {"cmp", "test"}:
         return transfer_data(state, program, ins)
     if opcode in {"lock", "xchg", "mfence"}:

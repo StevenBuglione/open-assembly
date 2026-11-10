@@ -19,6 +19,7 @@ bits 64
 default rel
 
 global localeconv:function
+global __al_localeconv_lock:data
 extern __al_lock:function
 extern __al_unlock:function
 
@@ -26,7 +27,7 @@ section .text.localeconv alloc exec nowrite progbits
 localeconv:
     push rbx
     lea rbx, [rel c_format]
-    lea rdi, [rel locale_lock]
+    lea rdi, [rel __al_localeconv_lock]
     call __al_lock
     cmp qword [rbx], 0
     jne .ready
@@ -45,7 +46,7 @@ localeconv:
     lea rax, [rel decimal]
     mov [rbx], rax
 .ready:
-    lea rdi, [rel locale_lock]
+    lea rdi, [rel __al_localeconv_lock]
     call __al_unlock
     mov rax, rbx
     pop rbx
@@ -54,7 +55,7 @@ localeconv:
 section .bss.localeconv alloc noexec write nobits align=8
 c_format:
     resb 96
-locale_lock:
+__al_localeconv_lock:
     resq 1
 
 section .rodata.localeconv alloc noexec nowrite progbits

@@ -7,6 +7,7 @@ bits 64
 default rel
 
 global __al_vformat:function
+extern __al_fork_scratch_locks:data
 extern __al_stream_lock:function
 extern __al_stream_unlock:function
 extern __al_lock:function
@@ -77,7 +78,7 @@ __al_vformat:
     mov r14d, -1
     jmp .stream_unlock
 .scratch_lock:
-    lea rdi, [rel format_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 4]
     call __al_lock
     lea r13, [rel output]
     lea r15, [rel fields]
@@ -511,7 +512,7 @@ __al_vformat:
     mov rcx, [r13 + 48]
     mov [rcx], rax
 .unlock:
-    lea rdi, [rel format_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 4]
     call __al_unlock
     cmp qword [rsp + 16], 1
     je .stream_unlock
@@ -541,7 +542,5 @@ output:
 fields:
     resq 5
 
-format_lock:
-    resd 1
 
 section .note.GNU-stack noalloc noexec nowrite progbits

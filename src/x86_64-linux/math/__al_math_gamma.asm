@@ -3,6 +3,7 @@ bits 64
 default rel
 
 global __al_math_gamma:function
+extern __al_fork_scratch_locks:data
 extern __al_fp_decode:function
 extern __al_fp_quiet:function
 extern __al_fp_special:function
@@ -117,7 +118,7 @@ __al_math_gamma:
 .finite:
     cmp dword [rsp + 16], -140
     jl .tiny
-    lea rdi, [rel gamma_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 32]
     call __al_lock
     lea rdi, [rel argument]
     mov rsi, [rsp]
@@ -254,7 +255,7 @@ __al_math_gamma:
     jmp .round_irrational
 
 .tiny:
-    lea rdi, [rel gamma_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 32]
     call __al_lock
     test r14d, r14d
     jnz .tiny_gamma
@@ -319,7 +320,7 @@ __al_math_gamma:
     jmp .save_and_unlock
 
 .factorial:
-    lea rdi, [rel gamma_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 32]
     call __al_lock
     lea rdi, [rel series]
     mov esi, 1
@@ -356,7 +357,7 @@ __al_math_gamma:
     mov r12, rax
     mov r13d, edx
     mov [rsp + 44], ecx
-    lea rdi, [rel gamma_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 32]
     call __al_unlock
     mov edi, [rsp + 44]
     xor esi, esi
@@ -368,7 +369,7 @@ __al_math_gamma:
     jmp .original
 
 .exp_range:
-    lea rdi, [rel gamma_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 32]
     call __al_unlock
     mov ecx, [rsp + 20]
     mov r14d, 65536
@@ -452,8 +453,7 @@ log2e_lower:
     dd 0xd23a7d11, 0x7d0ffda0, 0xb82fe177, 0x71547652, 0x00000001
 
 section .bss.__al_math_gamma alloc noexec write nobits align=8
-gamma_lock:
-    resq 1
+    resq 1                    ; preserve scratch record offsets
 metadata:
     resq 6
 argument:

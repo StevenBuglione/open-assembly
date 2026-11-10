@@ -1,0 +1,41 @@
+schema = 1
+
+[[function]]
+symbol = "json_scan_string"
+abi = "json-string-abi"
+trace = "json-string-unit"
+mutations = { json-string-unit = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21] }
+fuzz = "json-string-packets"
+model = "tests/oracle/json/model.py"
+record_size = 64
+result_size = 240
+
+[[function]]
+symbol = "json_scan_number"
+abi = "json-number-abi"
+trace = "json-number-unit"
+mutations = { json-number-unit = [11, 12, 13, 14, 15, 16] }
+fuzz = "json-number-packets"
+model = "tests/oracle/json/model.py"
+record_size = 64
+result_size = 240
+
+[[function]]
+symbol = "json_lex"
+abi = "json-lex-abi"
+trace = "json-lex-unit"
+mutations = { json-lex-unit = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21] }
+fuzz = "json-lex-packets"
+model = "tests/oracle/json/model.py"
+record_size = 64
+result_size = 240
+
+[[function]]
+symbol = "json_parse"
+abi = "json-parse-abi"
+trace = "json-parse-unit"
+mutations = { json-parse-unit = [11, 12, 13, 14, 15, 16, 29] }
+fuzz = "json-parse-packets"
+model = "tests/oracle/json/model.py"
+record_size = 64
+result_size = 240

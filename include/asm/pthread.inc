@@ -14,6 +14,7 @@
 %define PTHREAD_MUTEX_RECURSIVE 2
 %define PTHREAD_ONCE_INIT 0
 
+extern pthread_atfork
 extern pthread_attr_destroy
 extern pthread_attr_getdetachstate
 extern pthread_attr_getguardsize

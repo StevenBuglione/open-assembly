@@ -64,12 +64,16 @@ jobs:
           persist-credentials: false
       - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b
       - name: Run the independent math suites
-        run: ./tools/container make -k phase7-exact phase7-transcendental phase7-complex
+        run: ./tools/container make -k phase7-exact phase7-transcendental phase7-complex verify-math-wrappers
+      - name: Check operation-specific math campaign binaries
+        run: ./tools/container python3 tests/phase7/campaign/test_operation_probe.py
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
           name: mathematics-verification-evidence
-          path: build/evidence/
+          path: |
+            build/evidence/
+            build/operation-probe-controls/report.json
           if-no-files-found: warn
 
   applications:
@@ -101,8 +105,8 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b
-      - name: Run lifecycle, synchronization, C11, and detector gates
-        run: ./tools/container make -k phase8-lifecycle phase8-sync phase8-c11 phase8-openposix phase8-detectors phase8-compiler-atomics
+      - name: Run lifecycle, fork, synchronization, C11, and detector gates
+        run: ./tools/container make -k phase8-lifecycle phase8-fork phase8-sync phase8-c11 phase8-openposix phase8-detectors phase8-compiler-atomics
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
@@ -140,7 +144,7 @@ jobs:
           persist-credentials: false
       - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b
       - name: Run pinned applications and the descriptor production gate
-        run: ./tools/container make -k phase6-zlib phase6-sqlite phase6-fcntl phase10-gnulib phase10-native-ltp && ./tools/container make gate FUNC=fcntl
+        run: ./tools/container make -k phase6-zlib phase6-sqlite phase6-sqlite-concurrency phase6-fcntl phase10-gnulib phase10-native-ltp && ./tools/container make gate FUNC=fcntl
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
@@ -196,28 +200,56 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b
-      - name: Build and independently verify arena, slice, and vector
+      - name: Verify arena, slice, vector, and map
         run: |
           ./tools/container tools/build-extension arena
           ./tools/container tools/extension-gate arena --require-production
           ./tools/container tools/build-extension slice
           ./tools/container tools/extension-gate slice --require-production
-          ./tools/container tools/gate --production memmove
+          ./tools/container python3 tools/phase2.py memcmp memmove memset --jobs 3
           ./tools/container tools/build-extension vector
           ./tools/container tools/extension-gate vector --require-production
+          ./tools/container tools/build-extension map
+          ./tools/container tools/extension-gate map --require-production
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
           name: extension-verification-evidence
           path: |
             build/evidence/extension-*.json
+            build/evidence/memcmp.production.json
             build/evidence/memmove.production.json
+            build/evidence/memset.production.json
+          if-no-files-found: warn
+
+  extension_formats:
+    name: JSON and HTTP extension production gates
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b
+      - name: Verify JSON and HTTP and run the pinned upstream JSON corpus
+        run: |
+          ./tools/container tools/build-extension json
+          ./tools/container tools/extension-gate json --require-production
+          ./tools/container make extension-json-upstream
+          ./tools/container tools/build-extension http
+          ./tools/container tools/extension-gate http --require-production
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: format-extension-verification-evidence
+          path: build/evidence/extension-*.json
           if-no-files-found: warn
 
   acceptance:
     name: acceptance
     if: always()
-    needs: [core, integration, mathematics, applications, threads, locale, real_programs, network, platform, extensions]
+    needs: [core, integration, mathematics, applications, threads, locale, real_programs, network, platform, extensions, extension_formats]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions: {}
@@ -232,6 +264,7 @@ jobs:
       NETWORK_RESULT: ${{ needs.network.result }}
       PLATFORM_RESULT: ${{ needs.platform.result }}
       EXTENSIONS_RESULT: ${{ needs.extensions.result }}
+      FORMATS_RESULT: ${{ needs.extension_formats.result }}
     steps:
       - name: Require all verification jobs
         shell: bash
@@ -253,3 +286,5 @@ jobs:
           test "$PLATFORM_RESULT" = success
           printf 'Extensions: %s\n' "$EXTENSIONS_RESULT"
           test "$EXTENSIONS_RESULT" = success
+          printf 'JSON and HTTP extensions: %s\n' "$FORMATS_RESULT"
+          test "$FORMATS_RESULT" = success

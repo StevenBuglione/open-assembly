@@ -6,8 +6,8 @@ import sys
 import tempfile
 
 from branch_coverage import verify_coverage
-from gate import (BUILD, COMPILE_FLAGS, GateError, LINK_FLAGS, checked, identify_tools,
-                  nm_symbols, run, verify_setup, write_evidence)
+from gate import (BUILD, COMPILE_FLAGS, CandidateFailure, GateError, LINK_FLAGS, checked, finish_function_gate, identify_tools,
+                  nm_symbols, run, verify_setup)
 from phase1 import NASM, build_case, build_runtime, execute_case, generate_stub, load_manifest
 from production import phase2_inputs
 from spec import ROOT, load_project, sha256_file
@@ -31,7 +31,8 @@ def check_fixture(case, path, runtime, checks):
               "skipped_backends": case.skip}
     checks[case.name] = record
     binary, record["artifacts"] = build_case(case, path, runtime, record["commands"])
-    execute_case(case, binary, record)
+    execute_case(case, binary, record,
+                 classify_native=case.name in {"errno-context", "errno-context-abi"})
     record["outcome"] = "pass"
     return record
 
@@ -132,7 +133,7 @@ def check_glibc(directory, runtime_result, record):
     print(f"PASS {ERRNO} differential glibc errno contract", flush=True)
 
 
-def runtime_production(function, only=None):
+def runtime_production(function, only=None, *, attempt=None):
     scope = "production-runtime-function" if only is None else f"production-runtime-{only}"
     evidence = {"schema_version": 1, "scope": scope, "function": function, "outcome": "fail",
                 "production_verified": False, "checks": {}}
@@ -194,7 +195,6 @@ def runtime_production(function, only=None):
         evidence.update(outcome="pass", production_verified=only is None)
     except (GateError, KeyError, OSError, ValueError) as error:
         evidence["error"] = str(error)
+        evidence["failure_class"] = "semantic" if isinstance(error, CandidateFailure) else "harness"
         print(f"gate: {error}", file=sys.stderr)
-    report = write_evidence(f"{function}.{only or 'production'}", evidence)
-    print(f"{scope} evidence: {report}", flush=True)
-    return 0 if evidence["outcome"] == "pass" else 1
+    return finish_function_gate(function, only, evidence, attempt, phase2_inputs)

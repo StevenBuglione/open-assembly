@@ -88,7 +88,9 @@ def read_edges(report, addresses):
 
 
 def verify_coverage(record, directory, binary, function, source, commands, *, require_complete=True,
-                    exact_case=None, require_entry=False):
+                    exact_case=None, require_entry=False, packet_oracle=None):
+    if exact_case is not None and packet_oracle is not None:
+        raise GateError("choose a single exact trace oracle")
     log = record["commands"]
     source_lines = {}
     addresses, branches = describe_branches(binary, function, source, log, source_lines=source_lines)
@@ -97,11 +99,15 @@ def verify_coverage(record, directory, binary, function, source, commands, *, re
                            "binary_sha256": sha256_file(binary), "source_sha256": sha256_file(source)}
     coverage = set()
     for index, args in enumerate(commands):
-        mode = exact_case.name if exact_case else args[0]
+        mode = "mpfr-packets" if packet_oracle else exact_case.name if exact_case else args[0]
         report = directory / f"edges-{index}.txt"
         options = f"{plugin.resolve()},start={addresses[0]:x},end={addresses[-1] + 1:x},output={report.resolve()}"
         command = [shutil.which("qemu-x86_64"), "-plugin", options, binary.resolve(), *args]
-        if exact_case:
+        if packet_oracle:
+            result = packet_oracle(command)
+            log.append(result)
+            passed = result.get("passed") is True
+        elif exact_case:
             result = run(command, environment=exact_case.env, timeout=90, cwd=directory.resolve())
             log.append(result)
             passed = ((result["returncode"], result["stdout"], result["stderr"]) ==

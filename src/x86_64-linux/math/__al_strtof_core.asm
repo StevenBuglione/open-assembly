@@ -5,6 +5,7 @@ bits 64
 default rel
 
 global __al_strtof_core:function
+extern __al_fork_scratch_locks:data
 extern __al_lock:function
 extern __al_unlock:function
 extern __al_float_lex:function
@@ -25,7 +26,7 @@ __al_strtof_core:
     mov rbx, rdi
     mov r12, rsi
     mov r13, rdx
-    lea rdi, [rel numeric_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 60]
     call __al_lock
     mov rdi, rbx
     lea rsi, [rel numerator]
@@ -113,7 +114,7 @@ __al_strtof_core:
 .save:
     mov r14, rax
     mov r15, rdx
-    lea rdi, [rel numeric_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 60]
     call __al_unlock
     test qword [rsp], 24          ; overflow or underflow
     jz .exceptions
@@ -137,8 +138,7 @@ __al_strtof_core:
     ret
 
 section .bss.__al_strtof_core alloc noexec write nobits align=8
-numeric_lock:
-    resq 1
+    resq 1                    ; preserve scratch record offsets
 metadata:
     resq 6
 numerator:

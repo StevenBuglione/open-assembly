@@ -3,6 +3,7 @@ bits 64
 default rel
 
 global __al_fixed_odd_series:function
+extern __al_fork_scratch_locks:data
 extern __al_lock:function
 extern __al_unlock:function
 extern __al_fixed_mul_precision:function
@@ -28,7 +29,7 @@ __al_fixed_odd_series:
     mov r14d, ecx
     cmp qword [r12], 0
     je .argument
-    lea rdi, [rel series_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 116]
     call __al_lock
     lea rdi, [rel squared]
     mov rsi, r12
@@ -143,11 +144,11 @@ __al_fixed_odd_series:
     mov rcx, r13
     lea r8, [rel scratch]
     call __al_fixed_mul_precision
-    lea rdi, [rel series_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 116]
     call __al_unlock
     jmp .done
 .unlock_argument:
-    lea rdi, [rel series_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 116]
     call __al_unlock
 .argument:
     mov rdi, rbx
@@ -164,7 +165,7 @@ __al_fixed_odd_series:
 
 section .bss alloc noexec write nobits
 alignb 16
-series_lock: resd 1
+    resd 1                    ; preserve scratch record offsets
 alignb 16
 powers: resb 223488
 squared: resb 2304

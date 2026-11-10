@@ -3,6 +3,7 @@ bits 64
 default rel
 
 global __al_math_pow:function
+extern __al_fork_scratch_locks:data
 extern __al_fp_decode:function
 extern __al_fp_pack_exact:function
 extern __al_fp_special:function
@@ -195,7 +196,7 @@ __al_math_pow:
     jnz .take_root
 
 .exact_rational:
-    lea rdi, [rel pow_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 48]
     call __al_lock
     lea r12, [rel power_a]
     lea r13, [rel power_b]
@@ -250,7 +251,7 @@ __al_math_pow:
     jmp .save_and_unlock
 
 .logarithm:
-    lea rdi, [rel pow_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 48]
     call __al_lock
     mov edi, ebx
     mov rsi, r12
@@ -311,7 +312,7 @@ __al_math_pow:
 .save_and_unlock:
     mov r12, rax
     mov r13d, edx
-    lea rdi, [rel pow_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 48]
     call __al_unlock
     mov edi, [rsp + 76]
     xor esi, esi
@@ -323,7 +324,7 @@ __al_math_pow:
     jmp .original
 
 .tiny_exponent:
-    lea rdi, [rel pow_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 48]
     call __al_unlock
     mov edi, ebx
     mov esi, 1
@@ -340,7 +341,7 @@ __al_math_pow:
     call __al_math_tiny_adjust
     jmp .done
 .extreme_exponent:
-    lea rdi, [rel pow_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 48]
     call __al_unlock
     mov edi, ebx
     mov esi, 1
@@ -436,8 +437,7 @@ __al_math_pow:
     ret
 
 section .bss.__al_math_pow alloc noexec write nobits align=8
-pow_lock:
-    resq 1
+    resq 1                    ; preserve scratch record offsets
 metadata:
     resq 6
 power_a:

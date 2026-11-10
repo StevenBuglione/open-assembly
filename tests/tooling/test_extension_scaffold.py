@@ -1,4 +1,4 @@
-"""Verify extension scaffold confinement, namespace and dependency failures."""
+"""Verify extension scaffold and production tooling controls."""
 
 from argparse import Namespace
 from contextlib import redirect_stdout
@@ -6,11 +6,16 @@ from io import StringIO
 from pathlib import Path
 import sys
 import tempfile
+from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "tools"))
 from extensions import create_function, create_package, extension_sources, load_packages
-from spec import Project, SpecError, comment_header
+from gate import GateError
+from production import MUTATION_EQUIVALENCES
+import runtime_manifest_gate
+from spec import Project, SpecError, comment_header, sha256_file
 
 
 class ExtensionScaffold(unittest.TestCase):
@@ -101,6 +106,71 @@ class ExtensionScaffold(unittest.TestCase):
         path.touch()
         with self.assertRaisesRegex(SpecError, "architecture path"):
             extension_sources(self.project, load_packages(self.project))
+
+
+class ExtensionMutationProofs(unittest.TestCase):
+    def setUp(self):
+        self.root = Path(self.enterContext(tempfile.TemporaryDirectory()))
+        self.name = "mutation_control"
+        self.source = self.root / f"{self.name}.asm"
+        # Two generated variants per branch, and two return variants.
+        branches = [f"    jb .edge_{index}\n" for index in range(65)]
+        self.source.write_text("".join([*branches, "    ret\n"]), encoding="utf-8")
+        self.proofs = {f"comparison-signedness-{line}": "Synthetic equivalent operator."
+                       for line in range(1, 17)}
+        self.enterContext(patch.dict(MUTATION_EQUIVALENCES,
+                                     {self.name: (sha256_file(self.source), self.proofs)}))
+        self.object = self.root / "control.o"
+        self.object.write_bytes(b"synthetic object")
+        self.binary = self.root / "control"
+        self.record = {"outcome": "fail", "operators": []}
+        self.distinct = ([f"invert-branch-{line}" for line in range(1, 66)]
+                         + [f"comparison-signedness-{line}" for line in range(17, 66)]
+                         + ["return-plus-one", "return-minus-one"])
+
+    def evaluate(self, killed):
+        spec = SimpleNamespace(prototype="int mutation_control(void)", abi=SimpleNamespace(noreturn=False))
+        case = SimpleNamespace(status=0)
+        probe = SimpleNamespace(case=case, stdout=b"", stderr=b"", wraps=())
+        plan = SimpleNamespace(mutations=(("probe", (42,)),))
+
+        def observe(_probe, _binary, directory):
+            status = 42 if directory.parent.name in killed else 0
+            return (status, b"", b""), {}
+
+        with patch.multiple(runtime_manifest_gate, candidate_object=lambda *_: self.object,
+                            build_case=lambda *_, **__: (self.binary, {self.binary.name: "synthetic"}),
+                            execute_native=observe), redirect_stdout(StringIO()):
+            runtime_manifest_gate.mutate_function(
+                self.name, spec, self.source, self.object, {"probe": probe}, plan, self.root / "mutation",
+                None, self.record, run_equivalent=True)
+
+    def test_changed_source_rejects_equivalence(self):
+        with self.source.open("a", encoding="utf-8") as stream:
+            stream.write("\n")
+        with self.assertRaisesRegex(GateError, "source changed"):
+            self.evaluate(set())
+        self.assertEqual(self.record["operators"], [])
+
+    def test_score_just_below_threshold(self):
+        with self.assertRaisesRegex(GateError, "104/116, below 90%"):
+            self.evaluate(set(self.distinct[:104]))
+        self.assertEqual((self.record["raw_killed"], self.record["raw_total"]), (104, 132))
+        self.assertEqual(self.record["outcome"], "fail")
+
+    def test_score_just_above_threshold_retains_raw_results(self):
+        self.evaluate(set(self.distinct[:105]))
+        self.assertEqual((self.record["killed"], self.record["total"]), (105, 116))
+        self.assertEqual((self.record["raw_killed"], self.record["raw_total"]), (105, 132))
+        self.assertEqual({item["operator"] for item in self.record["equivalent"]}, set(self.proofs))
+        self.assertEqual(len(self.record["operators"]), 132)
+        self.assertEqual(self.record["outcome"], "pass")
+
+    def test_observed_equivalence_contradiction_fails(self):
+        with self.assertRaisesRegex(GateError, "equivalence contradicted by comparison-signedness-1"):
+            self.evaluate(set(self.distinct[:105]) | {"comparison-signedness-1"})
+        self.assertEqual((self.record["raw_killed"], self.record["raw_total"]), (106, 132))
+        self.assertEqual(self.record["outcome"], "fail")
 
 
 if __name__ == "__main__":

@@ -362,6 +362,21 @@ On pull requests, CI compares the protected oracle and external test paths
 with the base commit. New files are allowed. Edits, deletions, moves and
 type changes to existing files fail the check.
 
+Full per-function production gates append local attempt records.
+Three attributable candidate failures suspend a function and require
+its investigation note. Harness failures and existing fixture reports
+do not count. [Local production attempts](production-attempts.md)
+
+Run `./tools/container make verify-math-wrappers` for `exp2f`, `log2f`,
+`exp2`, and `log2`. The wrapper reports bind reproducible archive and
+probe bytes, direct scalar SysV state checks, MPFR-directed cases,
+QEMU entry and conditional-edge coverage, typed stub and mutation
+controls, and at least 60 seconds of seeded MPFR packets per function.
+The hosted glibc and musl observations use the same named shared-domain
+cases. The reports keep the separate shared math engine coverage and
+mutation proof pending. The full `make gate FUNC=...` requires that
+proof before it can qualify a function.
+
 ## Nightly and tagged verification
 
 ```sh

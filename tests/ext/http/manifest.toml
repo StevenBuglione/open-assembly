@@ -1,0 +1,168 @@
+schema = 1
+
+[[case]]
+name = "http-token-unit"
+sources = ["tests/ext/http/unit.c"]
+requires = ["http_is_token_byte"]
+args = ["token"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:bounded-http-model"]
+host_skip = "The bounded byte grammar and RFC token syntax are the independent oracle."
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "http-token-abi"
+sources = ["tests/ext/http/abi.c", "tests/phase2/abi.asm"]
+requires = ["http_is_token_byte"]
+args = ["token"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:bounded-http-model"]
+host_skip = "The bounded byte grammar and RFC token syntax are the independent oracle."
+backends = ["native", "qemu"]
+[case.skip]
+valgrind = "Shared nondefault x87 ABI probe exceeds Memcheck emulation."
+
+[[case]]
+name = "http-token-packets"
+sources = ["tests/ext/http/packets.c"]
+requires = ["http_is_token_byte"]
+args = ["token"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:bounded-http-model"]
+host_skip = "The bounded byte grammar and RFC token syntax are the independent oracle."
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "http-find-unit"
+sources = ["tests/ext/http/unit.c"]
+requires = ["http_find_header_end"]
+args = ["find"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:bounded-http-model"]
+host_skip = "The bounded byte grammar and RFC token syntax are the independent oracle."
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "http-find-abi"
+sources = ["tests/ext/http/abi.c", "tests/phase2/abi.asm"]
+requires = ["http_find_header_end"]
+args = ["find"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:bounded-http-model"]
+host_skip = "The bounded byte grammar and RFC token syntax are the independent oracle."
+backends = ["native", "qemu"]
+[case.skip]
+valgrind = "Shared nondefault x87 ABI probe exceeds Memcheck emulation."
+
+[[case]]
+name = "http-find-packets"
+sources = ["tests/ext/http/packets.c"]
+requires = ["http_find_header_end"]
+args = ["find"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:bounded-http-model"]
+host_skip = "The bounded byte grammar and RFC token syntax are the independent oracle."
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "http-parse-unit"
+sources = ["tests/ext/http/unit.c"]
+requires = ["http_parse"]
+args = ["parse"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:bounded-http-model"]
+host_skip = "The bounded byte grammar and RFC token syntax are the independent oracle."
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "http-parse-abi"
+sources = ["tests/ext/http/abi.c", "tests/phase2/abi.asm"]
+requires = ["http_parse"]
+args = ["parse"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:bounded-http-model"]
+host_skip = "The bounded byte grammar and RFC token syntax are the independent oracle."
+backends = ["native", "qemu"]
+[case.skip]
+valgrind = "Shared nondefault x87 ABI probe exceeds Memcheck emulation."
+
+[[case]]
+name = "http-parse-packets"
+sources = ["tests/ext/http/packets.c"]
+requires = ["http_parse"]
+args = ["parse"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:bounded-http-model"]
+host_skip = "The bounded byte grammar and RFC token syntax are the independent oracle."
+backends = ["native", "qemu", "valgrind"]
+
+[[case]]
+name = "http-guard-pages"
+sources = ["tests/ext/http/guards.c"]
+requires = ["http_find_header_end", "http_parse"]
+args = []
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:bounded-http-model"]
+host_skip = "The bounded byte grammar and RFC token syntax are the independent oracle."
+backends = ["native", "qemu", "valgrind"]
+
+[[stub]]
+symbol = "http_is_token_byte"
+case = "http-token-unit"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "http_find_header_end"
+case = "http-find-unit"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "http_parse"
+case = "http-parse-unit"
+status = 11
+stdout = ""
+stderr = ""

@@ -122,7 +122,8 @@ def verify_production(package, plans, probes, directory, runtime, record):
         trace = item["branch_coverage"] = {"outcome": "fail", "commands": [], "runs": []}
         trace_function(symbol, source, original, probes[plan.trace], work / "coverage", runtime, trace)
         mutation = item["production_mutation"] = {"outcome": "fail", "operators": []}
-        mutate_function(symbol, spec, source, original, probes, plan, work / "mutation", runtime, mutation)
+        mutate_function(symbol, spec, source, original, probes, plan, work / "mutation", runtime, mutation,
+                        run_equivalent=True)
         fuzz = item["differential_fuzz"] = {"outcome": "fail", "commands": [],
                                             "oracle": package.oracle, "model": str(plan.model),
                                             "model_sha256": sha256_file(plan.model)}

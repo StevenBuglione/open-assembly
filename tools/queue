@@ -8,6 +8,7 @@ import json
 import re
 import sys
 
+from failure_journal import JournalError, load_history, resume, suspension
 from spec import (
     ROOT, SpecError, check_comment_header, has_runtime_entry, load_project, production_sources,
     phase0_input_paths, regular_file, snapshot_inputs,
@@ -87,7 +88,7 @@ def evidence_status(project, spec):
             expected = {path.as_posix() for path in phase0_input_paths(project.root)}
             if set(current) != expected:
                 return "stale fixture evidence (input path set changed)"
-        except (SpecError, OSError) as error:
+        except (JournalError, SpecError, OSError) as error:
             return f"stale fixture evidence ({error})"
         changed = [name for name in current if inputs[name] != current[name]]
         if changed:
@@ -177,6 +178,10 @@ def states(project):
     sources = production_sources(project)
     result = {}
     for name, spec in project.functions.items():
+        history = load_history(project.root, name)
+        if history.blocked:
+            result[name] = State("blocked", suspension(project.root, name, history))
+            continue
         implementation = sources.get(name)
         if implementation is None:
             result[name] = State("todo", evidence_status(project, spec))
@@ -199,9 +204,18 @@ def main():
     commands.add_parser("next", help="print the first specified todo with verified dependencies")
     status = commands.add_parser("status", help="report computed state and evidence")
     status.add_argument("function", nargs="?")
+    resume_command = commands.add_parser("resume", help="open a new reviewed attempt window")
+    resume_command.add_argument("function")
+    resume_command.add_argument("--reason", required=True)
     args = parser.parse_args()
     try:
         project = load_project(ROOT)
+        if args.command == "resume":
+            if args.function not in project.functions:
+                raise SpecError(f"not a specified function: {args.function}")
+            sequence = resume(project.root, args.function, args.reason)
+            print(f"{args.function}: resumed at journal record {sequence}")
+            return 0
         by_name = states(project)
         if args.command == "next":
             for name, spec in project.functions.items():
@@ -230,7 +244,7 @@ def main():
             counts["todo"] += len(inventory - by_name.keys())
             print(f"{len(by_name)}/{len(inventory)} functions specified; "
                   + ", ".join(f"{counts[kind]} {kind}" for kind in ("todo", "implemented", "verified", "blocked")))
-    except (SpecError, OSError) as error:
+    except (JournalError, SpecError, OSError) as error:
         print(f"queue: {error}", file=sys.stderr)
         return 1
     return 0

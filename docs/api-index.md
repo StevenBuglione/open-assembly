@@ -3,11 +3,12 @@
 
 This index lists authored function specifications. For implementation state, run `tools/queue status`.
 
-Specs: 729 of 729 inventoried functions. The inventory covers C17, the named POSIX subset, runtime ABI entries, and Linux compatibility extensions. see [inventory scope](cookbook/specifications.md#inventory-scope).
+Specs: 731 of 731 inventoried functions. The inventory covers C17, the named POSIX subset, runtime ABI entries, and Linux compatibility extensions. see [inventory scope](cookbook/specifications.md#inventory-scope).
 
 | Function | Header | Prototype | Standard |
 | --- | --- | --- | --- |
 | [`_Exit`](../spec/functions/stdlib/_Exit.toml) | `<stdlib.h>` | `_Noreturn void _Exit(int status)` | C17 7.22.4.5 |
+| [`_Fork`](../spec/functions/unistd/_Fork.toml) | `<unistd.h>` | `pid_t _Fork(void)` | POSIX.1-2024 XSH _Fork |
 | [`__al_assert_fail`](../spec/functions/assert/__al_assert_fail.toml) | `<assert.h>` | `_Noreturn void __al_assert_fail(const char *expression, const char *file, unsigned int line, const char *function)` | Runtime ABI __al_assert_fail |
 | [`__atomic_compare_exchange`](../spec/functions/compiler_rt/__atomic_compare_exchange.toml) | `<compiler_rt.h>` | `_Bool __atomic_compare_exchange(size_t size, volatile void *object, void *expected, const void *desired, int success_order, int failure_order)` | Runtime ABI __atomic_compare_exchange |
 | [`__atomic_compare_exchange_16`](../spec/functions/compiler_rt/__atomic_compare_exchange_16.toml) | `<compiler_rt.h>` | `_Bool __atomic_compare_exchange_16(volatile void *object, void *expected, unsigned __int128 desired, int success_order, int failure_order)` | Runtime ABI __atomic_compare_exchange_16 |
@@ -474,6 +475,7 @@ Specs: 729 of 729 inventoried functions. The inventory covers C17, the named POS
 | [`ppoll`](../spec/functions/poll/ppoll.toml) | `<poll.h>` | `int ppoll(struct pollfd fds[], nfds_t count, const struct timespec *timeout, const sigset_t *mask)` | Extension ABI ppoll |
 | [`pread`](../spec/functions/unistd/pread.toml) | `<unistd.h>` | `ssize_t pread(int fd, void *buffer, size_t count, off_t offset)` | POSIX.1-2024 XSH pread |
 | [`printf`](../spec/functions/stdio/printf.toml) | `<stdio.h>` | `int printf(const char *restrict format, ...)` | C17 7.21.6.3 |
+| [`pthread_atfork`](../spec/functions/pthread/pthread_atfork.toml) | `<pthread.h>` | `int pthread_atfork(void (*prepare)(void), void (*parent)(void), void (*child)(void))` | POSIX.1-2024 XSH pthread_atfork |
 | [`pthread_attr_destroy`](../spec/functions/pthread/pthread_attr_destroy.toml) | `<pthread.h>` | `int pthread_attr_destroy(pthread_attr_t *attr)` | POSIX.1-2024 XSH pthread_attr_destroy |
 | [`pthread_attr_getdetachstate`](../spec/functions/pthread/pthread_attr_getdetachstate.toml) | `<pthread.h>` | `int pthread_attr_getdetachstate(const pthread_attr_t *attr, int *detachstate)` | POSIX.1-2024 XSH pthread_attr_getdetachstate |
 | [`pthread_attr_getguardsize`](../spec/functions/pthread/pthread_attr_getguardsize.toml) | `<pthread.h>` | `int pthread_attr_getguardsize(const pthread_attr_t *restrict attr, size_t *restrict guardsize)` | POSIX.1-2024 XSH pthread_attr_getguardsize |

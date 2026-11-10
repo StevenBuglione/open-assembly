@@ -3,6 +3,7 @@ bits 64
 default rel
 
 global __al_math_hyperbolic:function
+extern __al_fork_scratch_locks:data
 extern __al_fp_decode:function
 extern __al_fp_pack_exact:function
 extern __al_fp_special:function
@@ -67,7 +68,7 @@ __al_math_hyperbolic:
     jne .evaluate
     mov dword [rsp + 20], 0
 .evaluate:
-    lea rdi, [rel hyper_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 36]
     call __al_lock
     mov edi, ebx
     mov rsi, r12
@@ -165,7 +166,7 @@ __al_math_hyperbolic:
     mov r12, rax
     mov r13d, edx
     mov [rsp + 24], ecx
-    lea rdi, [rel hyper_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 36]
     call __al_unlock
     mov edi, [rsp + 24]
     xor esi, esi
@@ -197,7 +198,7 @@ __al_math_hyperbolic:
     mov rax, [rsp + 32]
     mov rdx, [rel metadata + 16]
     mov [rax + 16], rdx
-    lea rdi, [rel hyper_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 36]
     call __al_unlock
     jmp .done
 
@@ -296,8 +297,7 @@ __al_math_hyperbolic:
     ret
 
 section .bss.__al_math_hyperbolic alloc noexec write nobits align=8
-hyper_lock:
-    resq 1
+    resq 1                    ; preserve scratch record offsets
 metadata:
     resq 6
 exponential:

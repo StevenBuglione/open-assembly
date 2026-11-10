@@ -3,6 +3,7 @@ bits 64
 default rel
 
 global __al_math_root:function
+extern __al_fork_scratch_locks:data
 extern __al_fp_decode:function
 extern __al_fp_special:function
 extern __al_fp_quiet:function
@@ -70,7 +71,7 @@ __al_math_root:
 .common:
     mov [rsp + 28], eax
     mov dword [rsp + 24], 0
-    lea rdi, [rel root_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 52]
     call __al_lock
     mov rax, [rsp + 8]
     mul rax
@@ -103,7 +104,7 @@ __al_math_root:
     cmp r8d, 2
     ja .original
     mov [rsp + 28], edx
-    lea rdi, [rel root_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 52]
     call __al_lock
     lea r12, [rel radicand]
     mov rdi, r12
@@ -121,7 +122,7 @@ __al_math_root:
     mov r12, rax
     mov r13d, edx
     mov [rsp + 44], ecx
-    lea rdi, [rel root_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 52]
     call __al_unlock
     mov edi, [rsp + 44]
     xor esi, esi
@@ -185,8 +186,7 @@ __al_math_root:
     ret
 
 section .bss.__al_math_root alloc noexec write nobits align=8
-root_lock:
-    resq 1
+    resq 1                    ; preserve scratch record offsets
 radicand:
     resq 1281
 addend:

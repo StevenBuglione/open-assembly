@@ -49,7 +49,7 @@ def phase6_inputs():
     return dict(sorted(hashes.items()))
 
 
-def run_cases(probes, directory, first, second, runners, checks, host_macro):
+def run_cases(probes, directory, first, second, runners, checks, host_macro, *, classify_native=False):
     hosts = directory / "host"
     hosts.mkdir()
     for probe in probes:
@@ -70,7 +70,8 @@ def run_cases(probes, directory, first, second, runners, checks, host_macro):
         if artifacts != repeated:
             raise GateError(f"{case.name}: isolated fixture builds differ")
         for backend in case.backends:
-            execute_probe(probe, binary, work / backend, item["runs"], {backend: runners[backend]})
+            execute_probe(probe, binary, work / backend, item["runs"], {backend: runners[backend]},
+                          classify_native=classify_native)
         if probe.host_skip is None:
             for compiler, oracle in (("gcc", "diff:glibc"), ("musl-gcc", "diff:musl")):
                 host = host_binary(compiler, case.sources, hosts, item["commands"], host_macro=host_macro)

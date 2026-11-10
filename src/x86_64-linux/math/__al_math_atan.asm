@@ -3,6 +3,7 @@ bits 64
 default rel
 
 global __al_math_atan:function
+extern __al_fork_scratch_locks:data
 extern __al_fp_decode:function
 extern __al_fp_pack_exact:function
 extern __al_fp_quiet:function
@@ -115,7 +116,7 @@ __al_math_atan:
     cmp r11d, -81
     jl .tiny_ratio
     mov dword [rsp + 48], 0      ; use the quarter-pi complement for the transformed ratio
-    lea rdi, [rel atan_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 16]
     call __al_lock
     lea rdi, [rel term]
     mov rsi, [rsp]
@@ -246,7 +247,7 @@ __al_math_atan:
     mov [rsp + 72], r8
     mov dword [rsp + 40], 0
     mov dword [rsp + 48], 0
-    lea rdi, [rel atan_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 16]
     call __al_lock
     cmp qword [r12], 0
     je .raw_zero_y
@@ -341,7 +342,7 @@ __al_math_atan:
 .raw_zero_y:
     cmp dword [rsp + 36], 0
     jne .raw_full_pi
-    lea rdi, [rel atan_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 16]
     call __al_unlock
     mov edi, ebx
     xor esi, esi
@@ -366,7 +367,7 @@ __al_math_atan:
     jne .half_pi
     cmp dword [rsp + 36], 0
     jne .full_pi
-    lea rdi, [rel atan_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 16]
     call __al_lock
     lea rdi, [rel series]
     mov rsi, [rsp]
@@ -421,7 +422,7 @@ __al_math_atan:
     mov eax, 4
 .constant:
     mov [rsp + 56], eax
-    lea rdi, [rel atan_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 16]
     call __al_lock
     lea rdi, [rel series]
     mov eax, [rsp + 56]
@@ -447,7 +448,7 @@ __al_math_atan:
     mov r12, rax
     mov r13d, edx
     mov [rsp + 52], ecx
-    lea rdi, [rel atan_lock]
+    lea rdi, [rel __al_fork_scratch_locks + 16]
     call __al_unlock
     mov ecx, [rsp + 52]
     cmp dword [rsp + 64], 2
@@ -491,8 +492,7 @@ __al_math_atan:
     ret
 
 section .bss.__al_math_atan alloc noexec write nobits align=8
-atan_lock:
-    resq 1
+    resq 1                    ; preserve scratch record offsets
 metadata:
     resq 6
 argument:

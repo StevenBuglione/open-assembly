@@ -21,15 +21,35 @@ default rel
 
 global lgammaf:function
 extern __al_math_gamma:function
+extern __al_math_scale:function
+extern __al_lgammaf_fast:function
 
 section .text.lgammaf alloc exec nowrite progbits
 lgammaf:
-    xor ecx, ecx
     movd esi, xmm0
-    xor edx, edx
-    mov edi, 0
     sub rsp, 8
+    cmp esi, 0x7c800000           ; positive finite x >= 2^122
+    jb .estimate
+    cmp esi, 0x7f800000
+    jae .estimate
+    xor edi, edi
+    mov esi, 0x3f800000
+    xor edx, edx
+    mov ecx, 65536
+    call __al_math_scale
+    jmp .done
+.estimate:
+    mov [rsp], esi
+    mov edi, esi
+    call __al_lgammaf_fast
+    test edx, edx
+    jnz .done
+    mov esi, [rsp]
+    xor ecx, ecx
+    xor edx, edx
+    xor edi, edi
     call __al_math_gamma
+.done:
     movd xmm0, eax
     add rsp, 8
     ret

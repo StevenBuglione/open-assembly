@@ -3,6 +3,7 @@
 
 import argparse
 from collections import defaultdict
+import fcntl
 from pathlib import Path
 import os
 import sys
@@ -635,7 +636,13 @@ def main():
                 raise SpecError(f"no specification for {args.comment_header}")
             print(comment_header(spec), end="")
         else:
-            sync(project, args.check, not args.test_headers, not args.tracked_only)
+            # Lock the checkout itself so a scan never sees another writer's temporary file.
+            directory = os.open(project.root, os.O_RDONLY | os.O_DIRECTORY)
+            try:
+                fcntl.flock(directory, fcntl.LOCK_SH if args.check else fcntl.LOCK_EX)
+                sync(project, args.check, not args.test_headers, not args.tracked_only)
+            finally:
+                os.close(directory)
     except (SpecError, OSError) as error:
         print(f"gen: {error}", file=sys.stderr)
         return 1
