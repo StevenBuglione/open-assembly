@@ -9,7 +9,7 @@ import sys
 import tempfile
 
 from branch_coverage import verify_coverage
-from gate import (BUILD, COMPILE_FLAGS, GateError, LINK_FLAGS, checked, identify_tools,
+from gate import (BUILD, COMPILE_FLAGS, GateError, LINK_FLAGS, check_strlen_prototype, checked, identify_tools,
                   inputs, nm_symbols, run, verify_setup, write_evidence)
 from lint import JCC
 from phase1 import NASM
@@ -222,8 +222,6 @@ def build_checks(plan, compiler, directory, log):
         path = directory / f"checks-{index}.o"
         if source.suffix == ".c":
             flags = ["-DTEST_HOST_MUSL=1"] if compiler == "musl-gcc" else []
-            if plan.legacy_strlen:
-                flags.extend(("-include", "build/include/c/string.h"))
             checked(log, [compiler, *COMPILE_FLAGS, *plan.defines, *flags, "-c", source, "-o", path])
             checked(log, ["tools/elf-audit", "--test-object", path])
             refs.update(name for name, kind in nm_symbols(log, path, ["-g", "-u"]).items() if kind == "U")
@@ -252,8 +250,8 @@ def link_checks(plan, compiler, objects, candidate, binary, log):
 def legacy_oracle(compiler, directory, log):
     obj = directory / f"oracle-{compiler}.o"
     binary = directory / f"oracle-{compiler}"
-    checked(log, [compiler, *COMPILE_FLAGS, "-include", "build/include/c/string.h",
-                  "-c", LEGACY_ORACLES[compiler], "-o", obj])
+    check_strlen_prototype(log, compiler)
+    checked(log, [compiler, *COMPILE_FLAGS, "-c", LEGACY_ORACLES[compiler], "-o", obj])
     checked(log, ["tools/elf-audit", "--test-object", obj])
     if nm_symbols(log, obj, ["-g", "-u"]).get("strlen") != "U":
         raise GateError(f"{compiler}: strlen oracle lacks its host reference")
