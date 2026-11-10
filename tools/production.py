@@ -422,7 +422,15 @@ def dependency_evidence(dependencies, inputs_snapshot):
     return result
 
 
+def libfuzzer_seconds():
+    value = os.environ.get("OPEN_ASSEMBLY_LIBFUZZER_SECONDS", "60")
+    if re.fullmatch(r"[0-9]{2,4}", value) is None or not 60 <= int(value) <= 3600:
+        raise GateError("OPEN_ASSEMBLY_LIBFUZZER_SECONDS must be an integer from 60 to 3600")
+    return int(value)
+
+
 def run_libfuzzer(plan, objects, directory, record):
+    duration = libfuzzer_seconds()
     directory.mkdir()
     log = record["commands"]
     if not plan.fuzz_sources:
@@ -451,12 +459,13 @@ def run_libfuzzer(plan, objects, directory, record):
     if not {"LLVMFuzzerTestOneInput", candidate_symbol(plan.name)} <= defined.keys():
         raise GateError("libFuzzer executable is missing fixture or candidate entry")
     record["artifacts"] = {path.name: sha256_file(path) for path in (binary, *fixture_objects)}
-    stdout = checked(log, [binary, "-seed=1634488114", "-max_total_time=60", "-max_len=8192",
-                           "-print_final_stats=1"], timeout=90)
-    if stdout or not re.search(r"(?m)^Done [1-9][0-9]* runs in \d+ second\(s\)$", log[-1]["stderr"]):
-        raise GateError(f"{plan.name}: libFuzzer did not report completed execution")
-    record["outcome"] = "pass"
-    print(f"PASS {plan.name} 60-second libFuzzer campaign", flush=True)
+    stdout = checked(log, [binary, "-seed=1634488114", f"-max_total_time={duration}", "-max_len=8192",
+                           "-print_final_stats=1"], timeout=duration + 30)
+    done = re.search(r"(?m)^Done ([1-9][0-9]*) runs in (\d+) second\(s\)$", log[-1]["stderr"])
+    if stdout or done is None or int(done[2]) < duration:
+        raise GateError(f"{plan.name}: libFuzzer did not report the required completed execution")
+    record.update(outcome="pass", requested_seconds=duration, elapsed_seconds=int(done[2]), runs=int(done[1]))
+    print(f"PASS {plan.name} {duration}-second libFuzzer campaign", flush=True)
 
 
 def run_external(plan, candidate, stub, directory, record):

@@ -885,6 +885,7 @@ def phase0_input_paths(root):
     """Enumerate exactly the repository inputs covered by Phase 0 evidence."""
     root = Path(root).resolve()
     paths = {Path(relative) for relative in PHASE0_FIXED_INPUTS}
+    paths.update(path.relative_to(root) for path in (root / ".github/workflows").glob("*.yml"))
     for directory in ("tools", "nix", "spec", "include/asm", "tests", "ext"):
         paths.update(path.relative_to(root) for path in (root / directory).rglob("*")
                      if path.is_file() and "__pycache__" not in path.parts and path.suffix != ".pyc")

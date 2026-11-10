@@ -361,3 +361,32 @@ independent Phase 2 manifest.
 On pull requests, CI compares the protected oracle and external test paths
 with the base commit. New files are allowed. Edits, deletions, moves and
 type changes to existing files fail the check.
+
+## Nightly and tagged verification
+
+```sh
+./tools/container python3 tools/verify_tiers.py nightly
+./tools/container python3 tools/verify_tiers.py release --tag v1.0.0
+```
+
+The nightly entry point runs the available matrix, including Phase 2
+production mutation and 300-second libFuzzer observations, exact binary32
+rounding groups, selected transcendental shards, the isolated memcpy benchmark,
+and the pinned application and external suites. The extension smoke control runs in a separate clone.
+Its unimplemented, scoped, and production-required reports are archived
+with the main evidence.
+
+The release tier additionally validates the checked-out tag and compares
+two independently built and audited sets of runtime, PIE startup and
+application artifacts. Its JSON evidence includes fresh per-function
+coverage, mutation summaries, the outstanding inventory, and the declared
+deviations. Both workflows upload evidence even when verification fails.
+
+Every listed gate must produce a fresh passing report with matching input
+hashes. Use repeated `--only` selections for focused diagnosis. Such a run
+exits nonzero with a partial report. The current matrix also records unmet
+old-kernel boot, restrictive seccomp, remaining full binary32 domains,
+LTP and gnulib, performance, and authorship similarity requirements. A tier
+with any failure or unmet requirement exits nonzero and cannot qualify
+a release. The platform section records the actual native kernel and
+seccomp mode separately from those matrix requirements.

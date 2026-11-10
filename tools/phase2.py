@@ -9,7 +9,7 @@ import sys
 from gate import EVIDENCE, GateError, run, write_evidence
 from phase2_helpers import HELPER, WRAPPERS
 from phase11_copy import HELPER as COPY_HELPER
-from production import phase2_inputs
+from production import libfuzzer_seconds, phase2_inputs
 from runtime_gate import ERRNO
 from spec import ROOT, load_project, sha256_file
 
@@ -30,7 +30,8 @@ def phase2_functions():
 def check_function(function, only):
     command = [TOOLS[only], function] if only else ["tools/gate", "--production", function]
     try:
-        result = run(command, timeout=240)
+        timeout = max(240, libfuzzer_seconds() + 180) if only is None else 240
+        result = run(command, timeout=timeout)
     except (GateError, OSError) as error:
         return {"outcome": "fail", "error": str(error)}
     report = EVIDENCE / f"{function}.{only or 'production'}.json"
