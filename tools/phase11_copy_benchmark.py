@@ -56,7 +56,8 @@ def quiet_cpu(observation):
     return cpu, allowed
 
 
-def build_benchmarks(directory, report):
+def build_benchmarks(directory, report, *, source=SOURCE, symbols=("memcpy",),
+                     open_members=("memcpy", "__al_memcpy_bulk")):
     log = report["commands"]
     runtime = directory / "runtime"
     checked(log, ["make", "--no-print-directory", "runtime", f"RUNTIME_BUILD={runtime}"], timeout=240)
@@ -72,28 +73,30 @@ def build_benchmarks(directory, report):
         obj = directory / f"benchmark-{kind}.o"
         binary = directory / f"benchmark-{kind}"
         link_map = binary.with_suffix(".map")
-        checked(log, [compiler, *COMPILE_FLAGS, "-fno-stack-protector", *includes, "-c", SOURCE, "-o", obj])
+        checked(log, [compiler, *COMPILE_FLAGS, "-fno-stack-protector", *includes, "-c", source, "-o", obj])
         checked(log, ["tools/elf-audit", "--test-object", obj])
-        if nm_symbols(log, obj, ["-g", "-u"]).get("memcpy") != "U":
-            raise GateError(f"{kind}: compiler eliminated the measured memcpy reference")
+        undefined = nm_symbols(log, obj, ["-g", "-u"])
+        if any(undefined.get(name) != "U" for name in symbols):
+            raise GateError(f"{kind}: compiler eliminated a measured symbol reference")
         if kind == "openasm":
             checked(log, ["ld", "-static", "-no-pie", "--fatal-warnings", "--gc-sections", "-z", "noexecstack",
-                          "-Map", link_map, "-o", binary, startup, obj, archive])
+                          "-Map", link_map, "--cref", "-o", binary, startup, obj, archive])
         else:
-            checked(log, [compiler, *LINK_FLAGS, f"-Wl,-Map,{link_map}", "-o", binary, obj])
+            checked(log, [compiler, *LINK_FLAGS, f"-Wl,-Map,{link_map},--cref", "-o", binary, obj])
         checked(log, ["tools/elf-audit", binary])
-        symbols = nm_symbols(log, binary, ["-g", "--defined-only"])
+        defined = nm_symbols(log, binary, ["-g", "--defined-only"])
         map_text = link_map.read_text()
-        if symbols.get("memcpy") != "T":
-            raise GateError(f"{kind}: missing linked memcpy text symbol")
-        if kind == "openasm":
-            if (f"{archive}(memcpy.o)" not in map_text or f"{archive}(__al_memcpy_bulk.o)" not in map_text
-                    or symbols.get("__al_memcpy_bulk") != "T"):
-                raise GateError("linked memcpy does not contain the Open Assembly dispatched implementation")
-        else:
-            match = re.search(r"(?m)^(\S+/libc\.a)\([^\n]+\)\s+\S*benchmark-musl\.o \(memcpy\)", map_text)
-            if match is None or Path(match[1]).resolve() != libc:
-                raise GateError("linked memcpy origin was not the pinned musl archive")
+        origin_symbols = open_members if kind == "openasm" else symbols
+        expected_archive = archive.resolve() if kind == "openasm" else libc
+        cross_reference = map_text.split("Cross Reference Table", 1)
+        if len(cross_reference) != 2:
+            raise GateError(f"{kind}: linker map lacks symbol origins")
+        for name in origin_symbols:
+            origin = re.search(rf"(?m)^{re.escape(name)}[ \t]+(\S+\.a)\([^\n]+\)$", cross_reference[1])
+            # Pinned musl publishes malloc through its weak public alias.
+            expected_kind = "W" if kind == "musl" and name == "malloc" else "T"
+            if defined.get(name) != expected_kind or origin is None or Path(origin[1]).resolve() != expected_archive:
+                raise GateError(f"{kind}: {name} does not come from the expected static archive")
         report["artifacts"][kind] = {path.name: sha256_file(path) for path in (obj, binary, link_map)}
         executables[kind] = binary
     return executables

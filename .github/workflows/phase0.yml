@@ -178,7 +178,7 @@ jobs:
           persist-credentials: false
       - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b
       - name: Run optional static PIE and ELF relocation controls
-        run: ./tools/container make -k phase11-static-pie phase11-copy phase11-vdso
+        run: ./tools/container make -k phase11-static-pie phase11-copy phase11-vdso phase11-allocator
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
