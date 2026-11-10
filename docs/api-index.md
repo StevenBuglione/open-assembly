@@ -744,6 +744,10 @@ Specs: 729 of 729 inventoried functions. The inventory covers C17, the named POS
 | [`arena_alloc`](../ext/arena/spec/functions/arena_alloc.toml) | `<arena.h>` | `int arena_alloc(size_t *restrict state, size_t size, size_t alignment, void **restrict result)` | Extension ABI arena |
 | [`arena_init`](../ext/arena/spec/functions/arena_init.toml) | `<arena.h>` | `int arena_init(size_t state[3], void *storage, size_t capacity)` | Extension ABI arena |
 | [`arena_reset`](../ext/arena/spec/functions/arena_reset.toml) | `<arena.h>` | `int arena_reset(size_t state[3])` | Extension ABI arena |
+| [`json_lex`](../ext/json/spec/functions/json_lex.toml) | `<json.h>` | `int json_lex(const unsigned char *restrict data, size_t length, size_t offset, size_t *restrict record)` | Extension ABI json |
+| [`json_parse`](../ext/json/spec/functions/json_parse.toml) | `<json.h>` | `long json_parse(const unsigned char *restrict data, size_t length, size_t *restrict workspace, size_t frame_capacity, size_t *restrict tokens, size_t token_capacity)` | Extension ABI json |
+| [`json_scan_number`](../ext/json/spec/functions/json_scan_number.toml) | `<json.h>` | `long json_scan_number(const unsigned char *data, size_t length, size_t offset)` | Extension ABI json |
+| [`json_scan_string`](../ext/json/spec/functions/json_scan_string.toml) | `<json.h>` | `long json_scan_string(const unsigned char *data, size_t length, size_t offset)` | Extension ABI json |
 | [`map_get`](../ext/map/spec/functions/map_get.toml) | `<map.h>` | `int map_get(const size_t *restrict state, const unsigned char *key, size_t length, size_t *restrict value)` | Extension ABI map |
 | [`map_init`](../ext/map/spec/functions/map_init.toml) | `<map.h>` | `int map_init(size_t *restrict state, size_t *restrict slots, size_t capacity, size_t seed)` | Extension ABI map |
 | [`map_probe`](../ext/map/spec/functions/map_probe.toml) | `<map.h>` | `long map_probe(const size_t *restrict state, const unsigned char *key, size_t length)` | Extension ABI map |
