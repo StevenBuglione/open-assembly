@@ -123,12 +123,12 @@ POSIX_SCOPE = {
                 "types": {"struct addrinfo"}, "macros": set(NETDB_CONSTANTS)},
     "sys/socket.h": {"functions": {"accept", "bind", "connect", "getpeername", "getsockname", "getsockopt", "listen", "recv", "recvfrom", "recvmsg", "send", "sendmsg", "sendto", "setsockopt", "shutdown", "socket", "socketpair"},
         "types": {"sa_family_t", "socklen_t", "struct cmsghdr", "struct linger", "struct msghdr", "struct sockaddr", "struct sockaddr_storage"},
-        "macros": {"AF_INET", "AF_INET6", "AF_UNIX", "AF_UNSPEC", "CMSG_DATA", "CMSG_FIRSTHDR", "CMSG_LEN", "CMSG_NXTHDR", "CMSG_SPACE", "MSG_CTRUNC", "MSG_DONTROUTE", "MSG_EOR", "MSG_NOSIGNAL", "MSG_OOB", "MSG_PEEK", "MSG_TRUNC", "MSG_WAITALL", "SCM_RIGHTS", "SHUT_RD", "SHUT_RDWR", "SHUT_WR", "SOCK_DGRAM", "SOCK_RAW", "SOCK_SEQPACKET", "SOCK_STREAM", "SOL_SOCKET", "SO_ACCEPTCONN", "SO_BROADCAST", "SO_ERROR", "SO_KEEPALIVE", "SO_LINGER", "SO_RCVBUF", "SO_REUSEADDR", "SO_SNDBUF", "SO_TYPE"}},
+        "macros": {"AF_INET", "AF_INET6", "AF_UNIX", "AF_UNSPEC", "CMSG_DATA", "CMSG_FIRSTHDR", "CMSG_LEN", "CMSG_NXTHDR", "CMSG_SPACE", "MSG_CTRUNC", "MSG_DONTROUTE", "MSG_EOR", "MSG_NOSIGNAL", "MSG_OOB", "MSG_PEEK", "MSG_TRUNC", "MSG_WAITALL", "PF_INET", "SCM_RIGHTS", "SHUT_RD", "SHUT_RDWR", "SHUT_WR", "SOCK_DGRAM", "SOCK_RAW", "SOCK_SEQPACKET", "SOCK_STREAM", "SOL_SOCKET", "SO_ACCEPTCONN", "SO_BROADCAST", "SO_ERROR", "SO_KEEPALIVE", "SO_LINGER", "SO_RCVBUF", "SO_RCVTIMEO", "SO_REUSEADDR", "SO_SNDBUF", "SO_TYPE"}},
     "sys/un.h": {"types": {"struct sockaddr_un"}},
     "sys/uio.h": {"types": {"struct iovec"}},
     "netinet/in.h": {"types": {"in_addr_t", "in_port_t", "struct in6_addr", "struct in_addr", "struct sockaddr_in", "struct sockaddr_in6"},
         "macros": {"IN6ADDR_ANY_INIT", "IN6ADDR_LOOPBACK_INIT", "INADDR_ANY", "INADDR_BROADCAST", "INADDR_LOOPBACK", "INADDR_NONE", "INET_ADDRSTRLEN", "INET6_ADDRSTRLEN", "IPPROTO_ICMP", "IPPROTO_IP", "IPPROTO_IPV6", "IPPROTO_TCP", "IPPROTO_UDP"}},
-    "arpa/inet.h": {"functions": {"htonl", "htons", "inet_ntop", "inet_pton", "ntohl", "ntohs"}},
+    "arpa/inet.h": {"functions": {"htonl", "htons", "inet_addr", "inet_ntoa", "inet_ntop", "inet_pton", "ntohl", "ntohs"}},
     "poll.h": {"functions": {"poll"},
         "types": {"nfds_t", "struct pollfd"},
         "macros": {"POLLERR", "POLLHUP", "POLLIN", "POLLNVAL", "POLLOUT", "POLLPRI", "POLLRDBAND", "POLLRDNORM", "POLLWRBAND", "POLLWRNORM"}},
@@ -329,7 +329,7 @@ def load_network_abi(root):
         fail(path, "network ABI types must match the selected Linux LP64 types")
     groups = {
         "syscalls": {"accept", "accept4", "bind", "connect", "epoll_create", "epoll_create1", "epoll_ctl", "epoll_pwait", "epoll_wait", "getpeername", "getsockname", "getsockopt", "listen", "poll", "ppoll", "recvfrom", "recvmsg", "sendmsg", "sendto", "setsockopt", "shutdown", "socket", "socketpair"},
-        "socket": {"AF_INET", "AF_INET6", "AF_LOCAL", "AF_UNIX", "AF_UNSPEC", "MSG_CMSG_CLOEXEC", "MSG_CTRUNC", "MSG_DONTROUTE", "MSG_DONTWAIT", "MSG_EOR", "MSG_NOSIGNAL", "MSG_OOB", "MSG_PEEK", "MSG_TRUNC", "MSG_WAITALL", "SCM_CREDENTIALS", "SCM_RIGHTS", "SHUT_RD", "SHUT_RDWR", "SHUT_WR", "SOCK_CLOEXEC", "SOCK_DGRAM", "SOCK_NONBLOCK", "SOCK_RAW", "SOCK_SEQPACKET", "SOCK_STREAM", "SOL_SOCKET", "SO_ACCEPTCONN", "SO_BROADCAST", "SO_ERROR", "SO_KEEPALIVE", "SO_LINGER", "SO_PASSCRED", "SO_PEERCRED", "SO_RCVBUF", "SO_REUSEADDR", "SO_REUSEPORT", "SO_SNDBUF", "SO_TYPE"},
+        "socket": {"AF_INET", "AF_INET6", "AF_LOCAL", "AF_UNIX", "AF_UNSPEC", "MSG_CMSG_CLOEXEC", "MSG_CTRUNC", "MSG_DONTROUTE", "MSG_DONTWAIT", "MSG_EOR", "MSG_NOSIGNAL", "MSG_OOB", "MSG_PEEK", "MSG_TRUNC", "MSG_WAITALL", "PF_INET", "SCM_CREDENTIALS", "SCM_RIGHTS", "SHUT_RD", "SHUT_RDWR", "SHUT_WR", "SOCK_CLOEXEC", "SOCK_DGRAM", "SOCK_NONBLOCK", "SOCK_RAW", "SOCK_SEQPACKET", "SOCK_STREAM", "SOL_SOCKET", "SO_ACCEPTCONN", "SO_BROADCAST", "SO_ERROR", "SO_KEEPALIVE", "SO_LINGER", "SO_PASSCRED", "SO_PEERCRED", "SO_RCVBUF", "SO_RCVTIMEO", "SO_REUSEADDR", "SO_REUSEPORT", "SO_SNDBUF", "SO_TYPE"},
         "poll": {"POLLERR", "POLLHUP", "POLLIN", "POLLNVAL", "POLLOUT", "POLLPRI", "POLLRDBAND", "POLLRDHUP", "POLLRDNORM", "POLLWRBAND", "POLLWRNORM"},
         "epoll": {"EPOLLERR", "EPOLLET", "EPOLLEXCLUSIVE", "EPOLLHUP", "EPOLLIN", "EPOLLONESHOT", "EPOLLOUT", "EPOLLPRI", "EPOLLRDBAND", "EPOLLRDHUP", "EPOLLRDNORM", "EPOLLWAKEUP", "EPOLLWRBAND", "EPOLLWRNORM", "EPOLL_CLOEXEC", "EPOLL_CTL_ADD", "EPOLL_CTL_DEL", "EPOLL_CTL_MOD"},
         "inet": {"INADDR_ANY", "INADDR_BROADCAST", "INADDR_LOOPBACK", "INADDR_NONE", "INET_ADDRSTRLEN", "INET6_ADDRSTRLEN", "IPPROTO_ICMP", "IPPROTO_IP", "IPPROTO_IPV6", "IPPROTO_TCP", "IPPROTO_UDP"},

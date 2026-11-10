@@ -4,6 +4,8 @@
 
 extern htonl
 extern htons
+extern inet_addr
+extern inet_ntoa
 extern inet_ntop
 extern inet_pton
 extern ntohl

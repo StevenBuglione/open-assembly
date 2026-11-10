@@ -620,10 +620,10 @@ functions = ["ioctl"]
 [[headers]]
 name = "sys/socket.h"
 standard = "POSIX.1-2024 XBD <sys/socket.h>"
-count = 59
+count = 61
 functions = ["accept", "bind", "connect", "getpeername", "getsockname", "getsockopt", "listen", "recv", "recvfrom", "recvmsg", "send", "sendmsg", "sendto", "setsockopt", "shutdown", "socket", "socketpair"]
 types = ["sa_family_t", "socklen_t", "struct cmsghdr", "struct linger", "struct msghdr", "struct sockaddr", "struct sockaddr_storage"]
-macros = ["AF_INET", "AF_INET6", "AF_UNIX", "AF_UNSPEC", "CMSG_DATA", "CMSG_FIRSTHDR", "CMSG_LEN", "CMSG_NXTHDR", "CMSG_SPACE", "MSG_CTRUNC", "MSG_DONTROUTE", "MSG_EOR", "MSG_NOSIGNAL", "MSG_OOB", "MSG_PEEK", "MSG_TRUNC", "MSG_WAITALL", "SCM_RIGHTS", "SHUT_RD", "SHUT_RDWR", "SHUT_WR", "SOCK_DGRAM", "SOCK_RAW", "SOCK_SEQPACKET", "SOCK_STREAM", "SOL_SOCKET", "SO_ACCEPTCONN", "SO_BROADCAST", "SO_ERROR", "SO_KEEPALIVE", "SO_LINGER", "SO_RCVBUF", "SO_REUSEADDR", "SO_SNDBUF", "SO_TYPE"]
+macros = ["AF_INET", "AF_INET6", "AF_UNIX", "AF_UNSPEC", "CMSG_DATA", "CMSG_FIRSTHDR", "CMSG_LEN", "CMSG_NXTHDR", "CMSG_SPACE", "MSG_CTRUNC", "MSG_DONTROUTE", "MSG_EOR", "MSG_NOSIGNAL", "MSG_OOB", "MSG_PEEK", "MSG_TRUNC", "MSG_WAITALL", "PF_INET", "SCM_RIGHTS", "SHUT_RD", "SHUT_RDWR", "SHUT_WR", "SOCK_DGRAM", "SOCK_RAW", "SOCK_SEQPACKET", "SOCK_STREAM", "SOL_SOCKET", "SO_ACCEPTCONN", "SO_BROADCAST", "SO_ERROR", "SO_KEEPALIVE", "SO_LINGER", "SO_RCVBUF", "SO_RCVTIMEO", "SO_REUSEADDR", "SO_SNDBUF", "SO_TYPE"]
 
 [[headers]]
 name = "sys/un.h"
@@ -647,8 +647,8 @@ macros = ["IN6ADDR_ANY_INIT", "IN6ADDR_LOOPBACK_INIT", "INADDR_ANY", "INADDR_BRO
 [[headers]]
 name = "arpa/inet.h"
 standard = "POSIX.1-2024 XBD <arpa/inet.h>"
-count = 6
-functions = ["htonl", "htons", "inet_ntop", "inet_pton", "ntohl", "ntohs"]
+count = 8
+functions = ["htonl", "htons", "inet_addr", "inet_ntoa", "inet_ntop", "inet_pton", "ntohl", "ntohs"]
 
 [[headers]]
 name = "poll.h"

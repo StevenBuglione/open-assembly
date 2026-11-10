@@ -14,5 +14,9 @@
 %define IPPROTO_UDP 17
 %define IPPROTO_IPV6 41
 
+extern htonl
+extern htons
+extern ntohl
+extern ntohs
 
 %endif

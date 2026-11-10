@@ -3,7 +3,7 @@
 
 This index lists authored function specifications. For implementation state, run `tools/queue status`.
 
-Specs: 706 of 706 inventoried functions. The inventory covers C17, the named POSIX subset, runtime ABI entries, and Linux compatibility extensions. see [inventory scope](cookbook/specifications.md#inventory-scope).
+Specs: 708 of 708 inventoried functions. The inventory covers C17, the named POSIX subset, runtime ABI entries, and Linux compatibility extensions. see [inventory scope](cookbook/specifications.md#inventory-scope).
 
 | Function | Header | Prototype | Standard |
 | --- | --- | --- | --- |
@@ -302,6 +302,8 @@ Specs: 706 of 706 inventoried functions. The inventory covers C17, the named POS
 | [`ilogbl`](../spec/functions/math/ilogbl.toml) | `<math.h>` | `int ilogbl(long double x)` | C17 7.12.6.5 |
 | [`imaxabs`](../spec/functions/inttypes/imaxabs.toml) | `<inttypes.h>` | `intmax_t imaxabs(intmax_t value)` | C17 7.8.2.1 |
 | [`imaxdiv`](../spec/functions/inttypes/imaxdiv.toml) | `<inttypes.h>` | `imaxdiv_t imaxdiv(intmax_t numerator, intmax_t denominator)` | C17 7.8.2.2 |
+| [`inet_addr`](../spec/functions/arpa/inet/inet_addr.toml) | `<arpa/inet.h>` | `in_addr_t inet_addr(const char *source)` | POSIX.1-2024 XSH inet_addr |
+| [`inet_ntoa`](../spec/functions/arpa/inet/inet_ntoa.toml) | `<arpa/inet.h>` | `char *inet_ntoa(struct in_addr address)` | POSIX.1-2024 XSH inet_ntoa |
 | [`inet_ntop`](../spec/functions/arpa/inet/inet_ntop.toml) | `<arpa/inet.h>` | `const char *inet_ntop(int family, const void *restrict source, char *restrict destination, socklen_t size)` | POSIX.1-2024 XSH inet_ntop |
 | [`inet_pton`](../spec/functions/arpa/inet/inet_pton.toml) | `<arpa/inet.h>` | `int inet_pton(int family, const char *restrict source, void *restrict destination)` | POSIX.1-2024 XSH inet_pton |
 | [`ioctl`](../spec/functions/sys/ioctl/ioctl.toml) | `<sys/ioctl.h>` | `int ioctl(int fd, unsigned long request, ...)` | Extension ABI ioctl |

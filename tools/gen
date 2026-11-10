@@ -161,6 +161,10 @@ def make_outputs(project, include_tracked=True, include_test=True):
         })
         for header in ("netinet/in.h", "sys/un.h", "sys/uio.h"):
             grouped.setdefault(header, [])
+        # These symbols have canonical arpa/inet specs and are also declared in netinet/in.h.
+        grouped["netinet/in.h"].extend(project.functions[name]
+                                      for name in ("htonl", "htons", "ntohl", "ntohs")
+                                      if name in project.functions)
     if include_test:
         grouped["sys/types.h"] = []
     outputs = {}

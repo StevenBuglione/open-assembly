@@ -6,6 +6,7 @@
 %define AF_UNIX 1
 %define AF_LOCAL 1
 %define AF_INET 2
+%define PF_INET 2
 %define AF_INET6 10
 %define SOCK_STREAM 1
 %define SOCK_DGRAM 2
@@ -25,6 +26,7 @@
 %define SO_REUSEPORT 15
 %define SO_PASSCRED 16
 %define SO_PEERCRED 17
+%define SO_RCVTIMEO 20
 %define SO_ACCEPTCONN 30
 %define SHUT_RD 0
 %define SHUT_WR 1
