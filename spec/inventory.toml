@@ -1,0 +1,498 @@
+# Catalog of the C17 clause 7 API and the named POSIX bootstrap subset.
+# Counts include conditional entries and count each family pattern once.
+# See docs/cookbook/specifications.md for the scope and counting rules.
+schema_version = 1
+
+[sources]
+c17 = "https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2310.pdf"
+posix = "https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/unistd.h.html"
+
+[[headers]]
+name = "assert.h"
+standard = "C17 7.2"
+count = 2
+macros = ["assert", "static_assert"]
+
+[[headers]]
+name = "complex.h"
+standard = "C17 7.3"
+count = 75
+
+[[headers.conditional]]
+when = "Imaginary types are supported"
+macros = ["_Imaginary_I", "imaginary"]
+
+[[headers.conditional]]
+when = "Complex arithmetic is supported"
+functions = [
+  "cabs", "cabsf", "cabsl", "cacos", "cacosf", "cacosh", "cacoshf", "cacoshl", "cacosl", "carg",
+  "cargf", "cargl", "casin", "casinf", "casinh", "casinhf", "casinhl", "casinl", "catan",
+  "catanf", "catanh", "catanhf", "catanhl", "catanl", "ccos", "ccosf", "ccosh", "ccoshf",
+  "ccoshl", "ccosl", "cexp", "cexpf", "cexpl", "cimag", "cimagf", "cimagl", "clog", "clogf",
+  "clogl", "conj", "conjf", "conjl", "cpow", "cpowf", "cpowl", "cproj", "cprojf", "cprojl",
+  "creal", "crealf", "creall", "csin", "csinf", "csinh", "csinhf", "csinhl", "csinl", "csqrt",
+  "csqrtf", "csqrtl", "ctan", "ctanf", "ctanh", "ctanhf", "ctanhl", "ctanl",
+]
+macros = [
+  "CMPLX", "CMPLXF", "CMPLXL", "I", "_Complex_I", "complex",
+]
+pragmas = ["STDC CX_LIMITED_RANGE"]
+
+[[headers]]
+name = "ctype.h"
+standard = "C17 7.4"
+count = 14
+functions = [
+  "isalnum", "isalpha", "isblank", "iscntrl", "isdigit", "isgraph", "islower", "isprint",
+  "ispunct", "isspace", "isupper", "isxdigit", "tolower", "toupper",
+]
+
+[[headers]]
+name = "errno.h"
+standard = "C17 7.5"
+count = 4
+macros = ["EDOM", "EILSEQ", "ERANGE", "errno"]
+
+[[headers]]
+name = "fenv.h"
+standard = "C17 7.6"
+count = 25
+functions = [
+  "feclearexcept", "fegetenv", "fegetexceptflag", "fegetround", "feholdexcept", "feraiseexcept",
+  "fesetenv", "fesetexceptflag", "fesetround", "fetestexcept", "feupdateenv",
+]
+macros = ["FE_ALL_EXCEPT", "FE_DFL_ENV"]
+types = ["fenv_t", "fexcept_t"]
+pragmas = ["STDC FENV_ACCESS"]
+
+[[headers.conditional]]
+when = "The corresponding floating point exception is supported"
+macros = [
+  "FE_DIVBYZERO", "FE_INEXACT", "FE_INVALID", "FE_OVERFLOW", "FE_UNDERFLOW",
+]
+
+[[headers.conditional]]
+when = "The corresponding rounding mode is supported"
+macros = ["FE_DOWNWARD", "FE_TONEAREST", "FE_TOWARDZERO", "FE_UPWARD"]
+
+[[headers]]
+name = "float.h"
+standard = "C17 7.7"
+count = 40
+macros = [
+  "DBL_DECIMAL_DIG", "DBL_DIG", "DBL_EPSILON", "DBL_HAS_SUBNORM", "DBL_MANT_DIG", "DBL_MAX",
+  "DBL_MAX_10_EXP", "DBL_MAX_EXP", "DBL_MIN", "DBL_MIN_10_EXP", "DBL_MIN_EXP", "DBL_TRUE_MIN",
+  "DECIMAL_DIG", "FLT_DECIMAL_DIG", "FLT_DIG", "FLT_EPSILON", "FLT_EVAL_METHOD",
+  "FLT_HAS_SUBNORM", "FLT_MANT_DIG", "FLT_MAX", "FLT_MAX_10_EXP", "FLT_MAX_EXP", "FLT_MIN",
+  "FLT_MIN_10_EXP", "FLT_MIN_EXP", "FLT_RADIX", "FLT_ROUNDS", "FLT_TRUE_MIN", "LDBL_DECIMAL_DIG",
+  "LDBL_DIG", "LDBL_EPSILON", "LDBL_HAS_SUBNORM", "LDBL_MANT_DIG", "LDBL_MAX", "LDBL_MAX_10_EXP",
+  "LDBL_MAX_EXP", "LDBL_MIN", "LDBL_MIN_10_EXP", "LDBL_MIN_EXP", "LDBL_TRUE_MIN",
+]
+
+[[headers]]
+name = "inttypes.h"
+standard = "C17 7.8"
+count = 194
+functions = [
+  "imaxabs", "imaxdiv", "strtoimax", "strtoumax", "wcstoimax", "wcstoumax",
+]
+macros = [
+  "PRIXFAST16", "PRIXFAST32", "PRIXFAST64", "PRIXFAST8", "PRIXLEAST16", "PRIXLEAST32",
+  "PRIXLEAST64", "PRIXLEAST8", "PRIXMAX", "PRIdFAST16", "PRIdFAST32", "PRIdFAST64", "PRIdFAST8",
+  "PRIdLEAST16", "PRIdLEAST32", "PRIdLEAST64", "PRIdLEAST8", "PRIdMAX", "PRIiFAST16",
+  "PRIiFAST32", "PRIiFAST64", "PRIiFAST8", "PRIiLEAST16", "PRIiLEAST32", "PRIiLEAST64",
+  "PRIiLEAST8", "PRIiMAX", "PRIoFAST16", "PRIoFAST32", "PRIoFAST64", "PRIoFAST8", "PRIoLEAST16",
+  "PRIoLEAST32", "PRIoLEAST64", "PRIoLEAST8", "PRIoMAX", "PRIuFAST16", "PRIuFAST32",
+  "PRIuFAST64", "PRIuFAST8", "PRIuLEAST16", "PRIuLEAST32", "PRIuLEAST64", "PRIuLEAST8",
+  "PRIuMAX", "PRIxFAST16", "PRIxFAST32", "PRIxFAST64", "PRIxFAST8", "PRIxLEAST16", "PRIxLEAST32",
+  "PRIxLEAST64", "PRIxLEAST8", "PRIxMAX",
+]
+types = ["imaxdiv_t"]
+
+[[headers.conditional]]
+when = "Corresponding type has a suitable fscanf length modifier"
+macros = [
+  "SCNdFAST16", "SCNdFAST32", "SCNdFAST64", "SCNdFAST8", "SCNdLEAST16", "SCNdLEAST32",
+  "SCNdLEAST64", "SCNdLEAST8", "SCNdMAX", "SCNiFAST16", "SCNiFAST32", "SCNiFAST64", "SCNiFAST8",
+  "SCNiLEAST16", "SCNiLEAST32", "SCNiLEAST64", "SCNiLEAST8", "SCNiMAX", "SCNoFAST16",
+  "SCNoFAST32", "SCNoFAST64", "SCNoFAST8", "SCNoLEAST16", "SCNoLEAST32", "SCNoLEAST64",
+  "SCNoLEAST8", "SCNoMAX", "SCNuFAST16", "SCNuFAST32", "SCNuFAST64", "SCNuFAST8", "SCNuLEAST16",
+  "SCNuLEAST32", "SCNuLEAST64", "SCNuLEAST8", "SCNuMAX", "SCNxFAST16", "SCNxFAST32",
+  "SCNxFAST64", "SCNxFAST8", "SCNxLEAST16", "SCNxLEAST32", "SCNxLEAST64", "SCNxLEAST8",
+  "SCNxMAX",
+]
+
+[[headers.conditional]]
+when = "Corresponding type is available; SCN also requires a suitable fscanf length modifier"
+macros = [
+  "PRIX16", "PRIX32", "PRIX64", "PRIX8", "PRIXPTR", "PRId16", "PRId32", "PRId64", "PRId8",
+  "PRIdPTR", "PRIi16", "PRIi32", "PRIi64", "PRIi8", "PRIiPTR", "PRIo16", "PRIo32", "PRIo64",
+  "PRIo8", "PRIoPTR", "PRIu16", "PRIu32", "PRIu64", "PRIu8", "PRIuPTR", "PRIx16", "PRIx32",
+  "PRIx64", "PRIx8", "PRIxPTR", "SCNd16", "SCNd32", "SCNd64", "SCNd8", "SCNdPTR", "SCNi16",
+  "SCNi32", "SCNi64", "SCNi8", "SCNiPTR", "SCNo16", "SCNo32", "SCNo64", "SCNo8", "SCNoPTR",
+  "SCNu16", "SCNu32", "SCNu64", "SCNu8", "SCNuPTR", "SCNx16", "SCNx32", "SCNx64", "SCNx8",
+  "SCNxPTR",
+]
+
+[[headers.conditional]]
+when = "Other widths with corresponding types; SCN also requires a suitable fscanf length modifier"
+families = [
+  "PRIXFAST{N}", "PRIXLEAST{N}", "PRIX{N}", "PRIdFAST{N}", "PRIdLEAST{N}", "PRId{N}",
+  "PRIiFAST{N}", "PRIiLEAST{N}", "PRIi{N}", "PRIoFAST{N}", "PRIoLEAST{N}", "PRIo{N}",
+  "PRIuFAST{N}", "PRIuLEAST{N}", "PRIu{N}", "PRIxFAST{N}", "PRIxLEAST{N}", "PRIx{N}",
+  "SCNdFAST{N}", "SCNdLEAST{N}", "SCNd{N}", "SCNiFAST{N}", "SCNiLEAST{N}", "SCNi{N}",
+  "SCNoFAST{N}", "SCNoLEAST{N}", "SCNo{N}", "SCNuFAST{N}", "SCNuLEAST{N}", "SCNu{N}",
+  "SCNxFAST{N}", "SCNxLEAST{N}", "SCNx{N}",
+]
+
+[[headers]]
+name = "iso646.h"
+standard = "C17 7.9"
+count = 11
+macros = [
+  "and", "and_eq", "bitand", "bitor", "compl", "not", "not_eq", "or", "or_eq", "xor", "xor_eq",
+]
+
+[[headers]]
+name = "limits.h"
+standard = "C17 7.10"
+count = 19
+macros = [
+  "CHAR_BIT", "CHAR_MAX", "CHAR_MIN", "INT_MAX", "INT_MIN", "LLONG_MAX", "LLONG_MIN", "LONG_MAX",
+  "LONG_MIN", "MB_LEN_MAX", "SCHAR_MAX", "SCHAR_MIN", "SHRT_MAX", "SHRT_MIN", "UCHAR_MAX",
+  "UINT_MAX", "ULLONG_MAX", "ULONG_MAX", "USHRT_MAX",
+]
+
+[[headers]]
+name = "locale.h"
+standard = "C17 7.11"
+count = 10
+functions = ["localeconv", "setlocale"]
+macros = [
+  "LC_ALL", "LC_COLLATE", "LC_CTYPE", "LC_MONETARY", "LC_NUMERIC", "LC_TIME", "NULL",
+]
+types = ["struct lconv"]
+
+[[headers]]
+name = "math.h"
+standard = "C17 7.12"
+count = 204
+functions = [
+  "acos", "acosf", "acosh", "acoshf", "acoshl", "acosl", "asin", "asinf", "asinh", "asinhf",
+  "asinhl", "asinl", "atan", "atan2", "atan2f", "atan2l", "atanf", "atanh", "atanhf", "atanhl",
+  "atanl", "cbrt", "cbrtf", "cbrtl", "ceil", "ceilf", "ceill", "copysign", "copysignf",
+  "copysignl", "cos", "cosf", "cosh", "coshf", "coshl", "cosl", "erf", "erfc", "erfcf", "erfcl",
+  "erff", "erfl", "exp", "exp2", "exp2f", "exp2l", "expf", "expl", "expm1", "expm1f", "expm1l",
+  "fabs", "fabsf", "fabsl", "fdim", "fdimf", "fdiml", "floor", "floorf", "floorl", "fma", "fmaf",
+  "fmal", "fmax", "fmaxf", "fmaxl", "fmin", "fminf", "fminl", "fmod", "fmodf", "fmodl", "frexp",
+  "frexpf", "frexpl", "hypot", "hypotf", "hypotl", "ilogb", "ilogbf", "ilogbl", "ldexp",
+  "ldexpf", "ldexpl", "lgamma", "lgammaf", "lgammal", "llrint", "llrintf", "llrintl", "llround",
+  "llroundf", "llroundl", "log", "log10", "log10f", "log10l", "log1p", "log1pf", "log1pl",
+  "log2", "log2f", "log2l", "logb", "logbf", "logbl", "logf", "logl", "lrint", "lrintf",
+  "lrintl", "lround", "lroundf", "lroundl", "modf", "modff", "modfl", "nan", "nanf", "nanl",
+  "nearbyint", "nearbyintf", "nearbyintl", "nextafter", "nextafterf", "nextafterl", "nexttoward",
+  "nexttowardf", "nexttowardl", "pow", "powf", "powl", "remainder", "remainderf", "remainderl",
+  "remquo", "remquof", "remquol", "rint", "rintf", "rintl", "round", "roundf", "roundl",
+  "scalbln", "scalblnf", "scalblnl", "scalbn", "scalbnf", "scalbnl", "sin", "sinf", "sinh",
+  "sinhf", "sinhl", "sinl", "sqrt", "sqrtf", "sqrtl", "tan", "tanf", "tanh", "tanhf", "tanhl",
+  "tanl", "tgamma", "tgammaf", "tgammal", "trunc", "truncf", "truncl",
+]
+macros = [
+  "FP_ILOGB0", "FP_ILOGBNAN", "FP_INFINITE", "FP_NAN", "FP_NORMAL", "FP_SUBNORMAL", "FP_ZERO",
+  "HUGE_VAL", "HUGE_VALF", "HUGE_VALL", "INFINITY", "MATH_ERREXCEPT", "MATH_ERRNO", "fpclassify",
+  "isfinite", "isgreater", "isgreaterequal", "isinf", "isless", "islessequal", "islessgreater",
+  "isnan", "isnormal", "isunordered", "math_errhandling", "signbit",
+]
+types = ["double_t", "float_t"]
+pragmas = ["STDC FP_CONTRACT"]
+
+[[headers.conditional]]
+when = "Float supports quiet NaNs"
+macros = ["NAN"]
+
+[[headers.conditional]]
+when = "Optional fast fused multiply add indicators"
+macros = ["FP_FAST_FMA", "FP_FAST_FMAF", "FP_FAST_FMAL"]
+
+[[headers]]
+name = "setjmp.h"
+standard = "C17 7.13"
+count = 3
+functions = ["longjmp"]
+macros = ["setjmp"]
+types = ["jmp_buf"]
+
+[[headers]]
+name = "signal.h"
+standard = "C17 7.14"
+count = 12
+functions = ["raise", "signal"]
+macros = [
+  "SIGABRT", "SIGFPE", "SIGILL", "SIGINT", "SIGSEGV", "SIGTERM", "SIG_DFL", "SIG_ERR", "SIG_IGN",
+]
+types = ["sig_atomic_t"]
+
+[[headers]]
+name = "stdalign.h"
+standard = "C17 7.15"
+count = 4
+macros = ["__alignas_is_defined", "__alignof_is_defined", "alignas", "alignof"]
+
+[[headers]]
+name = "stdarg.h"
+standard = "C17 7.16"
+count = 5
+macros = ["va_arg", "va_copy", "va_end", "va_start"]
+types = ["va_list"]
+
+[[headers]]
+name = "stdatomic.h"
+standard = "C17 7.17"
+count = 86
+
+[[headers.conditional]]
+when = "The corresponding integer type for converted pointers is available"
+types = ["atomic_intptr_t", "atomic_uintptr_t"]
+
+[[headers.conditional]]
+when = "Atomics are supported"
+functions = [
+  "atomic_flag_clear", "atomic_flag_clear_explicit", "atomic_flag_test_and_set",
+  "atomic_flag_test_and_set_explicit", "atomic_signal_fence", "atomic_thread_fence",
+]
+macros = [
+  "ATOMIC_BOOL_LOCK_FREE", "ATOMIC_CHAR16_T_LOCK_FREE", "ATOMIC_CHAR32_T_LOCK_FREE",
+  "ATOMIC_CHAR_LOCK_FREE", "ATOMIC_FLAG_INIT", "ATOMIC_INT_LOCK_FREE", "ATOMIC_LLONG_LOCK_FREE",
+  "ATOMIC_LONG_LOCK_FREE", "ATOMIC_POINTER_LOCK_FREE", "ATOMIC_SHORT_LOCK_FREE",
+  "ATOMIC_VAR_INIT", "ATOMIC_WCHAR_T_LOCK_FREE", "kill_dependency",
+]
+types = [
+  "atomic_bool", "atomic_char", "atomic_char16_t", "atomic_char32_t", "atomic_flag",
+  "atomic_int", "atomic_int_fast16_t", "atomic_int_fast32_t", "atomic_int_fast64_t",
+  "atomic_int_fast8_t", "atomic_int_least16_t", "atomic_int_least32_t", "atomic_int_least64_t",
+  "atomic_int_least8_t", "atomic_intmax_t", "atomic_llong", "atomic_long", "atomic_ptrdiff_t",
+  "atomic_schar", "atomic_short", "atomic_size_t", "atomic_uchar", "atomic_uint",
+  "atomic_uint_fast16_t", "atomic_uint_fast32_t", "atomic_uint_fast64_t", "atomic_uint_fast8_t",
+  "atomic_uint_least16_t", "atomic_uint_least32_t", "atomic_uint_least64_t",
+  "atomic_uint_least8_t", "atomic_uintmax_t", "atomic_ullong", "atomic_ulong", "atomic_ushort",
+  "atomic_wchar_t", "memory_order",
+]
+constants = [
+  "memory_order_acq_rel", "memory_order_acquire", "memory_order_consume", "memory_order_relaxed",
+  "memory_order_release", "memory_order_seq_cst",
+]
+generic_functions = [
+  "atomic_compare_exchange_strong", "atomic_compare_exchange_strong_explicit",
+  "atomic_compare_exchange_weak", "atomic_compare_exchange_weak_explicit", "atomic_exchange",
+  "atomic_exchange_explicit", "atomic_fetch_add", "atomic_fetch_add_explicit",
+  "atomic_fetch_and", "atomic_fetch_and_explicit", "atomic_fetch_or", "atomic_fetch_or_explicit",
+  "atomic_fetch_sub", "atomic_fetch_sub_explicit", "atomic_fetch_xor",
+  "atomic_fetch_xor_explicit", "atomic_init", "atomic_is_lock_free", "atomic_load",
+  "atomic_load_explicit", "atomic_store", "atomic_store_explicit",
+]
+
+[[headers]]
+name = "stdbool.h"
+standard = "C17 7.18"
+count = 4
+macros = ["__bool_true_false_are_defined", "bool", "false", "true"]
+
+[[headers]]
+name = "stddef.h"
+standard = "C17 7.19"
+count = 6
+macros = ["NULL", "offsetof"]
+types = ["max_align_t", "ptrdiff_t", "size_t", "wchar_t"]
+
+[[headers]]
+name = "stdint.h"
+standard = "C17 7.20"
+count = 106
+macros = [
+  "INT16_C", "INT32_C", "INT64_C", "INT8_C", "INTMAX_C", "INTMAX_MAX", "INTMAX_MIN",
+  "INT_FAST16_MAX", "INT_FAST16_MIN", "INT_FAST32_MAX", "INT_FAST32_MIN", "INT_FAST64_MAX",
+  "INT_FAST64_MIN", "INT_FAST8_MAX", "INT_FAST8_MIN", "INT_LEAST16_MAX", "INT_LEAST16_MIN",
+  "INT_LEAST32_MAX", "INT_LEAST32_MIN", "INT_LEAST64_MAX", "INT_LEAST64_MIN", "INT_LEAST8_MAX",
+  "INT_LEAST8_MIN", "PTRDIFF_MAX", "PTRDIFF_MIN", "SIG_ATOMIC_MAX", "SIG_ATOMIC_MIN", "SIZE_MAX",
+  "UINT16_C", "UINT32_C", "UINT64_C", "UINT8_C", "UINTMAX_C", "UINTMAX_MAX", "UINT_FAST16_MAX",
+  "UINT_FAST32_MAX", "UINT_FAST64_MAX", "UINT_FAST8_MAX", "UINT_LEAST16_MAX", "UINT_LEAST32_MAX",
+  "UINT_LEAST64_MAX", "UINT_LEAST8_MAX", "WCHAR_MAX", "WCHAR_MIN", "WINT_MAX", "WINT_MIN",
+]
+types = [
+  "int_fast16_t", "int_fast32_t", "int_fast64_t", "int_fast8_t", "int_least16_t",
+  "int_least32_t", "int_least64_t", "int_least8_t", "intmax_t", "uint_fast16_t", "uint_fast32_t",
+  "uint_fast64_t", "uint_fast8_t", "uint_least16_t", "uint_least32_t", "uint_least64_t",
+  "uint_least8_t", "uintmax_t",
+]
+
+[[headers.conditional]]
+when = "Optional integer types for converted pointers"
+macros = ["INTPTR_MAX", "INTPTR_MIN", "UINTPTR_MAX"]
+types = ["intptr_t", "uintptr_t"]
+
+[[headers.conditional]]
+when = "The corresponding exact width integer type is available"
+macros = [
+  "INT16_MAX", "INT16_MIN", "INT32_MAX", "INT32_MIN", "INT64_MAX", "INT64_MIN", "INT8_MAX",
+  "INT8_MIN", "UINT16_MAX", "UINT32_MAX", "UINT64_MAX", "UINT8_MAX",
+]
+types = [
+  "int16_t", "int32_t", "int64_t", "int8_t", "uint16_t", "uint32_t", "uint64_t", "uint8_t",
+]
+
+[[headers.conditional]]
+when = "Other widths when the corresponding types are available"
+families = [
+  "INT_FAST{N}_MAX", "INT_FAST{N}_MIN", "INT_LEAST{N}_MAX", "INT_LEAST{N}_MIN", "INT{N}_MAX",
+  "INT{N}_MIN", "UINT_FAST{N}_MAX", "UINT_LEAST{N}_MAX", "UINT{N}_MAX", "int_fast{N}_t",
+  "int_least{N}_t", "int{N}_t", "uint_fast{N}_t", "uint_least{N}_t", "uint{N}_t",
+]
+
+[[headers.conditional]]
+when = "Other widths with corresponding minimum width types"
+families = ["INT{N}_C", "UINT{N}_C"]
+
+[[headers]]
+name = "stdio.h"
+standard = "C17 7.21"
+count = 64
+functions = [
+  "clearerr", "fclose", "feof", "ferror", "fflush", "fgetc", "fgetpos", "fgets", "fopen",
+  "fprintf", "fputc", "fputs", "fread", "freopen", "fscanf", "fseek", "fsetpos", "ftell",
+  "fwrite", "getc", "getchar", "perror", "printf", "putc", "putchar", "puts", "remove", "rename",
+  "rewind", "scanf", "setbuf", "setvbuf", "snprintf", "sprintf", "sscanf", "tmpfile", "tmpnam",
+  "ungetc", "vfprintf", "vfscanf", "vprintf", "vscanf", "vsnprintf", "vsprintf", "vsscanf",
+]
+macros = [
+  "BUFSIZ", "EOF", "FILENAME_MAX", "FOPEN_MAX", "L_tmpnam", "NULL", "SEEK_CUR", "SEEK_END",
+  "SEEK_SET", "TMP_MAX", "_IOFBF", "_IOLBF", "_IONBF", "stderr", "stdin", "stdout",
+]
+types = ["FILE", "fpos_t", "size_t"]
+
+[[headers]]
+name = "stdlib.h"
+standard = "C17 7.22"
+count = 49
+functions = [
+  "_Exit", "abort", "abs", "aligned_alloc", "at_quick_exit", "atexit", "atof", "atoi", "atol",
+  "atoll", "bsearch", "calloc", "div", "exit", "free", "getenv", "labs", "ldiv", "llabs",
+  "lldiv", "malloc", "mblen", "mbstowcs", "mbtowc", "qsort", "quick_exit", "rand", "realloc",
+  "srand", "strtod", "strtof", "strtol", "strtold", "strtoll", "strtoul", "strtoull", "system",
+  "wcstombs", "wctomb",
+]
+macros = [
+  "EXIT_FAILURE", "EXIT_SUCCESS", "MB_CUR_MAX", "NULL", "RAND_MAX",
+]
+types = [
+  "div_t", "ldiv_t", "lldiv_t", "size_t", "wchar_t",
+]
+
+[[headers]]
+name = "stdnoreturn.h"
+standard = "C17 7.23"
+count = 1
+macros = ["noreturn"]
+
+[[headers]]
+name = "string.h"
+standard = "C17 7.24"
+count = 24
+functions = [
+  "memchr", "memcmp", "memcpy", "memmove", "memset", "strcat", "strchr", "strcmp", "strcoll",
+  "strcpy", "strcspn", "strerror", "strlen", "strncat", "strncmp", "strncpy", "strpbrk",
+  "strrchr", "strspn", "strstr", "strtok", "strxfrm",
+]
+macros = ["NULL"]
+types = ["size_t"]
+
+[[headers]]
+name = "tgmath.h"
+standard = "C17 7.25"
+count = 60
+macros = [
+  "acos", "acosh", "asin", "asinh", "atan", "atan2", "atanh", "carg", "cbrt", "ceil", "cimag",
+  "conj", "copysign", "cos", "cosh", "cproj", "creal", "erf", "erfc", "exp", "exp2", "expm1",
+  "fabs", "fdim", "floor", "fma", "fmax", "fmin", "fmod", "frexp", "hypot", "ilogb", "ldexp",
+  "lgamma", "llrint", "llround", "log", "log10", "log1p", "log2", "logb", "lrint", "lround",
+  "nearbyint", "nextafter", "nexttoward", "pow", "remainder", "remquo", "rint", "round",
+  "scalbln", "scalbn", "sin", "sinh", "sqrt", "tan", "tanh", "tgamma", "trunc",
+]
+
+[[headers]]
+name = "threads.h"
+standard = "C17 7.26"
+count = 43
+
+[[headers.conditional]]
+when = "C threads are supported"
+functions = [
+  "call_once", "cnd_broadcast", "cnd_destroy", "cnd_init", "cnd_signal", "cnd_timedwait",
+  "cnd_wait", "mtx_destroy", "mtx_init", "mtx_lock", "mtx_timedlock", "mtx_trylock",
+  "mtx_unlock", "thrd_create", "thrd_current", "thrd_detach", "thrd_equal", "thrd_exit",
+  "thrd_join", "thrd_sleep", "thrd_yield", "tss_create", "tss_delete", "tss_get", "tss_set",
+]
+macros = ["ONCE_FLAG_INIT", "TSS_DTOR_ITERATIONS", "thread_local"]
+types = [
+  "cnd_t", "mtx_t", "once_flag", "thrd_start_t", "thrd_t", "tss_dtor_t", "tss_t",
+]
+constants = [
+  "mtx_plain", "mtx_recursive", "mtx_timed", "thrd_busy", "thrd_error", "thrd_nomem",
+  "thrd_success", "thrd_timedout",
+]
+
+[[headers]]
+name = "time.h"
+standard = "C17 7.27"
+count = 18
+functions = [
+  "asctime", "clock", "ctime", "difftime", "gmtime", "localtime", "mktime", "strftime", "time",
+  "timespec_get",
+]
+macros = ["CLOCKS_PER_SEC", "NULL", "TIME_UTC"]
+types = [
+  "clock_t", "size_t", "struct timespec", "struct tm", "time_t",
+]
+
+[[headers]]
+name = "uchar.h"
+standard = "C17 7.28"
+count = 8
+functions = ["c16rtomb", "c32rtomb", "mbrtoc16", "mbrtoc32"]
+types = ["char16_t", "char32_t", "mbstate_t", "size_t"]
+
+[[headers]]
+name = "wchar.h"
+standard = "C17 7.29"
+count = 68
+functions = [
+  "btowc", "fgetwc", "fgetws", "fputwc", "fputws", "fwide", "fwprintf", "fwscanf", "getwc",
+  "getwchar", "mbrlen", "mbrtowc", "mbsinit", "mbsrtowcs", "putwc", "putwchar", "swprintf",
+  "swscanf", "ungetwc", "vfwprintf", "vfwscanf", "vswprintf", "vswscanf", "vwprintf", "vwscanf",
+  "wcrtomb", "wcscat", "wcschr", "wcscmp", "wcscoll", "wcscpy", "wcscspn", "wcsftime", "wcslen",
+  "wcsncat", "wcsncmp", "wcsncpy", "wcspbrk", "wcsrchr", "wcsrtombs", "wcsspn", "wcsstr",
+  "wcstod", "wcstof", "wcstok", "wcstol", "wcstold", "wcstoll", "wcstoul", "wcstoull", "wcsxfrm",
+  "wctob", "wmemchr", "wmemcmp", "wmemcpy", "wmemmove", "wmemset", "wprintf", "wscanf",
+]
+macros = ["NULL", "WCHAR_MAX", "WCHAR_MIN", "WEOF"]
+types = [
+  "mbstate_t", "size_t", "struct tm", "wchar_t", "wint_t",
+]
+
+[[headers]]
+name = "wctype.h"
+standard = "C17 7.30"
+count = 22
+functions = [
+  "iswalnum", "iswalpha", "iswblank", "iswcntrl", "iswctype", "iswdigit", "iswgraph", "iswlower",
+  "iswprint", "iswpunct", "iswspace", "iswupper", "iswxdigit", "towctrans", "towlower",
+  "towupper", "wctrans", "wctype",
+]
+macros = ["WEOF"]
+types = ["wctrans_t", "wctype_t", "wint_t"]
+
+[[headers]]
+name = "unistd.h"
+standard = "POSIX.1-2024 XBD <unistd.h>"
+count = 6
+functions = ["_exit", "close", "read", "write"]
+types = ["size_t", "ssize_t"]

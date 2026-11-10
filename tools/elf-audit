@@ -1,0 +1,81 @@
+#!/usr/bin/env python3
+"""Audit x86-64 ELF fixtures and NASM objects for Phase 0."""
+
+import argparse
+from pathlib import Path
+import re
+import subprocess
+import sys
+
+
+def output(tool, flags, path):
+    return subprocess.run([tool, flags, str(path)], check=True, capture_output=True, text=True).stdout
+
+
+def audit(path, assembly_object):
+    header = output("readelf", "-hW", path)
+    required = (r"Class:\s+ELF64", r"Data:\s+2's complement, little endian",
+                r"Machine:\s+Advanced Micro Devices X86-64")
+    if not all(re.search(pattern, header) for pattern in required):
+        return "expected a little-endian x86-64 ELF64 file"
+    kind = "REL" if assembly_object else "EXEC"
+    if not re.search(rf"Type:\s+{kind}\b", header):
+        return f"expected ELF type {kind}"
+    sections = output("readelf", "-SW", path)
+    if assembly_object:
+        note = re.search(r"^\s*\[\s*\d+\]\s+\.note\.GNU-stack\s+PROGBITS\s+"
+                         r"(?:[0-9a-fA-F]+\s+){2}0+\s+0+\s+\d+\s+\d+\s+\d+\s*$",
+                         sections, re.M)
+        if not note:
+            return "missing empty GNU-stack note without allocation, write or execute flags"
+        section_pattern = (r"^\s*\[\s*\d+\]\s+(\S+)\s+(\S+)\s+"
+                           r"(?:[0-9a-fA-F]+\s+){4}([A-Za-z]*)\s*\d+\s+\d+\s+\d+\s*$")
+        text_sections = []
+        for name, kind, flags in re.findall(section_pattern, sections, re.M):
+            if name == ".text" or name.startswith(".text."):
+                text_sections.append(name)
+                if kind != "PROGBITS" or not {"A", "X"} <= set(flags) or "W" in flags:
+                    return f"{name} must be allocated, non-writable executable text"
+            elif "X" in flags:
+                return f"executable bytes in unexpected section {name}"
+        if not text_sections:
+            return "missing executable text section"
+        if (re.search(r"\s\.(?:comment|GCC\.command\.line)\s", sections)
+                or re.search(rb"\b(?:GCC:|GNU C17|clang version|Apple LLVM|rustc version)",
+                             path.read_bytes())):
+            return "compiler producer metadata in assembly object"
+        return None
+    program = [line.split() for line in output("readelf", "-lW", path).splitlines() if line.strip()]
+    if any(fields[0] in {"INTERP", "DYNAMIC"} for fields in program):
+        return "dynamic loader or dynamic table present"
+    stack = [fields for fields in program if fields[0] == "GNU_STACK"]
+    if len(stack) != 1 or "".join(stack[0][6:-1]) != "RW":
+        return "expected exactly one writable, non-executable GNU stack"
+    for fields in program:
+        if fields[0] == "LOAD" and {"W", "E"} <= set("".join(fields[6:-1])):
+            return "writable executable load segment"
+    if output("nm", "-u", path).strip():
+        return "undefined symbols in linked executable"
+    return None
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--assembly-object", action="store_true")
+    parser.add_argument("paths", type=Path, nargs="+")
+    args = parser.parse_args()
+    failed = False
+    for path in args.paths:
+        try:
+            problem = audit(path, args.assembly_object)
+        except subprocess.CalledProcessError as error:
+            problem = error.stderr.strip() or str(error)
+        except OSError as error:
+            problem = str(error)
+        if problem:
+            print(f"{path}: ELF_AUDIT: {problem}", file=sys.stderr)
+            failed = True
+    return int(failed)
+
+
+raise SystemExit(main())

@@ -1,0 +1,20 @@
+name = "strlen"
+header = "string.h"
+prototype = "size_t strlen(const char *s)"
+standard = ["C17 7.24.6.3"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "reference:byte-count"]
+provenance = "original"
+semantics = [
+  "Input points to readable bytes up to and including the first zero byte.",
+  "Return the count of bytes preceding the first zero as size_t; a nonzero byte counts regardless of its high bit.",
+  "Ignore bytes after the first zero. Do not write to the input or read across an inaccessible boundary for a valid string.",
+  "Null pointers and strings without a readable terminating zero are outside the contract.",
+]
+
+[abi]
+narrow_args = []
+variadic = false
