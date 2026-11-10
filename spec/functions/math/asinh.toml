@@ -1,0 +1,19 @@
+name = "asinh"
+header = "math.h"
+prototype = "double asinh(double x)"
+standard = ["C17 7.12.5.2"]
+deps = ["fegetround", "feraiseexcept", "__errno_location"]
+errno = ["ERANGE"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:mpfr", "reference:fixed-point-interval", "diff:glibc"]
+provenance = "original"
+semantics = [
+  "Compute the inverse hyperbolic sine in the active rounding mode. Preserve the sign of zero and infinity.",
+  "Quiet signaling NaNs and raise FE_INVALID.",
+  "A tiny inexact result raises FE_UNDERFLOW and FE_INEXACT with ERANGE.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

@@ -1,0 +1,17 @@
+name = "creall"
+header = "complex.h"
+prototype = "long double creall(long double _Complex z)"
+standard = ["C17 7.3.9.6"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:ieee-bits", "reference:mpfr", "diff:glibc"]
+provenance = "original"
+semantics = [
+  "Return the real component without changing its representation or the floating environment.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

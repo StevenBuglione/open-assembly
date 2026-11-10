@@ -1,0 +1,18 @@
+name = "flockfile"
+header = "stdio.h"
+prototype = "void flockfile(FILE *stream)"
+standard = ["POSIX.1-2024 XSH flockfile"]
+deps = ["__errno_location"]
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:stream-ownership"]
+provenance = "original"
+semantics = [
+  "Acquire exclusive ownership shared by explicit and implicit operations on the stream.",
+  "Recursive acquisitions by the same owner increment a depth count and preserve errno.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

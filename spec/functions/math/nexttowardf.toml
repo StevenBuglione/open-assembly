@@ -1,0 +1,18 @@
+name = "nexttowardf"
+header = "math.h"
+prototype = "float nexttowardf(float x, long double y)"
+standard = ["C17 7.12.11.4"]
+deps = ["feraiseexcept", "__errno_location"]
+errno = ["ERANGE"]
+mt_safe = true
+as_safe = true
+oracles = ["reference:mpfr", "reference:ieee-bits", "diff:glibc"]
+provenance = "original"
+semantics = [
+  "Step one representable value from x toward y, comparing y at extended precision.",
+  "Equal operands return y converted to the return type. A step into subnormal range or from finite to infinity sets ERANGE and the corresponding flags.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

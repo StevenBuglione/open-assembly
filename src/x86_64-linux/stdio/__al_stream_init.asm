@@ -1,39 +1,23 @@
-; Original locked stream association. rdi = FILE, rsi = fd, rdx = flags.
+; Original stream initialization. rdi = new FILE, rsi = fd, rdx = flags.
+; The caller owns the registry lock. The final words describe ownership.
 bits 64
 default rel
 
 global __al_stream_init:function
-extern __al_streams:data
-extern memset:function
+extern __al_stream_rebind:function
 
 section .text.__al_stream_init alloc exec nowrite progbits
 __al_stream_init:
-    push rbp
-    mov rbp, rsp
-    push rbx
-    push r12
-    push r13
-    push r14
-    mov rbx, rdi
-    mov r12, rsi
-    mov r13, rdx
-    xor esi, esi
-    mov edx, 128
-    call memset
-    mov [rbx], r12
-    mov [rbx + 8], r13
-    mov rax, [rel __al_streams]
-    mov [rbx + 16], rax
-    mov [rel __al_streams], rbx
-    lea rax, [rbx + 128]
-    mov [rbx + 24], rax
-    mov qword [rbx + 32], 4096
-    mov qword [rbx + 72], -1
-    pop r14
-    pop r13
-    pop r12
-    pop rbx
-    pop rbp
+    mov qword [rdi + 96], 0      ; lock word and registry pin count
+    mov qword [rdi + 104], 0     ; recursive owner
+    mov qword [rdi + 112], 0     ; owner depth
+    mov rax, rdx
+    and eax, 8
+    shr eax, 3
+    mov [rdi + 120], rax         ; immutable heap ownership and retirement
+    sub rsp, 8
+    call __al_stream_rebind
+    add rsp, 8
     ret
 
 section .note.GNU-stack noalloc noexec nowrite progbits

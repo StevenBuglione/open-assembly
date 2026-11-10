@@ -1,0 +1,18 @@
+name = "scalblnf"
+header = "math.h"
+prototype = "float scalblnf(float x, long n)"
+standard = ["C17 7.12.6.13"]
+deps = ["feraiseexcept", "__errno_location", "fegetround"]
+errno = ["ERANGE"]
+mt_safe = true
+as_safe = true
+oracles = ["reference:mpfr", "reference:ieee-bits", "diff:glibc"]
+provenance = "original"
+semantics = [
+  "Multiply x by two raised to the long exponent and round in the active mode.",
+  "Handle large exponents without integer overflow. Overflow and tiny inexact results set ERANGE.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

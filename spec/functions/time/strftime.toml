@@ -1,0 +1,22 @@
+name = "strftime"
+header = "time.h"
+prototype = "size_t strftime(char *restrict dest, size_t size, const char *restrict format, const struct tm *restrict value)"
+standard = ["C17 7.27.3.5"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:c17-time-format"]
+provenance = "original"
+semantics = [
+  "Format a broken-down time using the C locale and all C17 conversion specifiers.",
+  "Accept the specified E and O modifiers with the C locale fallback. Use the ISO week-year for g, G, and V.",
+  "Use at least four magnitude digits for full years and a nonnegative modulo 100 for two-digit years.",
+  "Use the supplied UTC offset and abbreviation when available. An unknown zone produces no characters.",
+  "Reserve space for the terminating null byte. Return the byte count excluding that byte, or zero if the result does not fit.",
+  "For size zero, return zero without accessing the destination. Preserve errno.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

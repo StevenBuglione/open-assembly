@@ -1,0 +1,17 @@
+name = "ftello"
+header = "stdio.h"
+prototype = "off_t ftello(FILE *stream)"
+standard = ["POSIX.1-2024 XSH ftello"]
+deps = ["ftell"]
+errno = ["EBADF", "ESPIPE", "EOVERFLOW"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:lua-posix-abi"]
+provenance = "original"
+semantics = [
+  "Return the same signed LP64 stream position as ftell.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

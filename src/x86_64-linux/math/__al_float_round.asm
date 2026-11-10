@@ -1,6 +1,7 @@
 ; Original exact rational rounding.
 ; rdi = numerator, rsi = denominator scratch, rdx = comparison scratch,
-; rcx = lexer metadata, r8 = target 0 binary32 / 1 binary64 / 2 extended.
+; rcx = metadata, r8 = target 0 binary32 / 1 binary64 / 2 extended.
+; Radix zero preserves a supplied denominator. Other modes start from one.
 ; Returns integer significand in rax, biased exponent in rdx and flags in rcx.
 bits 64
 default rel
@@ -44,6 +45,8 @@ __al_float_round:
     mov [rsp + 32], eax
     mov qword [rsp + 56], 0      ; standard exception flags
 
+    cmp qword [r14 + 24], 0
+    je .find_exponent
     mov qword [r12], 1
     mov dword [r12 + 8], 1
     cmp qword [r14 + 24], 10

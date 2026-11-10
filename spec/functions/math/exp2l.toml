@@ -1,0 +1,19 @@
+name = "exp2l"
+header = "math.h"
+prototype = "long double exp2l(long double x)"
+standard = ["C17 7.12.6.2"]
+deps = ["fegetround", "feraiseexcept", "__errno_location"]
+errno = ["ERANGE"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:mpfr", "reference:fixed-point-interval", "diff:glibc"]
+provenance = "original"
+semantics = [
+  "Compute two raised to x in the active rounding mode. Integer arguments use the exact scaling path.",
+  "Return one for either zero, positive zero for negative infinity, and positive infinity for positive infinity.",
+  "Quiet signaling NaNs and raise FE_INVALID. Overflow or an inexact tiny result reports ERANGE with the corresponding flags.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

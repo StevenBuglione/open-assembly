@@ -18,9 +18,8 @@ bits 64
 default rel
 
 global clearerr:function
-extern __al_stdio_lock:data
-extern __al_lock:function
-extern __al_unlock:function
+extern __al_stream_lock:function
+extern __al_stream_unlock:function
 
 section .text.clearerr alloc exec nowrite progbits
 clearerr:
@@ -29,11 +28,11 @@ clearerr:
     push rbx
     push r12
     mov rbx, rdi
-    lea rdi, [rel __al_stdio_lock]
-    call __al_lock
+    mov rdi, rbx
+    call __al_stream_lock
     and qword [rbx + 8], -49
-    lea rdi, [rel __al_stdio_lock]
-    call __al_unlock
+    mov rdi, rbx
+    call __al_stream_unlock
     pop r12
     pop rbx
     pop rbp

@@ -1,0 +1,17 @@
+name = "cexpf"
+header = "complex.h"
+prototype = "float _Complex cexpf(float _Complex z)"
+standard = ["C17 7.3.7.1"]
+deps = ["fegetround", "feraiseexcept", "__errno_location"]
+errno = ["ERANGE"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:mpfr", "reference:complex-branch-cut", "diff:glibc"]
+provenance = "original"
+semantics = [
+  "Return the complex exponential, with final range effects assessed for each component. Conjugation preserves the real result and reflects the sign of the imaginary result.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

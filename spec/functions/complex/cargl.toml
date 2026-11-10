@@ -1,0 +1,17 @@
+name = "cargl"
+header = "complex.h"
+prototype = "long double cargl(long double _Complex z)"
+standard = ["C17 7.3.9.1"]
+deps = ["atan2l"]
+errno = ["ERANGE"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:ieee-bits", "reference:mpfr", "diff:glibc"]
+provenance = "original"
+semantics = [
+  "Return the signed angle in radians with the quadrant, signed-zero and exception rules of atan2 of imaginary and real.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

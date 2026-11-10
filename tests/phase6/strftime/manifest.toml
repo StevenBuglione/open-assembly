@@ -1,0 +1,106 @@
+schema = 1
+
+[[case]]
+name = "strftime-directives"
+sources = ["tests/phase6/strftime/format.c"]
+requires = ["strftime"]
+args = ["directives"]
+env = { LC_ALL = "C", TZ = "UTC0" }
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-time-format"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "strftime-cycle"
+sources = ["tests/phase6/strftime/format.c"]
+requires = ["strftime"]
+args = ["cycle"]
+env = { LC_ALL = "C", TZ = "UTC0" }
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-time-format"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "strftime-bounds"
+sources = ["tests/phase6/strftime/format.c"]
+requires = ["strftime"]
+args = ["bounds"]
+env = { LC_ALL = "C", TZ = "UTC0" }
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-time-format"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "strftime-zone"
+sources = ["tests/phase6/strftime/format.c"]
+requires = ["strftime"]
+args = ["zone"]
+env = { LC_ALL = "C", TZ = "UTC0" }
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-time-format"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Pinned musl omits a manually provided zone abbreviation. Project offset bounds and missing-zone behavior also have exact contract checks."
+
+[[case]]
+name = "strftime-extended"
+sources = ["tests/phase6/strftime/format.c"]
+requires = ["strftime"]
+args = ["extended"]
+env = { LC_ALL = "C", TZ = "UTC0" }
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-time-format"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The project specifies negative year padding, full-width tm_year arithmetic and an error return for unsupported formats."
+
+[[case]]
+name = "strftime-guard"
+sources = ["tests/phase6/strftime/guard.c"]
+requires = ["strftime"]
+args = []
+env = { LC_ALL = "C", TZ = "UTC0" }
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-time-format"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The guard fixture uses private startup auxv and raw Linux mmap to locate its protected regions."
+
+[[case]]
+name = "strftime-offset"
+sources = ["tests/phase6/strftime/format.c"]
+requires = ["strftime"]
+args = ["offset"]
+env = { LC_ALL = "C", TZ = "UTC0" }
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-time-format"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[stub]]
+symbol = "strftime"
+case = "strftime-directives"
+status = 11
+stdout = ""
+stderr = ""

@@ -18,9 +18,8 @@ bits 64
 default rel
 
 global ferror:function
-extern __al_stdio_lock:data
-extern __al_lock:function
-extern __al_unlock:function
+extern __al_stream_lock:function
+extern __al_stream_unlock:function
 
 section .text.ferror alloc exec nowrite progbits
 ferror:
@@ -29,12 +28,12 @@ ferror:
     push rbx
     push r12
     mov rbx, rdi
-    lea rdi, [rel __al_stdio_lock]
-    call __al_lock
+    mov rdi, rbx
+    call __al_stream_lock
     mov r12, [rbx + 8]
     and r12d, 32
-    lea rdi, [rel __al_stdio_lock]
-    call __al_unlock
+    mov rdi, rbx
+    call __al_stream_unlock
     mov eax, r12d
     pop r12
     pop rbx

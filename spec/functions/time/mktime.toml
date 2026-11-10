@@ -1,0 +1,22 @@
+name = "mktime"
+header = "time.h"
+prototype = "time_t mktime(struct tm *value)"
+standard = ["C17 7.27.2.3"]
+deps = ["getenv", "calloc", "malloc", "free", "strlen", "strcmp", "memcpy", "close", "__errno_location"]
+errno = ["EOVERFLOW"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:gregorian-local"]
+provenance = "original"
+semantics = [
+  "Normalize the calendar fields into a local civil time. Ignore incoming weekday and year-day fields.",
+  "Use the current zone and interpret negative tm_isdst as an unknown DST preference.",
+  "Prefer a matching DST state when supplied. For an unspecified repeated time choose the earlier instant.",
+  "Normalize an unspecified skipped time forward using the pre-transition offset.",
+  "On success replace value with normalized fields and preserve errno. A successful timestamp may equal -1.",
+  "On overflow return -1 with EOVERFLOW and leave value unchanged.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

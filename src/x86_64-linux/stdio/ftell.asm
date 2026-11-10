@@ -18,9 +18,8 @@ bits 64
 default rel
 
 global ftell:function
-extern __al_stdio_lock:data
-extern __al_lock:function
-extern __al_unlock:function
+extern __al_stream_lock:function
+extern __al_stream_unlock:function
 extern __al_stdio_seek:function
 extern __al_stdio_errno:function
 extern __al_stream_flush:function
@@ -33,8 +32,8 @@ ftell:
     push r12
     mov rbx, rdi
     mov r12, -1
-    lea rdi, [rel __al_stdio_lock]
-    call __al_lock
+    mov rdi, rbx
+    call __al_stream_lock
     cmp qword [rbx], 0
     jl .closed
     cmp qword [rbx + 56], 2
@@ -79,8 +78,8 @@ ftell:
 .errno:
     call __al_stdio_errno
 .unlock:
-    lea rdi, [rel __al_stdio_lock]
-    call __al_unlock
+    mov rdi, rbx
+    call __al_stream_unlock
     mov rax, r12
     pop r12
     pop rbx

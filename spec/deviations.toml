@@ -29,3 +29,33 @@ function = "freopen"
 standard = "C17 7.21.5.4"
 choice = "Reject a NULL pathname with EINVAL after closing the former association."
 reason = "Mode changes without a pathname are implementation-defined and are outside the initial byte-stream interface."
+
+[[deviations]]
+function = "remquo"
+standard = "C17 7.12.10.3"
+choice = "Store the signed low seven quotient bits across all three floating widths. Store zero for a NaN result."
+reason = "A single modulus across formats gives callers more than the required three bits. C17 leaves the quotient width implementation-defined."
+
+[[deviations]]
+function = "fmin"
+standard = "C17 7.12.12.3"
+choice = "The fmin family returns a quieted signaling NaN and raises FE_INVALID even when the other operand is numeric."
+reason = "The arithmetic interface reports signaling inputs explicitly. The generic musl implementation can return the numeric operand in this case."
+
+[[deviations]]
+function = "fmax"
+standard = "C17 7.12.12.2"
+choice = "The fmax family returns a quieted signaling NaN and raises FE_INVALID even when the other operand is numeric."
+reason = "The arithmetic interface reports signaling inputs explicitly. The generic musl implementation can return the numeric operand in this case."
+
+[[deviations]]
+function = "sqrt"
+standard = "C17 7.12.1"
+choice = "The math interface declares both MATH_ERRNO and MATH_ERREXCEPT. Each function's specification identifies its errno conditions."
+reason = "The project reports domain, pole and range errors through errno where declared. Musl typically reports these through floating exceptions alone."
+
+[[deviations]]
+function = "setlocale"
+standard = "C17 7.11.1.1"
+choice = "The foundation accepts C and POSIX. Other names fail, including through environment selection."
+reason = "The current byte and formatting interfaces implement the C locale. The C.UTF-8 locale needs the later wide-character and locale milestone."

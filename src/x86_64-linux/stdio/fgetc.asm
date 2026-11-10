@@ -18,9 +18,8 @@ bits 64
 default rel
 
 global fgetc:function
-extern __al_stdio_lock:data
-extern __al_lock:function
-extern __al_unlock:function
+extern __al_stream_lock:function
+extern __al_stream_unlock:function
 extern __al_stream_read:function
 
 section .text.fgetc alloc exec nowrite progbits
@@ -31,8 +30,8 @@ fgetc:
     push r12
     mov rbx, rdi
     mov r12d, -1
-    lea rdi, [rel __al_stdio_lock]
-    call __al_lock
+    mov rdi, rbx
+    call __al_stream_lock
     mov rdi, rbx
     lea rsi, [rbx + 80]          ; stream scratch byte
     mov edx, 1
@@ -41,8 +40,8 @@ fgetc:
     jz .unlock
     movzx r12d, byte [rbx + 80]
 .unlock:
-    lea rdi, [rel __al_stdio_lock]
-    call __al_unlock
+    mov rdi, rbx
+    call __al_stream_unlock
     mov eax, r12d
     pop r12
     pop rbx

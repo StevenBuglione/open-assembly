@@ -4,7 +4,8 @@ bits 64
 default rel
 
 global __al_vscan:function
-extern __al_stdio_lock:data
+extern __al_stream_lock:function
+extern __al_stream_unlock:function
 extern __al_lock:function
 extern __al_unlock:function
 extern __al_stdio_errno:function
@@ -39,7 +40,11 @@ __al_vscan:
     mov r12, rdx
     xor r14d, r14d                ; assignments
     xor r15d, r15d                ; completed conversion
-    lea rdi, [rel __al_stdio_lock]
+    cmp qword [rsp + 8], 1
+    jne .scratch_lock
+    call __al_stream_lock
+.scratch_lock:
+    lea rdi, [rel scan_lock]
     call __al_lock
     lea r13, [rel input]
     mov rax, [rsp]
@@ -348,8 +353,13 @@ __al_vscan:
     mov [rdi + 72], rax           ; preserve one nonmatching lookahead byte
     and qword [rdi + 8], -17
 .unlock:
-    lea rdi, [rel __al_stdio_lock]
+    lea rdi, [rel scan_lock]
     call __al_unlock
+    cmp qword [rsp + 8], 1
+    jne .result
+    mov rdi, [rsp]
+    call __al_stream_unlock
+.result:
     mov eax, r14d
     add rsp, 72
     pop r15
@@ -365,5 +375,8 @@ input:
     resq 5
 scan_set:
     resb 256
+
+scan_lock:
+    resd 1
 
 section .note.GNU-stack noalloc noexec nowrite progbits

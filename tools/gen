@@ -26,6 +26,26 @@ FENV_CONSTANTS = {
     "FE_DOWNWARD": 1024, "FE_UPWARD": 2048, "FE_TOWARDZERO": 3072,
 }
 
+MATH_CONSTANTS = {
+    "MATH_ERRNO": 1, "MATH_ERREXCEPT": 2, "math_errhandling": 3,
+    "FP_NAN": 0, "FP_INFINITE": 1, "FP_ZERO": 2, "FP_SUBNORMAL": 3, "FP_NORMAL": 4,
+    "FP_ILOGB0": -2147483648, "FP_ILOGBNAN": -2147483648,
+}
+
+LOCALE_CONSTANTS = {
+    "LC_CTYPE": 0, "LC_NUMERIC": 1, "LC_TIME": 2, "LC_COLLATE": 3,
+    "LC_MONETARY": 4, "LC_MESSAGES": 5, "LC_ALL": 6,
+}
+LCONV_STRINGS = (
+    "decimal_point", "thousands_sep", "grouping", "int_curr_symbol", "currency_symbol",
+    "mon_decimal_point", "mon_thousands_sep", "mon_grouping", "positive_sign", "negative_sign",
+)
+LCONV_NUMBERS = (
+    "int_frac_digits", "frac_digits", "p_cs_precedes", "p_sep_by_space", "n_cs_precedes",
+    "n_sep_by_space", "p_sign_posn", "n_sign_posn", "int_p_cs_precedes", "int_p_sep_by_space",
+    "int_n_cs_precedes", "int_n_sep_by_space", "int_p_sign_posn", "int_n_sign_posn",
+)
+
 
 def make_outputs(project, include_tracked=True, include_test=True):
     file_abi = load_file_abi(project.root)
@@ -42,6 +62,7 @@ def make_outputs(project, include_tracked=True, include_test=True):
         "time.h": time_abi["constants"],
         "signal.h": signal_abi["signals"] | signal_abi["mask_operations"] | signal_abi["action_flags"] | signal_abi["info_codes"],
         "stdio.h": {name: value for name, value in file_abi["seek"].items() if name in SEEK_ORIGINS},
+        "stdlib.h": {"EXIT_SUCCESS": 0, "EXIT_FAILURE": 1},
     }
     grouped = defaultdict(list)
     for spec in project.functions.values():
@@ -64,6 +85,12 @@ def make_outputs(project, include_tracked=True, include_test=True):
                 lines.extend(("%define FE_DFL_ENV -1", ""))
             elif header == "signal.h":
                 lines.extend(("%define SIG_DFL 0", "%define SIG_IGN 1", "%define SIG_ERR -1", ""))
+            elif header == "math.h":
+                lines.extend(f"%define {name} {value}" for name, value in MATH_CONSTANTS.items())
+                lines.append("")
+            elif header == "locale.h":
+                lines.extend(f"%define {name} {value}" for name, value in LOCALE_CONSTANTS.items())
+                lines.append("")
             if header in header_constants:
                 lines.extend(f"%define {name} {value}" for name, value in header_constants[header].items())
                 lines.append("")
@@ -138,7 +165,8 @@ def make_outputs(project, include_tracked=True, include_test=True):
             elif header == "inttypes.h":
                 lines.extend(("#include <stdint.h>", ""))
             elif header == "stdio.h":
-                lines.extend(("#include <stdarg.h>", "", "typedef struct __al_FILE FILE;",
+                lines.extend(("#include <stdarg.h>", "", f"typedef {file_abi['types']['off_t']} off_t;",
+                              "typedef struct __al_FILE FILE;",
                               "typedef struct { long offset; unsigned int state[2]; } fpos_t;", ""))
                 lines.extend(f"#define {name} ({value})" for name, value in STDIO_CONSTANTS.items())
                 lines.extend(("", "extern FILE *stdin;", "extern FILE *stdout;", "extern FILE *stderr;", ""))
@@ -147,11 +175,60 @@ def make_outputs(project, include_tracked=True, include_test=True):
                               "typedef struct { unsigned char x87[28]; unsigned int mxcsr; } fenv_t;", ""))
                 lines.extend(f"#define {name} ({value})" for name, value in FENV_CONSTANTS.items())
                 lines.extend(("#define FE_DFL_ENV ((const fenv_t *)-1)", ""))
+            elif header == "math.h":
+                lines.extend(("typedef float float_t;", "typedef double double_t;", ""))
+                lines.extend(f"#define {name} ({value})" for name, value in MATH_CONSTANTS.items())
+                lines.extend(("#define HUGE_VAL (__builtin_huge_val())",
+                              "#define HUGE_VALF (__builtin_huge_valf())",
+                              "#define HUGE_VALL (__builtin_huge_vall())",
+                              "#ifndef INFINITY",
+                              "#define INFINITY (__builtin_inff())",
+                              "#endif",
+                              "#ifndef NAN",
+                              '#define NAN (__builtin_nanf(""))',
+                              "#endif", ""))
+                for helper in ("__al_fpclassify", "__al_signbit"):
+                    for kind, suffix in (("float", "f"), ("double", ""), ("long double", "l")):
+                        lines.append(f"int {helper}{suffix}({kind});")
+                lines.extend((
+                    "int __al_comparef(float, float);",
+                    "int __al_compare(double, double);",
+                    "int __al_comparel(long double, long double);",
+                    "",
+                    "#define fpclassify(x) (_Generic((x), float: __al_fpclassifyf, double: __al_fpclassify, long double: __al_fpclassifyl)(x))",
+                    "#define signbit(x) (_Generic((x), float: __al_signbitf, double: __al_signbit, long double: __al_signbitl)(x))",
+                    "#define isfinite(x) (fpclassify(x) >= FP_ZERO)",
+                    "#define isinf(x) (fpclassify(x) == FP_INFINITE)",
+                    "#define isnan(x) (fpclassify(x) == FP_NAN)",
+                    "#define isnormal(x) (fpclassify(x) == FP_NORMAL)",
+                    "#define __al_math_cmp(x, y) (_Generic(((x) + (y)), float: __al_comparef, double: __al_compare, long double: __al_comparel)((x), (y)))",
+                    "#define isgreater(x, y) (__al_math_cmp((x), (y)) == 1)",
+                    "#define isgreaterequal(x, y) ((unsigned int)__al_math_cmp((x), (y)) <= 1)",
+                    "#define isless(x, y) (__al_math_cmp((x), (y)) < 0)",
+                    "#define islessequal(x, y) (__al_math_cmp((x), (y)) <= 0)",
+                    "#define islessgreater(x, y) (__al_math_cmp((x), (y)) % 2 != 0)",
+                    "#define isunordered(x, y) (__al_math_cmp((x), (y)) == 2)",
+                    "",
+                ))
+            elif header == "complex.h":
+                lines.extend(("#define complex _Complex",
+                              "#define _Complex_I (__extension__ 1.0fi)",
+                              "#define I _Complex_I",
+                              "#define CMPLX(x, y) __builtin_complex((double)(x), (double)(y))",
+                              "#define CMPLXF(x, y) __builtin_complex((float)(x), (float)(y))",
+                              "#define CMPLXL(x, y) __builtin_complex((long double)(x), (long double)(y))",
+                              ""))
+            elif header == "locale.h":
+                lines.extend(f"#define {name} {value}" for name, value in LOCALE_CONSTANTS.items())
+                lines.extend(("", "struct lconv {"))
+                lines.extend(f"    char *{field};" for field in LCONV_STRINGS)
+                lines.extend(f"    char {field};" for field in LCONV_NUMBERS)
+                lines.extend(("};", ""))
             if header in header_constants:
                 lines.extend(f"#define {name} ({value})" for name, value in header_constants[header].items())
                 lines.append("")
             for spec in specs:
-                attributes = " __attribute__((returns_twice))" if spec.name in {"setjmp", "sigsetjmp"} else ""
+                attributes = " __attribute__((returns_twice))" if spec.name in {"setjmp", "sigsetjmp", "_setjmp"} else ""
                 lines.append(f"{spec.prototype}{attributes};")
             if header == "setjmp.h" and any(spec.name == "setjmp" for spec in specs):
                 lines.extend(("", "#define setjmp(env) (setjmp)(env)"))

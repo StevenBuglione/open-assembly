@@ -1,0 +1,17 @@
+name = "fseeko"
+header = "stdio.h"
+prototype = "int fseeko(FILE *stream, off_t offset, int whence)"
+standard = ["POSIX.1-2024 XSH fseeko"]
+deps = ["fseek"]
+errno = ["EINVAL", "ESPIPE", "EOVERFLOW"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:lua-posix-abi"]
+provenance = "original"
+semantics = [
+  "Use the same byte stream positioning as fseek with a signed LP64 offset.",
+]
+
+[abi]
+narrow_args = ["edx:s32"]
+variadic = false

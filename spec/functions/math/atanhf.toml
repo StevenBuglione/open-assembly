@@ -1,0 +1,19 @@
+name = "atanhf"
+header = "math.h"
+prototype = "float atanhf(float x)"
+standard = ["C17 7.12.5.3"]
+deps = ["fegetround", "feraiseexcept", "__errno_location"]
+errno = ["EDOM", "ERANGE"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:mpfr", "reference:fixed-point-interval", "diff:glibc"]
+provenance = "original"
+semantics = [
+  "Compute the inverse hyperbolic tangent in the active rounding mode. Magnitudes above one yield a quiet NaN with EDOM and FE_INVALID. At magnitude one return signed infinity with ERANGE and FE_DIVBYZERO.",
+  "Quiet signaling NaNs and raise FE_INVALID.",
+  "A tiny inexact result raises FE_UNDERFLOW and FE_INEXACT with ERANGE.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

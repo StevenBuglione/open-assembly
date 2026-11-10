@@ -1,0 +1,18 @@
+name = "localeconv"
+header = "locale.h"
+prototype = "struct lconv *localeconv(void)"
+standard = ["C17 7.11.2.1"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["reference:c-locale", "reference:x86-64-lconv", "diff:glibc", "diff:musl"]
+provenance = "original"
+semantics = [
+  "Return the shared LP64 C-locale numeric and monetary formatting record.",
+  "Use a period for the decimal point, empty strings for the remaining text fields, and CHAR_MAX for the unavailable numeric fields.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

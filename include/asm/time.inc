@@ -24,7 +24,10 @@ extern clock_nanosleep
 extern difftime
 extern gmtime
 extern gmtime_r
+extern localtime_r
+extern mktime
 extern nanosleep
+extern strftime
 extern time
 extern timespec_get
 

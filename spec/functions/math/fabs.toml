@@ -1,0 +1,18 @@
+name = "fabs"
+header = "math.h"
+prototype = "double fabs(double x)"
+standard = ["C17 7.12.7.2"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:mpfr", "reference:ieee-bits", "diff:glibc"]
+provenance = "original"
+semantics = [
+  "Clear the sign of x and preserve the other value bits.",
+  "This bit operation preserves errno and floating exception flags.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

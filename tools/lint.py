@@ -5,11 +5,13 @@ from __future__ import annotations
 import argparse
 from collections import deque
 from dataclasses import dataclass, replace
+from functools import cache
 from pathlib import Path
 import re
 import subprocess
 import sys
 import tempfile
+from types import MappingProxyType
 
 ROOT = Path(__file__).resolve().parent.parent
 SYMBOL = r"[A-Za-z_][A-Za-z0-9_]*"
@@ -43,7 +45,8 @@ SSE_MOVE = frozenset(("movd", "movq", "movdqa", "movdqu", "movapd", "movaps",
                       "movupd", "movups", "movsd", "movss", "pmovmskb", "cvtsi2sd"))
 SSE_ALU = frozenset(("pxor", "pand", "pandn", "por", "pcmpeqb", "pcmpeqw",
                      "pcmpeqd", "paddb", "paddw", "paddd", "paddq", "psubb",
-                     "psubw", "psubd", "psubq", "pslldq", "psrldq", "divsd", "mulsd", "addsd"))
+                     "psubw", "psubd", "psubq", "pslldq", "psrldq", "divsd", "mulsd",
+                     "addsd", "sqrtss", "sqrtsd"))
 AFTER_SSE2 = frozenset(("addsubpd", "addsubps", "haddpd", "haddps", "hsubpd",
                         "hsubps", "lddqu", "movddup", "movshdup", "movsldup",
                         "palignr", "pabsb", "pabsd", "pabsw", "pshufb",
@@ -57,7 +60,56 @@ DATA = frozenset(("db", "dw", "dd", "dq", "dt", "do", "dy", "dz", "resb",
                   "incbin", "times", "align", "alignb"))
 SIZE = {"byte": 1, "word": 2, "dword": 4, "qword": 8, "tword": 10, "oword": 16}
 RUNTIME = ("src", "x86_64-linux")
+EXTENDED_ARGUMENTS = {
+    **{name + "l": 1 for name in (
+        "fabs", "sqrt", "ceil", "floor", "nearbyint", "rint", "round", "trunc", "frexp",
+        "ldexp", "scalbn", "scalbln", "modf", "ilogb", "logb",
+        "lrint", "llrint", "lround", "llround",
+        "__al_fpclassify", "__al_signbit", "cbrt", "exp2", "exp", "expm1", "log2", "log", "log10", "log1p", "sin", "cos", "tan", "atan", "asin", "acos", "sinh", "cosh", "tanh", "asinh", "acosh", "atanh", "erf", "erfc", "lgamma", "tgamma",
+    )},
+    **{name + "l": 2 for name in (
+        "copysign", "nextafter", "nexttoward", "fmin", "fmax", "fmod", "remainder",
+        "remquo", "__al_compare", "hypot", "pow", "atan2",
+    )},
+    "nexttoward": 1, "nexttowardf": 1, "fdiml": 2, "fmal": 3,
+}
+COMPLEX_EXTENDED_ARGUMENTS = {**{name + "l": 2 for name in (
+    "creal", "cimag", "conj", "cproj", "cabs", "carg", "clog", "csqrt", "cexp", "ccos", "csin", "ccosh", "csinh", "ctan", "ctanh", "catan", "catanh", "casin", "cacos", "casinh", "cacosh",
+)}, "cpowl": 4}
 PRIVATE_FUNCTIONS = {
+    "complex/__al_complex_power", "complex/__al_complex_power_log", "complex/__al_complex_power_arg",
+    "complex/__al_fixed_ratio_precision", "complex/__al_fixed_mul_precision",
+    "complex/__al_fixed_odd_series", "complex/__al_complex_scaled_ratio_precision",
+    "complex/__al_complex_power_constant", "complex/__al_complex_signed_sum",
+    "complex/__al_complex_power_coefficient", "complex/__al_complex_power_finish",
+    "math/__al_big_multiply", "complex/__al_complex_norm", "complex/__al_complex_log",
+    "complex/__al_complex_sqrt", "complex/__al_complex_exp", "complex/__al_complex_product",
+    "complex/__al_complex_tangent", "complex/__al_complex_inverse_tangent",
+    "complex/__al_complex_inverse_circle", "complex/__al_complex_scaled_add",
+    "complex/__al_complex_scaled_sqrt", "complex/__al_complex_scaled_ratio",
+    "complex/__al_complex_constant_angle", "complex/__al_complex_distance_delta", "complex/__al_complex_geometric_root", "complex/__al_complex_align", "complex/__al_complex_square_cmp",
+    "math/__al_fp_decode", "math/__al_fp_pack_exact", "math/__al_fp_quiet",
+    "math/__al_fp_round_shift", "math/__al_math_effects", "math/__al_math_round",
+    "math/__al_math_frexp", "math/__al_math_modf", "math/__al_math_scale",
+    "math/__al_math_next", "math/__al_math_logb", "math/__al_fp_special",
+    "math/__al_math_roundint", "math/__al_fp_compare", "math/__al_math_minmax",
+    "math/__al_math_gamma", "math/__al_log_gamma_positive", "math/__al_sinpi_q256", "math/__al_big_multiply",
+    "math/__al_math_erf", "math/__al_erfc_fraction",
+    "math/__al_math_hyperbolic", "math/__al_math_inverse_hyperbolic",
+    "math/__al_math_asin", "math/__al_big_isqrt",
+    "math/__al_math_atan", "math/__al_pi_q256", "math/__al_pi_complement", "math/__al_round_irrational",
+    "math/__al_math_pow", "math/__al_isqrt64_exact",
+    "math/__al_math_trig",
+    "math/__al_big_mul_u64", "math/__al_reduce_pio2",
+    "math/__al_math_tiny_adjust", "math/__al_fixed_big_ratio256",
+    "math/__al_math_log", "math/__al_fixed_ratio256",
+    "math/__al_fixed_mul256", "math/__al_fp_pack_biased", "math/__al_math_exp",
+    "math/__al_big_right_sticky", "math/__al_pow_u65", "math/__al_u256_cmp",
+    "math/__al_root_round", "math/__al_math_root",
+    "math/__al_math_fma", "math/__al_math_fdim", "math/__al_big_init128", "math/__al_big_add",
+    "math/__al_math_rem", "math/__al_comparef", "math/__al_compare", "math/__al_comparel",
+    "math/__al_fpclassifyf", "math/__al_fpclassify", "math/__al_fpclassifyl",
+    "math/__al_signbitf", "math/__al_signbit", "math/__al_signbitl",
     "math/__al_big_muladd", "math/__al_big_left", "math/__al_big_right1",
     "math/__al_big_cmp", "math/__al_big_sub", "math/__al_big_bits", "math/__al_big_copy",
     "math/__al_float_lex", "math/__al_float_round", "math/__al_strtof_core",
@@ -69,7 +121,10 @@ PRIVATE_FUNCTIONS = {
     "rt/__al_stdio_init", "stdio/__al_stdio_isatty", "stdio/__al_stdio_io",
     "stdio/__al_stdio_seek", "stdio/__al_stdio_open", "stdio/__al_stdio_errno",
     "stdio/__al_stream_flush", "stdio/__al_stream_read", "stdio/__al_stream_write",
-    "stdio/__al_stream_close", "stdio/__al_stream_init",
+    "stdio/__al_stream_close", "stdio/__al_stream_init", "stdio/__al_stream_rebind",
+    "rt/__al_stream_owner",
+    "stdio/__al_stream_lock", "stdio/__al_stream_unlock", "stdio/__al_stream_unlock_all",
+    "stdio/__al_stream_snapshot", "stdio/__al_stream_unpin",
     "stdio/__al_va_next", "stdio/__al_vformat", "stdio/__al_fmt_emit",
     "stdio/__al_fmt_decimal", "stdio/__al_fmt_text", "stdio/__al_fmt_integer",
     "stdio/__al_vscan", "stdio/__al_scan_peek", "stdio/__al_scan_take",
@@ -88,6 +143,14 @@ PRIVATE_FUNCTIONS = {
     "internal/__al_execve_raw", "internal/__al_exec_path_env",
     "internal/__al_exec_search", "internal/__al_exec_script",
     "internal/__al_shell_exec", "stdlib/__al_system_restore", "stdio/__al_popen_child",
+    "time/__al_strftime_render", "time/__al_strftime_field", "time/__al_strftime_number", "time/__al_iso_week",
+    "time/__al_utc_convert", "time/__al_gregorian_day", "time/__al_gregorian_split", "time/__al_civil_seconds",
+    "time/__al_tzif_parse", "time/__al_tzif_read", "time/__al_tzif_type",
+    "time/__al_tz_uint", "time/__al_tz_name", "time/__al_tz_value",
+    "time/__al_tz_date_rule", "time/__al_tz_rule_parse",
+    "time/__al_tz_rule_instant", "time/__al_tz_rule_lookup",
+    "time/__al_tzif_scale", "time/__al_tzif_leaps", "time/__al_zone_load",
+    "time/__al_zone_acquire", "time/__al_zone_lookup", "time/__al_zone_publish", "time/__al_mktime_pick",
     "internal/__al_lock", "internal/__al_unlock", "rt/_start", "rt/__al_tls_init",
     "rt/__al_panic", "rt/__al_abort", "rt/__al_diagnostic", "stdlib/__al_strtox",
 }
@@ -109,6 +172,9 @@ SIGACTION_STACK_RECORDS = {
     ("rdx", "rsp + 8"): KernelStackRecord(32, (("mov", ("edi", "13")), ("lea", ("rcx", "[rsp + 40]")))),
 }
 KERNEL_STACK_RECORDS = {
+    "stdlib/abort": {
+        ("rdx", "rsp + 8"): KernelStackRecord(8, (("mov", ("edi", "14")),)),
+    },
     "internal/__al_stat_query": {
         ("rdx", "rsp + 8"): KernelStackRecord(144, (("mov", ("edi", "5")),)),
         ("rcx", "rsp + 8"): KernelStackRecord(144, (("mov", ("edi", "262")),)),
@@ -133,6 +199,11 @@ KERNEL_STACK_RECORDS = {
     "stdio/pclose": {
         ("rdx", "rsp + 8"): KernelStackRecord(4, (("mov", ("edi", "61")),)),
     },
+    "time/__al_tzif_read": {
+        ("rdx", "rsp + 8"): KernelStackRecord(144, (("mov", ("edi", "5")), ("mov", ("rsi", "r12"))),
+                                               ((("xor", ("ecx", "ecx")), ("xor", ("r8d", "r8d")),
+                                                 ("xor", ("r9d", "r9d"))),)),
+    },
 }
 PRIVATE_DATA = {
     "stdin": "rt/__al_stdio_init", "stdout": "rt/__al_stdio_init", "stderr": "rt/__al_stdio_init",
@@ -140,6 +211,7 @@ PRIVATE_DATA = {
     "__al_heap_seed": "stdlib/__al_heap",
     "environ": "rt/__al_env_init",
     "__al_shell_path": "internal/__al_shell_exec",
+    "__al_zone_lock": "time/__al_zone_acquire",
     "optarg": "posix/getopt", "opterr": "posix/getopt", "optind": "posix/getopt", "optopt": "posix/getopt",
     "__al_env_lock": "rt/__al_env_init",
     "__al_env_owned": "stdlib/__al_env_change",
@@ -259,6 +331,7 @@ class State:
     syscall_clobbers: frozenset[str] = frozenset()
     process_entry: bool = False
     caller_stack_arg: bool = False
+    extended_arguments: int = 0
     tls_self: bool = False
     callback_table_registers: frozenset[str] = frozenset()
     callback_registers: frozenset[str] = frozenset()
@@ -280,6 +353,7 @@ class Program:
     process_entry: bool = False
     signal_restorer: bool = False
     caller_stack_arg: bool = False
+    extended_arguments: int = 0
     tls_self: bool = False
     callback_dispatch: bool = False
     callback_table: bool = False
@@ -328,12 +402,11 @@ def parse(source, narrow, variadic, allow_seed_metadata):
                     reject(line, "SYNTAX", f"invalid variadic symbol {value!r}")
 
         body = body.strip()
-        # NASM reserves WAIT as an x87 mnemonic. Recognize the escaped
-        # identifier only in positions that denote an ordinary ELF symbol.
-        if body == "$wait:":
-            body = "wait:"
-        elif escaped := re.fullmatch(r"(global|extern|call)\s+\$wait(:function)?", body):
-            body = f"{escaped[1]} wait{escaped[2] or ''}"
+        # Recognize reserved identifiers in ELF symbol positions.
+        if body in {"$abs:", "$wait:"}:
+            body = body[1:]
+        elif escaped := re.fullmatch(r"(global|extern|call)\s+\$(abs|wait)(:function)?", body):
+            body = f"{escaped[1]} {escaped[2]}{escaped[3] or ''}"
         if not body:
             continue
         directive, *fields = body.split()
@@ -482,6 +555,7 @@ def merge(a, b, line):
         syscall_clobbers=a.syscall_clobbers | b.syscall_clobbers,
         process_entry=a.process_entry,
         caller_stack_arg=a.caller_stack_arg,
+        extended_arguments=a.extended_arguments,
         tls_self=a.tls_self,
         callback_table_registers=a.callback_table_registers & b.callback_table_registers,
         callback_registers=a.callback_registers & b.callback_registers,
@@ -514,6 +588,9 @@ def stack_location(state, op, width, line, *, write):
                 or (state.context_save and state.rsp == 0 and address == 0)
                 or (state.caller_stack_arg and address == 8)):
             return None
+    if not write and any(8 + 16 * index <= address and address + width <= 18 + 16 * index
+                         for index in range(state.extended_arguments)):
+        return None
     if address < state.rsp or address + width > 0:
         reject(line, "STACK_ACCESS", "stack access is outside the allocated frame")
     return address
@@ -753,11 +830,18 @@ def transfer(state, program, ins, syscall_boundary, x87_return):
         check_operands(ins, {0})
         read_registers(state, ("rax",), line)
         return write_gpr(state, operand("rdx", line), line)
-    if opcode in {"div", "idiv"}:
+    if opcode == "bsr":
+        dest, src = check_operands(ins, {2})
+        if (dest.kind, src.kind, dest.width, src.width) != ("gpr", "gpr", 64, 64):
+            reject(line, "INSTRUCTION", "bit scan uses full-width general registers")
+        read_registers(state, (src.base,), line)
+        return write_gpr(state, dest, line)
+    if opcode in {"mul", "div", "idiv"}:
         (divisor,) = check_operands(ins, {1})
         if divisor.kind != "gpr" or divisor.width != 64:
-            reject(line, "INSTRUCTION", "division requires a full-width GPR divisor")
-        read_registers(state, ("rax", "rdx", divisor.base), line)
+            reject(line, "INSTRUCTION", f"{opcode} requires a full-width general register")
+        reads = ("rax", "rdx", divisor.base) if opcode in {"div", "idiv"} else ("rax", divisor.base)
+        read_registers(state, reads, line)
         state = write_gpr(state, operand("rax", line), line)
         return write_gpr(state, operand("rdx", line), line)
     if opcode in JCC | {"ret", "call", "jmp", "syscall", "sysenter", "int", "int3",
@@ -794,6 +878,11 @@ def transfer(state, program, ins, syscall_boundary, x87_return):
         restore = reg.base if (state.rsp, reg.base) in state.saved else None
         state = stack_adjust(state, state.rsp + 8, line)
         return write_gpr(state, reg, line, restore=restore)
+    if opcode == "fsqrt":
+        check_operands(ins, {0})
+        if not state.x87_depth:
+            reject(line, "X87_RETURN", "square root of empty x87 stack")
+        return state
     if opcode in {"fld1", "fldz", "fld", "fst", "fstp"}:
         args = check_operands(ins, {0} if opcode in {"fld1", "fldz"} else {1})
         if args:
@@ -862,7 +951,8 @@ def verify(program, syscall_boundary, x87_return):
         noreturn = names[start] in program.noreturn
         states = {start: State(pending_args=frozenset(program.narrow),
                                process_entry=program.process_entry,
-                               caller_stack_arg=program.caller_stack_arg, tls_self=program.tls_self,
+                               caller_stack_arg=program.caller_stack_arg,
+                               extended_arguments=program.extended_arguments, tls_self=program.tls_self,
                                context_save=program.context_save, callback_registers=(frozenset({program.comparator_argument})
                                                    if program.comparator_argument else frozenset()))}
         work = deque([start])
@@ -916,7 +1006,16 @@ def verify(program, syscall_boundary, x87_return):
             reject(program.instructions[start].line, "CONTROL_FLOW", "entry has no reachable exit")
 
 
-def check_file(path, function, fixture_syscall):
+def project_functions():
+    from spec import SpecError, load_project
+
+    try:
+        return MappingProxyType(load_project(ROOT).functions), None
+    except SpecError as error:
+        return None, str(error)
+
+
+def check_file(path, function, fixture_syscall, functions_snapshot=project_functions):
     resolved = path.resolve()
     relative = resolved.relative_to(ROOT) if resolved.is_relative_to(ROOT) else resolved
     parts = relative.parts
@@ -936,25 +1035,29 @@ def check_file(path, function, fixture_syscall):
     noreturn = set()
     x87_return = 0
     if function is not None or private or app:
-        from spec import SpecError, check_comment_header, load_project
+        from spec import SpecError, check_comment_header
         try:
-            project = load_project(ROOT)
+            functions, error = functions_snapshot()
+            if error is not None:
+                reject(1, "SPEC_HEADER", error)
             if function is not None:
-                spec = project.functions.get(function)
+                spec = functions.get(function)
                 if spec is None:
                     reject(1, "SPEC_HEADER", f"no function specification for {function}")
                 check_comment_header(path, spec)
                 for arg in spec.abi.narrow_args:
                     reg, how = arg.split(":")
                     narrow[REGISTERS[reg][0]] = (reg, how)
-                if spec.prototype.startswith("long double "):
+                if spec.prototype.startswith("long double _Complex "):
+                    x87_return = 2
+                elif spec.prototype.startswith("long double "):
                     x87_return = 1
-            external_signatures.update(project.functions)
+            external_signatures.update(functions)
             external_signatures.update(Path(name).name for name in PRIVATE_FUNCTIONS)
             external_signatures.difference_update({"_start", "__al_rt_sigreturn"})
-            noreturn = PRIVATE_NORETURN | {name for name, spec in project.functions.items()
+            noreturn = PRIVATE_NORETURN | {name for name, spec in functions.items()
                                           if spec.abi.noreturn}
-            variadic = {name for name, spec in project.functions.items() if spec.abi.variadic}
+            variadic = {name for name, spec in functions.items() if spec.abi.variadic}
         except SpecError as error:
             reject(1, "SPEC_HEADER", str(error))
     program = parse(path.read_text(), narrow, set(), in_seed)
@@ -965,7 +1068,11 @@ def check_file(path, function, fixture_syscall):
     program.process_entry = relative_runtime == "rt/_start"
     program.signal_restorer = relative_runtime == "internal/__al_rt_sigreturn"
     program.caller_stack_arg = relative_runtime in {"internal/__al_syscall", "spawn/__al_spawn_entry"}
-    program.tls_self = relative_runtime == "rt/__errno_location"
+    if relative_runtime == f"math/{path.stem}":
+        program.extended_arguments = EXTENDED_ARGUMENTS.get(path.stem, 0)
+    elif relative_runtime == f"complex/{path.stem}":
+        program.extended_arguments = COMPLEX_EXTENDED_ARGUMENTS.get(path.stem, 0)
+    program.tls_self = relative_runtime in {"rt/__errno_location", "rt/__al_stream_owner"}
     program.callback_table = relative_runtime == "stdlib/exit"
     program.comparator_argument = COMPARATOR_ARGUMENTS.get(function)
     program.callback_dispatch = program.callback_table or program.comparator_argument is not None
@@ -1040,8 +1147,8 @@ def check_file(path, function, fixture_syscall):
             reject(1, "SYSCALL_BOUNDARY", "signal restorer must issue Linux rt_sigreturn and then trap")
     if function is not None and set(program.entries) != {function}:
         reject(1, "SYMBOL", f"expected exactly one export named {function}")
-    if relative_runtime in {"setjmp/setjmp", "setjmp/sigsetjmp"}:
-        prefix = JUMP_SAVE if function == "setjmp" else (("movsxd", ("rsi", "esi")), *JUMP_SAVE)
+    if relative_runtime in {"setjmp/setjmp", "setjmp/sigsetjmp", "setjmp/_setjmp"}:
+        prefix = JUMP_SAVE if function in {"setjmp", "_setjmp"} else (("movsxd", ("rsi", "esi")), *JUMP_SAVE)
         sequence = tuple((ins.opcode, ins.operands) for ins in program.instructions)
         frame_lea = ("lea", ("rax", "[rsp + 8]"))
         if (sequence[:len(prefix)] != prefix or sequence.count(frame_lea) != 1
@@ -1075,10 +1182,11 @@ def main():
                         help="authorize syscall analysis for a seed under tests/seeded-bugs")
     parser.add_argument("paths", type=Path, nargs="+")
     args = parser.parse_args()
+    functions_snapshot = cache(project_functions)
     failed = False
     for path in args.paths:
         try:
-            check_file(path, args.function, args.fixture_syscall_boundary)
+            check_file(path, args.function, args.fixture_syscall_boundary, functions_snapshot)
         except Violation as error:
             print(f"{path}:{error.line}: {error.rule}: {error.message}", file=sys.stderr)
             failed = True

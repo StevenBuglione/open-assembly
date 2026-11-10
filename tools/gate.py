@@ -147,10 +147,15 @@ def source_policy(checks, directory):
                         and Path(name).suffix.lower() in c_family})
     if forbidden:
         raise GateError("C-family or non-NASM source outside tests: " + ", ".join(forbidden))
+    sources = sorted(path for root in ("src", "ext", "apps") for path in Path(root).rglob("*.asm"))
+    if sources:
+        result = run(["tools/lint", *sources], timeout=120)
+        log.append(result)
+        if result["returncode"] != 0:
+            detail = (result["stderr"] or result["stdout"]).strip()
+            raise GateError(f"shipped source lint exited {result['returncode']}. {detail}")
     object_path = directory / "shipped.o"
-    for source in sorted(path for root in ("src", "ext", "apps")
-                         for path in Path(root).rglob("*.asm")):
-        checked(log, ["tools/lint", source])
+    for source in sources:
         checked(log, ["nasm", "-f", "elf64", "-Wall", "-Werror", "-Wno-reloc-rel-dword",
                       "-I", "include/asm/",
                       "-o", object_path, source])

@@ -1,0 +1,17 @@
+name = "csqrtl"
+header = "complex.h"
+prototype = "long double _Complex csqrtl(long double _Complex z)"
+standard = ["C17 7.3.8.3"]
+deps = ["fegetround", "feraiseexcept", "__errno_location"]
+errno = ["ERANGE"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:mpfr", "reference:complex-branch-cut", "diff:glibc"]
+provenance = "original"
+semantics = [
+  "Return the principal square root with a nonnegative real part and imaginary sign from the input. The branch cut is the negative real axis.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

@@ -19,9 +19,8 @@ bits 64
 default rel
 
 global fseek:function
-extern __al_stdio_lock:data
-extern __al_lock:function
-extern __al_unlock:function
+extern __al_stream_lock:function
+extern __al_stream_unlock:function
 extern __al_stream_flush:function
 extern __al_stdio_seek:function
 extern __al_stdio_errno:function
@@ -38,8 +37,8 @@ fseek:
     mov r12, rsi                  ; offset
     movsxd r13, edx               ; origin
     mov r14d, -1
-    lea rdi, [rel __al_stdio_lock]
-    call __al_lock
+    mov rdi, rbx
+    call __al_stream_lock
     cmp r13, 2
     ja .invalid
     cmp qword [rbx], 0
@@ -90,8 +89,8 @@ fseek:
 .errno:
     call __al_stdio_errno
 .unlock:
-    lea rdi, [rel __al_stdio_lock]
-    call __al_unlock
+    mov rdi, rbx
+    call __al_stream_unlock
     mov eax, r14d
     pop r14
     pop r13
