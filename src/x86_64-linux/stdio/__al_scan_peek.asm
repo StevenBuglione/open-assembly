@@ -41,6 +41,7 @@ __al_scan_peek:
     lea rsi, [rbx + 32]
     mov edx, 1
     call __al_stream_read
+    mov [rbx + 48], edx          ; byte read failure vs EOF
     test rax, rax
     jz .end
     movzx eax, byte [rbx + 32]

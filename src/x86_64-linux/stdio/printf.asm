@@ -4,7 +4,7 @@
 ; prototype: int printf(const char *restrict format, ...)
 ; standard: C17 7.21.6.3
 ; deps: vprintf
-; errno: EINVAL, EOVERFLOW, EIO
+; errno: EILSEQ, EINVAL, EOVERFLOW, EIO
 ; mt_safe: true
 ; as_safe: false
 ; oracles: diff:glibc, diff:musl, reference:phase4-stdio
@@ -13,7 +13,7 @@
 ; variadic: true
 ; semantics: Interpret the integer, floating, string, byte, pointer, count, and percent conversions.
 ; semantics: Return the byte count excluding the terminator on success, or a negative result on error.
-; semantics: Unsupported wide conversions report EINVAL. Count overflow reports EOVERFLOW.
+; semantics: Wide c and s encode arguments with the active LC_CTYPE. String precision limits complete multibyte characters by byte count. Count overflow reports EOVERFLOW.
 ; END OPEN ASSEMBLY GENERATED SPEC
 
 bits 64
