@@ -53,6 +53,15 @@ for left, right in CONDITIONS:
 SIGNED = dict(zip(("ja", "jae", "jb", "jbe", "jg", "jge", "jl", "jle"),
                   ("jg", "jge", "jl", "jle", "ja", "jae", "jb", "jbe"), strict=True))
 MUTATION_EQUIVALENCES = {
+    "aligned_alloc": ("54018c8232eb79be972248c95639918d735b662e6dba1073313da6db617fe58a", {
+        "comparison-plus-one-38": "Only alignment 16 changes path. The fallback writes the same alignment 16.",
+        "comparison-minus-one-38": "Only alignment 15 changes path. The prior power-of-two check rejects 15.",
+    }),
+    "posix_memalign": ("f9e673ae0de30af7ef9277d1dec68ef1ec664b561fe0616eedc0cff5c1b81554", {
+        "comparison-minus-one-28": "Only alignment 7 reaches the power-of-two check instead of returning EINVAL immediately. It fails that check with the same result and effects.",
+        "comparison-plus-one-39": "Only alignment 16 changes path. The fallback writes the same alignment 16.",
+        "comparison-minus-one-39": "Only alignment 15 changes path. The prior power-of-two check rejects 15.",
+    }),
     "http_find_header_end": ("ce3be959f11603bdd7a026a55e8522d88c1dbd7ec6da758b79eaa5ce5a34e807", {
         "comparison-signedness-25": "A readable x86-64 Linux user byte span has length below 2^63. The length and threshold four have bit 63 clear.",
         "comparison-signedness-33": "The remaining-start limit is the valid length minus three. The counter starts at zero and cannot exceed that limit. Both operands have bit 63 clear.",

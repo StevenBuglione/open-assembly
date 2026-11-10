@@ -1,0 +1,114 @@
+schema = 1
+
+[[case]]
+name = "heap-closure-cold-slab"
+sources = ["tests/allocator-closure/witness.c"]
+requires = ["malloc", "free"]
+args = ["cold-slab"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:phase3-contract", "reference:linux-allocation-boundary"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The independent project mapping and ownership contract is the oracle."
+link_wraps = ["__al_syscall"]
+
+[[case]]
+name = "heap-closure-alignment-overflow"
+sources = ["tests/allocator-closure/witness.c"]
+requires = ["aligned_alloc", "posix_memalign"]
+args = ["alignment-overflow"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:phase3-contract", "reference:linux-allocation-boundary"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The independent project mapping and ownership contract is the oracle."
+link_wraps = ["__al_syscall"]
+
+[[case]]
+name = "heap-closure-slab-lists"
+sources = ["tests/allocator-closure/witness.c"]
+requires = ["malloc", "free"]
+args = ["slab-lists"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:phase3-contract", "reference:linux-allocation-boundary"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The independent project mapping and ownership contract is the oracle."
+link_wraps = ["__al_syscall"]
+
+[[case]]
+name = "heap-closure-in-place-remap"
+sources = ["tests/allocator-closure/witness.c"]
+requires = ["realloc", "malloc", "free"]
+args = ["in-place-remap"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:phase3-contract", "reference:linux-allocation-boundary"]
+backends = ["native"]
+host_skip = "The independent project mapping and ownership contract is the oracle."
+link_wraps = ["__al_syscall"]
+[case.skip]
+qemu = "The in-place witness is scoped to native Linux address-space placement."
+valgrind = "The in-place witness is scoped to native Linux address-space placement."
+
+[[case]]
+name = "heap-closure-raw-remap-error"
+sources = ["tests/allocator-closure/witness.c"]
+requires = ["realloc", "malloc", "free"]
+args = ["raw-remap-error"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:phase3-contract", "reference:linux-allocation-boundary"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The independent project mapping and ownership contract is the oracle."
+link_wraps = ["__al_syscall"]
+
+[[stub]]
+symbol = "malloc"
+case = "heap-closure-cold-slab"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "free"
+case = "heap-closure-slab-lists"
+status = 24
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "aligned_alloc"
+case = "heap-closure-alignment-overflow"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "posix_memalign"
+case = "heap-closure-alignment-overflow"
+status = 12
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "realloc"
+case = "heap-closure-in-place-remap"
+status = 31
+stdout = ""
+stderr = ""

@@ -1,23 +1,30 @@
 """Verify selected runtime functions using independent manifest cases."""
 
+import argparse
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from functools import partial
 from hashlib import sha256
+from itertools import chain
+import json
+import os
 from pathlib import Path
 import random
 import shutil
+import struct
 import subprocess
 import sys
 import tempfile
 import time
 
 from branch_coverage import verify_coverage
-from gate import (BUILD, COMPILE_FLAGS, LINK_FLAGS, CandidateFailure, GateError, checked, finish_function_gate, identify_tools,
-                  nm_symbols, verify_setup)
+from gate import (BUILD, COMPILE_FLAGS, EVIDENCE, LINK_FLAGS, CandidateFailure, GateError, checked,
+                  finish_function_gate, identify_tools, nm_symbols, verify_setup, write_evidence)
 from phase1 import NASM, build_case, build_runtime, load_manifest as load_phase1_manifest
 from phase4 import Probe, load_probes, observation, parse_probe
-from phase6 import ABI_FIXTURES, PUBLIC as FILE_PUBLIC, SUITE as FILE_SUITE, run_cases, run_stubs
-from production import applicable_variants, phase2_inputs, source_paths
+from phase6 import (ABI_FIXTURES, PROCESS as PROCESS_PUBLIC, PUBLIC as FILE_PUBLIC,
+                    SUITE as FILE_SUITE, run_cases, run_stubs)
+from production import applicable_variants, phase2_inputs, result_type, source_paths
 from spec import ROOT, load_project, sha256_file, snapshot_inputs
 
 
@@ -34,6 +41,12 @@ class Plan:
     contracts: tuple
     fault_wrappers: tuple = ()
     phase1_cases: tuple = ()
+    private_engine: str = ""
+    semantic_mutants: tuple = ()
+    supplement: Path | None = None
+    wrapper_suffix: str = "allocator-wrapper"
+    private_helpers: tuple = ()
+    abi_result: bool = False
 
 
 FCNTL = Path("tests/phase6/fcntl")
@@ -49,8 +62,68 @@ IO_MUTATIONS.update(pread=(("io-pread", (11, 12, 13, 14)),),
                     pwrite=(("io-pwrite", (11, 12, 13, 14, 15)),
                             ("io-pwrite-coverage", (*range(11, 19), 21, 22, 23, 24))))
 FILE_MUTATION_FAILURES = {"lseek": (62, 63, 65, 67), "dup": (72, 73, 74), "dup2": (82, 83, 84, 85)}
+PROCESS_IDENTITY = Path("tests/phase6/process_identity")
+PROCESS_IDENTITY_FAILURES = {"getpid": (11,), "getppid": (21,)}
+GETPID_SYSCALL = "    mov edi, 39                  ; __NR_getpid\n"
+GETPPID_SYSCALL = "    mov edi, 110                 ; __NR_getppid\n"
+PROCESS_IDENTITY_MUTANTS = {
+    "getpid": (("swap-process-identity-syscall", GETPID_SYSCALL, GETPPID_SYSCALL),),
+    "getppid": (("swap-process-identity-syscall", GETPPID_SYSCALL, GETPID_SYSCALL),),
+}
+PROCESS_IDENTITY_RECORD = (16, 72)
+PROCESS_NORMALIZED_BYTES = 64
+PIPE_IDENTITY = Path("tests/phase6/pipe_identity")
+PIPE_RECORD = (16, 64)
+NULL_PIPE_OUTPUT = ("null-pipe-output", "    mov rsi, rdi", "    xor esi, esi")
+DROP_PIPE2_FLAGS = ("drop-pipe2-flags", "    movsxd rdx, esi\n", "    xor edx, edx\n")
 FILE_CONTRACTS = (Path("docs/adr/0007-linux-files-process-signal-time.md"),
                   Path("docs/cookbook/linux-file-verification.md"))
+ALLOCATOR = Path("tests/allocator-production")
+ALLOCATOR_NAMES = {name: name.replace("_", "-") for name in
+                   ("malloc", "calloc", "free", "realloc", "aligned_alloc", "posix_memalign")}
+ALLOCATOR_FUNCTIONS = frozenset(ALLOCATOR_NAMES)
+ALLOCATOR_CONTRACTS = (Path("docs/adr/0004-allocator-environment.md"),
+                       Path("docs/adr/0036-direct-allocation-remap.md"))
+ALLOCATOR_MUTATIONS = {
+    "malloc": (("heap-malloc-fault", (31, 32)), ("heap-malloc-unit", tuple(range(11, 18)))),
+    "calloc": (("heap-calloc-fault", (31, 32)), ("heap-calloc-unit", tuple(range(11, 18)))),
+    "free": (("heap-free-release", (31, 32)), ("heap-free-unit", tuple(range(11, 16)))),
+    "realloc": (("heap-realloc-fault", (31, 32, 33)), ("heap-realloc-unit", tuple(range(11, 20)))),
+    "aligned_alloc": (("heap-aligned-alloc-fault", (31, 32, 33)), ("heap-aligned-alloc-unit", tuple(range(11, 19)))),
+    "posix_memalign": (("heap-posix-memalign-fault", (31, 32, 33)), ("heap-posix-memalign-unit", tuple(range(11, 19)))),
+}
+ALLOCATOR_SEMANTIC_MUTANTS = {
+    "calloc": (("omit-calloc-zeroing", "    mov ecx, 3                    ; allocate and zero\n",
+                "    xor ecx, ecx\n"),),
+    "free": (("drop-free-pointer", "    call __al_heap\n", "    xor edi, edi\n    call __al_heap\n"),
+             ("wrong-free-operation", "    mov ecx, 1                    ; free\n", "    xor ecx, ecx\n")),
+    "realloc": (("discard-old-allocation", "    call __al_heap\n", "    xor edi, edi\n    call __al_heap\n"),),
+    "posix_memalign": (("omit-aligned-output-store", "    mov [rdi], rax\n", "    nop\n"),),
+}
+STREAM_INDICATORS = Path("tests/stream-indicators")
+STREAM_FAILURES = {"feof": (11, 18), "ferror": (11, 19), "clearerr": (11, 16), "fileno": (11, 17)}
+STREAM_CONTRACTS = (Path("docs/adr/0005-stdio-varargs.md"), Path("docs/adr/0021-wide-stream-orientation.md"))
+STREAM_SEMANTIC_MUTANTS = {
+    "feof": (("read-error-indicator", "    and r12d, 16\n", "    and r12d, 32\n"),),
+    "ferror": (("read-eof-indicator", "    and r12d, 32\n", "    and r12d, 16\n"),),
+    "clearerr": (("leave-eof-indicator", "    and qword [rbx + 8], -49\n", "    and qword [rbx + 8], -33\n"),
+                 ("leave-error-indicator", "    and qword [rbx + 8], -49\n", "    and qword [rbx + 8], -17\n")),
+}
+STREAM_WRAPPER_SUFFIX = "stream-indicator-wrapper"
+FILENO_DESCRIPTORLESS = {
+    "line": 38, "instruction": "js", "branch": "taken",
+    "source_sha256": "9d00db5d671a11f5f9b76c66df59e749a33b388123b6aa5f4a3114267d41a923",
+}
+FILENO_REVIEW = Path("docs/cookbook/fileno-descriptor-domain.md")
+FILENO_DOMAIN_CONTRACTS = (
+    Path("docs/adr/0002-runtime-abi.md"), Path("docs/adr/0010-thread-lifecycle-locks.md"),
+    Path("docs/adr/0028-static-pie.md"), Path("docs/adr/0043-threaded-fork.md"), FILENO_REVIEW,
+)
+FILENO_DOMAIN_FIXED_INPUTS = (
+    "Makefile", "tools/gen", "tools/phase1.py", "tools/spec.py",
+    *(str(path) for path in (*STREAM_CONTRACTS, *FILENO_DOMAIN_CONTRACTS)),
+)
+FILENO_DOMAIN_SHA256 = "53b69c3d3be0625e99942b3f19cc26e83b380664820956413cf43b3fab8dcd5f"
 PLANS = {
     **{name: Plan(FILE_SUITE, frozenset(FILE_PUBLIC), ABI_FIXTURES,
                   "file-abi", f"file-{name}", ((f"file-{name}", codes),),
@@ -62,6 +135,33 @@ PLANS = {
                   mutations, f"io-{name}-fuzz", (16, 24), FILE_CONTRACTS,
                   ((IO / "pwrite_fault.c", ("__al_syscall",)),), IO_PHASE1_CASES.get(name, ()))
        for name, mutations in IO_MUTATIONS.items()},
+    **{name: Plan(ALLOCATOR, ALLOCATOR_FUNCTIONS, (Path("tests/phase2/abi.asm"),),
+                  f"heap-{label}-abi", "heap-free-release" if name == "free" else f"heap-{label}-unit",
+                  ALLOCATOR_MUTATIONS[name], f"heap-{label}-fuzz", (32, 64), ALLOCATOR_CONTRACTS,
+                  ((ALLOCATOR / "fault.c", ("__al_syscall",)),), private_engine="__al_heap",
+                  semantic_mutants=ALLOCATOR_SEMANTIC_MUTANTS.get(name, ()))
+       for name, label in ALLOCATOR_NAMES.items()},
+    **{name: Plan(FILE_SUITE / "process", frozenset(PROCESS_PUBLIC), (Path("tests/phase2/abi.asm"),),
+                  f"identity-{name}-abi", f"process-{name}", ((f"process-{name}", codes),),
+                  f"identity-{name}-fuzz", PROCESS_IDENTITY_RECORD, FILE_CONTRACTS[:1],
+                  semantic_mutants=PROCESS_IDENTITY_MUTANTS[name], supplement=PROCESS_IDENTITY, abi_result=True)
+       for name, codes in PROCESS_IDENTITY_FAILURES.items()},
+    **{name: Plan(STREAM_INDICATORS, frozenset(STREAM_FAILURES), (Path("tests/phase2/abi.asm"),),
+                  f"stream-{name}-abi", f"stream-{name}-unit", ((f"stream-{name}-unit", tuple(range(first, last + 1))),),
+                  f"stream-{name}-fuzz", (16, 64),
+                  STREAM_CONTRACTS + (FILENO_DOMAIN_CONTRACTS if name == "fileno" else ()),
+                  private_engine="__al_stream_lock",
+                  semantic_mutants=STREAM_SEMANTIC_MUTANTS.get(name, ()), wrapper_suffix=STREAM_WRAPPER_SUFFIX,
+                  private_helpers=("__al_stream_unlock", "__al_stdio_errno") if name == "fileno" else ("__al_stream_unlock",))
+       for name, (first, last) in STREAM_FAILURES.items()},
+    "pipe": Plan(FILE_SUITE, frozenset(FILE_PUBLIC), ABI_FIXTURES, "file-abi", "file-pipe",
+                 (("file-pipe", (92, 93, 94)),), "pipe-fuzz", PIPE_RECORD, FILE_CONTRACTS,
+                 ((FILE_SUITE / "fault.c", ("__al_syscall",)),),
+                 semantic_mutants=(NULL_PIPE_OUTPUT,), supplement=PIPE_IDENTITY),
+    "pipe2": Plan(FILE_SUITE / "process", frozenset(PROCESS_PUBLIC), (Path("tests/phase2/abi.asm"),),
+                  "pipe2-typed-abi", "process-pipe2", (("process-pipe2", (41, 42, 43, 44)),),
+                  "pipe2-fuzz", PIPE_RECORD, FILE_CONTRACTS[:1],
+                  semantic_mutants=(NULL_PIPE_OUTPUT, DROP_PIPE2_FLAGS), supplement=PIPE_IDENTITY, abi_result=True),
     "fcntl": Plan(
         FCNTL, frozenset({"fcntl"}), (Path("tests/phase2/abi.asm"), FCNTL / "variadic.asm"),
         "fcntl-abi", "fcntl-dispatch",
@@ -90,11 +190,18 @@ def phase1_probe(case):
                  "Phase 1 fixture links the Open Assembly runtime directly.")
 
 
-def load_plan_probes(function, plan):
+def load_plan_probes(function, plan, *, include_supplement=True):
     parse = partial(parse_probe, suite=plan.suite, programs=(), asm_fixtures=plan.assembly,
                     fault_wrappers=dict(plan.fault_wrappers), allow_fixture_files=True)
     probes, controls = load_probes(plan.suite / "manifest.toml", plan.public, parse)
     selected = {probe.case.name: probe for probe in probes if function in probe.case.requires}
+    if plan.supplement is not None and include_supplement:
+        supplemental, _ = load_probes(plan.supplement / "manifest.toml", plan.public,
+                                       partial(parse, suite=plan.supplement), supplement=True)
+        additional = {probe.case.name: probe for probe in supplemental if function in probe.case.requires}
+        if selected.keys() & additional.keys():
+            raise GateError(f"{function}: overlapping original and supplemental cases")
+        selected.update(additional)
     if plan.phase1_cases:
         cases, stubs = load_phase1_manifest()
         phase1 = {case.name: phase1_probe(case) for case in cases if function in case.requires}
@@ -128,7 +235,7 @@ def debug_candidate(name, source, original, directory, log):
     return debug
 
 
-def trace_function(name, source, original, probe, directory, runtime, record):
+def trace_function(name, source, original, probe, directory, runtime, record, *, require_complete=True):
     if probe.files or probe.input_bytes or "qemu" not in probe.case.backends:
         raise GateError(f"{probe.case.name}: trace case requires an argument-only QEMU probe")
     directory.mkdir()
@@ -139,7 +246,39 @@ def trace_function(name, source, original, probe, directory, runtime, record):
     record.update(debug_object_sha256=sha256_file(debug), linked_artifacts=artifacts,
                   link_wraps=probe.wraps)
     verify_coverage(record, directory, binary, name, source, [probe.case.args], exact_case=probe.case,
-                    require_entry=True)
+                    require_complete=require_complete, require_entry=True)
+
+
+def descriptor_domain(inputs):
+    # Review the complete source universe, including new paths outside stdio.
+    # The gate captures this input map before and after building and running.
+    domain = {path: digest for path, digest in inputs.items()
+              if path.startswith(("src/", "spec/", "include/asm/", "build/include/c/"))
+              or path in FILENO_DOMAIN_FIXED_INPUTS}
+    serialized = json.dumps(domain, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return sha256(serialized).hexdigest(), len(domain)
+
+
+def bind_descriptorless_scope(source, trace, inputs):
+    proof = FILENO_DESCRIPTORLESS
+    missing = [(edge["line"], edge["instruction"], edge["branch"]) for edge in trace["edges"] if not edge["covered"]]
+    if (trace.get("outcome") != "partial" or trace.get("covered") != 1 or trace.get("total") != 2
+            or missing != [(proof["line"], proof["instruction"], proof["branch"])]
+            or sha256_file(source) != proof["source_sha256"]):
+        raise GateError("fileno trace does not match the documented descriptor-backed stream scope")
+    fingerprint, count = descriptor_domain(inputs)
+    domain = {
+        **proof, "outcome": "pending", "review": str(FILENO_REVIEW),
+        "review_sha256": inputs[str(FILENO_REVIEW)],
+        "domain_sha256": fingerprint, "reviewed_domain_sha256": FILENO_DOMAIN_SHA256,
+        "domain_input_count": count,
+    }
+    if fingerprint == FILENO_DOMAIN_SHA256:
+        domain.update(outcome="unreachable_in_reviewed_public_domain",
+                      applicable_covered=1, applicable_total=1)
+    else:
+        domain["reason"] = "The FILE constructor and lifetime source domain changed and requires fresh review."
+    trace["descriptorless"] = domain
 
 
 def expected(probe):
@@ -154,11 +293,20 @@ def execute_native(probe, binary, directory):
     return observation(command, directory, probe.input_bytes, probe.case.env)
 
 
-def mutate_function(name, spec, source, original, probes, plan, directory, runtime, record, *, run_equivalent=False):
+def semantic_variants(source, replacements):
+    original = source.read_text(encoding="utf-8")
+    for operator, before, after in replacements:
+        if original.count(before) != 1:
+            raise GateError(f"{source}: {operator} requires one exact source instruction")
+        yield operator, original.replace(before, after, 1)
+
+
+def mutate_function(name, spec, source, original, probes, plan, directory, runtime, record, *,
+                    run_equivalent=False, semantic_mutants=(), isolate_candidate=False):
     directory.mkdir()
-    returns_value = not spec.prototype.startswith("void ") and not spec.abi.noreturn
-    for operator, contents in applicable_variants(name, source, record, returns_value=returns_value,
-                                                  run_equivalent=run_equivalent):
+    returns_value = result_type(spec) != "void" and not spec.abi.noreturn
+    variants = applicable_variants(name, source, record, returns_value=returns_value, run_equivalent=run_equivalent)
+    for operator, contents in chain(variants, semantic_variants(source, semantic_mutants)):
         work = directory / operator
         work.mkdir()
         mutant = work / f"{name}.asm"
@@ -171,7 +319,8 @@ def mutate_function(name, spec, source, original, probes, plan, directory, runti
         for case_name, rejection_codes in plan.mutations:
             probe = probes[case_name]
             binary, artifacts = build_case(probe.case, work / case_name, runtime, item["commands"],
-                                          candidate=(name, obj), link_wraps=probe.wraps)
+                                          candidate=(name, obj), link_wraps=probe.wraps,
+                                          isolate_candidate=isolate_candidate)
             observed, log = execute_native(probe, binary, work / f"{case_name}-inputs")
             item["probes"].append({"case": case_name, "binary_sha256": artifacts[binary.name], **log})
             if observed == expected(probe):
@@ -224,10 +373,25 @@ def timed_fuzz(name, probe, plan, directory, runtime, record):
         binaries[label] = binary
     record["artifacts"] = artifacts
     commands = {label: [str(binary.resolve())] for label, binary in binaries.items()}
-    timed_packets(name, probe, plan.record_sizes, directory, commands, record)
+    timed_packets(name, probe, plan.record_sizes, directory, commands, record,
+                  process_identity=name in PROCESS_IDENTITY_FAILURES)
 
 
-def timed_packets(name, probe, record_sizes, directory, commands, record):
+def normalize_process_packets(raw, identities):
+    identities["digest"].update(raw)
+    normalized = bytearray(raw)
+    for start in range(0, len(raw), PROCESS_IDENTITY_RECORD[1]):
+        role = struct.unpack_from("<Q", raw, start)[0]
+        offset = start + PROCESS_NORMALIZED_BYTES
+        pid, ppid = struct.unpack_from("<II", raw, offset)
+        identities["roles"].add(role)
+        identities["pids"].add(pid)
+        identities["ppids"].add(ppid)
+        normalized[offset:offset + 8] = b"\0" * 8
+    return bytes(normalized)
+
+
+def timed_packets(name, probe, record_sizes, directory, commands, record, *, process_identity=False):
     if "candidate" not in commands or len(commands) < 2:
         raise GateError("timed differential requires a candidate and independent oracle")
     record.update(seed=FUZZ_SEED, runs=list(commands))
@@ -236,11 +400,15 @@ def timed_packets(name, probe, record_sizes, directory, commands, record):
     start = time.monotonic()
     count = 0
     digests = {label: sha256() for label in ["input", *commands]}
+    identities = {label: {"pids": set(), "ppids": set(), "roles": set(), "digest": sha256()}
+                  for label in commands} if process_identity else {}
     while time.monotonic() - start < FUZZ_SECONDS:
         payload = rng.randbytes(seed_size * 512)
         digests["input"].update(payload)
         results = {label: fuzz_observation(command, probe, payload, directory, result_size * 512)
                    for label, command in commands.items()}
+        for label, observed in identities.items():
+            results[label] = normalize_process_packets(results[label], observed)
         if len(set(results.values())) != 1:
             for i in range(512):
                 row = {label: data[i * result_size:(i + 1) * result_size].hex()
@@ -256,13 +424,33 @@ def timed_packets(name, probe, record_sizes, directory, commands, record):
         count += 512
     if count == 0:
         raise GateError("timed differential produced no records")
+    if identities:
+        record["process_identity"] = {}
+        for label, observed in identities.items():
+            roles = observed["roles"]
+            pids, ppids = len(observed["pids"]), len(observed["ppids"])
+            record["process_identity"][label] = {"roles": sorted(roles), "distinct_pids": pids,
+                                                   "distinct_ppids": ppids,
+                                                   "raw_output_sha256": observed["digest"].hexdigest()}
+            if roles != {0, 1, 2} or min(pids, ppids) < 2:
+                raise GateError(f"{name}: {label} did not observe varied live process identities")
+        record["normalized_prefix_bytes"] = PROCESS_NORMALIZED_BYTES
     record.update(outcome="pass", records=count, elapsed_s=round(time.monotonic() - start, 6),
                   sha256={label: digest.hexdigest() for label, digest in digests.items()})
     print(f"PASS {name} timed differential {count} records", flush=True)
 
 
-def runtime_manifest_production(function, only=None, *, attempt=None):
-    scope = "production-runtime-manifest-function" if only is None else f"production-runtime-manifest-{only}"
+def pending_dependency(plan):
+    result = {"outcome": "pending", "engine": plan.private_engine}
+    if plan.private_helpers:
+        result["helpers"] = list(plan.private_helpers)
+    return result
+
+
+def runtime_manifest_production(function, only=None, *, attempt=None, wrapper_only=False):
+    plan = PLANS.get(function)
+    wrapper_suffix = plan.wrapper_suffix if plan and wrapper_only else None
+    scope = f"{wrapper_suffix}-verification" if wrapper_suffix else f"production-runtime-manifest-{only or 'function'}"
     evidence = {"schema_version": 1, "scope": scope, "function": function, "outcome": "fail",
                 "production_verified": False, "checks": {}}
     checks = evidence["checks"]
@@ -270,13 +458,20 @@ def runtime_manifest_production(function, only=None, *, attempt=None):
     try:
         if only not in (None, "coverage", "mutation", "stub", "fuzz"):
             raise GateError(f"unsupported manifest production check {only}")
-        plan = PLANS[function]
+        if plan is None:
+            raise GateError(f"{function}: no runtime manifest production plan")
+        if wrapper_only and (not plan.private_engine or only is not None or attempt is not None):
+            raise GateError("scoped wrapper verification requires a private-engine plan and no production attempt")
+        if plan.private_engine:
+            checks["dependency_closure"] = pending_dependency(plan)
+            if only is None and not wrapper_only:
+                raise GateError(f"{function}: shared implementation {plan.private_engine} needs separate production proof")
         evidence["toolchain"] = identify_tools("ar", "make", "objdump", "qemu-x86_64", "musl-gcc")
         evidence["inputs"] = verify_setup(checks, False, snapshot=snapshot)
         project = load_project()
         spec = project.functions[function]
         source = source_paths()[function]
-        probes, controls = load_plan_probes(function, plan)
+        probes, controls = load_plan_probes(function, plan, include_supplement=only in (None, "fuzz"))
         required_cases = {"coverage": {plan.trace}, "mutation": {case for case, _ in plan.mutations},
                           "stub": set(), "fuzz": {plan.fuzz}}
         selected = {plan.abi}.union(*required_cases.values()) if only is None else required_cases[only]
@@ -312,28 +507,94 @@ def runtime_manifest_production(function, only=None, *, attempt=None):
                     record = checks[check] = {"outcome": "fail", "cases": {}}
                     run_cases(cases, target, runtime, second, runners, record["cases"],
                               host_macro="OA_PHASE6_HOST", classify_native=True)
+                    if check == "abi" and plan.abi_result:
+                        probe = probes[plan.abi].case
+                        objects = [target / plan.abi / "first" / f"test-{index}.o"
+                                   for index, path in enumerate(probe.sources) if path.suffix == ".c"]
+                        log = record["cases"][plan.abi]["commands"]
+                        if not any(nm_symbols(log, obj, ["-g", "-u"]).get("phase2_abi_probe_result") == "U"
+                                   for obj in objects):
+                            raise GateError(f"{function}: ABI fixture lacks the typed result trampoline")
                     record["outcome"] = "pass"
             if only in (None, "coverage"):
                 trace = checks["branch_coverage"] = {"outcome": "fail", "commands": [], "runs": []}
-                trace_function(function, source, original, probes[plan.trace], directory / "coverage", runtime, trace)
+                scoped_fileno = function == "fileno" and wrapper_only
+                trace_function(function, source, original, probes[plan.trace], directory / "coverage", runtime, trace,
+                               require_complete=not scoped_fileno)
+                if scoped_fileno:
+                    bind_descriptorless_scope(source, trace, evidence["inputs"])
             if only in (None, "stub"):
                 stub = checks["generated_stub"] = {"outcome": "fail", "symbols": {}}
                 run_stubs({function: controls[function]}, project, directory, runtime, stub)
             if only in (None, "mutation"):
                 mutation = checks["production_mutation"] = {"outcome": "fail", "operators": []}
                 mutate_function(function, spec, source, original, probes, plan,
-                                directory / "mutation", runtime, mutation)
+                                directory / "mutation", runtime, mutation, run_equivalent=bool(plan.private_engine),
+                                semantic_mutants=plan.semantic_mutants, isolate_candidate=bool(plan.private_engine))
             if only in (None, "fuzz"):
                 fuzz = checks["differential_fuzz"] = {"outcome": "fail", "commands": []}
                 timed_fuzz(function, probes[plan.fuzz], plan, directory / "fuzz", runtime, fuzz)
         if evidence["inputs"] != snapshot():
             raise GateError("runtime manifest verification inputs changed during the run")
-        if only is None and (not REQUIRED_CHECKS <= checks.keys()
-                             or any(checks[name]["outcome"] != "pass" for name in REQUIRED_CHECKS)):
+        required = REQUIRED_CHECKS - {"branch_coverage"} if function == "fileno" and wrapper_only else REQUIRED_CHECKS
+        if only is None and (not required <= checks.keys()
+                             or any(checks[name]["outcome"] != "pass" for name in required)):
             raise GateError("runtime manifest production evidence is missing a passing required check")
-        evidence.update(outcome="pass", production_verified=only is None)
+        evidence.update(outcome="pass", production_verified=only is None and not wrapper_only)
     except (GateError, KeyError, OSError, ValueError, subprocess.SubprocessError) as error:
         evidence["error"] = str(error)
         evidence["failure_class"] = "semantic" if isinstance(error, CandidateFailure) else "harness"
         print(f"gate: {error}", file=sys.stderr)
-    return finish_function_gate(function, only, evidence, attempt, snapshot)
+    return finish_function_gate(function, wrapper_suffix or only, evidence, attempt, snapshot)
+
+
+def wrapper_batch(functions, available, suffix, label):
+    scope = f"{suffix}-verification"
+
+    def child(name):
+        item = {"outcome": "fail"}
+        try:
+            status = runtime_manifest_production(name, wrapper_only=True)
+            path = EVIDENCE / f"{name}.{suffix}.json"
+            record = json.loads(path.read_text(encoding="utf-8"))
+            item.update(evidence=str(path), evidence_sha256=sha256_file(path))
+            dependency = pending_dependency(PLANS[name])
+            if (status == 0 and record.get("outcome") == "pass" and record.get("scope") == scope
+                    and record.get("function") == name and record.get("production_verified") is False
+                    and record.get("checks", {}).get("dependency_closure") == dependency
+                    and record.get("inputs") == manifest_inputs(name)):
+                item["outcome"] = "pass"
+            else:
+                item["error"] = record.get("error", "missing fresh scoped wrapper evidence")
+        except (GateError, OSError, ValueError) as error:
+            item["error"] = str(error)
+        return name, item
+
+    with ThreadPoolExecutor(max_workers=len(functions)) as pool:
+        results = dict(pool.map(child, functions))
+    passed = sum(item["outcome"] == "pass" for item in results.values())
+    success = passed == len(functions)
+    evidence = {"schema_version": 1, "scope": f"{scope}-batch",
+                "outcome": "pass" if success else "fail", "production_verified": False,
+                "functions": results, "passed": passed, "total": len(functions),
+                "full_scope": set(functions) == available}
+    report = write_evidence(f"{suffix}s", evidence)
+    print(f"{label} wrapper checks {passed}/{len(functions)}. Evidence at {report}", flush=True)
+    return 0 if success else 1
+
+
+if __name__ == "__main__":
+    os.chdir(ROOT)
+    parser = argparse.ArgumentParser(description=__doc__)
+    modes = parser.add_mutually_exclusive_group(required=True)
+    modes.add_argument("--allocator-wrappers", action="store_true")
+    modes.add_argument("--stream-indicators", action="store_true")
+    parser.add_argument("functions", nargs="*")
+    args = parser.parse_args()
+    if args.allocator_wrappers:
+        available, suffix, label = ALLOCATOR_FUNCTIONS, "allocator-wrapper", "Allocator"
+    else:
+        available, suffix, label = STREAM_FAILURES.keys(), STREAM_WRAPPER_SUFFIX, "Stream indicator"
+    if len(set(args.functions)) != len(args.functions) or set(args.functions) - available:
+        parser.error("select unique wrapper names from the chosen batch")
+    raise SystemExit(wrapper_batch(args.functions or sorted(available), available, suffix, label))

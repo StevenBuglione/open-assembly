@@ -1,0 +1,403 @@
+schema = 1
+
+[[case]]
+name = "heap-malloc-unit"
+sources = ["tests/allocator-production/unit.c"]
+requires = ["malloc"]
+args = ["malloc"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:phase3-contract"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The separate packet case compares shared hosted semantics."
+
+[[case]]
+name = "heap-malloc-abi"
+sources = ["tests/allocator-production/abi.c", "tests/phase2/abi.asm"]
+requires = ["malloc"]
+args = ["malloc"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:phase3-contract"]
+backends = ["native", "qemu"]
+host_skip = "The separate packet case compares shared hosted semantics."
+[case.skip]
+valgrind = "Shared nondefault x87 ABI probe exceeds Memcheck emulation."
+
+[[case]]
+name = "heap-malloc-fuzz"
+sources = ["tests/allocator-production/packets.c"]
+requires = ["malloc"]
+args = ["malloc"]
+env = {}
+status = 0
+stdin_hex = "0100000000000000000000000000000000000000000000005a00000000000000"
+stdout = ""
+stderr = ""
+oracle = ["reference:phase3-contract", "diff:glibc", "diff:musl"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+stdout_hex = "01000000000000000000000000000000070000000000000001000000000000000000000000000000cd5002864c1764afe68ca8b40716e407e68ca8b40716e407"
+
+[[case]]
+name = "heap-malloc-fault"
+sources = ["tests/allocator-production/fault.c"]
+requires = ["malloc"]
+args = ["malloc"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:phase3-contract"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The independent project mapping-boundary and errno contract is the oracle."
+link_wraps = ["__al_syscall"]
+
+[[case]]
+name = "heap-calloc-unit"
+sources = ["tests/allocator-production/unit.c"]
+requires = ["calloc"]
+args = ["calloc"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:phase3-contract"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The separate packet case compares shared hosted semantics."
+
+[[case]]
+name = "heap-calloc-abi"
+sources = ["tests/allocator-production/abi.c", "tests/phase2/abi.asm"]
+requires = ["calloc"]
+args = ["calloc"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:phase3-contract"]
+backends = ["native", "qemu"]
+host_skip = "The separate packet case compares shared hosted semantics."
+[case.skip]
+valgrind = "Shared nondefault x87 ABI probe exceeds Memcheck emulation."
+
+[[case]]
+name = "heap-calloc-fuzz"
+sources = ["tests/allocator-production/packets.c"]
+requires = ["calloc"]
+args = ["calloc"]
+env = {}
+status = 0
+stdin_hex = "0100000000000000000000000000000000000000000000005a00000000000000"
+stdout = ""
+stderr = ""
+oracle = ["reference:phase3-contract", "diff:glibc", "diff:musl"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+stdout_hex = "01000000000000000000000000000000070000000000000001000000000000000000000000000000cd5002864c1764afe68ca8b40716e407e68ca8b40716e407"
+
+[[case]]
+name = "heap-calloc-fault"
+sources = ["tests/allocator-production/fault.c"]
+requires = ["calloc"]
+args = ["calloc"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:phase3-contract"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The independent project mapping-boundary and errno contract is the oracle."
+link_wraps = ["__al_syscall"]
+
+[[case]]
+name = "heap-free-unit"
+sources = ["tests/allocator-production/unit.c"]
+requires = ["free"]
+args = ["free"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:phase3-contract"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The separate packet case compares shared hosted semantics."
+
+[[case]]
+name = "heap-free-abi"
+sources = ["tests/allocator-production/abi.c", "tests/phase2/abi.asm"]
+requires = ["free"]
+args = ["free"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:phase3-contract"]
+backends = ["native", "qemu"]
+host_skip = "The separate packet case compares shared hosted semantics."
+[case.skip]
+valgrind = "Shared nondefault x87 ABI probe exceeds Memcheck emulation."
+
+[[case]]
+name = "heap-free-fuzz"
+sources = ["tests/allocator-production/packets.c"]
+requires = ["free"]
+args = ["free"]
+env = {}
+status = 0
+stdin_hex = "0100000000000000000000000000000000000000000000005a00000000000000"
+stdout = ""
+stderr = ""
+oracle = ["reference:phase3-contract", "diff:glibc", "diff:musl"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+stdout_hex = "01000000000000002100000000000000070000000000000001000000000000000000000000000000cd5002864c1764afe68ca8b40716e407e68ca8b40716e407"
+
+[[case]]
+name = "heap-free-release"
+sources = ["tests/allocator-production/fault.c"]
+requires = ["free"]
+args = ["free"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:phase3-contract"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The independent project mapping-boundary and errno contract is the oracle."
+link_wraps = ["__al_syscall"]
+
+[[stub]]
+symbol = "malloc"
+case = "heap-malloc-unit"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "calloc"
+case = "heap-calloc-unit"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "free"
+case = "heap-free-release"
+status = 31
+stdout = ""
+stderr = ""
+
+[[case]]
+name = "heap-realloc-unit"
+sources = ["tests/allocator-production/unit.c"]
+requires = ["realloc"]
+args = ["realloc"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:phase3-contract"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The separate packet case compares shared hosted semantics."
+
+[[case]]
+name = "heap-realloc-abi"
+sources = ["tests/allocator-production/abi.c", "tests/phase2/abi.asm"]
+requires = ["realloc"]
+args = ["realloc"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:phase3-contract"]
+backends = ["native", "qemu"]
+host_skip = "The separate packet case compares shared hosted semantics."
+[case.skip]
+valgrind = "Shared nondefault x87 ABI probe exceeds Memcheck emulation."
+
+[[case]]
+name = "heap-realloc-fuzz"
+sources = ["tests/allocator-production/packets.c"]
+requires = ["realloc"]
+args = ["realloc"]
+env = {}
+status = 0
+stdin_hex = "0100000000000000000000000000000000000000000000005a00000000000000"
+stdout = ""
+stderr = ""
+oracle = ["reference:phase3-contract", "diff:glibc", "diff:musl"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+stdout_hex = "01000000000000000000000000000000070000000000000002000000000000000100000000000000d608c2b607745c0ae68ca8b40716e407cd5002864c1764af"
+
+[[case]]
+name = "heap-realloc-fault"
+sources = ["tests/allocator-production/fault.c"]
+requires = ["realloc"]
+args = ["realloc"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:phase3-contract"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The independent project mapping-boundary and errno contract is the oracle."
+link_wraps = ["__al_syscall"]
+
+[[case]]
+name = "heap-aligned-alloc-unit"
+sources = ["tests/allocator-production/unit.c"]
+requires = ["aligned_alloc"]
+args = ["aligned_alloc"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:phase3-contract"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The separate packet case compares shared hosted semantics."
+
+[[case]]
+name = "heap-aligned-alloc-abi"
+sources = ["tests/allocator-production/abi.c", "tests/phase2/abi.asm"]
+requires = ["aligned_alloc"]
+args = ["aligned_alloc"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:phase3-contract"]
+backends = ["native", "qemu"]
+host_skip = "The separate packet case compares shared hosted semantics."
+[case.skip]
+valgrind = "Shared nondefault x87 ABI probe exceeds Memcheck emulation."
+
+[[case]]
+name = "heap-aligned-alloc-fuzz"
+sources = ["tests/allocator-production/packets.c"]
+requires = ["aligned_alloc"]
+args = ["aligned_alloc"]
+env = {}
+status = 0
+stdin_hex = "0100000000000000000000000000000000000000000000005a00000000000000"
+stdout = ""
+stderr = ""
+oracle = ["reference:phase3-contract", "diff:glibc", "diff:musl"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+stdout_hex = "01000000000000000000000000000000070000000000000010000000000000001000000000000000656e78d6b1a555190bb9f3f4a2a1151b0bb9f3f4a2a1151b"
+
+[[case]]
+name = "heap-aligned-alloc-fault"
+sources = ["tests/allocator-production/fault.c"]
+requires = ["aligned_alloc"]
+args = ["aligned_alloc"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:phase3-contract"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The independent project mapping-boundary and errno contract is the oracle."
+link_wraps = ["__al_syscall"]
+
+[[case]]
+name = "heap-posix-memalign-unit"
+sources = ["tests/allocator-production/unit.c"]
+requires = ["posix_memalign"]
+args = ["posix_memalign"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:phase3-contract"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The separate packet case compares shared hosted semantics."
+
+[[case]]
+name = "heap-posix-memalign-abi"
+sources = ["tests/allocator-production/abi.c", "tests/phase2/abi.asm"]
+requires = ["posix_memalign"]
+args = ["posix_memalign"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:phase3-contract"]
+backends = ["native", "qemu"]
+host_skip = "The separate packet case compares shared hosted semantics."
+[case.skip]
+valgrind = "Shared nondefault x87 ABI probe exceeds Memcheck emulation."
+
+[[case]]
+name = "heap-posix-memalign-fuzz"
+sources = ["tests/allocator-production/packets.c"]
+requires = ["posix_memalign"]
+args = ["posix_memalign"]
+env = {}
+status = 0
+stdin_hex = "0100000000000000000000000000000000000000000000005a00000000000000"
+stdout = ""
+stderr = ""
+oracle = ["reference:phase3-contract", "diff:glibc", "diff:musl"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+stdout_hex = "01000000000000000000000000000000070000000000000001000000000000001000000000000000cd5002864c1764afe68ca8b40716e407e68ca8b40716e407"
+
+[[case]]
+name = "heap-posix-memalign-fault"
+sources = ["tests/allocator-production/fault.c"]
+requires = ["posix_memalign"]
+args = ["posix_memalign"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:phase3-contract"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The independent project mapping-boundary and errno contract is the oracle."
+link_wraps = ["__al_syscall"]
+
+[[stub]]
+symbol = "realloc"
+case = "heap-realloc-unit"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "aligned_alloc"
+case = "heap-aligned-alloc-unit"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "posix_memalign"
+case = "heap-posix-memalign-unit"
+status = 11
+stdout = ""
+stderr = ""

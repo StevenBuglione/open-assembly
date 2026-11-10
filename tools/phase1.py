@@ -180,11 +180,14 @@ def build_runtime(directory, log):
 
 
 def build_case(case, directory, runtime, log, stub=None, *, link_wraps=(), candidate=None,
-               c_include=(), c_flags=()):
+               c_include=(), c_flags=(), isolate_candidate=False):
+    if isolate_candidate and not candidate:
+        raise GateError(f"{case.name}: fixture-only substitution requires a candidate object")
     startup, archive, exports, _ = runtime
     directory.mkdir()
     objects = []
     references = set()
+    object_references = {}
     for index, source in enumerate(case.sources):
         obj = directory / f"test-{index}.o"
         if source.suffix == ".c":
@@ -195,7 +198,9 @@ def build_case(case, directory, runtime, log, stub=None, *, link_wraps=(), candi
             checked(log, [*NASM, "-o", obj, source])
             audit = "--assembly-object"
         checked(log, ["tools/elf-audit", audit, obj])
-        references.update(name for name, kind in nm_symbols(log, obj, ["-g", "-u"]).items() if kind == "U")
+        undefined = nm_symbols(log, obj, ["-g", "-u"])
+        references.update(name for name, kind in undefined.items() if kind == "U")
+        object_references[obj] = (audit, undefined)
         objects.append(obj)
     for symbol in case.requires:
         if symbol not in references or symbol not in exports:
@@ -215,6 +220,7 @@ def build_case(case, directory, runtime, log, stub=None, *, link_wraps=(), candi
             raise GateError(f"{case.name}: missing real runtime call or test wrapper for {wrapped}")
         wrap_options.append(f"--wrap={wrapped}")
     symbol = wrapper = None
+    substituted = {}
     if stub:
         symbol, obj = stub
         wrapper = f"__wrap_{symbol}"
@@ -225,7 +231,28 @@ def build_case(case, directory, runtime, log, stub=None, *, link_wraps=(), candi
         if (stub or name not in case.requires or exports.get(name) != "T"
                 or nm_symbols(log, obj, ["-g", "--defined-only"]) != {name: "T"}):
             raise GateError(f"{case.name}: debug or mutant object does not replace a required function")
-        wrap_options.append(f"--unique=.text.{name}")
+        if isolate_candidate:
+            replacement = f"__al_fixture_candidate_{name}"
+            if replacement in references or replacement in test_definitions or replacement in exports:
+                raise GateError(f"{case.name}: fixture-only candidate alias already in use")
+            rename = ["objcopy", "--redefine-sym", f"{name}={replacement}"]
+            for test, (audit, undefined) in object_references.items():
+                if undefined.get(name) != "U":
+                    continue
+                checked(log, [*rename, test])
+                checked(log, ["tools/elf-audit", audit, test])
+                expected = {replacement if key == name else key: value for key, value in undefined.items()}
+                if nm_symbols(log, test, ["-g", "-u"]) != expected:
+                    raise GateError(f"{case.name}: fixture candidate rename changed other references")
+            renamed = directory / "fixture-candidate.o"
+            checked(log, [*rename, obj, renamed])
+            checked(log, ["tools/elf-audit", "--assembly-object", renamed])
+            if nm_symbols(log, renamed, ["-g", "--defined-only"]) != {replacement: "T"}:
+                raise GateError(f"{case.name}: mutant object does not define the fixture-only alias")
+            substituted[name] = replacement
+            obj = renamed
+        else:
+            wrap_options.append(f"--unique=.text.{name}")
         objects.append(obj)
     checked(log, [*RUNTIME_LINK, *wrap_options, "-o", binary, startup, *objects, archive])
     checked(log, ["tools/elf-audit", binary])
@@ -236,7 +263,7 @@ def build_case(case, directory, runtime, log, stub=None, *, link_wraps=(), candi
         if defined.get(wrapped) != "T" or defined.get(f"__wrap_{wrapped}") != "T":
             raise GateError(f"{case.name}: executable is missing real and wrapped symbols for {wrapped}")
     for symbol in case.requires:
-        target = wrapper if stub and symbol == stub[0] else symbol
+        target = wrapper if stub and symbol == stub[0] else substituted.get(symbol, symbol)
         if defined.get(target) != exports[symbol]:
             raise GateError(f"{case.name}: executable does not define runtime symbol {symbol}")
     return binary, {path.name: sha256_file(path) for path in (binary, *objects)}

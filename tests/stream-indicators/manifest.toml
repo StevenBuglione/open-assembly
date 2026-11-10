@@ -1,0 +1,209 @@
+schema = 1
+
+[[case]]
+name = "stream-feof-unit"
+sources = ["tests/stream-indicators/unit.c"]
+requires = ["feof"]
+args = ["feof"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:phase4-stdio"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Direct C17 and project stream contract checks. Shared hosted behavior is compared in the packet case."
+
+[[case]]
+name = "stream-feof-abi"
+sources = ["tests/stream-indicators/abi.c", "tests/phase2/abi.asm"]
+requires = ["feof"]
+args = ["feof"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:phase4-stdio"]
+backends = ["native", "qemu"]
+host_skip = "Direct C17 and project stream contract checks. Shared hosted behavior is compared in the packet case."
+[case.skip]
+valgrind = "Shared nondefault x87 ABI probe exceeds Memcheck emulation."
+
+[[case]]
+name = "stream-feof-fuzz"
+sources = ["tests/stream-indicators/packets.c"]
+requires = ["feof"]
+args = ["feof"]
+env = {}
+status = 0
+stdin_hex = "29000000000000005100000000000000"
+stdout = ""
+stderr = ""
+oracle = ["reference:phase4-stdio", "diff:glibc", "diff:musl"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+stdout_hex = "030000000000000003000000000000000100000000000000210000000000000008000000000000000800000000000000ffffffffffffffff0000000000000000"
+
+[[case]]
+name = "stream-ferror-unit"
+sources = ["tests/stream-indicators/unit.c"]
+requires = ["ferror"]
+args = ["ferror"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:phase4-stdio"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Direct C17 and project stream contract checks. Shared hosted behavior is compared in the packet case."
+
+[[case]]
+name = "stream-ferror-abi"
+sources = ["tests/stream-indicators/abi.c", "tests/phase2/abi.asm"]
+requires = ["ferror"]
+args = ["ferror"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:phase4-stdio"]
+backends = ["native", "qemu"]
+host_skip = "Direct C17 and project stream contract checks. Shared hosted behavior is compared in the packet case."
+[case.skip]
+valgrind = "Shared nondefault x87 ABI probe exceeds Memcheck emulation."
+
+[[case]]
+name = "stream-ferror-fuzz"
+sources = ["tests/stream-indicators/packets.c"]
+requires = ["ferror"]
+args = ["ferror"]
+env = {}
+status = 0
+stdin_hex = "29000000000000005100000000000000"
+stdout = ""
+stderr = ""
+oracle = ["reference:phase4-stdio", "diff:glibc", "diff:musl"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+stdout_hex = "030000000000000003000000000000000100000000000000210000000000000008000000000000000800000000000000ffffffffffffffff0000000000000000"
+
+[[case]]
+name = "stream-clearerr-unit"
+sources = ["tests/stream-indicators/unit.c"]
+requires = ["clearerr"]
+args = ["clearerr"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:phase4-stdio"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Direct C17 and project stream contract checks. Shared hosted behavior is compared in the packet case."
+
+[[case]]
+name = "stream-clearerr-abi"
+sources = ["tests/stream-indicators/abi.c", "tests/phase2/abi.asm"]
+requires = ["clearerr"]
+args = ["clearerr"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:phase4-stdio"]
+backends = ["native", "qemu"]
+host_skip = "Direct C17 and project stream contract checks. Shared hosted behavior is compared in the packet case."
+[case.skip]
+valgrind = "Shared nondefault x87 ABI probe exceeds Memcheck emulation."
+
+[[case]]
+name = "stream-clearerr-fuzz"
+sources = ["tests/stream-indicators/packets.c"]
+requires = ["clearerr"]
+args = ["clearerr"]
+env = {}
+status = 0
+stdin_hex = "29000000000000005100000000000000"
+stdout = ""
+stderr = ""
+oracle = ["reference:phase4-stdio", "diff:glibc", "diff:musl"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+stdout_hex = "030000000000000000000000000000000000000000000000210000000000000008000000000000000800000000000000ffffffffffffffff0000000000000000"
+
+[[case]]
+name = "stream-fileno-unit"
+sources = ["tests/stream-indicators/unit.c"]
+requires = ["fileno"]
+args = ["fileno"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:stream-ownership"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Direct C17 and project stream contract checks. Shared hosted behavior is compared in the packet case."
+
+[[case]]
+name = "stream-fileno-abi"
+sources = ["tests/stream-indicators/abi.c", "tests/phase2/abi.asm"]
+requires = ["fileno"]
+args = ["fileno"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:stream-ownership"]
+backends = ["native", "qemu"]
+host_skip = "Direct C17 and project stream contract checks. Shared hosted behavior is compared in the packet case."
+[case.skip]
+valgrind = "Shared nondefault x87 ABI probe exceeds Memcheck emulation."
+
+[[case]]
+name = "stream-fileno-fuzz"
+sources = ["tests/stream-indicators/packets.c"]
+requires = ["fileno"]
+args = ["fileno"]
+env = {}
+status = 0
+stdin_hex = "29000000000000005100000000000000"
+stdout = ""
+stderr = ""
+oracle = ["reference:stream-ownership", "diff:glibc", "diff:musl"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+stdout_hex = "030000000000000003000000000000000100000000000000210000000000000008000000000000000800000000000000ffffffffffffffff0000000000000000"
+
+[[stub]]
+symbol = "feof"
+case = "stream-feof-unit"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "ferror"
+case = "stream-ferror-unit"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "clearerr"
+case = "stream-clearerr-unit"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "fileno"
+case = "stream-fileno-unit"
+status = 11
+stdout = ""
+stderr = ""

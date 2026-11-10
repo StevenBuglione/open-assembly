@@ -23,6 +23,9 @@ OPERATIONS = Path("tests/phase7/transcendental/operations.def")
 NATIVE = Path("tests/phase7/campaign")
 NATIVE_ARTIFACTS = ("native-unary", "mpfr.h", "gmp.h")
 NATIVE_BACKEND = "native-mpfr-unary"
+BINARY_ARTIFACTS = ("native-binary", "mpfr.h", "gmp.h")
+BINARY_BACKEND = "native-mpfr-fixed-axis"
+BINARY_OPERATIONS = {"pow", "atan2"}
 NATIVE_OPERATIONS = {
     "exp", "exp2", "expm1", "log", "log2", "log10", "log1p", "sin", "cos", "tan",
     "asin", "acos", "atan", "sinh", "cosh", "tanh", "asinh", "acosh", "atanh",
@@ -91,7 +94,14 @@ def source_inputs(gate, root):
                    build["candidate_artifacts"])[name] for name in ARTIFACTS}
 
 
-def oracle_identity(root, backend):
+def oracle_artifact_names(backend):
+    try:
+        return {"python": (), NATIVE_BACKEND: NATIVE_ARTIFACTS, BINARY_BACKEND: BINARY_ARTIFACTS}[backend]
+    except KeyError as error:
+        raise ValueError(f"unknown oracle backend: {backend}") from error
+
+
+def oracle_identity(root, backend, folder=None):
     library = Path(os.environ["OPEN_ASSEMBLY_MPFR"]).resolve(strict=True)
     identity = {"backend": backend, "script_sha256": digest(Path(__file__).resolve()),
             "verify_sha256": digest(root / VERIFY), "python_sha256": digest(Path(sys.executable).resolve()),
@@ -99,25 +109,36 @@ def oracle_identity(root, backend):
     if backend == NATIVE_BACKEND:
         identity.update({name: digest(root / NATIVE / name)
                          for name in ("native_unary.c", "native_oracle.py")})
+    elif backend == BINARY_BACKEND:
+        from native_binary_oracle import linked_dependencies
+
+        sources = (NATIVE / "native_binary.c", NATIVE / "native_binary_oracle.py",
+                   NATIVE / "native_oracle.py", OPERATIONS, VERIFY.with_name("oracle.py"),
+                   VERIFY.parent.parent / "math_vectors.py", Path("tests/phase5/vectors.py"))
+        identity.update(sources={str(path): digest(root / path) for path in sources},
+                        gmpy2_extension_sha256=digest(Path(gmpy2.gmpy2.__file__).resolve()),
+                        native_dependencies=linked_dependencies(folder / BINARY_ARTIFACTS[0], library))
     elif backend != "python":
         raise ValueError(f"unknown oracle backend: {backend}")
     return identity
 
 
-def build_native(folder, headers, root):
-    for name in NATIVE_ARTIFACTS[1:]:
+def build_native(folder, headers, root, backend=NATIVE_BACKEND):
+    names = oracle_artifact_names(backend)
+    for name in names[1:]:
         shutil.copyfile(headers / name, folder / name)
     library = Path(os.environ["OPEN_ASSEMBLY_MPFR"]).resolve(strict=True)
-    command = ["gcc", "-O2", "-Wall", "-Wextra", "-Werror", f"-I{folder}",
-               root / NATIVE / "native_unary.c", library, f"-Wl,-rpath,{library.parent}"]
-    helper = folder / NATIVE_ARTIFACTS[0]
+    options, source = (["-std=c17"], "native_binary.c") if backend == BINARY_BACKEND else ([], "native_unary.c")
+    command = ["gcc", *options, "-O2", "-Wall", "-Wextra", "-Werror", f"-I{folder}",
+               root / NATIVE / source, library, f"-Wl,-rpath,{library.parent}"]
+    helper = folder / names[0]
     with tempfile.TemporaryDirectory(dir=folder, prefix=".native-build-") as second:
         replay = Path(second) / helper.name
         for output in (helper, replay):
             subprocess.run([*command, "-o", output], cwd=root, check=True)
         if digest(helper) != digest(replay):
             raise ValueError("isolated native oracle builds differ")
-    return {name: digest(folder / name) for name in NATIVE_ARTIFACTS}
+    return {name: digest(folder / name) for name in names}
 
 
 
@@ -147,10 +168,12 @@ def prepare(args, root):
             raise ValueError(f"artifact differs from source-bound gate: {name}")
     backend = "python"
     if args.native_headers is not None:
-        if args.operation not in NATIVE_OPERATIONS or args.second is not None:
-            raise ValueError("native MPFR oracle supports only these unary operations: "
-                             + ", ".join(sorted(NATIVE_OPERATIONS)))
-        backend = NATIVE_BACKEND
+        if args.operation in BINARY_OPERATIONS:
+            backend = BINARY_BACKEND
+        elif args.operation in NATIVE_OPERATIONS:
+            backend = NATIVE_BACKEND
+        else:
+            raise ValueError(f"unsupported native MPFR operation: {args.operation}")
     folder = args.campaign.resolve()
     folder.mkdir(parents=True, exist_ok=False)
     (folder / "checkpoints").mkdir()
@@ -159,13 +182,14 @@ def prepare(args, root):
     for name in ARTIFACTS:
         shutil.copy2(args.artifacts / name, folder / "artifacts" / name)
     shutil.copy2(args.gate, folder / "source-gate.json")
-    extras = build_native(folder / "artifacts", args.native_headers, root) if backend == NATIVE_BACKEND else {}
+    extras = build_native(folder / "artifacts", args.native_headers, root, backend) if backend != "python" else {}
     settings = {
         "schema": 1, "operation": args.operation, "mode_index": args.mode,
         "start": args.start, "count": args.count, "width": args.width,
         "second_bits": args.second, "artifacts": hashes, "oracle_artifacts": extras,
         "source_gate_sha256": digest(folder / "source-gate.json"),
-        "source_snapshot_sha256": identity(gate["inputs"]), "oracle": oracle_identity(root, backend),
+        "source_snapshot_sha256": identity(gate["inputs"]),
+        "oracle": oracle_identity(root, backend, folder / "artifacts"),
     }
     atomic_json(folder / "campaign.json", {"id": identity(settings), "settings": settings})
     verify_campaign(folder, root)
@@ -182,16 +206,23 @@ def verify_campaign(folder, root):
     if digest(gate_path) != settings["source_gate_sha256"]:
         raise ValueError("campaign source gate changed")
     gate = read_json(gate_path)
+    backend = settings["oracle"]["backend"]
     if (identity(gate["inputs"]) != settings["source_snapshot_sha256"] or
-            source_inputs(gate, root) != settings["artifacts"] or
-            oracle_identity(root, settings["oracle"]["backend"]) != settings["oracle"]):
+            source_inputs(gate, root) != settings["artifacts"]):
         raise ValueError("campaign source or oracle identity changed")
-    expected_extras = set(NATIVE_ARTIFACTS) if settings["oracle"]["backend"] == NATIVE_BACKEND else set()
+    expected_extras = set(oracle_artifact_names(backend))
     if set(settings["oracle_artifacts"]) != expected_extras:
         raise ValueError("campaign oracle artifact inventory changed")
     for name, expected in (settings["artifacts"] | settings["oracle_artifacts"]).items():
         if digest(folder / "artifacts" / name) != expected:
             raise ValueError(f"campaign artifact changed: {name}")
+    if oracle_identity(root, backend, folder / "artifacts") != settings["oracle"]:
+        raise ValueError("campaign source or oracle identity changed")
+    if backend == BINARY_BACKEND:
+        second, mode = settings["second_bits"], settings["mode_index"]
+        if (settings["operation"] not in BINARY_OPERATIONS or type(second) is not int
+                or not 0 <= second < DOMAIN or type(mode) is not int or not 0 <= mode <= 3):
+            raise ValueError("invalid native binary campaign axis")
     return record
 
 
@@ -199,12 +230,18 @@ def valid_report(report, folder, settings, start, count):
     artifacts = settings["artifacts"] | settings["oracle_artifacts"]
     artifact_paths = {str(folder / "artifacts" / name): expected for name, expected in artifacts.items()}
     backend = settings["oracle"]["backend"]
-    if backend == NATIVE_BACKEND and (report.get("oracle_backend") != backend or
-                                      report.get("oracle_identity") != settings["oracle"]):
+    if backend in (NATIVE_BACKEND, BINARY_BACKEND) and (report.get("oracle_backend") != backend or
+                                                        report.get("oracle_identity") != settings["oracle"]):
         return False
     artifact_paths[str(folder / "source-gate.json")] = settings["source_gate_sha256"]
     native = report["results"]["native"]
     ulp = native.get("max_finite_ulp")
+    if backend == BINARY_BACKEND and (type(report.get("second_bits")) is not int
+                                      or type(report.get("mode_index")) is not int
+                                      or any(not isinstance(native.get(key), str)
+                                             or not re.fullmatch(r"[0-9a-f]{64}", native[key])
+                                             for key in ("request_sha256", "expected_sha256", "response_sha256"))):
+        return False
     return (
         report.get("schema") == 1 and report.get("scope") == "consecutive binary32 shard"
         and report.get("backend") == "native" and report.get("passed") is True
@@ -261,20 +298,29 @@ def run_python_shard(folder, root, campaign, start, count):
 
 
 def run_native_shard(folder, root, campaign, start, count):
-    from native_oracle import OracleMismatch, compare_native, evaluate
+    from native_oracle import OracleMismatch, checked, compare_native, evaluate
 
     settings = campaign["settings"]
     artifacts = folder / "artifacts"
-    helper = artifacts / NATIVE_ARTIFACTS[0]
+    backend = settings["oracle"]["backend"]
+    helper = artifacts / oracle_artifact_names(backend)[0]
     candidate = artifacts / "trans-f32"
     tracked = [candidate, helper]
     before = monotonic()
     try:
         hashes = {str(path): digest(path) for path in tracked}
         with tempfile.TemporaryDirectory(dir=folder / "attempts", prefix=f"shard-{start:08x}-") as name:
-            request, expected, actual = evaluate(helper, candidate, Path(name), settings["operation"],
-                                                 start, count, settings["mode_index"])
-        maximum = compare_native(actual, expected, settings["operation"], start, count)
+            operation, mode, second = settings["operation"], settings["mode_index"], settings["second_bits"]
+            if backend == BINARY_BACKEND:
+                from native_binary_oracle import compare_binary, produce, verify_wire
+
+                request, expected = produce(helper, Path(name), operation, start, count, mode, second)
+                verify_wire(request, expected, operation, start, count, mode, second)
+                actual = checked([candidate], data=request)
+                maximum = compare_binary(request, actual, expected, operation, start, count)
+            else:
+                request, expected, actual = evaluate(helper, candidate, Path(name), operation, start, count, mode)
+                maximum = compare_native(actual, expected, operation, start, count)
         if hashes != {str(path): digest(path) for path in tracked}:
             raise ValueError("candidate or native oracle changed during shard")
         hashes.update({str(artifacts / name): expected_hash for name, expected_hash in
@@ -284,8 +330,8 @@ def run_native_shard(folder, root, campaign, start, count):
         report = {
             "schema": 1, "scope": "consecutive binary32 shard", "backend": "native",
             "passed": True, "inputs_frozen": True, "operation": settings["operation"],
-            "mode_index": settings["mode_index"], "second_bits": None, "start": start,
-            "count": count, "oracle_backend": NATIVE_BACKEND, "oracle_identity": settings["oracle"],
+            "mode_index": mode, "second_bits": second, "start": start,
+            "count": count, "oracle_backend": backend, "oracle_identity": settings["oracle"],
             "sha256": hashes,
             "results": {"native": {"passed": True, "records": count, "max_finite_ulp": maximum,
                                    "request_sha256": hashlib.sha256(request).hexdigest(),
@@ -342,7 +388,7 @@ def summary(folder, campaign, intervals, done, attempted, elapsed, failed):
 
 def worker_pass(folder, root, campaign, selected, workers):
     iterator = iter(selected)
-    run_shard = (run_native_shard if campaign["settings"]["oracle"]["backend"] == NATIVE_BACKEND
+    run_shard = (run_native_shard if campaign["settings"]["oracle"]["backend"] in (NATIVE_BACKEND, BINARY_BACKEND)
                  else run_python_shard)
     attempted, failed, elapsed = 0, 0, 0.0
     with ThreadPoolExecutor(max_workers=workers) as pool:
@@ -427,7 +473,7 @@ def main():
     try:
         root = Path.cwd().resolve()
         return prepare(args, root) if args.command == "prepare" else execute(args, root)
-    except (KeyError, OSError, TypeError, ValueError, subprocess.SubprocessError) as error:
+    except (KeyError, OSError, RuntimeError, TypeError, ValueError, subprocess.SubprocessError) as error:
         print(f"campaign: {error}", file=sys.stderr)
         return 1
 

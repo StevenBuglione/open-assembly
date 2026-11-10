@@ -97,12 +97,14 @@ def parse_probe(table, where, *, suite=Path("tests/phase4"), programs=APPS,
     return Probe(case, decode_hex(table["stdin_hex"], where), output, stderr.encode(), files, wraps, host_skip)
 
 
-def load_probes(manifest, public, parse, required_sources=()):
+def load_probes(manifest, public, parse, required_sources=(), *, supplement=False):
     document = read_toml(regular_file(ROOT, manifest, "probe manifest"))
     keys(document, {"schema", "case", "stub"}, manifest)
     version_one(document["schema"], manifest)
     if type(document["case"]) is not list or not document["case"] or type(document["stub"]) is not list:
         raise GateError(f"{manifest}: expected case and stub arrays")
+    if supplement and document["stub"]:
+        raise GateError(f"{manifest}: a supplemental manifest must reuse the original stubs")
     probes = {}
     for index, table in enumerate(document["case"], 1):
         probe = parse(table, f"{manifest}: case {index}")
@@ -130,7 +132,7 @@ def load_probes(manifest, public, parse, required_sources=()):
         if expected == (probe.case.status, probe.stdout, probe.stderr):
             raise GateError(f"{where}: stub must differ from the production result")
         stubs[symbol] = probe, expected
-    if stubs.keys() != public:
+    if not supplement and stubs.keys() != public:
         raise GateError(f"{manifest}: missing generated stubs: " + ", ".join(sorted(public - stubs.keys())))
     return probes.values(), stubs
 

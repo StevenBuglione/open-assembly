@@ -3,11 +3,12 @@
 import argparse
 import json
 from pathlib import Path
+import struct
 import subprocess
 import sys
 import tempfile
 
-from campaign import DOMAIN, checkpoint_name, digest, identity, partition
+from campaign import BINARY_BACKEND, DOMAIN, checkpoint_name, digest, identity, partition
 
 RUNNER = Path(__file__).with_name("campaign.py")
 
@@ -21,6 +22,62 @@ def invoke(*arguments, expect=0, diagnostic=None):
 
 def status(path):
     return json.loads((path / "summary.json").read_text())
+
+
+def native_binary(root, gate, artifacts, headers):
+    from native_binary_oracle import produce, verify_wire
+
+    for operation, start, mode, second in (("pow", 0, 2, 0xc0400000),
+                                            ("atan2", 0x80000000, 1, 0x3f800000)):
+        target = root / f"native-{operation}"
+        invoke("prepare", target, gate, artifacts, operation, "--native-headers", headers,
+               "--second", second, "--mode", mode, "--start", start, "--count", 32, "--width", 8)
+        invoke("run", target, "--limit", 1)
+        first = target / "checkpoints" / checkpoint_name(start, 8)
+        original = first.read_bytes()
+        invoke("run", target, "--workers", 2)
+        result = status(target)
+        assert result["oracle_backend"] == BINARY_BACKEND
+        assert result["fixed_second_operand_bits"] == second and result["mode_index"] == mode
+        assert result["covered_patterns"] == 32 and result["requested_interval_complete"]
+        assert not result["complete_domain"] and not result["complete_binary32_axis"]
+        assert first.read_bytes() == original
+
+        for field, value in (("mode_index", mode ^ 1), ("second_bits", second ^ 1)):
+            bad = json.loads(original)
+            bad["report"][field] = value
+            bad["report_sha256"] = identity(bad["report"])
+            first.write_text(json.dumps(bad))
+            invoke("run", target, "--limit", 0, expect=1, diagnostic="invalid checkpoint")
+        bad = json.loads(original)
+        bad["report"]["results"]["native"]["request_sha256"] = "invalid"
+        bad["report_sha256"] = identity(bad["report"])
+        first.write_text(json.dumps(bad))
+        invoke("run", target, "--limit", 0, expect=1, diagnostic="invalid checkpoint")
+        first.write_bytes(original)
+
+        for artifact in ("native-binary", "mpfr.h", "libopenasm.a", "trans-f32"):
+            path = target / "artifacts" / artifact
+            contents = path.read_bytes()
+            path.write_bytes(contents + b"\0")
+            invoke("run", target, "--limit", 0, expect=1, diagnostic="campaign artifact changed")
+            path.write_bytes(contents)
+        request, response = produce(target.resolve() / "artifacts/native-binary", target,
+                                    operation, start, 8, mode, second)
+        verify_wire(request, response, operation, start, 8, mode, second)
+        # Corrupt one interior row to check the whole wire interval.
+        for offset, kind, value in ((0, "<I", start), (10, "<H", (mode ^ 1) << 10),
+                                    (16, "<I", second ^ 1), (26, "<H", 0)):
+            changed = bytearray(request)
+            struct.pack_into(kind, changed, 32 + offset, value)
+            try:
+                verify_wire(changed, response, operation, start, 8, mode, second)
+            except RuntimeError as error:
+                assert "native binary" in str(error)
+            else:
+                raise AssertionError(f"accepted corrupted native binary request at offset {offset}")
+        invoke("run", target, "--limit", 0)
+    print("PASS native binary axes, resume, wrong mode/operand, wire and artifact locks")
 
 
 def exercise(root, gate, artifacts, headers):
@@ -109,9 +166,7 @@ def exercise(root, gate, artifacts, headers):
         invoke("run", native, "--limit", 0, expect=1, diagnostic="campaign artifact changed")
         path.write_bytes(original)
     invoke("run", native, "--limit", 0)
-    invoke("prepare", root / "unsupported-native", gate, artifacts, "pow", "--second", "0x3f800000",
-           "--native-headers", headers, "--count", 8, "--width", 8,
-           expect=1, diagnostic="supports only these unary operations")
+    native_binary(root, gate, artifacts, headers)
     logarithm = root / "native-log2"
     invoke("prepare", logarithm, gate, artifacts, "log2", "--native-headers", headers,
            "--start", "0x3f000000", "--count", 32, "--width", 8)

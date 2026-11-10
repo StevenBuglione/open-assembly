@@ -48,9 +48,10 @@ can independently read the published coverage while the runner works.
 ```
 
 The journal checks complete, disjoint coverage before marking the full
-binary32 unary domain complete. The native helper covers all 23 unary binary32 transcendental entries.
-Binary `powf` and `atan2f` still use the Python oracle and an explicit
-fixed second-operand encoding. Each operation and rounding
+binary32 unary domain complete. The native unary helper covers all 23 unary
+binary32 transcendental entries. The optional native binary helper covers
+`powf` and `atan2f` with one explicit fixed second-operand encoding. Both
+operations also support the Python backend. Each operation and rounding
 mode uses its own campaign identity and checkpoint directory.
 The benchmark in `measure_native.py` compares its request and expected
 response bytes with the independent Python path at directed boundaries
@@ -61,6 +62,25 @@ diagnostic and prevents silently resuming past a known semantic mismatch.
 Candidate outputs, errno, exceptions and control-state bits are all
 checked. Campaign counts stay separate across candidate artifacts,
 rounding modes and oracle backends.
+
+Prepare a native nearest-even sweep of the first operand of `powf(x, 3)`.
+Use `atan2 --second 0x3f800000` for `atan2f(x, 1)` and a separate ledger.
+
+```sh
+./tools/container python3 tests/phase7/campaign/campaign.py prepare \
+    build/phase7-campaign/powf-exponent-three build/evidence/phase7-transcendental.json \
+    build/campaign-input pow --second 0x40400000 --mode 0 --width 262144 \
+    --native-headers build/campaign-input/headers
+./tools/container python3 tests/phase7/campaign/campaign.py run \
+    build/phase7-campaign/powf-exponent-three --workers 2
+```
+
+The binary backend checks the operation, mode, second operand, first-operand
+interval and exception seeds in every produced packet before execution.
+The ledger records the native helper and resolved library identities, exact
+request and response digests, and the archive and candidate ELF from the
+passing gate. The [native binary oracle proof](native-binary.md) compares
+its packets and acceptance policy against the Python oracle.
 
 [MPFR reference manual](https://www.mpfr.org/mpfr-current/mpfr.html)
 

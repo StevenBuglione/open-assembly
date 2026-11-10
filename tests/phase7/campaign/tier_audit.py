@@ -6,7 +6,8 @@ import re
 import sys
 
 from audit import audit
-from campaign import ARTIFACTS, DOMAIN, NATIVE_ARTIFACTS, OPERATIONS, atomic_json, digest, identity, read_json
+from campaign import (ARTIFACTS, BINARY_BACKEND, BINARY_OPERATIONS, DOMAIN, NATIVE_BACKEND, OPERATIONS,
+                      atomic_json, digest, identity, oracle_artifact_names, read_json)
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "tools"))
 from extensions import confined
@@ -54,10 +55,11 @@ def observe(folder, operations, current):
             or type(gate.get("inputs")) is not dict
             or identity(gate["inputs"]) != settings["source_snapshot_sha256"]):
         raise ValueError("invalid source-bound transcendental report")
+    backend = settings["oracle"]["backend"]
     if (set(settings["artifacts"]) != set(ARTIFACTS)
-            or settings["oracle"]["backend"] not in {"python", "native-mpfr-unary"}
-            or set(settings["oracle_artifacts"]) !=
-            (set(NATIVE_ARTIFACTS) if settings["oracle"]["backend"] == "native-mpfr-unary" else set())):
+            or set(settings["oracle_artifacts"]) != set(oracle_artifact_names(backend))
+            or backend == NATIVE_BACKEND and settings["second_bits"] is not None
+            or backend == BINARY_BACKEND and settings["operation"] not in BINARY_OPERATIONS):
         raise ValueError("invalid campaign artifact or oracle inventory")
     if gate["inputs"] != current:
         return {"outcome": "historical", "campaign_id": campaign_id,
@@ -109,7 +111,7 @@ def collect(root, operations, current):
         try:
             confined(ROOT, relative)
             result = observe(folder, operations, current)
-        except (KeyError, OSError, SpecError, TypeError, ValueError) as error:
+        except (KeyError, OSError, RuntimeError, SpecError, TypeError, ValueError) as error:
             result = {"outcome": "fail", "error": str(error)}
         ledgers[relative.as_posix()] = result
         if result["outcome"] != "pass":
