@@ -275,3 +275,7 @@ phase10-gnulib:
 
 phase10-native-ltp:
 	python3 tools/upstream_conformance.py native-ltp
+
+.PHONY: phase11-vdso-benchmark
+phase11-vdso-benchmark:
+	python3 tools/phase11_vdso_benchmark.py
