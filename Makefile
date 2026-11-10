@@ -87,6 +87,9 @@ phase6-strftime:
 phase11-copy:
 	python3 tools/phase11_copy.py
 
+phase11-copy-benchmark:
+	python3 tools/phase11_copy_benchmark.py
+
 phase7-exact:
 	python3 tools/phase7_exact.py
 

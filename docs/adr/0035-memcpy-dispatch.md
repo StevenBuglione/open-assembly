@@ -31,3 +31,11 @@ Exclude one untimed warmup and verify a copied-byte checksum.
 The acceptance margin is at most 1.25 times the geometric mean of
 per-size median times and at most 1.50 times musl's median at every
 size. The margin and workload are fixed before measurements.
+
+Run `./tools/container make phase11-copy-benchmark` on an otherwise quiet
+native runner. The report in `build/evidence/phase11-copy-benchmark.json`
+records both linked artifacts and all paired samples. A one-second Linux
+CPU preflight requires at least 90% idle on the selected CPU. Each sample
+also checks that wall time exceeds thread CPU time by at most 10% or 50 μs,
+whichever is larger. An unavailable or interrupted CPU produces an
+incomplete report and a nonzero gate result.
