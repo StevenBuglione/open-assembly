@@ -1,0 +1,16 @@
+name = "map_get"
+header = "map.h"
+prototype = "int map_get(const size_t *restrict state, const unsigned char *key, size_t length, size_t *restrict value)"
+standard = ["Extension ABI map"]
+deps = ["map_probe"]
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:bounded-map-model"]
+provenance = "original"
+semantics = ["Publish the value for an existing length-delimited key or return -ENOENT.", "Preserve the output on failure and preserve errno."]
+
+[abi]
+narrow_args = []
+variadic = false
+noreturn = false

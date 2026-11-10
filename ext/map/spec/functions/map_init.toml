@@ -1,0 +1,16 @@
+name = "map_init"
+header = "map.h"
+prototype = "int map_init(size_t *restrict state, size_t *restrict slots, size_t capacity, size_t seed)"
+standard = ["Extension ABI map"]
+deps = ["memset"]
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:bounded-map-model"]
+provenance = "original"
+semantics = ["Initialize a fixed-capacity table of four-word slots and a caller-owned four-word state.", "Require a positive power-of-two capacity and a representable slot extent. Preserve state, slots and errno on failure."]
+
+[abi]
+narrow_args = []
+variadic = false
+noreturn = false
