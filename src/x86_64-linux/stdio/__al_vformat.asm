@@ -22,6 +22,7 @@ extern __al_fmt_text:function
 extern __al_fmt_unit:function
 extern __al_fmt_wemit:function
 extern __al_fmt_wtext:function
+extern __al_fmt_nwide:function
 extern __al_stream_orient:function
 extern __al_stdio_errno:function
 extern strlen:function
@@ -361,6 +362,8 @@ __al_vformat:
 .character:
     cmp qword [rsp + 16], 3
     jae .wide_text
+    cmp qword [r15 + 24], 8
+    je .narrow_wide_text
     cmp qword [r15 + 24], 4
     jne .invalid
     mov rdi, r12
@@ -372,6 +375,8 @@ __al_vformat:
 .string:
     cmp qword [rsp + 16], 3
     jae .wide_text
+    cmp qword [r15 + 24], 8
+    je .narrow_wide_text
     cmp qword [r15 + 24], 4
     jne .invalid
     mov rdi, r12
@@ -402,6 +407,16 @@ __al_vformat:
     mov rdi, r13
     mov rsi, r15
     call __al_fmt_text
+    test eax, eax
+    jz .next
+    jmp .failure
+.narrow_wide_text:
+    mov rdi, r12
+    call __al_va_next
+    mov rdi, r13
+    mov rsi, r15
+    mov rdx, rax
+    call __al_fmt_nwide
     test eax, eax
     jz .next
     jmp .failure

@@ -3,7 +3,7 @@ header = "stdio.h"
 prototype = "int fprintf(FILE *restrict stream, const char *restrict format, ...)"
 standard = ["C17 7.21.6.1"]
 deps = ["vfprintf"]
-errno = ["EINVAL", "EOVERFLOW", "EIO"]
+errno = ["EILSEQ", "EINVAL", "EOVERFLOW", "EIO"]
 mt_safe = true
 as_safe = false
 oracles = ["diff:glibc", "diff:musl", "reference:phase4-stdio"]
@@ -11,7 +11,7 @@ provenance = "original"
 semantics = [
   "Interpret the integer, floating, string, byte, pointer, count, and percent conversions.",
   "Return the byte count excluding the terminator on success, or a negative result on error.",
-  "Unsupported wide conversions report EINVAL. Count overflow reports EOVERFLOW.",
+  "Wide c and s encode arguments with the active LC_CTYPE. String precision limits complete multibyte characters by byte count. Count overflow reports EOVERFLOW.",
 ]
 
 [abi]

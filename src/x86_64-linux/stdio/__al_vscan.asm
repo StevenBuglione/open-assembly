@@ -82,6 +82,7 @@ __al_vscan:
     mov [r13 + 8], rax
     mov qword [r13 + 16], 0       ; input units consumed
     mov qword [r13 + 24], -2      ; no peeked unit
+    mov dword [r13 + 48], 0       ; byte source read error
 
 .next:
     mov rdi, rbx
@@ -352,8 +353,11 @@ __al_vscan:
 .byte_field:
     cmp qword [rsp + 72], 4
     je .wide_field
+    cmp qword [rsp + 32], 8
+    je .byte_destination_init
     cmp qword [rsp + 32], 4
     jne .invalid
+.byte_destination_init:
     mov qword [rsp + 48], 0       ; destination or suppressed
     mov qword [rsp + 56], 0       ; optional temporary %c array
     cmp qword [rsp + 24], 0
@@ -366,6 +370,10 @@ __al_vscan:
     cmp qword [rsp + 16], 1
     je .scan_bytes
     mov rdi, [rsp + 16]
+    cmp qword [rsp + 32], 8
+    jne .allocate_byte_field
+    shl rdi, 2
+.allocate_byte_field:
     call malloc
     test rax, rax
     jz .input_failure
@@ -380,6 +388,11 @@ __al_vscan:
     mov rdx, [rsp + 16]
     mov rcx, [rsp + 40]
     lea r8, [rel scan_set]
+    xor r9d, r9d
+    cmp qword [rsp + 32], 8
+    jne .scan_chars_ready
+    inc r9d
+.scan_chars_ready:
     call __al_scan_chars
     mov [rsp + 64], eax
     mov rsi, [rsp + 56]
@@ -388,7 +401,6 @@ __al_vscan:
     test eax, eax
     jnz .release_temp
     mov rdi, [rsp + 48]
-    mov rdx, [rsp + 16]
     call memcpy
 .release_temp:
     mov rdi, [rsp + 56]

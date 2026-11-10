@@ -4,7 +4,7 @@
 ; prototype: int sscanf(const char *restrict src, const char *restrict format, ...)
 ; standard: C17 7.21.6.7
 ; deps: vsscanf
-; errno: EINVAL, EIO
+; errno: EILSEQ, EINVAL, EIO
 ; mt_safe: true
 ; as_safe: false
 ; oracles: diff:glibc, diff:musl, reference:phase4-stdio
@@ -14,7 +14,7 @@
 ; semantics: Interpret the integer, floating, byte, string, pointer, count, percent and bracket-set conversions.
 ; semantics: Apply widths and assignment suppression. Preserve the first input byte after a matching item.
 ; semantics: Return the number of assignments, or EOF if input fails before the first completed conversion.
-; semantics: Unsupported wide conversions report EINVAL.
+; semantics: Wide c, s and bracket conversions decode the selected byte field from an initial multibyte state. Incomplete or malformed encodings report EILSEQ.
 ; END OPEN ASSEMBLY GENERATED SPEC
 
 bits 64

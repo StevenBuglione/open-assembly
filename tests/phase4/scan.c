@@ -171,7 +171,7 @@ static int policy(void)
     wchar_t character = L'!';
     errno = 0;
     int result = sscanf("a", "%lc", &character);
-    REQUIRE(result <= 0 && errno == EINVAL && character == L'!', 61);
+    REQUIRE(result == 1 && errno == 0 && character == L'a', 61);
     return 0;
 }
 

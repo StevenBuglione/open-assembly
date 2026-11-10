@@ -79,6 +79,7 @@ COMPLEX_EXTENDED_ARGUMENTS = {**{name + "l": 2 for name in (
 PRIVATE_FUNCTIONS = {
     "stdio/__al_scan_wset", "stdio/__al_scan_wmember", "stdio/__al_scan_wchars",
     "stdio/__al_fmt_unit", "stdio/__al_fmt_wemit", "stdio/__al_fmt_wtext",
+    "stdio/__al_fmt_nwide",
     "stdio/__al_stream_orient", "stdio/__al_stream_read_raw", "stdio/__al_stream_write_raw",
     "stdio/__al_stream_getwc", "stdio/__al_stream_putwc",
     "complex/__al_complex_power", "complex/__al_complex_power_log", "complex/__al_complex_power_arg",
