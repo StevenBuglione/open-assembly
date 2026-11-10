@@ -1,0 +1,99 @@
+"""Build and verify the scoped Phase 9 locale and conversion interfaces."""
+
+import argparse
+from functools import partial
+from pathlib import Path
+import shutil
+import sys
+import tempfile
+
+from gate import BUILD, GateError, identify_tools, source_policy, verify_setup, write_evidence
+from phase1 import build_runtime, phase1_inputs
+from phase4 import load_probes, parse_probe
+from phase6 import run_cases, run_stubs
+from spec import ROOT, SpecError, load_project, snapshot_inputs
+
+MULTIBYTE = {
+    "setlocale", "localeconv", "btowc", "wctob", "mbsinit", "mbrlen", "mbrtowc", "wcrtomb",
+    "mbrtoc16", "c16rtomb", "mbrtoc32", "c32rtomb",
+}
+BULK = {"mblen", "mbtowc", "wctomb", "mbstowcs", "wcstombs", "mbsrtowcs", "wcsrtombs"}
+SUITES = {
+    "multibyte": (MULTIBYTE, ["Initial C and C.UTF-8 API slice.",
+                             "Valid scalar sweeps are complete for the three scalar conversion pairs.",
+                             "Malformed and restartable state cases are directed.",
+                             "Default state observations are single-threaded."]),
+    "bulk": (BULK, ["Restartable and one-shot strings and legacy single-character conversions.",
+                    "Directed input states, output capacities and malformed sequences."]),
+    "worker": ({"mbrlen"}, ["Supplemental worker-local default-state and TLS reuse proof.",
+                          "Single-threaded API and stub coverage is in the multibyte gate."]),
+}
+SCALAR_CASES = ("multibyte-scalar16", "multibyte-scalar32", "multibyte-scalar-wide")
+
+
+def inputs(suite):
+    bound = phase1_inputs()
+    paths = [Path(__file__).relative_to(ROOT), Path("tools/phase6.py"),
+             Path("docs/adr/0012-c-utf8-multibyte.md"),
+             *sorted(path for path in suite.iterdir() if path.is_file())]
+    bound.update(snapshot_inputs(ROOT, paths))
+    return dict(sorted(bound.items()))
+
+
+def execute(scope):
+    name = f"phase9-{scope}"
+    suite = Path("tests/phase9") / scope
+    public, limits = SUITES[scope]
+    snapshot = partial(inputs, suite)
+    evidence = {"schema_version": 1, "scope": name, "production_verified": False,
+                "outcome": "fail", "checks": {}, "limits": limits}
+    checks = evidence["checks"]
+    try:
+        evidence["toolchain"] = identify_tools("ar", "make", "qemu-x86_64", "musl-gcc")
+        evidence["inputs"] = verify_setup(checks, False, snapshot=snapshot)
+        project = load_project()
+        if not public <= project.functions.keys():
+            raise GateError("the public multibyte specifications are incomplete")
+        parse = partial(parse_probe, suite=suite, programs=(), fault_wrappers={})
+        probes, controls = load_probes(suite / "manifest.toml", public, parse)
+        runners = {"native": [], "qemu": [shutil.which("qemu-x86_64")],
+                   "valgrind": [shutil.which("valgrind"), "--quiet", "--error-exitcode=99",
+                                "--leak-check=full", "--errors-for-leak-kinds=all"]}
+        workspace = BUILD / name
+        workspace.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=workspace, prefix="run-") as temporary:
+            directory = Path(temporary).resolve().relative_to(ROOT)
+            source_policy(checks, directory)
+            runtime = checks["runtime_build"] = {"outcome": "fail", "commands": []}
+            first = build_runtime(directory / "runtime-1", runtime["commands"])
+            second = build_runtime(directory / "runtime-2", runtime["commands"])
+            if first[3] != second[3]:
+                raise GateError("isolated Phase 9 runtime builds differ")
+            runtime.update(outcome="pass", artifacts=first[3])
+            cases = checks["cases"] = {}
+            run_cases(probes, directory, first, second, runners, cases, host_macro="OA_PHASE9_HOST")
+            stubs = checks["stub_controls"] = {"outcome": "fail", "symbols": {}}
+            run_stubs(controls, project, directory, first, stubs)
+            if scope == "multibyte":
+                for case in SCALAR_CASES:
+                    if set(cases[case]["runs"]) != runners.keys() or len(cases[case]["host_runs"]) != 2:
+                        raise GateError(f"the full scalar case {case} omitted a backend")
+                checks["scalar_domain"] = {"outcome": "pass", "observed_case_names": SCALAR_CASES,
+                                           "scalar_count_per_case": 1112064,
+                                           "ranges": [[0, 0xd7ff], [0xe000, 0x10ffff]]}
+        if evidence["inputs"] != snapshot():
+            raise GateError("inputs changed during Phase 9 verification")
+        evidence["outcome"] = "pass"
+        print(f"PASS {name}", flush=True)
+    except (GateError, KeyError, OSError, SpecError, ValueError) as error:
+        evidence["error"] = str(error)
+        print(f"gate: {error}", file=sys.stderr)
+    report = write_evidence(name, evidence)
+    print(f"{name} evidence {report}", flush=True)
+    return 0 if evidence["outcome"] == "pass" else 1
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--suite", choices=SUITES, default="multibyte")
+    raise SystemExit(execute(parser.parse_args().suite))

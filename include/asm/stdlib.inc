@@ -5,6 +5,8 @@
 %define EXIT_SUCCESS 0
 %define EXIT_FAILURE 1
 
+extern __al_mb_cur_max
+
 extern _Exit
 extern abort
 extern $abs
@@ -20,6 +22,9 @@ extern exit
 extern free
 extern getenv
 extern malloc
+extern mblen
+extern mbstowcs
+extern mbtowc
 extern mkstemp
 extern posix_memalign
 extern putenv
@@ -35,5 +40,7 @@ extern strtoul
 extern strtoull
 extern system
 extern unsetenv
+extern wcstombs
+extern wctomb
 
 %endif

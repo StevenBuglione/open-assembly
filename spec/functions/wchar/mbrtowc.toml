@@ -1,0 +1,18 @@
+name = "mbrtowc"
+header = "wchar.h"
+prototype = "size_t mbrtowc(wchar_t *restrict pwc, const char *restrict s, size_t n, mbstate_t *restrict ps)"
+standard = ["C17 7.29.6.3.2"]
+deps = ["__errno_location"]
+errno = ["EILSEQ"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:unicode-scalar", "reference:mbstate-transition", "diff:glibc"]
+provenance = "original"
+semantics = [
+  "Decode one multibyte character in the current LC_CTYPE. Return current-call byte count, zero for null, (size_t)-2 for incomplete input or (size_t)-1 for an encoding error.",
+  "Clear the affected state on an encoding error. Preserve errno for successful or incomplete conversions.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

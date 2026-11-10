@@ -1,0 +1,246 @@
+schema = 1
+
+[[case]]
+name = "bulk-from-bytes"
+sources = ["tests/phase9/bulk/strings.c"]
+requires = ["mbsrtowcs"]
+args = ["from-bytes"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "bulk-to-bytes"
+sources = ["tests/phase9/bulk/strings.c"]
+requires = ["wcsrtombs"]
+args = ["to-bytes"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "bulk-oneshot"
+sources = ["tests/phase9/bulk/strings.c"]
+requires = ["mbstowcs", "wcstombs"]
+args = ["oneshot"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "bulk-legacy"
+sources = ["tests/phase9/bulk/strings.c"]
+requires = ["mblen", "mbtowc", "wctomb"]
+args = ["legacy"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "bulk-count-copy"
+sources = ["tests/phase9/bulk/strings.c"]
+requires = ["mbsrtowcs"]
+args = ["count-copy"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The project preserves an incomplete source state on count-only success and failure."
+
+[[case]]
+name = "bulk-errors"
+sources = ["tests/phase9/bulk/strings.c"]
+requires = ["mbsrtowcs", "wcsrtombs", "mblen", "mbtowc", "wctomb"]
+args = ["errors"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The project specifies EILSEQ and reset even for incomplete legacy calls and exact restartable state on error."
+
+[[case]]
+name = "bulk-guard"
+sources = ["tests/phase9/bulk/guard.c"]
+requires = ["mbsrtowcs", "wcsrtombs"]
+args = []
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The guard fixture uses private startup auxv and Linux mmap."
+
+[[case]]
+name = "bulk-mblen"
+sources = ["tests/phase9/bulk/strings.c"]
+requires = ["mblen"]
+args = ["mblen"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "bulk-mbtowc"
+sources = ["tests/phase9/bulk/strings.c"]
+requires = ["mbtowc"]
+args = ["mbtowc"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "bulk-wctomb"
+sources = ["tests/phase9/bulk/strings.c"]
+requires = ["wctomb"]
+args = ["wctomb"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "bulk-mbstowcs"
+sources = ["tests/phase9/bulk/strings.c"]
+requires = ["mbstowcs"]
+args = ["mbstowcs"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "bulk-wcstombs"
+sources = ["tests/phase9/bulk/strings.c"]
+requires = ["wcstombs"]
+args = ["wcstombs"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "bulk-mbsrtowcs"
+sources = ["tests/phase9/bulk/strings.c"]
+requires = ["mbsrtowcs"]
+args = ["mbsrtowcs"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "bulk-wcsrtombs"
+sources = ["tests/phase9/bulk/strings.c"]
+requires = ["wcsrtombs"]
+args = ["wcsrtombs"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[stub]]
+symbol = "mblen"
+case = "bulk-mblen"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "mbtowc"
+case = "bulk-mbtowc"
+status = 12
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "wctomb"
+case = "bulk-wctomb"
+status = 13
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "mbstowcs"
+case = "bulk-mbstowcs"
+status = 14
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "wcstombs"
+case = "bulk-wcstombs"
+status = 15
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "mbsrtowcs"
+case = "bulk-mbsrtowcs"
+status = 16
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "wcsrtombs"
+case = "bulk-wcsrtombs"
+status = 17
+stdout = ""
+stderr = ""

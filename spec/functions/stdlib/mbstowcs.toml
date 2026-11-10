@@ -1,0 +1,18 @@
+name = "mbstowcs"
+header = "stdlib.h"
+prototype = "size_t mbstowcs(wchar_t *restrict dst, const char *restrict src, size_t len)"
+standard = ["C17 7.22.8.1"]
+deps = ["__errno_location"]
+errno = ["EILSEQ"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:unicode-scalar", "reference:mbstate-transition", "diff:glibc"]
+provenance = "original"
+semantics = [
+  "Convert the byte string in an initial state. Count without writing when dst is null. Exclude the terminating null from the result.",
+  "Return minus one and set EILSEQ on invalid input. Preserve errno on success.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

@@ -1,0 +1,137 @@
+#!/usr/bin/env python3
+"""Generate or verify Open Assembly Unicode 16.0 classification and case tables."""
+
+import argparse
+import gzip
+from hashlib import sha256
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+DATA = ROOT / "spec/unicode/16.0.0"
+SOURCES = {
+    "UnicodeData.txt": "ff58e5823bd095166564a006e47d111130813dcf8bf234ef79fa51a870edb48f",
+    "DerivedCoreProperties.txt": "39d35161f2954497f69e08bdb9e701493f476a3d30222de20028feda36c1dabd",
+    "PropList.txt": "53d614508e2a0b2305a8aa21cd60d993de9326cdf65993660dfcce4503548583",
+}
+LIMIT = 0x110000
+MARKER = "; BEGIN GENERATED UNICODE TABLE\n"
+
+
+def source(name):
+    data = gzip.decompress((DATA / (name + ".gz")).read_bytes())
+    if sha256(data).hexdigest() != SOURCES[name]:
+        raise ValueError(f"wrong Unicode 16.0.0 data digest for {name}")
+    return data.decode("utf-8").splitlines()
+
+
+def ranges(name, wanted):
+    properties = {key: set() for key in wanted}
+    for line in source(name):
+        fields = [field.strip() for field in line.split("#", 1)[0].split(";")]
+        if len(fields) < 2 or fields[1] not in properties:
+            continue
+        first, _, last = fields[0].partition("..")
+        properties[fields[1]].update(range(int(first, 16), int(last or first, 16) + 1))
+    return properties
+
+
+def categories_and_mappings():
+    categories = ["Cn"] * LIMIT
+    lower, upper = {}, {}
+    first = None
+    for line in source("UnicodeData.txt"):
+        fields = line.split(";")
+        point = int(fields[0], 16)
+        if fields[1].endswith(", First>"):
+            first = (point, fields[2])
+            continue
+        if fields[1].endswith(", Last>"):
+            if first is None or first[1] != fields[2]:
+                raise ValueError(f"unmatched Unicode range ending at U+{point:04X}")
+            start, category = first
+            categories[start:point + 1] = [category] * (point - start + 1)
+            first = None
+            continue
+        if first is not None:
+            raise ValueError("Unicode range endpoint is missing")
+        categories[point] = fields[2]
+        if fields[12]:
+            upper[point] = int(fields[12], 16)
+        if fields[13]:
+            lower[point] = int(fields[13], 16)
+    if first is not None:
+        raise ValueError("unterminated Unicode range")
+    return categories, lower, upper
+
+
+def classification(c, category, alpha, lower, upper, spaces):
+    digit = 0x30 <= c <= 0x39
+    xdigit = digit or 0x41 <= c <= 0x46 or 0x61 <= c <= 0x66
+    is_alpha = c in alpha
+    is_space = c in spaces
+    printable = category[0] in "LMNPS" or category in ("Zs", "Co")
+    graph = printable and not is_space
+    alnum = digit or is_alpha
+    values = (alnum, is_alpha, c == 9 or category == "Zs", category == "Cc",
+              digit, graph, c in lower, printable,
+              graph and not alnum and category[0] in "PS", is_space,
+              c in upper, xdigit)
+    return sum(1 << index for index, value in enumerate(values) if value)
+
+
+def runs(values, empty):
+    start, previous = 0, empty
+    for point, value in enumerate(values):
+        if value != previous:
+            if previous != empty:
+                yield start, point - 1, previous
+            start, previous = point, value
+    if previous != empty:
+        yield start, LIMIT - 1, previous
+
+
+def tables():
+    categories, lower, upper = categories_and_mappings()
+    core = ranges("DerivedCoreProperties.txt", ("Alphabetic", "Lowercase", "Uppercase"))
+    spaces = ranges("PropList.txt", ("White_Space",))["White_Space"]
+    low_set, up_set = core["Lowercase"], core["Uppercase"]
+    alpha = core["Alphabetic"] | low_set | up_set
+    masks = list(runs((classification(c, category, alpha, low_set, up_set, spaces)
+                       for c, category in enumerate(categories)), 0))
+    low_delta = {c: target - c for c, target in lower.items()
+                 if c in up_set and target in low_set}
+    up_delta = {c: target - c for c, target in upper.items()
+                if c in low_set and target in up_set}
+    case = list(runs(((low_delta.get(c, 0), up_delta.get(c, 0)) for c in range(LIMIT)), (0, 0)))
+    return {
+        "mask": (masks, lambda v: f"0x{v:03x}"),
+        "case": (case, lambda v: f"{v[0]}, {v[1]}"),
+    }
+
+
+def output(name, rows, format_value):
+    lines = [f"{name}_count: dd {len(rows)}", f"{name}_table:"]
+    lines.extend(f"    dd 0x{start:06x}, 0x{end:06x}, {format_value(value)}"
+                 for start, end, value in rows)
+    return "\n".join(lines) + "\n"
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--emit", choices=("mask", "case"))
+    args = parser.parse_args()
+    for name, (rows, format_value) in tables().items():
+        generated = output(name, rows, format_value)
+        if args.emit:
+            if name == args.emit:
+                print(generated, end="")
+            continue
+        path = ROOT / f"src/x86_64-linux/wctype/__al_unicode_{name}.asm"
+        existing = path.read_text().split(MARKER, 1)[1].split("\nsection .note.GNU-stack", 1)[0]
+        if existing != generated:
+            raise SystemExit(f"{path.name}: stale Unicode table")
+        print(f"checked Unicode 16.0.0 {name} table ({len(rows)} ranges)")
+
+
+if __name__ == "__main__":
+    main()

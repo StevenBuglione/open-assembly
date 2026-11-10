@@ -1,0 +1,18 @@
+name = "wcrtomb"
+header = "wchar.h"
+prototype = "size_t wcrtomb(char *restrict s, wchar_t wc, mbstate_t *restrict ps)"
+standard = ["C17 7.29.6.3.3"]
+deps = ["__errno_location"]
+errno = ["EILSEQ"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:unicode-scalar", "reference:mbstate-transition", "diff:glibc"]
+provenance = "original"
+semantics = [
+  "Encode a Unicode scalar value representable in the current LC_CTYPE. Return the stored byte count or (size_t)-1 for an encoding error.",
+  "Clear the affected state on an encoding error. Preserve errno for successful or incomplete conversions.",
+]
+
+[abi]
+narrow_args = ["esi:s32"]
+variadic = false

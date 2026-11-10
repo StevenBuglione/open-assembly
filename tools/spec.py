@@ -482,11 +482,13 @@ def builtin_abi_class(declaration):
     words = [word for word in declaration.split() if word not in qualifiers]
     if len(words) > 1 and words[-1] not in type_words:
         words.pop()
-    if words in (["off_t"], ["time_t"], ["clock_t"], ["__al_sighandler_t"], ["jmp_buf"], ["sigjmp_buf"]):
+    if words in (["off_t"], ["time_t"], ["clock_t"], ["__al_sighandler_t"], ["jmp_buf"], ["sigjmp_buf"], ["wctype_t"], ["wctrans_t"]):
         return "wide", ()
-    if words == ["mode_t"]:
+    if words in (["mode_t"], ["wint_t"], ["char32_t"]):
         return "narrow", ("u32",)
-    if words in (["pid_t"], ["clockid_t"]):
+    if words == ["char16_t"]:
+        return "narrow", ("u16",)
+    if words in (["pid_t"], ["clockid_t"], ["wchar_t"]):
         return "narrow", ("s32",)
     counts = {word: words.count(word) for word in set(words)}
     if not words or counts.keys() - type_words:

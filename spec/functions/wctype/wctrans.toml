@@ -1,0 +1,18 @@
+name = "wctrans"
+header = "wctype.h"
+prototype = "wctrans_t wctrans(const char *property)"
+standard = ["C17 7.30.3.2.2"]
+deps = ["strcmp"]
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:unicode-16.0.0", "diff:glibc", "diff:musl"]
+provenance = "original"
+semantics = [
+  "Return a descriptor for tolower or toupper, or zero for an unknown name.",
+  "Preserve errno.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

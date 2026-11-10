@@ -1,0 +1,18 @@
+name = "wctype"
+header = "wctype.h"
+prototype = "wctype_t wctype(const char *property)"
+standard = ["C17 7.30.2.2.2"]
+deps = ["strcmp"]
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:unicode-16.0.0", "diff:glibc", "diff:musl"]
+provenance = "original"
+semantics = [
+  "Return a descriptor for a standard class name, or zero for an unknown name.",
+  "Preserve errno.",
+]
+
+[abi]
+narrow_args = []
+variadic = false
