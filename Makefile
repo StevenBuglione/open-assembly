@@ -243,3 +243,7 @@ gate:
 	tools/gate "$(FUNC)"
 
 FORCE:
+
+.PHONY: scan-musl-authorship
+scan-musl-authorship:
+	python3 tools/musl_authorship.py
