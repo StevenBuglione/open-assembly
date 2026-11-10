@@ -5,11 +5,13 @@ from __future__ import annotations
 import argparse
 from collections import deque
 from dataclasses import dataclass, replace
+from functools import cache
 from pathlib import Path
 import re
 import subprocess
 import sys
 import tempfile
+from types import MappingProxyType
 
 ROOT = Path(__file__).resolve().parent.parent
 SYMBOL = r"[A-Za-z_][A-Za-z0-9_]*"
@@ -1003,7 +1005,16 @@ def verify(program, syscall_boundary, x87_return):
             reject(program.instructions[start].line, "CONTROL_FLOW", "entry has no reachable exit")
 
 
-def check_file(path, function, fixture_syscall):
+def project_functions():
+    from spec import SpecError, load_project
+
+    try:
+        return MappingProxyType(load_project(ROOT).functions), None
+    except SpecError as error:
+        return None, str(error)
+
+
+def check_file(path, function, fixture_syscall, functions_snapshot=project_functions):
     resolved = path.resolve()
     relative = resolved.relative_to(ROOT) if resolved.is_relative_to(ROOT) else resolved
     parts = relative.parts
@@ -1023,11 +1034,13 @@ def check_file(path, function, fixture_syscall):
     noreturn = set()
     x87_return = 0
     if function is not None or private or app:
-        from spec import SpecError, check_comment_header, load_project
+        from spec import SpecError, check_comment_header
         try:
-            project = load_project(ROOT)
+            functions, error = functions_snapshot()
+            if error is not None:
+                reject(1, "SPEC_HEADER", error)
             if function is not None:
-                spec = project.functions.get(function)
+                spec = functions.get(function)
                 if spec is None:
                     reject(1, "SPEC_HEADER", f"no function specification for {function}")
                 check_comment_header(path, spec)
@@ -1038,12 +1051,12 @@ def check_file(path, function, fixture_syscall):
                     x87_return = 2
                 elif spec.prototype.startswith("long double "):
                     x87_return = 1
-            external_signatures.update(project.functions)
+            external_signatures.update(functions)
             external_signatures.update(Path(name).name for name in PRIVATE_FUNCTIONS)
             external_signatures.difference_update({"_start", "__al_rt_sigreturn"})
-            noreturn = PRIVATE_NORETURN | {name for name, spec in project.functions.items()
+            noreturn = PRIVATE_NORETURN | {name for name, spec in functions.items()
                                           if spec.abi.noreturn}
-            variadic = {name for name, spec in project.functions.items() if spec.abi.variadic}
+            variadic = {name for name, spec in functions.items() if spec.abi.variadic}
         except SpecError as error:
             reject(1, "SPEC_HEADER", str(error))
     program = parse(path.read_text(), narrow, set(), in_seed)
@@ -1168,10 +1181,11 @@ def main():
                         help="authorize syscall analysis for a seed under tests/seeded-bugs")
     parser.add_argument("paths", type=Path, nargs="+")
     args = parser.parse_args()
+    functions_snapshot = cache(project_functions)
     failed = False
     for path in args.paths:
         try:
-            check_file(path, args.function, args.fixture_syscall_boundary)
+            check_file(path, args.function, args.fixture_syscall_boundary, functions_snapshot)
         except Violation as error:
             print(f"{path}:{error.line}: {error.rule}: {error.message}", file=sys.stderr)
             failed = True
