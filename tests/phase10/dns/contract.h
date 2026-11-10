@@ -30,28 +30,39 @@ static inline int emit(int32_t status, const void *data, uint32_t length)
            (!length || write(STDOUT_FILENO, data, length) == (ssize_t)length);
 }
 
+static inline size_t wire_name_length(const unsigned char *name, size_t extent)
+{
+    size_t used = 0;
+    while (used < extent) {
+        unsigned width = name[used++];
+        if (!width)
+            return used;
+        if (width > 63 || used + width >= extent)
+            return 0;
+        used += width;
+    }
+    return 0;
+}
+
 static inline int emit_answer(int status, const struct answer *answer)
 {
     if (status)
         return !answer->count && emit(status, NULL, 0);
-    if (!answer->count || answer->count > 16 || (answer->type != 1 && answer->type != 28))
+    size_t owner = wire_name_length(answer->canonical, sizeof answer->canonical);
+    if (!owner || !answer->count || answer->count > 16)
         return 0;
-    size_t used = 0;
-    while (used < sizeof answer->canonical) {
-        unsigned width = answer->canonical[used++];
-        if (!width)
-            break;
-        if (width > 63 || used + width >= sizeof answer->canonical)
+    size_t items = 16 * answer->count;
+    if (answer->type == 12) {
+        items = wire_name_length((const unsigned char *)answer->addresses, sizeof answer->addresses);
+        if (answer->count != 1 || !items)
             return 0;
-        used += width;
-    }
-    if (!used || used > sizeof answer->canonical || answer->canonical[used - 1])
+    } else if (answer->type != 1 && answer->type != 28) {
         return 0;
-    uint32_t length = (uint32_t)(8 + used + 16 * answer->count);
-    const struct reply reply = {status, length};
+    }
+    const struct reply reply = {status, (uint32_t)(8 + owner + items)};
     return write(STDOUT_FILENO, &reply, sizeof reply) == sizeof reply &&
-           write(STDOUT_FILENO, answer, 8 + used) == (ssize_t)(8 + used) &&
-           write(STDOUT_FILENO, answer->addresses, 16 * answer->count) == (ssize_t)(16 * answer->count);
+           write(STDOUT_FILENO, answer, 8 + owner) == (ssize_t)(8 + owner) &&
+           write(STDOUT_FILENO, answer->addresses, items) == (ssize_t)items;
 }
 
 #endif

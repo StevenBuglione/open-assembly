@@ -8,31 +8,36 @@ import sys
 import tempfile
 
 from gate import BUILD, GateError, checked, identify_tools, nm_symbols, source_policy, verify_setup, write_evidence
-from phase1 import NASM, Case, build_case, build_runtime
+from phase1 import NASM, Case, build_case, build_runtime, generate_stub
 from phase6 import phase6_inputs
-from spec import ROOT, SpecError, sha256_file, snapshot_inputs
+from spec import ROOT, SpecError, load_project, sha256_file, snapshot_inputs
 
 SUITE = Path("tests/phase10/dns")
 sys.path.insert(0, str(ROOT / SUITE))
 import loopback
-from oracle import FRAME, RESULT, SEED, decoded, directed, sampled
+import ptr_loopback
+from oracle import FRAME, RESULT, SEED, decoded, directed, ptr_directed, ptr_sampled, sampled
 
 WIRE = ("__al_dns_build", "__al_dns_parse")
 TRANSPORT = ("__al_dns_query",)
-SOURCE = {"dns-wire": ("wire.c", WIRE), "dns-transport": ("transport.c", TRANSPORT)}
+PTR_WRAPS = ("__al_dns_server", "fopen")
+SOURCE = {"dns-wire": ("wire.c", WIRE), "dns-transport": ("transport.c", TRANSPORT),
+          "dns-ptr": ("ptr.c", ("getnameinfo",))}
 ORACLE = ("reference:rfc1035", "reference:rfc7766", "reference:rfc5452")
+PTR_ORACLE = ("reference:rfc1035", "reference:rfc3493", "reference:rfc3596")
 
 
 def inputs():
     bound = phase6_inputs()
-    contracts = [Path("docs/adr/0017-dns-forward.md")]
+    contracts = [Path("docs/adr/0017-dns-forward.md"), Path("docs/adr/0019-local-reverse-lookup.md"),
+                 SUITE / "ptr.hosts"]
     bound.update(snapshot_inputs(ROOT, contracts))
     return dict(sorted(bound.items()))
 
 
 def make_case(name):
     file, required = SOURCE[name]
-    return Case(name, (SUITE / file,), required, [], {}, 0, "", "", ORACLE,
+    return Case(name, (SUITE / file,), required, [], {}, 0, "", "", PTR_ORACLE if name == "dns-ptr" else ORACLE,
                 ("native", "qemu", "valgrind"), {})
 
 
@@ -86,10 +91,23 @@ section .note.GNU-stack noalloc noexec nowrite progbits
                   artifacts=artifacts, status=result.returncode, stdout_hex=result.stdout.hex())
 
 
+def ptr_stub_control(directory, runtime, record):
+    directory.mkdir()
+    log = record["commands"]
+    obj, source_hash = generate_stub(load_project().functions["getnameinfo"], directory, log)
+    binary, artifacts = build_case(make_case("dns-ptr"), directory / "linked", runtime, log,
+                                   ("getnameinfo", obj), c_flags=("-DOA_PTR_STUB",))
+    result = subprocess.run([binary, "9", "numeric"], cwd=ROOT, env={}, capture_output=True, timeout=5)
+    if (result.returncode, result.stdout, result.stderr) != (14, b"", b""):
+        raise GateError("getnameinfo stub did not leave the expected unwritten numeric output")
+    record.update(outcome="pass", artifacts=artifacts, source_sha256=source_hash,
+                  artifact_sha256=sha256_file(obj), status=result.returncode)
+
+
 def main():
     name = "phase10-dns"
     evidence = {"schema_version": 1, "scope": name, "outcome": "fail", "production_verified": False,
-                "checks": {}, "limits": ["Direct private wire ABI and IPv4 loopback transport.",
+                "checks": {}, "limits": ["Direct private wire ABI, loopback transport and public PTR lookups.",
                                          "Directed and seeded packet samples."]}
     checks = evidence["checks"]
     try:
@@ -112,7 +130,9 @@ def main():
             binaries = {}
             for name_ in SOURCE:
                 fixture = checks["fixtures"][name_] = {"outcome": "fail", "commands": []}
-                artifacts = [build_case(make_case(name_), directory / f"{name_}-{i}", runtime, fixture["commands"])
+                wraps = PTR_WRAPS if name_ == "dns-ptr" else ()
+                artifacts = [build_case(make_case(name_), directory / f"{name_}-{i}", runtime,
+                                        fixture["commands"], link_wraps=wraps)
                              for i, runtime in enumerate(runtimes, 1)]
                 if artifacts[0][1] != artifacts[1][1]:
                     raise GateError(f"two isolated {name_} probe links differ")
@@ -124,6 +144,9 @@ def main():
             checks["wire"] = {"directed": len(fixed), "seed": SEED, "sampled": len(corpus) - len(fixed),
                               "backends": {}}
             checks["transport"] = {}
+            ptr_fixed = ptr_directed()
+            ptr_corpus = ptr_fixed + ptr_sampled(512)
+            checks["reverse"] = {"directed": len(ptr_fixed), "sampled": 512, "seed": SEED ^ 12, "backends": {}}
             for backend, prefix in backends.items():
                 binary = binaries["dns-wire"]
                 checks["wire"]["backends"][backend] = {
@@ -131,14 +154,23 @@ def main():
                 }
                 command = list(map(str, [*prefix, binaries["dns-transport"]]))
                 checks["transport"][backend] = loopback.run(command)
-                print(f"PASS DNS {backend} packet and loopback cases", flush=True)
+                reverse = checks["reverse"]["backends"][backend] = {}
+                reverse["wire"] = {
+                    side: wire_run([*prefix, binary, side], ptr_corpus) for side in ("left", "right")
+                }
+                ptr_command = list(map(str, [*prefix, binaries["dns-ptr"]]))
+                reverse["getnameinfo"] = ptr_loopback.run(ptr_command)
+                print(f"PASS DNS {backend} forward and reverse packet and loopback cases", flush=True)
             checks["wire"]["outcome"] = "pass"
+            checks["reverse"]["outcome"] = "pass"
             checks["stubs"] = {}
             for symbol in WIRE + TRANSPORT:
                 vector = next(row for row in fixed if FRAME.unpack_from(row[0])[0] == int(symbol == WIRE[1])
                               and (row[1][0] == 0 if symbol == WIRE[1] else row[1][0] > 0))
                 record = checks["stubs"][symbol] = {"outcome": "fail", "commands": []}
                 stub_control(symbol, directory / f"stub-{symbol}", runtimes[0], vector, record)
+            ptr_record = checks["stubs"]["getnameinfo-ptr"] = {"outcome": "fail", "commands": []}
+            ptr_stub_control(directory / "stub-getnameinfo-ptr", runtimes[0], ptr_record)
         if evidence["inputs"] != inputs():
             raise GateError("inputs changed during DNS verification")
         evidence["outcome"] = "pass"
