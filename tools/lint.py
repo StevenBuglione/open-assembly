@@ -157,6 +157,7 @@ PRIVATE_FUNCTIONS = {
     "rt/__al_map_anon", "rt/__al_unmap_anon", "rt/__al_env_init",
     "stdlib/__al_heap", "stdlib/__al_heap_alloc", "stdlib/__al_heap_free",
     "stdlib/__al_heap_inspect", "stdlib/__al_heap_tag", "stdlib/__al_heap_bad",
+    "stdlib/__al_heap_remap",
     "stdlib/__al_env_change", "stdlib/__al_env_match", "stdlib/__al_env_name",
     "stdlib/__al_env_collect",
     "internal/__al_syscall", "internal/__al_syscall_result", "internal/__al_rt_sigreturn",
