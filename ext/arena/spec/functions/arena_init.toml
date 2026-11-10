@@ -1,0 +1,16 @@
+name = "arena_init"
+header = "arena.h"
+prototype = "int arena_init(size_t state[3], void *storage, size_t capacity)"
+standard = ["Extension ABI arena"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:arena-state-model"]
+provenance = "original"
+semantics = ["Initialize caller-owned base, capacity, and used words with used zero.", "Return -EINVAL for a null state or nonzero capacity with a null base, or -EOVERFLOW for a wrapping extent.", "Preserve state on failure and preserve errno."]
+
+[abi]
+narrow_args = []
+variadic = false
+noreturn = false

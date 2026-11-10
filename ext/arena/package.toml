@@ -1,0 +1,5 @@
+schema_version = 1
+name = "arena"
+stability = "experimental"
+dependencies = []
+oracle = "reference:arena-state-model"

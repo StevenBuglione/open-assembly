@@ -736,3 +736,11 @@ Specs: 729 of 729 inventoried functions. The inventory covers C17, the named POS
 | [`wprintf`](../spec/functions/wchar/wprintf.toml) | `<wchar.h>` | `int wprintf(const wchar_t *restrict format, ...)` | C17 7.29.2.11 |
 | [`write`](../spec/functions/unistd/write.toml) | `<unistd.h>` | `ssize_t write(int fd, const void *buf, size_t count)` | POSIX.1-2024 XSH write |
 | [`wscanf`](../spec/functions/wchar/wscanf.toml) | `<wchar.h>` | `int wscanf(const wchar_t *restrict format, ...)` | C17 7.29.2.12 |
+
+## Extension packages
+
+| Function | Header | Prototype | Standard |
+| --- | --- | --- | --- |
+| [`arena_alloc`](../ext/arena/spec/functions/arena_alloc.toml) | `<arena.h>` | `int arena_alloc(size_t *restrict state, size_t size, size_t alignment, void **restrict result)` | Extension ABI arena |
+| [`arena_init`](../ext/arena/spec/functions/arena_init.toml) | `<arena.h>` | `int arena_init(size_t state[3], void *storage, size_t capacity)` | Extension ABI arena |
+| [`arena_reset`](../ext/arena/spec/functions/arena_reset.toml) | `<arena.h>` | `int arena_reset(size_t state[3])` | Extension ABI arena |
