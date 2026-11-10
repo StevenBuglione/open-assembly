@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -euo pipefail
+repo_root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
+cd "$repo_root"
+image_archive=$(nix build --file nix/image.nix --no-link --print-out-paths)
+image_name=$(python3 - "$image_archive" <<'PY'
+import json
+import sys
+import tarfile
+with tarfile.open(sys.argv[1]) as archive:
+    print(json.load(archive.extractfile('manifest.json'))[0]['RepoTags'][0])
+PY
+)
+if ! docker image inspect "$image_name" >/dev/null 2>&1; then
+    docker load --input "$image_archive" >&2
+fi
+if [ "$#" -eq 0 ]; then
+    set -- bash
+fi
+exec docker run --rm --network=none --user "$(id -u):$(id -g)" \
+    --volume "$repo_root:/work" --workdir /work "$image_name" "$@"
