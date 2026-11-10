@@ -1,0 +1,19 @@
+name = "kill"
+header = "signal.h"
+prototype = "int kill(pid_t pid, int sig)"
+standard = ["POSIX.1-2024 XSH kill"]
+deps = ["__errno_location"]
+errno = ["EINVAL", "EPERM", "ESRCH"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-signal-abi"]
+provenance = "original"
+semantics = [
+  "Send the requested signal to the process or process group selected by Linux pid semantics.",
+  "Signal zero performs Linux existence and permission checks without delivering a signal.",
+  "Return zero and preserve errno on success. Return -1 and set errno on failure.",
+]
+
+[abi]
+narrow_args = ["edi:s32", "esi:s32"]
+variadic = false

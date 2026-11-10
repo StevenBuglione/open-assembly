@@ -1,0 +1,19 @@
+name = "posix_spawn_file_actions_addopen"
+header = "spawn.h"
+prototype = "int posix_spawn_file_actions_addopen(posix_spawn_file_actions_t *restrict actions, int fd, const char *restrict path, int oflag, mode_t mode)"
+standard = ["POSIX.1-2024 XSH posix_spawn_file_actions_addopen"]
+deps = ["strlen", "memcpy", "malloc", "__errno_location"]
+errno = ["EBADF", "EFAULT", "ENOMEM"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:linux-spawn-abi"]
+provenance = "original"
+semantics = [
+  "Append closing the target descriptor, then opening a private copy of path with oflag and mode.",
+  "Arrange the resulting file descriptor at fd. The target must be below the current descriptor limit.",
+  "Return zero on success or a positive error number on failure. Preserve errno.",
+]
+
+[abi]
+narrow_args = ["esi:s32", "ecx:s32", "r8d:u32"]
+variadic = false

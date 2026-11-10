@@ -1,0 +1,19 @@
+name = "clock"
+header = "time.h"
+prototype = "clock_t clock(void)"
+standard = ["C17 7.27.2.1"]
+deps = ["__errno_location"]
+errno = ["EINVAL", "EOVERFLOW"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-time64"]
+provenance = "original"
+semantics = [
+  "Return elapsed process CPU time in microsecond units.",
+  "Truncate fractional microseconds. Return clock_t -1 when the query fails or its result is unrepresentable.",
+  "Preserve errno on success. Expose the kernel error or EOVERFLOW on failure.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

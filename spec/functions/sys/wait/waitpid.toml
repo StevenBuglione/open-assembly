@@ -1,0 +1,20 @@
+name = "waitpid"
+header = "sys/wait.h"
+prototype = "pid_t waitpid(pid_t pid, int *wstatus, int options)"
+standard = ["POSIX.1-2024 XSH waitpid"]
+deps = ["__errno_location"]
+errno = ["ECHILD", "EFAULT", "EINTR", "EINVAL"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-process-abi"]
+provenance = "original"
+semantics = [
+  "Wait for the matching child or process group according to Linux wait4 selection rules.",
+  "Store the raw status only when a child status is available and wstatus is nonnull.",
+  "A nonblocking call with no matching status returns zero and leaves wstatus unchanged.",
+  "Preserve errno on success. Return -1 and set errno on failure, including EINTR without retry.",
+]
+
+[abi]
+narrow_args = ["edi:s32", "edx:s32"]
+variadic = false

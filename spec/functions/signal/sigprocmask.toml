@@ -1,0 +1,20 @@
+name = "sigprocmask"
+header = "signal.h"
+prototype = "int sigprocmask(int how, const sigset_t *restrict set, sigset_t *restrict oldset)"
+standard = ["POSIX.1-2024 XSH sigprocmask"]
+deps = ["__errno_location"]
+errno = ["EFAULT", "EINVAL"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-signal-abi"]
+provenance = "original"
+semantics = [
+  "Apply SIG_BLOCK, SIG_UNBLOCK, or SIG_SETMASK to the calling thread when set is present.",
+  "A null set queries the current mask regardless of how. Linux ignores attempts to block SIGKILL or SIGSTOP.",
+  "Publish oldset only on success and clear its bytes above the low word.",
+  "Return zero and preserve errno on success. Return -1 and set errno on failure.",
+]
+
+[abi]
+narrow_args = ["edi:s32"]
+variadic = false

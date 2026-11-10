@@ -52,6 +52,21 @@ umask handling, exclusive creation, shared offsets, sparse seeks beyond
 on success and failure. Use kernel results for filesystem-dependent
 features. The tests should record any backend or filesystem skip.
 
+## Temporary files and name changes
+
+`rename` forwards one Linux atomic rename operation. `remove` first
+attempts unlink. An EISDIR result selects removal of an empty directory.
+Existing open file descriptions stay usable after either operation.
+
+`mkstemp` replaces six final X bytes with random alphanumeric bytes from
+Linux getrandom, then creates a read-write file with O_CREAT and O_EXCL.
+It uses mode 0600 and retries collisions with new randomness. A failed
+name attempt restores the placeholders. `tmpfile` opens an anonymous
+inode in `/tmp` where supported. Its fallback uses the same exclusive
+name creation, sets close-on-exec atomically, and unlinks the name before
+publishing the binary update stream. The stream owns its descriptor.
+[Linux getrandom](https://man7.org/linux/man-pages/man2/getrandom.2.html) · [Linux temporary files](https://man7.org/linux/man-pages/man2/open.2.html)
+
 ## File information and directories
 
 The next slice includes `stat`, `lstat`, `fstat`, and `fstatat`.
@@ -103,8 +118,14 @@ space. The later threading work owns at-fork handlers and lock recovery.
 `execve` passes the supplied argument and environment vectors to the
 kernel. Its ordinary return is an error. Convenience wrappers can use
 the runtime's `environ` and implement PATH search separately.
+`pid_t` is a signed 32-bit integer. `getpid` and `getppid` make raw
+Linux queries and preserve errno. `pipe2` creates the two descriptors
+with atomic flags and preserves its output array on error. The selected
+POSIX flags are close-on-exec and nonblocking. Linux-specific flags are
+validated by the kernel, and close-on-fork is outside this Linux slice.
 `waitpid` uses `wait4` without a resource-usage result. Preserve
-the raw wait-status bits for the public macros. Test normal exit,
+the raw wait-status bits for the public macros. A zero `WNOHANG` result
+leaves output untouched, as does an error. Test normal exit,
 signaled exit, invalid child IDs, and `WNOHANG`.
 [Linux fork](https://man7.org/linux/man-pages/man2/fork.2.html) · [Linux execve](https://man7.org/linux/man-pages/man2/execve.2.html) · [Linux wait](https://man7.org/linux/man-pages/man2/wait.2.html)
 
@@ -117,7 +138,13 @@ The child uses prepared state and raw operations before exec. Handle
 interrupted and short handshakes. Public errors are returned as positive
 codes. Use separate opaque, 16-byte public attribute and file-action
 objects with eight-byte alignment. Their internal state lives in
-library-owned storage.
+library-owned storage. File actions support close, dup2, and open.
+Open actions copy the path at registration. A same-descriptor dup2
+validates the descriptor and clears close-on-exec. The selected flags
+are reset IDs, set process group, set default dispositions, and set
+signal mask. Child signal delivery stays blocked through descriptor and
+attribute setup. The parent restores its own mask and publishes a child
+ID only after the handshake succeeds.
 [POSIX posix_spawn](https://pubs.opengroup.org/onlinepubs/9799919799/functions/posix_spawn.html)
 
 ## Signals and non-local control flow
@@ -131,14 +158,22 @@ has its handler, flags, restorer, and mask at bytes 0, 8, 16, and 24.
 The kernel call uses a mask size of eight. Handler installation adds
 the private restorer when needed and uses the existing
 `__al_rt_sigreturn` trampoline. User handlers enter through the
-kernel's System V ABI frame. Test mask round trips, real signal delivery,
-restart policy, and three-argument handler dispatch.
+kernel's System V ABI frame. The public `siginfo_t` is 128 bytes with an
+eight-byte alignment. The signal number, error, and code are 32-bit words
+at bytes 0, 4, and 8. For sender information, the process ID and user ID
+appear at bytes 16 and 20. Public signals occupy the full Linux range
+1 through 64. Host libraries may reserve their own internal signal numbers.
+A successful mask read clears the high public words. The kernel handles
+uncatchable dispositions and unmaskable signals. Test mask round trips,
+real signal delivery, restart policy, and three-argument handler dispatch.
 [Linux sigaction](https://man7.org/linux/man-pages/man2/sigaction.2.html) · [Linux sigreturn](https://man7.org/linux/man-pages/man2/sigreturn.2.html)
 
 A jump buffer stores RBX, RBP, R12 through R15, the caller's resumed RSP,
 and the return PC in eight successive words with eight-byte alignment.
-A signal-aware buffer adds a four-byte saved-mask indicator at byte 64
-and a 128-byte mask at byte 72. Test
+The ordinary buffer occupies 64 bytes. A signal-aware buffer adds a
+four-byte saved-mask indicator at byte 64 and a 128-byte mask at byte 72,
+for a total of 200 bytes. Both have eight-byte alignment. Jump targets
+must still be live in the same thread. Test
 declarations mark the save routines as returning twice and the restore
 routines as non-returning. Restore a zero requested result as one.
 Ordinary jumps preserve the current signal mask and floating-point
@@ -151,10 +186,17 @@ C locals, and mask restoration.
 ## Time and zone data
 
 Public `time_t` is a signed 64-bit `long`. Public `timespec` uses two
-signed 64-bit fields at bytes 0 and 8. Implement clock queries and
-nanosleep through the private time64 kernel boundary, including remaining
-time after `EINTR`. Calendar conversion uses checked Gregorian arithmetic
-for timestamps on both sides of the Unix epoch. Differential tests should
+signed 64-bit fields at bytes 0 and 8. `clockid_t` is signed 32-bit and
+`clock_t` is signed 64-bit. Clock queries and sleep operations use the
+private time64 kernel boundary. Relative sleep publishes a remaining
+interval after `EINTR`; absolute sleep leaves it untouched. `clock_nanosleep`
+returns the positive error code while preserving errno. `clock` reports
+process CPU time with one million ticks per second. `time` and
+`timespec_get(TIME_UTC)` use realtime seconds. `difftime` computes the full signed integer difference before rounding
+to double. UTC conversion uses checked Gregorian arithmetic for timestamps
+on both sides of the Unix epoch. A 400-year era has 146097 days. There
+are 719528 days from 0000-01-01 to the Unix epoch. Leap years are
+multiples of four, with the century exception and the 400-year exception. Differential tests should
 use fixed timestamps and explicit time zones. Timer tests should compare
 monotonic intervals with tolerances and handle interruption.
 

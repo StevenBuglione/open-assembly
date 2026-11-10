@@ -1,0 +1,19 @@
+name = "sigismember"
+header = "signal.h"
+prototype = "int sigismember(const sigset_t *set, int sig)"
+standard = ["POSIX.1-2024 XSH sigismember"]
+deps = ["__errno_location"]
+errno = ["EINVAL"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-signal-abi"]
+provenance = "original"
+semantics = [
+  "Query the signal bit identified by an integer from 1 through 64.",
+  "Return one for present or zero for absent without changing the mask.",
+  "Preserve errno on success. Invalid signal numbers return -1 and set EINVAL.",
+]
+
+[abi]
+narrow_args = ["esi:s32"]
+variadic = false

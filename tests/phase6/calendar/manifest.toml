@@ -1,0 +1,78 @@
+schema = 1
+
+[[case]]
+name = "calendar-gmtime"
+sources = ["tests/phase6/calendar/calendar.c"]
+requires = ["gmtime"]
+args = ["gmtime"]
+env = { TZ = "UTC0" }
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:gregorian-utc"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "calendar-gmtime-r"
+sources = ["tests/phase6/calendar/calendar.c"]
+requires = ["gmtime_r"]
+args = ["gmtime-r"]
+env = { TZ = "UTC0" }
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:gregorian-utc"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "calendar-difftime"
+sources = ["tests/phase6/calendar/calendar.c"]
+requires = ["difftime"]
+args = ["difftime"]
+env = { TZ = "UTC0" }
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:gregorian-utc"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "calendar-difftime-directed"
+sources = ["tests/phase6/calendar/calendar.c"]
+requires = ["difftime"]
+args = ["difftime-directed"]
+env = { TZ = "UTC0" }
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:gregorian-utc"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The project specifies the SSE rounding-control behavior."
+
+[[stub]]
+symbol = "gmtime"
+case = "calendar-gmtime"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "gmtime_r"
+case = "calendar-gmtime-r"
+status = 21
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "difftime"
+case = "calendar-difftime"
+status = 31
+stdout = ""
+stderr = ""

@@ -1,0 +1,23 @@
+name = "posix_spawn"
+header = "spawn.h"
+prototype = "int posix_spawn(pid_t *restrict pid, const char *restrict path, const posix_spawn_file_actions_t *restrict actions, const posix_spawnattr_t *restrict attr, char *const argv[restrict], char *const envp[restrict])"
+standard = ["POSIX.1-2024 XSH posix_spawn"]
+deps = ["malloc", "free", "__errno_location"]
+errno = ["EACCES", "EAGAIN", "EBADF", "EINTR", "EINVAL", "EIO", "EMFILE", "ENFILE", "ENOENT", "ENOEXEC", "ENOMEM", "EPERM"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:linux-spawn-abi"]
+provenance = "original"
+semantics = [
+  "Execute the explicit path in a child with the supplied argument and environment vectors.",
+  "Apply selected attributes, then file actions exactly once in registration order, then Linux close-on-exec.",
+  "Supported attributes select real IDs, a process group, default dispositions, and a signal mask.",
+  "A null actions or attr pointer selects the defaults for that category.",
+  "On success publish the child ID through a nonnull pid pointer. Leave pid untouched on failure.",
+  "Report pre-exec errors through a private close-on-exec handshake and reap a failed child.",
+  "Return zero on success or a positive error number on failure. Preserve errno.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

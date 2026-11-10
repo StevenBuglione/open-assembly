@@ -1,0 +1,21 @@
+name = "mkstemp"
+header = "stdlib.h"
+prototype = "int mkstemp(char *template)"
+standard = ["POSIX.1-2024 XSH mkstemp"]
+deps = ["strlen", "__errno_location"]
+errno = ["EACCES", "EEXIST", "EINVAL", "EIO", "EMFILE", "ENAMETOOLONG", "ENOENT", "ENOSPC", "EROFS"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:linux-temporary-file-abi"]
+provenance = "original"
+semantics = [
+  "Require a writable template ending in six X characters before its terminating NUL.",
+  "Replace the six placeholders with random alphanumeric bytes and create the file exclusively.",
+  "Request owner-only mode 0600 and return an open read-write descriptor on success.",
+  "Retry name collisions and interruptions while obtaining randomness. Preserve errno on success.",
+  "Return -1 and set errno on failure. Restore the six placeholders after a failed name attempt.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

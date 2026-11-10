@@ -1,0 +1,19 @@
+name = "sigsetjmp"
+header = "setjmp.h"
+prototype = "int sigsetjmp(sigjmp_buf env, int savemask)"
+standard = ["POSIX.1-2024 XSH sigsetjmp"]
+deps = ["sigprocmask"]
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:sysv-jump-abi"]
+provenance = "original"
+semantics = [
+  "Save the same calling context as setjmp and optionally save the calling thread signal mask.",
+  "A nonzero savemask requests a mask snapshot. Record whether a valid snapshot was saved.",
+  "Return zero when saving. A later valid siglongjmp can resume the caller with a nonzero result.",
+]
+
+[abi]
+narrow_args = ["esi:s32"]
+variadic = false

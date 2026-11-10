@@ -1,0 +1,19 @@
+name = "sigdelset"
+header = "signal.h"
+prototype = "int sigdelset(sigset_t *set, int sig)"
+standard = ["POSIX.1-2024 XSH sigdelset"]
+deps = ["__errno_location"]
+errno = ["EINVAL"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-signal-abi"]
+provenance = "original"
+semantics = [
+  "Remove the signal bit identified by an integer from 1 through 64.",
+  "Modify only the selected signal bit and return zero.",
+  "Preserve errno on success. Invalid signal numbers return -1 and set EINVAL.",
+]
+
+[abi]
+narrow_args = ["esi:s32"]
+variadic = false

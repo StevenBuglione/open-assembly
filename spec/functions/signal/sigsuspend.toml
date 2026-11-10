@@ -1,0 +1,19 @@
+name = "sigsuspend"
+header = "signal.h"
+prototype = "int sigsuspend(const sigset_t *mask)"
+standard = ["POSIX.1-2024 XSH sigsuspend"]
+deps = ["__errno_location"]
+errno = ["EFAULT", "EINTR", "EINVAL"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-signal-abi"]
+provenance = "original"
+semantics = [
+  "Temporarily replace the calling thread signal mask and suspend until a signal terminates or interrupts the call.",
+  "After an interrupting handler, restore the original mask and return -1 with EINTR.",
+  "Translate any other Linux error without retrying the operation.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

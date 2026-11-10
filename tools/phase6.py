@@ -1,4 +1,4 @@
-"""Verify the Phase 6 file and directory APIs against the real runtime."""
+"""Verify scoped Phase 6 APIs against the real runtime."""
 
 import argparse
 from functools import partial
@@ -21,6 +21,20 @@ PUBLIC = {
 COMPAT = {
     "chmod", "dirname", "ferror_unlocked", "fputs_unlocked", "getc_unlocked", "getcwd", "getopt", "ioctl",
     "isatty", "putchar_unlocked", "readlink", "strdup", "umask", "vasprintf",
+}
+PROCESS = {"execve", "fork", "getpid", "getppid", "pipe2", "wait", "waitpid"}
+SIGNAL = {"kill", "raise", "sigaction", "sigaddset", "sigdelset", "sigemptyset", "sigfillset", "sigismember",
+          "signal", "sigpending", "sigprocmask", "sigsuspend"}
+JUMP = {"setjmp", "longjmp", "sigsetjmp", "siglongjmp"}
+TIME = {"clock", "clock_gettime", "clock_getres", "clock_nanosleep", "nanosleep", "time", "timespec_get"}
+CALENDAR = {"difftime", "gmtime", "gmtime_r"}
+LUAFILES = {"mkstemp", "remove", "rename", "tmpfile"}
+SPAWN = {
+    "posix_spawn", "posix_spawn_file_actions_init", "posix_spawn_file_actions_destroy",
+    "posix_spawn_file_actions_addclose", "posix_spawn_file_actions_adddup2", "posix_spawn_file_actions_addopen",
+    "posix_spawnattr_init", "posix_spawnattr_destroy", "posix_spawnattr_getflags", "posix_spawnattr_setflags",
+    "posix_spawnattr_getpgroup", "posix_spawnattr_setpgroup", "posix_spawnattr_getsigmask",
+    "posix_spawnattr_setsigmask", "posix_spawnattr_getsigdefault", "posix_spawnattr_setsigdefault",
 }
 
 
@@ -76,16 +90,22 @@ def run_stubs(controls, project, directory, runtime, check):
     check["outcome"] = "pass"
 
 
-def execute_phase6(compat):
-    scope = "phase6-compat" if compat else "phase6-files"
-    suite = SUITE / "compat" if compat else SUITE
-    public = COMPAT if compat else PUBLIC
-    fault_wrappers = ({suite / "vasprintf_fault.c": ("realloc", "free"),
-                       suite / "unlocked_lock.c": ("__al_lock", "__al_unlock")} if compat else
-                      {suite / "fault.c": ("__al_syscall",)})
+def execute_phase6(suite_name):
+    scope = f"phase6-{suite_name}"
+    suite = SUITE if suite_name == "files" else SUITE / suite_name
+    public = {"files": PUBLIC, "compat": COMPAT, "process": PROCESS, "signal": SIGNAL, "jump": JUMP,
+              "time": TIME, "calendar": CALENDAR, "luafiles": LUAFILES, "spawn": SPAWN}[suite_name]
+    fault_wrappers = {
+        SUITE / "fault.c": ("__al_syscall",),
+        SUITE / "compat/vasprintf_fault.c": ("realloc", "free"),
+        SUITE / "compat/unlocked_lock.c": ("__al_lock", "__al_unlock"),
+        SUITE / "time/clock_fault.c": ("__al_syscall",),
+        SUITE / "luafiles/fault.c": ("__al_syscall",),
+        SUITE / "spawn/lifetime.c": ("malloc", "calloc", "realloc", "free"),
+    }
     evidence = {"schema_version": 1, "scope": scope, "production_verified": False,
                 "outcome": "fail", "checks": {},
-                "pending_phase6": ["BusyBox acceptance", "process and spawn", "signals", "setjmp", "time and TZif"]}
+                "pending_phase6": ["PATH exec and spawn search", "local time and TZif", "shell process APIs"]}
     checks = evidence["checks"]
     try:
         evidence["toolchain"] = identify_tools("ar", "make", "qemu-x86_64", "musl-gcc")
@@ -93,7 +113,8 @@ def execute_phase6(compat):
         project = load_project()
         if not public <= project.functions.keys():
             raise GateError(f"missing {scope} specifications")
-        parse = partial(parse_probe, suite=suite, programs=(), asm_fixtures=ABI_FIXTURES if not compat else (),
+        assembly = {"files": ABI_FIXTURES, "jump": (SUITE / "jump/registers.asm",)}.get(suite_name, ())
+        parse = partial(parse_probe, suite=suite, programs=(), asm_fixtures=assembly,
                         fault_wrappers=fault_wrappers, allow_fixture_files=True)
         probes, controls = load_probes(suite / "manifest.toml", public, parse)
         runners = {"native": [], "qemu": [shutil.which("qemu-x86_64")],
@@ -129,5 +150,22 @@ def execute_phase6(compat):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--compat", action="store_true", help="run the BusyBox compatibility API probes")
-    raise SystemExit(execute_phase6(parser.parse_args().compat))
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--compat", dest="suite", action="store_const", const="compat",
+                      help="run the BusyBox compatibility API probes")
+    mode.add_argument("--process", dest="suite", action="store_const", const="process",
+                      help="run the process API probes")
+    mode.add_argument("--signal", dest="suite", action="store_const", const="signal",
+                      help="run the signal API probes")
+    mode.add_argument("--jump", dest="suite", action="store_const", const="jump",
+                      help="run the non-local jump API probes")
+    mode.add_argument("--time", dest="suite", action="store_const", const="time",
+                      help="run the time64 clock API probes")
+    mode.add_argument("--calendar", dest="suite", action="store_const", const="calendar",
+                      help="run the UTC calendar API probes")
+    mode.add_argument("--luafiles", dest="suite", action="store_const", const="luafiles",
+                      help="run the pathname and temporary file API probes")
+    mode.add_argument("--spawn", dest="suite", action="store_const", const="spawn",
+                      help="run the process spawn API probes")
+    parser.set_defaults(suite="files")
+    raise SystemExit(execute_phase6(parser.parse_args().suite))

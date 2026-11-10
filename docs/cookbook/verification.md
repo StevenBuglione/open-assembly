@@ -24,9 +24,24 @@ and the hosted musl control. Directory comparison preserves duplicate counts
 and allows filesystem order. The upstream Memcheck run checks memory accesses
 and initialized reads. [Phase 6 ABI](../adr/0007-linux-files-process-signal-time.md)
 
-These gates record separate evidence in `build/evidence/`. Process spawning,
-signals, non-local control flow, time, and per-function production checks have
-separate requirements.
+`./tools/container make phase6-process` checks initial process and wait APIs
+against the same freestanding runtime. It exercises raw process IDs, child
+status, fork, and self-exec with explicit argv, environment, and descriptor
+inheritance. Its manifest describes backend transitions during exec and
+includes exact generated-stub rejection for each scoped API.
+
+The signal and jump suites run with `make phase6-signal phase6-jump`. They
+exercise Linux mask and disposition round trips, signal-handler dispatch, the
+kernel restorer, saved-mask semantics, and the non-local jump register state.
+Their manifests record exact stub outcomes and measured host or backend
+differences.
+
+The next scoped targets are `phase6-time`, `phase6-calendar`,
+`phase6-luafiles`, and `phase6-spawn`. They cover real and injected clock
+results, UTC boundaries and rounding, exclusive temporary file operations,
+and spawn attributes and ordered descriptor actions. Each records separate
+backend, host, and stub observations. PATH-based spawning, shell streams,
+local time, and per-function production checks have separate requirements.
 
 ## Phase 4 streams and utilities
 

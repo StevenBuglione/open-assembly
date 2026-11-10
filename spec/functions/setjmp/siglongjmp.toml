@@ -1,0 +1,20 @@
+name = "siglongjmp"
+header = "setjmp.h"
+prototype = "_Noreturn void siglongjmp(sigjmp_buf env, int val)"
+standard = ["POSIX.1-2024 XSH siglongjmp"]
+deps = ["longjmp", "sigprocmask"]
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:sysv-jump-abi"]
+provenance = "original"
+semantics = [
+  "Restore the saved signal mask when the environment recorded one.",
+  "Resume the live calling-thread context with val when nonzero or one when val is zero.",
+  "Preserve current floating-point control state. The restore call does not return.",
+]
+
+[abi]
+narrow_args = ["esi:s32"]
+variadic = false
+noreturn = true

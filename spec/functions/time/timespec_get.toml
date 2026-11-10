@@ -1,0 +1,19 @@
+name = "timespec_get"
+header = "time.h"
+prototype = "int timespec_get(struct timespec *ts, int base)"
+standard = ["C17 7.27.2.5"]
+deps = ["clock_gettime"]
+errno = ["EFAULT", "EINVAL"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-time64"]
+provenance = "original"
+semantics = [
+  "For TIME_UTC, publish realtime seconds and nanoseconds and return TIME_UTC on success.",
+  "An unsupported base returns zero and leaves the output and errno unchanged.",
+  "A failed clock operation returns zero and makes its errno available.",
+]
+
+[abi]
+narrow_args = ["esi:s32"]
+variadic = false

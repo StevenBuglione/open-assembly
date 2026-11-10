@@ -1,0 +1,113 @@
+schema = 1
+
+[[case]]
+name = "jump-setjmp"
+sources = ["tests/phase6/jump/jump.c"]
+requires = ["setjmp"]
+args = ["setjmp"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:sysv-jump-abi", "posix:setjmp"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "jump-sigsetjmp"
+sources = ["tests/phase6/jump/jump.c"]
+requires = ["sigsetjmp"]
+args = ["sigsetjmp"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:sysv-jump-abi", "posix:sigsetjmp"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "jump-longjmp"
+sources = ["tests/phase6/jump/jump.c"]
+requires = ["longjmp"]
+args = ["longjmp"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = "J\n"
+stderr = ""
+oracle = ["reference:sysv-jump-abi", "posix:longjmp"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "jump-siglongjmp"
+sources = ["tests/phase6/jump/jump.c"]
+requires = ["siglongjmp"]
+args = ["siglongjmp"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = "S\n"
+stderr = ""
+oracle = ["reference:sysv-jump-abi", "posix:siglongjmp"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "jump-siglongjmp-nosave"
+sources = ["tests/phase6/jump/jump.c"]
+requires = ["siglongjmp"]
+args = ["siglongjmp-nosave"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = "S\n"
+stderr = ""
+oracle = ["reference:sysv-jump-abi", "posix:siglongjmp"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "jump-registers"
+sources = ["tests/phase6/jump/registers.asm"]
+requires = ["setjmp", "longjmp"]
+args = []
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:sysv-jump-abi", "project:jump-layout"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The assembly probe checks the project's public jmp_buf byte layout."
+
+[[stub]]
+symbol = "setjmp"
+case = "jump-setjmp"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "sigsetjmp"
+case = "jump-sigsetjmp"
+status = 21
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "longjmp"
+case = "jump-longjmp"
+status = 0
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "siglongjmp"
+case = "jump-siglongjmp"
+status = 0
+stdout = ""
+stderr = ""

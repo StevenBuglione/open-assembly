@@ -1,0 +1,18 @@
+name = "posix_spawnattr_getsigdefault"
+header = "spawn.h"
+prototype = "int posix_spawnattr_getsigdefault(const posix_spawnattr_t *restrict attr, sigset_t *restrict value)"
+standard = ["POSIX.1-2024 XSH posix_spawnattr_getsigdefault"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:linux-spawn-abi"]
+provenance = "original"
+semantics = [
+  "Return the selected default disposition mask from an initialized attribute object through value.",
+  "Return zero on success or a positive error number on failure. Preserve errno.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

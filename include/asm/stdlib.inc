@@ -15,6 +15,7 @@ extern exit
 extern free
 extern getenv
 extern malloc
+extern mkstemp
 extern posix_memalign
 extern putenv
 extern qsort

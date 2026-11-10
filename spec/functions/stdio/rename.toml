@@ -1,0 +1,19 @@
+name = "rename"
+header = "stdio.h"
+prototype = "int rename(const char *oldpath, const char *newpath)"
+standard = ["C17 7.21.4.2"]
+deps = ["__errno_location"]
+errno = ["EACCES", "EBUSY", "EFAULT", "EINVAL", "EISDIR", "ELOOP", "ENAMETOOLONG", "ENOENT", "ENOTDIR", "ENOTEMPTY", "EPERM", "EROFS", "EXDEV"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-temporary-file-abi"]
+provenance = "original"
+semantics = [
+  "Rename the path with the usual Linux replacement and symbolic-link behavior.",
+  "Let the kernel perform the atomic name change and permission checks.",
+  "Return zero and preserve errno on success. Return -1 and set errno on failure.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

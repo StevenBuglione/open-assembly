@@ -48,6 +48,8 @@ extern putc
 extern putchar
 extern putchar_unlocked
 extern puts
+extern remove
+extern rename
 extern rewind
 extern scanf
 extern setbuf
@@ -55,6 +57,7 @@ extern setvbuf
 extern snprintf
 extern sprintf
 extern sscanf
+extern tmpfile
 extern ungetc
 extern vasprintf
 extern vfprintf

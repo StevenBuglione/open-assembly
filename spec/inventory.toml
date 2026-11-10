@@ -493,9 +493,9 @@ types = ["wctrans_t", "wctype_t", "wint_t"]
 [[headers]]
 name = "unistd.h"
 standard = "POSIX.1-2024 XBD <unistd.h>"
-count = 28
-functions = ["_exit", "close", "dup", "dup2", "getcwd", "getopt", "isatty", "lseek", "pipe", "read", "readlink", "rmdir", "unlink", "write"]
-types = ["size_t", "ssize_t", "off_t"]
+count = 34
+functions = ["_exit", "close", "dup", "dup2", "execve", "fork", "getcwd", "getopt", "getpid", "getppid", "isatty", "lseek", "pipe", "pipe2", "read", "readlink", "rmdir", "unlink", "write"]
+types = ["size_t", "ssize_t", "off_t", "pid_t"]
 macros = ["STDIN_FILENO", "STDOUT_FILENO", "STDERR_FILENO", "SEEK_SET", "SEEK_CUR", "SEEK_END"]
 objects = ["environ", "optarg", "opterr", "optind", "optopt"]
 
@@ -523,10 +523,49 @@ functions = ["closedir", "dirfd", "fdopendir", "opendir", "readdir"]
 types = ["DIR", "struct dirent"]
 
 [[headers]]
+name = "setjmp.h"
+standard = "POSIX.1-2024 XBD <setjmp.h>"
+count = 3
+functions = ["siglongjmp", "sigsetjmp"]
+types = ["sigjmp_buf"]
+
+[[headers]]
+name = "time.h"
+standard = "POSIX.1-2024 XBD <time.h>"
+count = 11
+functions = ["clock_getres", "clock_gettime", "clock_nanosleep", "gmtime_r", "nanosleep"]
+types = ["clockid_t"]
+macros = ["CLOCK_REALTIME", "CLOCK_MONOTONIC", "CLOCK_PROCESS_CPUTIME_ID", "CLOCK_THREAD_CPUTIME_ID", "TIMER_ABSTIME"]
+
+[[headers]]
+name = "spawn.h"
+standard = "POSIX.1-2024 XBD <spawn.h>"
+count = 22
+functions = ["posix_spawn", "posix_spawn_file_actions_addclose", "posix_spawn_file_actions_adddup2", "posix_spawn_file_actions_addopen", "posix_spawn_file_actions_destroy", "posix_spawn_file_actions_init", "posix_spawnattr_destroy", "posix_spawnattr_getflags", "posix_spawnattr_getpgroup", "posix_spawnattr_getsigdefault", "posix_spawnattr_getsigmask", "posix_spawnattr_init", "posix_spawnattr_setflags", "posix_spawnattr_setpgroup", "posix_spawnattr_setsigdefault", "posix_spawnattr_setsigmask"]
+types = ["posix_spawnattr_t", "posix_spawn_file_actions_t"]
+macros = ["POSIX_SPAWN_RESETIDS", "POSIX_SPAWN_SETPGROUP", "POSIX_SPAWN_SETSIGDEF", "POSIX_SPAWN_SETSIGMASK"]
+
+[[headers]]
+name = "signal.h"
+standard = "POSIX.1-2024 XBD <signal.h>"
+count = 26
+functions = ["kill", "sigaction", "sigaddset", "sigdelset", "sigemptyset", "sigfillset", "sigismember", "sigpending", "sigprocmask", "sigsuspend"]
+types = ["pid_t", "siginfo_t", "sigset_t", "struct sigaction"]
+macros = ["SIG_BLOCK", "SIG_UNBLOCK", "SIG_SETMASK", "SIGRTMIN", "SIGRTMAX", "SA_NOCLDSTOP", "SA_NOCLDWAIT", "SA_SIGINFO", "SA_ONSTACK", "SA_RESTART", "SA_NODEFER", "SA_RESETHAND"]
+
+[[headers]]
+name = "sys/wait.h"
+standard = "POSIX.1-2024 XBD <sys/wait.h>"
+count = 13
+functions = ["wait", "waitpid"]
+types = ["pid_t"]
+macros = ["WNOHANG", "WUNTRACED", "WCONTINUED", "WIFEXITED", "WEXITSTATUS", "WIFSIGNALED", "WTERMSIG", "WIFSTOPPED", "WSTOPSIG", "WIFCONTINUED"]
+
+[[headers]]
 name = "stdlib.h"
 standard = "POSIX.1-2024 XBD <stdlib.h>"
-count = 4
-functions = ["posix_memalign", "putenv", "setenv", "unsetenv"]
+count = 5
+functions = ["mkstemp", "posix_memalign", "putenv", "setenv", "unsetenv"]
 
 [[headers]]
 name = "libgen.h"

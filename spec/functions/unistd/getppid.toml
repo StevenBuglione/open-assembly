@@ -1,0 +1,17 @@
+name = "getppid"
+header = "unistd.h"
+prototype = "pid_t getppid(void)"
+standard = ["POSIX.1-2024 XSH getppid"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-process-abi"]
+provenance = "original"
+semantics = [
+  "Return the current Linux parent process ID without changing errno.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

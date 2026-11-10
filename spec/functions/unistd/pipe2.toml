@@ -1,0 +1,20 @@
+name = "pipe2"
+header = "unistd.h"
+prototype = "int pipe2(int fildes[2], int flags)"
+standard = ["POSIX.1-2024 XSH pipe2"]
+deps = ["__errno_location"]
+errno = ["EFAULT", "EINVAL", "EMFILE", "ENFILE", "ENOMEM"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-process-abi"]
+provenance = "original"
+semantics = [
+  "Create a pipe with flags applied atomically to both descriptors.",
+  "Support Linux close-on-exec and nonblocking flags. The kernel validates other command bits.",
+  "Store the read descriptor first and the write descriptor second.",
+  "Return zero and preserve errno on success. Leave the output array unchanged and set errno on failure.",
+]
+
+[abi]
+narrow_args = ["esi:s32"]
+variadic = false

@@ -1,0 +1,29 @@
+schema_version = 1
+
+[types]
+pid_t = "int"
+
+[syscalls]
+getpid = 39
+fork = 57
+execve = 59
+wait4 = 61
+getrlimit = 97
+getuid = 102
+getgid = 104
+setpgid = 109
+getppid = 110
+setresuid = 117
+setresgid = 119
+pipe2 = 293
+
+[wait_flags]
+WNOHANG = 1
+WUNTRACED = 2
+WCONTINUED = 8
+
+[spawn_flags]
+POSIX_SPAWN_RESETIDS = 1
+POSIX_SPAWN_SETPGROUP = 2
+POSIX_SPAWN_SETSIGDEF = 4
+POSIX_SPAWN_SETSIGMASK = 8

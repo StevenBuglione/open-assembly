@@ -1,0 +1,19 @@
+name = "setjmp"
+header = "setjmp.h"
+prototype = "int setjmp(jmp_buf env)"
+standard = ["C17 7.13.1.1", "POSIX.1-2024 XSH setjmp"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:sysv-jump-abi"]
+provenance = "original"
+semantics = [
+  "Save the current callee-saved registers, caller stack pointer, and return address.",
+  "Return zero when saving. A later valid longjmp can resume the caller with a nonzero result.",
+  "Leave the signal mask and floating-point state unchanged.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

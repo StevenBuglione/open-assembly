@@ -11,7 +11,7 @@ import tempfile
 from gate import (BUILD, COMPILE_FLAGS, GateError, checked, identify_tools, inputs, nm_symbols,
                   run, source_policy, verify_setup, write_evidence)
 from lint import PRIVATE_DATA
-from spec import (IDENTIFIER, ROOT, SpecError, comment_header, keys, load_project, matching,
+from spec import (IDENTIFIER, ROOT, SpecError, comment_header, keys, load_project, nasm_name, matching,
                   read_toml, regular_file, relative_path, sha256_file, snapshot_inputs,
                   string_list, version_one)
 
@@ -264,13 +264,14 @@ def generate_stub(spec, directory, log):
     else:
         external = ""
         body = "    xor eax, eax\n    ret\n"
+    symbol = nasm_name(spec.name)
     source.write_text(comment_header(spec) + f"""
 bits 64
 default rel
-global {spec.name}:function
+global {symbol}:function
 {external}
 section .text.{spec.name} progbits alloc exec nowrite
-{spec.name}:
+{symbol}:
 {body}
 section .note.GNU-stack noalloc noexec nowrite progbits
 """, encoding="utf-8")

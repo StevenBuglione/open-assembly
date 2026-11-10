@@ -1,0 +1,19 @@
+name = "difftime"
+header = "time.h"
+prototype = "double difftime(time_t later, time_t earlier)"
+standard = ["C17 7.27.2.2"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:gregorian-utc"]
+provenance = "original"
+semantics = [
+  "Compute later minus earlier across the full signed time64 input range.",
+  "Round the integer difference once to double in the current SSE floating-point rounding mode.",
+  "Preserve errno and floating-point control state.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

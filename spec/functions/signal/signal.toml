@@ -1,0 +1,19 @@
+name = "signal"
+header = "signal.h"
+prototype = "__al_sighandler_t signal(int sig, __al_sighandler_t handler)"
+standard = ["C17 7.14.1.1"]
+deps = ["__errno_location"]
+errno = ["EINVAL"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-signal-abi"]
+provenance = "original"
+semantics = [
+  "Install a one-argument handler, SIG_DFL, or SIG_IGN with persistent BSD signal semantics.",
+  "Block the current signal while a handler runs and request SA_RESTART.",
+  "Return the prior handler and preserve errno on success. Return SIG_ERR and set errno on failure.",
+]
+
+[abi]
+narrow_args = ["edi:s32"]
+variadic = false

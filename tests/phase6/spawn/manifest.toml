@@ -1,0 +1,199 @@
+schema = 1
+
+[[case]]
+name = "spawn-success"
+sources = ["tests/phase6/spawn/spawn_probe.c"]
+requires = ["posix_spawn", "posix_spawn_file_actions_init", "posix_spawn_file_actions_addclose", "posix_spawn_file_actions_adddup2", "posix_spawn_file_actions_addopen"]
+args = ["success"]
+env = { PARENT_ONLY = "retained-in-parent" }
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-spawn-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "spawn-failures"
+sources = ["tests/phase6/spawn/spawn_probe.c"]
+requires = ["posix_spawn"]
+args = ["failures"]
+env = { PARENT_ONLY = "retained-in-parent" }
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-spawn-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "spawn-attributes"
+sources = ["tests/phase6/spawn/spawn_probe.c"]
+requires = ["posix_spawnattr_init", "posix_spawnattr_getflags", "posix_spawnattr_setflags", "posix_spawnattr_getpgroup", "posix_spawnattr_setpgroup", "posix_spawnattr_getsigmask", "posix_spawnattr_setsigmask", "posix_spawnattr_getsigdefault", "posix_spawnattr_setsigdefault"]
+args = ["attributes"]
+env = { PARENT_ONLY = "retained-in-parent" }
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-spawn-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "spawn-actions"
+sources = ["tests/phase6/spawn/spawn_probe.c"]
+requires = ["posix_spawn_file_actions_init", "posix_spawn_file_actions_addclose", "posix_spawn_file_actions_adddup2", "posix_spawn_file_actions_addopen"]
+args = ["actions"]
+env = { PARENT_ONLY = "retained-in-parent" }
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-spawn-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "spawn-attribute-release"
+sources = ["tests/phase6/spawn/lifetime.c"]
+requires = ["posix_spawnattr_destroy"]
+args = ["attributes"]
+env = { PARENT_ONLY = "retained-in-parent" }
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-spawn-abi"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The fixture observes releases through the project allocator."
+link_wraps = ["malloc", "calloc", "realloc", "free"]
+
+[[case]]
+name = "spawn-actions-release"
+sources = ["tests/phase6/spawn/lifetime.c"]
+requires = ["posix_spawn_file_actions_destroy"]
+args = ["actions"]
+env = { PARENT_ONLY = "retained-in-parent" }
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-spawn-abi"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The fixture observes releases through the project allocator."
+link_wraps = ["malloc", "calloc", "realloc", "free"]
+
+[[stub]]
+symbol = "posix_spawn"
+case = "spawn-failures"
+status = 31
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "posix_spawnattr_init"
+case = "spawn-attributes"
+status = 41
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "posix_spawnattr_getflags"
+case = "spawn-attributes"
+status = 42
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "posix_spawnattr_setflags"
+case = "spawn-attributes"
+status = 43
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "posix_spawnattr_getpgroup"
+case = "spawn-attributes"
+status = 44
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "posix_spawnattr_setpgroup"
+case = "spawn-attributes"
+status = 45
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "posix_spawnattr_getsigmask"
+case = "spawn-attributes"
+status = 46
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "posix_spawnattr_setsigmask"
+case = "spawn-attributes"
+status = 47
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "posix_spawnattr_getsigdefault"
+case = "spawn-attributes"
+status = 48
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "posix_spawnattr_setsigdefault"
+case = "spawn-attributes"
+status = 49
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "posix_spawn_file_actions_init"
+case = "spawn-actions"
+status = 61
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "posix_spawn_file_actions_addclose"
+case = "spawn-actions"
+status = 62
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "posix_spawn_file_actions_adddup2"
+case = "spawn-actions"
+status = 63
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "posix_spawn_file_actions_addopen"
+case = "spawn-actions"
+status = 64
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "posix_spawnattr_destroy"
+case = "spawn-attribute-release"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "posix_spawn_file_actions_destroy"
+case = "spawn-actions-release"
+status = 21
+stdout = ""
+stderr = ""

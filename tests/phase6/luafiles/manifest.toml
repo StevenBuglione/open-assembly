@@ -1,0 +1,115 @@
+schema = 1
+
+[[case]]
+name = "temporary-remove"
+sources = ["tests/phase6/luafiles/temporary.c"]
+requires = ["remove"]
+args = ["remove"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-temporary-file-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "temporary-rename"
+sources = ["tests/phase6/luafiles/temporary.c"]
+requires = ["rename"]
+args = ["rename"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-temporary-file-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "temporary-mkstemp"
+sources = ["tests/phase6/luafiles/temporary.c"]
+requires = ["mkstemp"]
+args = ["mkstemp"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-temporary-file-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "temporary-tmpfile"
+sources = ["tests/phase6/luafiles/temporary.c"]
+requires = ["tmpfile"]
+args = ["tmpfile"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-temporary-file-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "temporary-retry"
+sources = ["tests/phase6/luafiles/fault.c"]
+requires = ["mkstemp"]
+args = ["retry"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-temporary-file-abi", "project:temporary-file-fault"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The fixture wraps the project private syscall boundary."
+link_wraps = ["__al_syscall"]
+
+[[case]]
+name = "temporary-fallback"
+sources = ["tests/phase6/luafiles/fault.c"]
+requires = ["tmpfile"]
+args = ["fallback"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-temporary-file-abi", "project:temporary-file-fault"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The fixture wraps the project private syscall boundary."
+link_wraps = ["__al_syscall"]
+
+[[stub]]
+symbol = "remove"
+case = "temporary-remove"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "rename"
+case = "temporary-rename"
+status = 22
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "mkstemp"
+case = "temporary-mkstemp"
+status = 41
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "tmpfile"
+case = "temporary-tmpfile"
+status = 61
+stdout = ""
+stderr = ""

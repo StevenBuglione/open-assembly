@@ -173,7 +173,7 @@ def run_applets(binary, work, wrapper, runs):
 def execute_busybox():
     evidence = {"schema_version": 1, "scope": "phase6-busybox", "production_verified": False,
                 "outcome": "fail", "checks": {},
-                "pending_phase6": ["process and spawn", "signals", "setjmp", "time and TZif"]}
+                "pending_phase6": ["spawn and exec search", "time and TZif"]}
     checks = evidence["checks"]
     try:
         evidence["toolchain"] = identify_tools("ar", "make", "tar", "qemu-x86_64", "musl-gcc")

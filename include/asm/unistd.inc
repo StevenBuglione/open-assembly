@@ -21,11 +21,16 @@ extern _exit
 extern close
 extern dup
 extern dup2
+extern execve
+extern fork
 extern getcwd
 extern getopt
+extern getpid
+extern getppid
 extern isatty
 extern lseek
 extern pipe
+extern pipe2
 extern read
 extern readlink
 extern rmdir

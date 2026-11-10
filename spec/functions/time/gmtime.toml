@@ -1,0 +1,19 @@
+name = "gmtime"
+header = "time.h"
+prototype = "struct tm *gmtime(const time_t *timer)"
+standard = ["C17 7.27.3.3"]
+deps = ["gmtime_r"]
+errno = ["EOVERFLOW"]
+mt_safe = false
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:gregorian-utc"]
+provenance = "original"
+semantics = [
+  "Convert time to UTC with the same fields and range checks as gmtime_r.",
+  "Return a pointer to library-owned static storage that can be overwritten by a later call.",
+  "Return null and set EOVERFLOW when tm_year cannot represent the year.",
+]
+
+[abi]
+narrow_args = []
+variadic = false
