@@ -1,0 +1,221 @@
+schema = 1
+
+[[case]]
+name = "vdso-positive"
+sources = ["tests/phase11/vdso/positive.c"]
+requires = ["time", "clock_gettime"]
+args = []
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-vdso", "reference:elf-gabi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "vdso-elf"
+sources = ["tests/phase11/vdso/elf.c"]
+requires = ["__al_vdso_lookup"]
+args = []
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-vdso", "reference:elf-gabi"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Uses the project-private vDSO parser, auxiliary vector and syscall contracts."
+env = {}
+
+[[case]]
+name = "vdso-native"
+sources = ["tests/phase11/vdso/dispatch.c"]
+requires = ["time", "__al_vdso_clock_entry", "clock_gettime"]
+args = ["native"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-vdso", "reference:elf-gabi"]
+backends = ["native"]
+link_wraps = ["__al_syscall"]
+host_skip = "Uses the project-private vDSO parser, auxiliary vector and syscall contracts."
+env = {}
+[case.skip]
+qemu = "Pinned QEMU user mode cannot resolve the original vDSO through process_vm_readv. The backend fallback case covers this route."
+valgrind = "Pinned Memcheck omits the original AT_SYSINFO_EHDR entry. The backend fallback case covers this route."
+
+[[case]]
+name = "vdso-backend"
+sources = ["tests/phase11/vdso/dispatch.c"]
+requires = ["time", "__al_vdso_clock_entry"]
+args = ["backend"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-vdso", "reference:elf-gabi"]
+backends = ["qemu", "valgrind"]
+link_wraps = ["__al_syscall"]
+host_skip = "Uses the project-private vDSO parser, auxiliary vector and syscall contracts."
+env = {}
+[case.skip]
+native = "Native valid kernel dispatch is asserted separately."
+
+[[case]]
+name = "vdso-missing"
+sources = ["tests/phase11/vdso/dispatch.c"]
+requires = ["time", "__al_vdso_clock_entry"]
+args = ["missing"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-vdso", "reference:elf-gabi"]
+backends = ["native", "qemu", "valgrind"]
+link_wraps = ["__al_syscall"]
+host_skip = "Uses the project-private vDSO parser, auxiliary vector and syscall contracts."
+env = {}
+
+[[case]]
+name = "vdso-raw-error"
+sources = ["tests/phase11/vdso/dispatch.c"]
+requires = ["time", "__al_vdso_clock_entry"]
+args = ["raw-error"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-vdso", "reference:elf-gabi"]
+backends = ["native", "qemu", "valgrind"]
+link_wraps = ["__al_syscall"]
+host_skip = "Uses the project-private vDSO parser, auxiliary vector and syscall contracts."
+env = {}
+
+[[case]]
+name = "vdso-unreadable"
+sources = ["tests/phase11/vdso/dispatch.c"]
+requires = ["time", "__al_vdso_clock_entry"]
+args = ["unreadable"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-vdso", "reference:elf-gabi"]
+backends = ["native", "qemu", "valgrind"]
+link_wraps = ["__al_syscall"]
+host_skip = "Uses the project-private vDSO parser, auxiliary vector and syscall contracts."
+env = {}
+
+[[case]]
+name = "vdso-short"
+sources = ["tests/phase11/vdso/dispatch.c"]
+requires = ["time", "__al_vdso_clock_entry"]
+args = ["short"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-vdso", "reference:elf-gabi"]
+backends = ["native", "qemu", "valgrind"]
+link_wraps = ["__al_syscall"]
+host_skip = "Uses the project-private vDSO parser, auxiliary vector and syscall contracts."
+env = {}
+
+[[case]]
+name = "vdso-vdso-error"
+sources = ["tests/phase11/vdso/dispatch.c"]
+requires = ["time", "__al_vdso_clock_entry"]
+args = ["vdso-error"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-vdso", "reference:elf-gabi"]
+backends = ["native", "qemu", "valgrind"]
+link_wraps = ["__al_syscall"]
+host_skip = "Uses the project-private vDSO parser, auxiliary vector and syscall contracts."
+env = {}
+
+[[case]]
+name = "vdso-signal"
+sources = ["tests/phase11/vdso/dispatch.c"]
+requires = ["time", "__al_vdso_clock_entry"]
+args = ["signal"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-vdso", "reference:elf-gabi"]
+backends = ["native", "qemu", "valgrind"]
+link_wraps = ["__al_syscall"]
+host_skip = "Uses the project-private vDSO parser, auxiliary vector and syscall contracts."
+env = {}
+
+[[case]]
+name = "vdso-fork"
+sources = ["tests/phase11/vdso/dispatch.c"]
+requires = ["time", "__al_vdso_clock_entry"]
+args = ["fork"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-vdso", "reference:elf-gabi"]
+backends = ["native", "qemu", "valgrind"]
+link_wraps = ["__al_syscall"]
+host_skip = "Uses the project-private vDSO parser, auxiliary vector and syscall contracts."
+env = {}
+
+[[case]]
+name = "vdso-auxv-bounds"
+sources = ["tests/phase11/vdso/dispatch.c"]
+requires = ["time", "__al_vdso_clock_entry"]
+args = ["auxv-bounds"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-vdso", "reference:elf-gabi"]
+backends = ["native", "qemu", "valgrind"]
+link_wraps = ["__al_syscall"]
+host_skip = "Uses the project-private vDSO parser, auxiliary vector and syscall contracts."
+env = {}
+
+[[case]]
+name = "vdso-unaligned"
+sources = ["tests/phase11/vdso/dispatch.c"]
+requires = ["time", "__al_vdso_clock_entry"]
+args = ["unaligned"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-vdso", "reference:elf-gabi"]
+backends = ["native", "qemu", "valgrind"]
+link_wraps = ["__al_syscall"]
+host_skip = "Uses the project-private vDSO parser, auxiliary vector and syscall contracts."
+env = {}
+
+[[case]]
+name = "vdso-overflow"
+sources = ["tests/phase11/vdso/dispatch.c"]
+requires = ["time", "__al_vdso_clock_entry"]
+args = ["overflow"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-vdso", "reference:elf-gabi"]
+backends = ["native", "qemu", "valgrind"]
+link_wraps = ["__al_syscall"]
+host_skip = "Uses the project-private vDSO parser, auxiliary vector and syscall contracts."
+env = {}
+
+[[stub]]
+symbol = "time"
+case = "vdso-missing"
+status = 22
+stdout = ""
+stderr = ""

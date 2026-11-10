@@ -9,7 +9,7 @@ RUNTIME_APPS := $(addprefix $(RUNTIME_BUILD)/apps/,cat wc httpd)
 HTTPD_SOURCES := $(sort $(wildcard apps/httpd/*.asm))
 HTTPD_OBJECTS := $(patsubst apps/httpd/%.asm,$(RUNTIME_BUILD)/app-obj/httpd/%.o,$(HTTPD_SOURCES))
 
-.PHONY: phase0 phase1 phase2 phase3 phase4 phase5 phase6-files phase6-compat phase6-busybox phase6-process phase6-signal phase6-jump phase6-time phase6-calendar phase6-luafiles phase6-spawn phase6-shell phase6-path runtime apps gate FORCE phase7-exact phase7-transcendental phase7-complex phase6-lua phase6-strftime phase8-lifecycle phase8-openposix phase8-detectors phase9-wctype phase9-multibyte phase9-bulk phase9-worker phase6-fcntl phase6-zone phase9-worker-sync phase9-wide phase10-http phase9-libc-test phase6-zlib phase8-sync phase8-c11 runtime-pie phase10-endpoints phase10-inet phase10-dns phase6-sqlite phase10-netdb phase10-terminal phase9-stdio phase11-static-pie phase11-copy
+.PHONY: phase0 phase1 phase2 phase3 phase4 phase5 phase6-files phase6-compat phase6-busybox phase6-process phase6-signal phase6-jump phase6-time phase6-calendar phase6-luafiles phase6-spawn phase6-shell phase6-path runtime apps gate FORCE phase7-exact phase7-transcendental phase7-complex phase6-lua phase6-strftime phase8-lifecycle phase8-openposix phase8-detectors phase9-wctype phase9-multibyte phase9-bulk phase9-worker phase6-fcntl phase6-zone phase9-worker-sync phase9-wide phase10-http phase9-libc-test phase6-zlib phase8-sync phase8-c11 runtime-pie phase10-endpoints phase10-inet phase10-dns phase6-sqlite phase10-netdb phase10-terminal phase9-stdio phase11-static-pie phase11-copy phase9-narrow-wide phase11-vdso
 
 phase0:
 	tools/gate --phase0
@@ -129,6 +129,9 @@ phase9-wide:
 phase9-libc-test:
 	python3 tools/phase9.py --suite libc-test
 
+phase9-narrow-wide:
+	python3 tools/phase9_narrow_wide.py
+
 phase9-stdio:
 	python3 tools/phase9.py --suite stdio
 
@@ -155,6 +158,9 @@ phase10-terminal:
 
 phase11-static-pie:
 	python3 tools/phase11_pie.py
+
+phase11-vdso:
+	python3 tools/phase11_vdso.py
 
 runtime: $(RUNTIME_BUILD)/crt1.o $(RUNTIME_BUILD)/libopenasm.a
 

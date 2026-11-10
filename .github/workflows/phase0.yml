@@ -121,7 +121,7 @@ jobs:
           persist-credentials: false
       - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b
       - name: Run Unicode, worker-state, and pinned libc-test gates
-        run: ./tools/container make -k phase9-multibyte phase9-bulk phase9-worker phase9-worker-sync phase9-wide phase9-wctype phase9-libc-test phase9-stdio
+        run: ./tools/container make -k phase9-multibyte phase9-bulk phase9-worker phase9-worker-sync phase9-wide phase9-wctype phase9-libc-test phase9-stdio phase9-narrow-wide
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
@@ -178,7 +178,7 @@ jobs:
           persist-credentials: false
       - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b
       - name: Run optional static PIE and ELF relocation controls
-        run: ./tools/container make -k phase11-static-pie phase11-copy
+        run: ./tools/container make -k phase11-static-pie phase11-copy phase11-vdso
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
