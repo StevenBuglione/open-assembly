@@ -10,7 +10,7 @@ import tomllib
 ROOT = Path(__file__).resolve().parent.parent
 IDENTIFIER = r"[A-Za-z_][A-Za-z0-9_]*"
 HEADER = r"[a-z][a-z0-9_]*(?:/[a-z][a-z0-9_]*)*\.h"
-STANDARD = r"(?:C17 7(?:\.[0-9]+)+|POSIX\.1-2024 (?:XBD|XSH) [A-Za-z0-9_./<>-]+|Runtime ABI [A-Za-z_<>.]+)"
+STANDARD = r"(?:C17 7(?:\.[0-9]+)+|POSIX\.1-2024 (?:XBD|XSH) [A-Za-z0-9_./<>-]+|Runtime ABI [A-Za-z_<>.]+|Extension ABI [A-Za-z_<>./]+)"
 C17_HEADERS = dict(zip(
     ("assert complex ctype errno fenv float inttypes iso646 limits locale math "
      "setjmp signal stdalign stdarg stdatomic stdbool stddef stdint stdio stdlib "
@@ -30,11 +30,38 @@ LICENSES = {"MIT", "BSD-2-Clause", "BSD-3-Clause", "CC0-1.0", "Apache-2.0", "BSL
 C17_SOURCE = "https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2310.pdf"
 POSIX_SOURCE = "https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/unistd.h.html"
 POSIX_FDS = {"STDIN_FILENO": 0, "STDOUT_FILENO": 1, "STDERR_FILENO": 2}
+FILE_TYPES = {"off_t": "long", "mode_t": "unsigned int"}
+SEEK_ORIGINS = {"SEEK_SET", "SEEK_CUR", "SEEK_END"}
+OPEN_FLAGS = {"AT_FDCWD", "AT_SYMLINK_NOFOLLOW", "O_RDONLY", "O_WRONLY", "O_RDWR", "O_ACCMODE", "O_CREAT",
+              "O_EXCL", "O_NOCTTY", "O_TRUNC", "O_APPEND", "O_NONBLOCK", "O_DSYNC",
+              "O_DIRECTORY", "O_NOFOLLOW", "O_CLOEXEC", "O_SYNC"}
+MODE_BITS = {"S_IRWXU", "S_IRUSR", "S_IWUSR", "S_IXUSR", "S_IRWXG", "S_IRGRP",
+             "S_IWGRP", "S_IXGRP", "S_IRWXO", "S_IROTH", "S_IWOTH", "S_IXOTH",
+             "S_ISUID", "S_ISGID", "S_ISVTX"}
+STAT_FILE_KINDS = {"FIFO": "S_IFIFO", **{kind: "S_IF" + kind for kind in
+                                       ("CHR", "DIR", "BLK", "REG", "LNK", "SOCK")}}
+STAT_MODE_BITS = {"S_IFMT", *STAT_FILE_KINDS.values()}
+DIRENT_TYPES = {"DT_UNKNOWN", "DT_FIFO", "DT_CHR", "DT_DIR", "DT_BLK", "DT_REG", "DT_LNK", "DT_SOCK"}
 POSIX_SCOPE = {
-    "unistd.h": {"functions": {"_exit", "close", "read", "write"},
-                 "types": {"size_t", "ssize_t"}, "macros": set(POSIX_FDS),
-                 "objects": {"environ"}},
+    "unistd.h": {"functions": {"_exit", "close", "dup", "dup2", "getcwd", "getopt", "isatty", "lseek",
+                               "pipe", "read", "readlink", "rmdir", "unlink", "write"},
+                 "types": {"size_t", "ssize_t", "off_t"}, "macros": set(POSIX_FDS) | SEEK_ORIGINS,
+                 "objects": {"environ", "optarg", "opterr", "optind", "optopt"}},
     "stdlib.h": {"functions": {"posix_memalign", "putenv", "setenv", "unsetenv"}},
+    "fcntl.h": {"functions": {"creat", "open", "openat"}, "types": {"mode_t"},
+                "macros": OPEN_FLAGS},
+    "sys/stat.h": {"functions": {"chmod", "fstat", "fstatat", "lstat", "mkdir", "stat", "umask"},
+                   "types": {"mode_t", "struct stat"},
+                   "macros": MODE_BITS | STAT_MODE_BITS | {"S_IS" + kind for kind in STAT_FILE_KINDS}},
+    "dirent.h": {"functions": {"closedir", "dirfd", "fdopendir", "opendir", "readdir"},
+                 "types": {"DIR", "struct dirent"}},
+    "libgen.h": {"functions": {"dirname"}},
+    "stdio.h": {"functions": {"getc_unlocked", "putchar_unlocked"}},
+    "string.h": {"functions": {"strdup"}},
+}
+EXTENSION_SCOPE = {
+    "stdio.h": {"ferror_unlocked", "fputs_unlocked", "vasprintf"},
+    "sys/ioctl.h": {"ioctl"},
 }
 RUNTIME_ABI = {"compiler_rt.h": "__stack_chk_fail", "errno.h": "__errno_location"}
 
@@ -143,6 +170,32 @@ def version_one(value, where):
         fail(where, "unsupported schema version; expected integer 1")
 
 
+def load_file_abi(root):
+    path = regular_file(root, "spec/types/linux-x86_64-files.toml", "file ABI")
+    document = read_toml(path)
+    keys(document, {"schema_version", "types", "syscalls", "seek", "open_flags", "mode_bits",
+                    "dirent_types", "descriptor_flags"}, path)
+    version_one(document["schema_version"], path)
+    if document["types"] != FILE_TYPES:
+        fail(path, "file ABI types must match the selected Linux LP64 types")
+    groups = {
+        "syscalls": {"fstat", "lseek", "ioctl", "pipe", "dup", "dup2", "fcntl", "getcwd", "mkdir", "rmdir",
+                     "unlink", "readlink", "chmod", "umask", "getdents64", "openat", "newfstatat"},
+        "seek": SEEK_ORIGINS | {"SEEK_DATA", "SEEK_HOLE"},
+        "open_flags": OPEN_FLAGS | {"AT_EMPTY_PATH", "O_PATH", "O_TMPFILE"},
+        "mode_bits": MODE_BITS | STAT_MODE_BITS,
+        "dirent_types": DIRENT_TYPES,
+        "descriptor_flags": {"F_GETFD", "F_SETFD", "F_GETFL", "FD_CLOEXEC"},
+    }
+    for name, expected in groups.items():
+        constants = document[name]
+        keys(constants, expected, f"{path}: {name}")
+        if any(type(value) is not int or not -(1 << 31) <= value < (1 << 31)
+               for value in constants.values()):
+            fail(path, f"{name} values must be signed 32-bit integer constants")
+    return document
+
+
 def relative_path(value, where):
     matching(value, r"[A-Za-z0-9_.+/-]+", where)
     path = PurePosixPath(value)
@@ -218,6 +271,9 @@ def load_inventory(root):
         elif edition == "Runtime":
             if name not in RUNTIME_ABI or standard != f"Runtime ABI <{name}>":
                 fail(where, "outside the named runtime ABI scope")
+        elif edition == "Extension":
+            if name not in EXTENSION_SCOPE or standard != f"Extension ABI <{name}>":
+                fail(where, "outside the named Linux compatibility extension scope")
         elif name not in POSIX_SCOPE or standard != f"POSIX.1-2024 XBD <{name}>":
             fail(where, "outside the named POSIX scope")
         found = list(inventory_group(table, name, standard, "required", where))
@@ -228,6 +284,9 @@ def load_inventory(root):
             fail(where, "the POSIX and runtime ABI bootstrap subsets have no conditional entries")
         if edition == "Runtime" and [(i.kind, i.name) for i in found] != [("functions", RUNTIME_ABI[name])]:
             fail(where, "expected only the named runtime ABI entry")
+        if edition == "Extension" and {(i.kind, i.name) for i in found} != {
+                ("functions", function) for function in EXTENSION_SCOPE[name]}:
+            fail(where, "expected only the named Linux compatibility extension entries")
         if edition == "POSIX.1-2024" and {(i.kind, i.name) for i in found} != {
                 (kind, item) for kind, entries in POSIX_SCOPE[name].items() for item in entries}:
             fail(where, "expected the explicitly scoped POSIX entries")
@@ -253,6 +312,7 @@ def load_inventory(root):
             items.append(item)
     expected = {("C17", name + ".h") for name in C17_HEADERS} | {("POSIX.1-2024", name) for name in POSIX_SCOPE}
     expected |= {("Runtime", name) for name in RUNTIME_ABI}
+    expected |= {("Extension", name) for name in EXTENSION_SCOPE}
     if missing := expected - headers:
         fail(path, "missing required header(s): " + ", ".join(" ".join(pair) for pair in sorted(missing)))
     return tuple(sorted(items, key=lambda item: (item.standard, item.header, item.kind, item.name)))
@@ -318,6 +378,10 @@ def builtin_abi_class(declaration):
     words = [word for word in declaration.split() if word not in qualifiers]
     if len(words) > 1 and words[-1] not in type_words:
         words.pop()
+    if words == ["off_t"]:
+        return "wide", ()
+    if words == ["mode_t"]:
+        return "narrow", ("u32",)
     counts = {word: words.count(word) for word in set(words)}
     if not words or counts.keys() - type_words:
         return None, ()
@@ -475,6 +539,8 @@ def load_project(root=ROOT):
             fail(path, f"expected a POSIX.1-2024 reference for {spec.name}")
         if group.startswith("Runtime ABI ") and f"Runtime ABI {spec.name}" not in spec.standard:
             fail(path, f"expected a runtime ABI reference for {spec.name}")
+        if group.startswith("Extension ABI ") and f"Extension ABI {spec.name}" not in spec.standard:
+            fail(path, f"expected a compatibility extension reference for {spec.name}")
         functions[spec.name] = spec
     inventory_names = {item.name for item in inventory if item.kind == "functions"}
     visited, active = set(), []

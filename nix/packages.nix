@@ -9,7 +9,7 @@ let
     exec ${pkgs.llvmPackages.clang}/bin/clang "$@"
   '';
 in with pkgs; [
-  bashInteractive coreutils findutils gnugrep gnused gawk diffutils
+  bashInteractive coreutils findutils gnugrep gnused gawk diffutils gnutar bzip2
   git nasm binutils gcc gnumake python-with-mpfr file
   valgrind qemu-user musl glibc.static musl-gcc al-clang
 ]

@@ -1,0 +1,19 @@
+name = "opendir"
+header = "dirent.h"
+prototype = "DIR *opendir(const char *name)"
+standard = ["POSIX.1-2024 XSH opendir"]
+deps = ["open", "fdopendir", "close", "__errno_location"]
+errno = ["EACCES", "EBADF", "ELOOP", "EMFILE", "ENAMETOOLONG", "ENFILE", "ENOENT", "ENOMEM", "ENOTDIR"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:linux-file-abi"]
+provenance = "original"
+semantics = [
+  "Open a readable directory with close-on-exec and return an owned stream.",
+  "If stream creation fails, close the temporary descriptor and retain the cause in errno.",
+  "Success preserves errno. Failure returns a null pointer and sets errno.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

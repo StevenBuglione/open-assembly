@@ -1,5 +1,33 @@
 # Verification
 
+## Phase 6 files, directories, and BusyBox slice
+
+```sh
+./tools/container make phase6-files phase6-compat phase6-busybox
+```
+
+The file and compatibility gates build and audit two isolated runtime archives.
+They run freestanding tests natively, under QEMU, and under Memcheck, and run
+shared assertions against pinned glibc and musl. Every API in these two scopes
+has an exact generated-stub rejection. Fault probes cover malformed directory
+records, pipe descriptor exhaustion, allocated formatting failure, and unlocked
+stream lock ownership. The manifests record backend-specific omissions.
+
+The BusyBox gate extracts the pinned 1.37.0 source with networking disabled.
+It builds the six selected upstream applets with freestanding, no-builtin
+flags, then uses the actual Kbuild link objects and the Open Assembly startup
+object and archive. It audits the resulting static executable, attributes its
+required symbols through the linker map, and compares two candidate links.
+The applets exercise file bytes, counts, directory contents, descriptor and
+mode changes, and an error diagnostic under native Linux, QEMU, Memcheck,
+and the hosted musl control. Directory comparison preserves duplicate counts
+and allows filesystem order. The upstream Memcheck run checks memory accesses
+and initialized reads. [Phase 6 ABI](../adr/0007-linux-files-process-signal-time.md)
+
+These gates record separate evidence in `build/evidence/`. Process spawning,
+signals, non-local control flow, time, and per-function production checks have
+separate requirements.
+
 ## Phase 4 streams and utilities
 
 ```sh

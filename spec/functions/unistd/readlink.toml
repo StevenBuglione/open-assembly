@@ -1,0 +1,19 @@
+name = "readlink"
+header = "unistd.h"
+prototype = "ssize_t readlink(const char *restrict path, char *restrict buf, size_t size)"
+standard = ["POSIX.1-2024 XSH readlink"]
+deps = ["__errno_location"]
+errno = ["EACCES", "EFAULT", "EINVAL", "EIO", "ELOOP", "ENAMETOOLONG", "ENOENT", "ENOMEM", "ENOTDIR"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-busybox-abi"]
+provenance = "original"
+semantics = [
+  "Read up to size bytes of a symbolic-link target without adding a terminating NUL.",
+  "Return the number of bytes placed in buf and preserve errno on success.",
+  "Return -1 and set errno when the Linux operation fails.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

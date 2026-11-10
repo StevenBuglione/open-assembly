@@ -3,10 +3,10 @@ RUNTIME_SRC := src/x86_64-linux
 RUNTIME_START := $(RUNTIME_SRC)/rt/_start.asm
 RUNTIME_SOURCES := $(filter-out $(RUNTIME_START),$(sort $(wildcard $(RUNTIME_SRC)/*/*.asm)))
 RUNTIME_OBJECTS := $(patsubst $(RUNTIME_SRC)/%.asm,$(RUNTIME_BUILD)/obj/%.o,$(RUNTIME_SOURCES))
-ASM_INCLUDES := $(wildcard include/asm/*.inc)
+ASM_INCLUDES := $(wildcard include/asm/*.inc include/asm/*/*.inc)
 RUNTIME_APPS := $(addprefix $(RUNTIME_BUILD)/apps/,cat wc)
 
-.PHONY: phase0 phase1 phase2 phase3 phase4 phase5 runtime apps gate FORCE
+.PHONY: phase0 phase1 phase2 phase3 phase4 phase5 phase6-files phase6-compat phase6-busybox runtime apps gate FORCE
 
 phase0:
 	tools/gate --phase0
@@ -25,6 +25,15 @@ phase4:
 
 phase5:
 	python3 tools/phase5.py
+
+phase6-files:
+	python3 tools/phase6.py
+
+phase6-compat:
+	python3 tools/phase6.py --compat
+
+phase6-busybox:
+	python3 tools/busybox.py
 
 runtime: $(RUNTIME_BUILD)/crt1.o $(RUNTIME_BUILD)/libopenasm.a
 

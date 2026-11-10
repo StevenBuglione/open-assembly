@@ -1,0 +1,21 @@
+name = "vasprintf"
+header = "stdio.h"
+prototype = "int vasprintf(char **restrict result, const char *restrict format, va_list args)"
+standard = ["Extension ABI vasprintf"]
+deps = ["malloc", "realloc", "free"]
+errno = ["EINVAL", "ENOMEM", "EOVERFLOW"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:linux-busybox-abi"]
+provenance = "original"
+semantics = [
+  "Interpret the same implemented byte, integer, and floating conversions as vfprintf in a single pass.",
+  "Perform count stores in format order exactly once, including when buffers grow.",
+  "On success return the byte count excluding the NUL and publish a caller-owned allocation.",
+  "Empty output still produces a valid NUL-terminated allocation.",
+  "On error free temporary storage, set the output pointer to null, and return a negative value with errno.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

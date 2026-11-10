@@ -1,0 +1,19 @@
+name = "creat"
+header = "fcntl.h"
+prototype = "int creat(const char *path, mode_t mode)"
+standard = ["POSIX.1-2024 XSH creat"]
+deps = ["open"]
+errno = ["EACCES", "EBADF", "EDQUOT", "EEXIST", "EFAULT", "EINTR", "EINVAL", "EISDIR", "ELOOP", "EMFILE", "ENAMETOOLONG", "ENFILE", "ENODEV", "ENOENT", "ENOMEM", "ENOSPC", "ENOTDIR", "ENXIO", "EOVERFLOW", "EPERM", "EROFS", "ETXTBSY"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-file-abi"]
+provenance = "original"
+semantics = [
+  "Create or truncate a writable file with flags O_WRONLY, O_CREAT, and O_TRUNC.",
+  "Use mode and the process umask for a newly created file.",
+  "Preserve errno on success. Translate a Linux kernel error to -1 and thread-local errno.",
+]
+
+[abi]
+narrow_args = ["esi:u32"]
+variadic = false

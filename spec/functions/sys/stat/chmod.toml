@@ -1,0 +1,19 @@
+name = "chmod"
+header = "sys/stat.h"
+prototype = "int chmod(const char *path, mode_t mode)"
+standard = ["POSIX.1-2024 XSH chmod"]
+deps = ["__errno_location"]
+errno = ["EACCES", "EFAULT", "EIO", "ELOOP", "ENAMETOOLONG", "ENOENT", "ENOMEM", "ENOTDIR", "EPERM", "EROFS"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-busybox-abi"]
+provenance = "original"
+semantics = [
+  "Apply the supplied mode to the file reached by path, including normal symlink following.",
+  "Let the Linux kernel enforce filesystem, mode, ownership, and permission rules.",
+  "Return zero on success and preserve errno. Return -1 and set errno on failure.",
+]
+
+[abi]
+narrow_args = ["esi:u32"]
+variadic = false

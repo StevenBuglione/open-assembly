@@ -1,6 +1,7 @@
-; Original integer format interpreter.
+; Original byte, integer, and floating format interpreter.
 ; rdi = sink, rsi = size for string output, rdx = format, rcx = va_list.
-; r8 = 0 for a string sink or 1 for a FILE sink.
+; r8 = 0 for a string sink, 1 for a FILE sink, or 2 for an allocated string sink.
+; The allocated sink receives a char ** in rdi.
 bits 64
 default rel
 
@@ -18,6 +19,8 @@ extern __al_va_extended:function
 extern __al_fmt_text:function
 extern __al_stdio_errno:function
 extern strlen:function
+extern malloc:function
+extern free:function
 
 section .text.__al_vformat alloc exec nowrite progbits
 __al_vformat:
@@ -50,6 +53,11 @@ __al_vformat:
     dec rax
 .capacity:
     mov [r13 + 8], rax
+    cmp qword [r13 + 24], 2
+    jne .next
+    mov rax, [r13]
+    mov [r13 + 48], rax           ; char **result for the allocated sink
+    mov qword [r13], 0
 
 .next:
     cmp byte [rbx], 0
@@ -339,6 +347,8 @@ __al_vformat:
 .success:
     mov r14d, [r13 + 16]
 .terminate:
+    cmp qword [r13 + 24], 2
+    je .dynamic_finish
     cmp qword [r13 + 24], 0
     jne .unlock
     cmp qword [r13 + 40], 0
@@ -350,6 +360,29 @@ __al_vformat:
 .nul:
     mov rcx, [r13]
     mov byte [rcx + rax], 0
+    jmp .unlock
+.dynamic_finish:
+    mov rax, [r13]
+    test r14d, r14d
+    js .dynamic_failure
+    test rax, rax
+    jnz .dynamic_nul
+    mov edi, 1                    ; empty output still owns a string
+    call malloc
+    test rax, rax
+    jnz .dynamic_nul
+    mov r14d, -1
+    jmp .dynamic_publish
+.dynamic_nul:
+    mov byte [rax + r14], 0
+    jmp .dynamic_publish
+.dynamic_failure:
+    mov rdi, rax
+    call free
+    xor eax, eax
+.dynamic_publish:
+    mov rcx, [r13 + 48]
+    mov [rcx], rax
 .unlock:
     lea rdi, [rel __al_stdio_lock]
     call __al_unlock

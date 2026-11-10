@@ -1,0 +1,19 @@
+name = "isatty"
+header = "unistd.h"
+prototype = "int isatty(int fd)"
+standard = ["POSIX.1-2024 XSH isatty"]
+deps = ["__errno_location"]
+errno = ["EBADF", "ENOTTY"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-busybox-abi"]
+provenance = "original"
+semantics = [
+  "Return one when the descriptor accepts a Linux terminal-attribute query.",
+  "Return zero on failure and set errno from the kernel result.",
+  "Preserve errno on success. Use a per-call kernel result record.",
+]
+
+[abi]
+narrow_args = ["edi:s32"]
+variadic = false

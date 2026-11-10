@@ -1,0 +1,22 @@
+name = "fstatat"
+header = "sys/stat.h"
+prototype = "int fstatat(int dirfd, const char *restrict path, struct stat *restrict buf, int flags)"
+standard = ["POSIX.1-2024 XSH fstatat"]
+deps = ["__errno_location"]
+errno = ["EACCES", "EBADF", "EFAULT", "EINVAL", "ELOOP", "ENAMETOOLONG", "ENOENT", "ENOMEM", "ENOTDIR", "EOVERFLOW"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-file-abi"]
+provenance = "original"
+semantics = [
+  "Resolve relative paths from dirfd or AT_FDCWD. An absolute path ignores dirfd.",
+  "AT_SYMLINK_NOFOLLOW selects the final symbolic link itself.",
+  "Linux AT_EMPTY_PATH with an empty string selects dirfd itself.",
+  "Write the converted LP64 stat record only after the kernel reports success.",
+  "Clear public padding and reserved words.",
+  "Return zero on success and preserve errno. Return -1 and set errno on error.",
+]
+
+[abi]
+narrow_args = ["edi:s32", "ecx:s32"]
+variadic = false

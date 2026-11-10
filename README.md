@@ -11,7 +11,7 @@ With Nix and Docker available, run the milestone acceptance checks in the
 pinned toolchain container.
 
 ```sh
-./tools/container make phase0 phase1 phase2 phase3 phase4
+./tools/container make -k phase0 phase1 phase2 phase3 phase4 phase5 phase6-files phase6-compat phase6-busybox
 ```
 
 Phase 2 covers the C-locale string and character functions, integer
@@ -25,6 +25,14 @@ mapping failures against the shipped runtime.
 Phase 4 adds byte streams, integer formatted I/O, and assembly utilities.
 Use `./tools/container make apps` to build `cat` and `wc` in
 `build/runtime/apps/`.
+
+Phase 5 adds floating conversion, floating-point environment control, and
+floating formatted I/O. Its gate uses pinned MPFR and independent vectors.
+
+The Phase 6 file and directory slice adds filesystem and descriptor APIs.
+Its compatibility slice runs six pinned BusyBox applets against the same
+freestanding runtime archive. Process spawning, signals, non-local control
+flow, and time remain separate Phase 6 work. [Phase 6 ABI](docs/adr/0007-linux-files-process-signal-time.md)
 
 The gates write evidence to `build/evidence/`. Use
 `./tools/container make runtime` to build `build/runtime/crt1.o` and

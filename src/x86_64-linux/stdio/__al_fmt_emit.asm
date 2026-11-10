@@ -8,6 +8,7 @@ extern __al_stream_write:function
 extern __al_stdio_errno:function
 extern memcpy:function
 extern memset:function
+extern realloc:function
 
 section .text.__al_fmt_emit alloc exec nowrite progbits
 __al_fmt_emit:
@@ -30,6 +31,8 @@ __al_fmt_emit:
     jc .overflow
     cmp r14, 2147483647
     ja .overflow
+    cmp qword [rbx + 24], 2
+    je .dynamic
     cmp qword [rbx + 24], 0
     jne .stream
 
@@ -53,6 +56,33 @@ __al_fmt_emit:
     mov rsi, r15
     call memset
     jmp .commit
+
+.dynamic:
+    mov rsi, [rbx + 8]
+    cmp r14, rsi
+    jbe .dynamic_chunk
+    lea rsi, [rsi * 2 + 63]       ; grow geometrically, starting at 64 bytes
+    cmp rsi, 2147483647
+    jbe .required_size
+    mov esi, 2147483647
+.required_size:
+    cmp rsi, r14
+    jae .allocate
+    mov rsi, r14
+.allocate:
+    mov [rsp], rsi
+    inc rsi                      ; storage for the terminating NUL
+    mov rdi, [rbx]
+    call realloc
+    test rax, rax
+    jz .failure
+    mov [rbx], rax
+    mov rdx, [rsp]
+    mov [rbx + 8], rdx
+.dynamic_chunk:
+    mov rax, [rbx + 16]
+    mov rdx, r13
+    jmp .string_chunk
 
 .stream:
     test r12, r12

@@ -1,0 +1,18 @@
+name = "dirfd"
+header = "dirent.h"
+prototype = "int dirfd(DIR *dirp)"
+standard = ["POSIX.1-2024 XSH dirfd"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:linux-file-abi"]
+provenance = "original"
+semantics = [
+  "Return the stream's borrowed descriptor without changing errno.",
+  "The caller must leave ownership with the stream.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

@@ -1,0 +1,22 @@
+name = "getopt"
+header = "unistd.h"
+prototype = "int getopt(int argc, char *const argv[], const char *optstring)"
+standard = ["POSIX.1-2024 XSH getopt"]
+deps = ["__errno_location", "fprintf"]
+errno = []
+mt_safe = false
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:linux-busybox-abi"]
+provenance = "original"
+semantics = [
+  "Process POSIX grouped short options without permuting arguments. An optional leading plus selects the same ordering.",
+  "Stop before the first operand or consume an explicit double-hyphen terminator.",
+  "Read required option arguments from the remainder of a group or the next argument.",
+  "For unknown or incomplete options update optopt, return question mark or a leading-colon missing-argument result, and follow opterr and colon diagnostics policy.",
+  "Maintain optind and optarg. The Linux compatibility reset optind equal to zero starts a new scan at one.",
+  "Each process has one getopt state. Preserve errno.",
+]
+
+[abi]
+narrow_args = ["edi:s32"]
+variadic = false

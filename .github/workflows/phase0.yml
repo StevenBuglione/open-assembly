@@ -24,8 +24,8 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: ./tools/container tools/gate --protected-base "$BASE_SHA"
-      - name: Run pinned Phase 0 through Phase 5 gates
-        run: ./tools/container make -k phase0 phase1 phase2 phase3 phase4 phase5
+      - name: Run pinned Phase 0 through Phase 5 and the Phase 6 slice gates
+        run: ./tools/container make -k phase0 phase1 phase2 phase3 phase4 phase5 phase6-files phase6-compat phase6-busybox
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:

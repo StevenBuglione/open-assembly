@@ -43,7 +43,10 @@ def decode_hex(value, where):
     return bytes.fromhex(value)
 
 
-def parse_probe(table, where):
+def parse_probe(table, where, *, suite=Path("tests/phase4"), programs=APPS,
+                asm_fixtures=(), fault_wrappers=None, allow_fixture_files=False):
+    if fault_wrappers is None:
+        fault_wrappers = {FAULT: ("__al_syscall",)}
     fields = set(Case.__dataclass_fields__) - {"skip"}
     keys(table, fields | {"stdin_hex"}, where,
          ("skip", "stdout_hex", "files", "link_wraps", "host", "host_skip"))
@@ -51,8 +54,9 @@ def parse_probe(table, where):
     sources = tuple(relative_path(path, where) for path in
                     string_list(table["sources"], r".+", where, nonempty=True))
     for source in sources:
-        if source not in APPS and (source.parts[:2] != ("tests", "phase4") or source.suffix != ".c"):
-            raise GateError(f"{where}: invalid Phase 4 fixture source {source}")
+        if (source not in programs and source not in asm_fixtures
+                and (source.parent != suite or source.suffix != ".c")):
+            raise GateError(f"{where}: invalid fixture source {source}")
         regular_file(ROOT, source, where)
     requires = string_list(table["requires"], IDENTIFIER, where, nonempty=True)
     oracle = string_list(table["oracle"], r"[a-z][a-z0-9_-]*:[A-Za-z0-9_./+-]+", where, nonempty=True)
@@ -76,12 +80,13 @@ def parse_probe(table, where):
     files = table.get("files", {})
     if type(files) is not dict or any(not re.fullmatch(r"[-A-Za-z0-9][A-Za-z0-9_.-]*", file) for file in files):
         raise GateError(f"{where}: expected simple fixture filenames")
-    if files and not all(source in APPS for source in sources):
+    if files and not allow_fixture_files and not all(source in programs for source in sources):
         raise GateError(f"{where}: only utility cases may use operand files")
     files = {file: decode_hex(value, where) for file, value in files.items()}
     wraps = tuple(string_list(table.get("link_wraps", []), IDENTIFIER, where))
-    if wraps != (("__al_syscall",) if FAULT in sources else ()):
-        raise GateError(f"{where}: only the designated fault fixture wraps the syscall boundary")
+    expected_wraps = tuple(symbol for source in sources for symbol in fault_wrappers.get(source, ()))
+    if wraps != expected_wraps:
+        raise GateError(f"{where}: link wrappers must match the designated fault fixture")
     host_skip = table.get("host_skip")
     if table.get("host") is True:
         if host_skip is not None or wraps or any(source.suffix != ".c" for source in sources):
@@ -92,31 +97,31 @@ def parse_probe(table, where):
     return Probe(case, decode_hex(table["stdin_hex"], where), output, stderr.encode(), files, wraps, host_skip)
 
 
-def load_manifest():
-    document = read_toml(regular_file(ROOT, MANIFEST, "Phase 4 manifest"))
-    keys(document, {"schema", "case", "stub"}, MANIFEST)
-    version_one(document["schema"], MANIFEST)
-    if type(document["case"]) is not list or type(document["stub"]) is not list:
-        raise GateError(f"{MANIFEST}: expected case and stub arrays")
+def load_probes(manifest, public, parse, required_sources=()):
+    document = read_toml(regular_file(ROOT, manifest, "probe manifest"))
+    keys(document, {"schema", "case", "stub"}, manifest)
+    version_one(document["schema"], manifest)
+    if type(document["case"]) is not list or not document["case"] or type(document["stub"]) is not list:
+        raise GateError(f"{manifest}: expected case and stub arrays")
     probes = {}
     for index, table in enumerate(document["case"], 1):
-        probe = parse_probe(table, f"{MANIFEST}: case {index}")
+        probe = parse(table, f"{manifest}: case {index}")
         if probe.case.name in probes:
-            raise GateError(f"{MANIFEST}: duplicate case {probe.case.name}")
+            raise GateError(f"{manifest}: duplicate case {probe.case.name}")
         probes[probe.case.name] = probe
-    if {source for probe in probes.values() for source in probe.case.sources} & APPS != APPS:
-        raise GateError(f"{MANIFEST}: both assembly utilities must be exercised")
-    public = {path.stem for path in Path("spec/functions/stdio").glob("*.toml")}
+    sources = {source for probe in probes.values() for source in probe.case.sources}
+    if not set(required_sources) <= sources:
+        raise GateError(f"{manifest}: missing required fixture sources")
     if not public:
-        raise GateError("missing Phase 4 stdio specifications")
+        raise GateError(f"{manifest}: missing public function specifications")
     stubs = {}
     for index, table in enumerate(document["stub"], 1):
-        where = f"{MANIFEST}: stub {index}"
+        where = f"{manifest}: stub {index}"
         keys(table, {"symbol", "case", "status", "stdout", "stderr"}, where)
         symbol = matching(table["symbol"], IDENTIFIER, where)
         case_name = matching(table["case"], r"[a-z][a-z0-9-]*", where)
         if symbol not in public or symbol in stubs or case_name not in probes:
-            raise GateError(f"{where}: expected a unique stdio symbol and existing case")
+            raise GateError(f"{where}: expected a unique public symbol and existing case")
         probe = probes[case_name]
         if symbol not in probe.case.requires or "native" not in probe.case.backends:
             raise GateError(f"{where}: selected native case must exercise {symbol}")
@@ -126,8 +131,14 @@ def load_manifest():
             raise GateError(f"{where}: stub must differ from the production result")
         stubs[symbol] = probe, expected
     if stubs.keys() != public:
-        raise GateError("missing Phase 4 generated stubs: " + ", ".join(sorted(public - stubs.keys())))
+        raise GateError(f"{manifest}: missing generated stubs: " + ", ".join(sorted(public - stubs.keys())))
     return probes.values(), stubs
+
+
+def load_manifest():
+    public = {spec.name for spec in load_project().functions.values()
+              if spec.header == "stdio.h" and any(standard.startswith("C17 ") for standard in spec.standard)}
+    return load_probes(MANIFEST, public, parse_probe, APPS)
 
 
 def observation(command, cwd, input_bytes, environment, timeout=30):
@@ -161,10 +172,10 @@ def execute_probe(probe, binary, work, record, runners, expected=None):
         print(f"PASS {probe.case.name} {backend}", flush=True)
 
 
-def host_binary(compiler, sources, directory, commands):
+def host_binary(compiler, sources, directory, commands, *, host_macro="OA_PHASE4_HOST"):
     binary = directory / (compiler + "-" + sources[0].stem)
     if not binary.exists():
-        checked(commands, [compiler, *COMPILE_FLAGS, "-DOA_PHASE4_HOST", "-static", "-no-pie",
+        checked(commands, [compiler, *COMPILE_FLAGS, f"-D{host_macro}", "-static", "-no-pie",
                            "-o", binary, *sources])
         checked(commands, ["tools/elf-audit", binary])
     return binary

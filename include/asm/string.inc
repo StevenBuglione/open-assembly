@@ -13,6 +13,7 @@ extern strcmp
 extern strcoll
 extern strcpy
 extern strcspn
+extern strdup
 extern strerror
 extern strlen
 extern strncat

@@ -21,7 +21,7 @@ def phase2_functions():
     project = load_project()
     return sorted(ADDITIONAL | {item.name for item in project.inventory
                                 if item.kind == "functions" and item.availability == "required"
-                                and item.header in {"string.h", "ctype.h"}})
+                                and item.standard.startswith("C17 ") and item.header in {"string.h", "ctype.h"}})
 
 
 def check_function(function, only):

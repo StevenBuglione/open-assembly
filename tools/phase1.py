@@ -124,7 +124,7 @@ def load_manifest():
 
 def phase1_inputs():
     bound = inputs()
-    headers = sorted((BUILD / "include/c").glob("*.h"))
+    headers = sorted((BUILD / "include/c").rglob("*.h"))
     if not headers:
         raise GateError("no generated C test headers")
     bound.update(snapshot_inputs(ROOT, [*headers, Path("docs/adr/0002-runtime-abi.md")]))

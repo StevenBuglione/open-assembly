@@ -1,0 +1,19 @@
+name = "rmdir"
+header = "unistd.h"
+prototype = "int rmdir(const char *path)"
+standard = ["POSIX.1-2024 XSH rmdir"]
+deps = ["__errno_location"]
+errno = ["EACCES", "EBUSY", "EFAULT", "EINVAL", "ELOOP", "ENAMETOOLONG", "ENOENT", "ENOMEM", "ENOTDIR", "ENOTEMPTY", "EPERM", "EROFS"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-file-abi"]
+provenance = "original"
+semantics = [
+  "Remove an empty directory entry selected by path.",
+  "Return zero on success.",
+  "Preserve errno on success. Translate a Linux kernel error to -1 and thread-local errno.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

@@ -493,17 +493,70 @@ types = ["wctrans_t", "wctype_t", "wint_t"]
 [[headers]]
 name = "unistd.h"
 standard = "POSIX.1-2024 XBD <unistd.h>"
-count = 10
-functions = ["_exit", "close", "read", "write"]
-types = ["size_t", "ssize_t"]
-macros = ["STDIN_FILENO", "STDOUT_FILENO", "STDERR_FILENO"]
-objects = ["environ"]
+count = 28
+functions = ["_exit", "close", "dup", "dup2", "getcwd", "getopt", "isatty", "lseek", "pipe", "read", "readlink", "rmdir", "unlink", "write"]
+types = ["size_t", "ssize_t", "off_t"]
+macros = ["STDIN_FILENO", "STDOUT_FILENO", "STDERR_FILENO", "SEEK_SET", "SEEK_CUR", "SEEK_END"]
+objects = ["environ", "optarg", "opterr", "optind", "optopt"]
+
+[[headers]]
+name = "fcntl.h"
+standard = "POSIX.1-2024 XBD <fcntl.h>"
+count = 21
+functions = ["creat", "open", "openat"]
+types = ["mode_t"]
+macros = ["AT_FDCWD", "AT_SYMLINK_NOFOLLOW", "O_RDONLY", "O_WRONLY", "O_RDWR", "O_ACCMODE", "O_CREAT", "O_EXCL", "O_NOCTTY", "O_TRUNC", "O_APPEND", "O_NONBLOCK", "O_DSYNC", "O_DIRECTORY", "O_NOFOLLOW", "O_CLOEXEC", "O_SYNC"]
+
+[[headers]]
+name = "sys/stat.h"
+standard = "POSIX.1-2024 XBD <sys/stat.h>"
+count = 39
+functions = ["chmod", "fstat", "fstatat", "lstat", "mkdir", "stat", "umask"]
+types = ["mode_t", "struct stat"]
+macros = ["S_IRWXU", "S_IRUSR", "S_IWUSR", "S_IXUSR", "S_IRWXG", "S_IRGRP", "S_IWGRP", "S_IXGRP", "S_IRWXO", "S_IROTH", "S_IWOTH", "S_IXOTH", "S_ISUID", "S_ISGID", "S_ISVTX", "S_IFMT", "S_IFIFO", "S_IFCHR", "S_IFDIR", "S_IFBLK", "S_IFREG", "S_IFLNK", "S_IFSOCK", "S_ISFIFO", "S_ISCHR", "S_ISDIR", "S_ISBLK", "S_ISREG", "S_ISLNK", "S_ISSOCK"]
+
+[[headers]]
+name = "dirent.h"
+standard = "POSIX.1-2024 XBD <dirent.h>"
+count = 7
+functions = ["closedir", "dirfd", "fdopendir", "opendir", "readdir"]
+types = ["DIR", "struct dirent"]
 
 [[headers]]
 name = "stdlib.h"
 standard = "POSIX.1-2024 XBD <stdlib.h>"
 count = 4
 functions = ["posix_memalign", "putenv", "setenv", "unsetenv"]
+
+[[headers]]
+name = "libgen.h"
+standard = "POSIX.1-2024 XBD <libgen.h>"
+count = 1
+functions = ["dirname"]
+
+[[headers]]
+name = "stdio.h"
+standard = "POSIX.1-2024 XBD <stdio.h>"
+count = 2
+functions = ["getc_unlocked", "putchar_unlocked"]
+
+[[headers]]
+name = "string.h"
+standard = "POSIX.1-2024 XBD <string.h>"
+count = 1
+functions = ["strdup"]
+
+[[headers]]
+name = "stdio.h"
+standard = "Extension ABI <stdio.h>"
+count = 3
+functions = ["ferror_unlocked", "fputs_unlocked", "vasprintf"]
+
+[[headers]]
+name = "sys/ioctl.h"
+standard = "Extension ABI <sys/ioctl.h>"
+count = 1
+functions = ["ioctl"]
 
 [[headers]]
 name = "compiler_rt.h"

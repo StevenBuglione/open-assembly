@@ -1,0 +1,19 @@
+name = "strdup"
+header = "string.h"
+prototype = "char *strdup(const char *s)"
+standard = ["POSIX.1-2024 XSH strdup"]
+deps = ["strlen", "malloc", "memcpy"]
+errno = ["ENOMEM"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:linux-busybox-abi"]
+provenance = "original"
+semantics = [
+  "Allocate and copy the complete NUL-terminated string to independent caller-owned storage.",
+  "Return a null pointer and set ENOMEM on allocation failure.",
+  "Preserve errno on success.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

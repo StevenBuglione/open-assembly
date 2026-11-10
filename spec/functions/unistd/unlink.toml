@@ -1,0 +1,20 @@
+name = "unlink"
+header = "unistd.h"
+prototype = "int unlink(const char *path)"
+standard = ["POSIX.1-2024 XSH unlink"]
+deps = ["__errno_location"]
+errno = ["EACCES", "EBUSY", "EFAULT", "EIO", "EISDIR", "ELOOP", "ENAMETOOLONG", "ENOENT", "ENOMEM", "ENOTDIR", "EPERM", "EROFS"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-file-abi"]
+provenance = "original"
+semantics = [
+  "Remove the named directory entry.",
+  "Existing open descriptors continue to refer to their original open file descriptions.",
+  "Return zero on success.",
+  "Preserve errno on success. Translate a Linux kernel error to -1 and thread-local errno.",
+]
+
+[abi]
+narrow_args = []
+variadic = false
