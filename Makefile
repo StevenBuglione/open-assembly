@@ -43,6 +43,35 @@ production-pipes:
 	tools/gate pipe
 	tools/gate pipe2
 
+.PHONY: production-open
+production-open:
+	tools/gate open
+	tools/gate openat
+
+.PHONY: verify-getcwd-wrapper
+verify-getcwd-wrapper:
+	python3 tools/runtime_manifest_gate.py --getcwd-wrapper
+
+.PHONY: production-paths
+production-paths:
+	tools/gate readlink
+	tools/gate unlink
+	tools/gate rmdir
+
+.PHONY: production-wait
+production-wait:
+	tools/gate waitpid
+	tools/gate wait
+
+.PHONY: production-exec
+production-exec:
+	tools/gate execve
+	tools/gate execv
+
+.PHONY: verify-execvp-wrapper
+verify-execvp-wrapper:
+	python3 tools/runtime_manifest_gate.py --execvp-wrapper
+
 .PHONY: verify-math-wrappers
 verify-math-wrappers:
 	python3 tools/math_production.py --batch

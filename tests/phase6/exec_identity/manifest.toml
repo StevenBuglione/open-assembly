@@ -1,0 +1,110 @@
+schema = 1
+stub = []
+
+[[case]]
+name = "process-execve-typed-abi"
+sources = ["tests/phase6/exec_identity/abi.c", "tests/phase2/abi.asm"]
+requires = ["execve"]
+args = ["execve"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["abi:sysv-amd64", "reference:linux-process-abi"]
+backends = ["native", "qemu"]
+host_skip = "The typed trampoline checks candidate register state and the signed int return."
+[case.skip]
+valgrind = "A no-op callback reports x87 and MXCSR control differences (probe mask 0x300) in Valgrind and zero on native Linux and QEMU."
+
+[[case]]
+name = "process-execve-fuzz"
+sources = ["tests/phase6/exec_identity/packets.c"]
+requires = ["execve"]
+args = ["execve"]
+env = {}
+status = 0
+stdin_hex = "0000000000000000f0debc8a67452381010000000000000078563412341200400300000000000000130000000000000006000000000000001b00000000000000"
+stdout = ""
+stdout_hex = "00000000000000000000000000000000009400000000000000000000000000000100000000000000cebc381ffdaa9dc20100000000000000010000000000000000000000000000000000000000000000009c000000000000010000000000000002000000000000001e55af3f68ddc3222d5fa2bde7a9e7080100000000000000ffffffffffffffff0200000000000000005b00000000000003000000000000000000000000000000c21c4647a38309cbff4fb55b8fd6c0f60200000000000000ffffffffffffffff0800000000000000005b0000000000000600000000000000000000000000000020c8ca4c448e5eac2e5a2242a7d8235c0200000000000000"
+stderr = ""
+oracle = ["reference:linux-process-abi", "diff:glibc", "diff:musl"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "process-execv-typed-abi"
+sources = ["tests/phase6/exec_identity/abi.c", "tests/phase2/abi.asm"]
+requires = ["execv"]
+args = ["execv"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["abi:sysv-amd64", "reference:linux-process-abi"]
+backends = ["native", "qemu"]
+host_skip = "The typed trampoline checks candidate register state and the signed int return."
+[case.skip]
+valgrind = "A no-op callback reports x87 and MXCSR control differences (probe mask 0x300) in Valgrind and zero on native Linux and QEMU."
+
+[[case]]
+name = "process-execv-fuzz"
+sources = ["tests/phase6/exec_identity/packets.c"]
+requires = ["execv"]
+args = ["execv"]
+env = {}
+status = 0
+stdin_hex = "020000000000000078563412341200400300000000000000130000000000000004000000000000001c00000000000000"
+stdout = ""
+stdout_hex = "00000000000000000000000000000000009c00000000000002000000000000000300000000000000a9d2dcc1a7b7d0fd1d059c04587702bb0100000000000000ffffffffffffffff0200000000000000005b000000000000030000000000000000000000000000005d64fe6918e79c04ff4fb55b8fd6c0f60200000000000000ffffffffffffffff0d00000000000000005b00000000000004000000000000000000000000000000bd548bab0385d8df2f70094740d3ffaf0200000000000000"
+stderr = ""
+oracle = ["reference:linux-process-abi", "diff:glibc", "diff:musl"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "process-execvp-typed-abi"
+sources = ["tests/phase6/exec_identity/abi.c", "tests/phase2/abi.asm"]
+requires = ["execvp"]
+args = ["execvp"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["abi:sysv-amd64", "reference:linux-process-abi"]
+backends = ["native", "qemu"]
+host_skip = "The typed trampoline checks candidate register state and the signed int return."
+[case.skip]
+valgrind = "A no-op callback reports x87 and MXCSR control differences (probe mask 0x300) in Valgrind and zero on native Linux and QEMU."
+
+[[case]]
+name = "process-execvp-fuzz"
+sources = ["tests/phase6/exec_identity/packets.c"]
+requires = ["execvp"]
+args = ["execvp"]
+env = {}
+status = 0
+stdin_hex = "00000000000000000d0000000000000002000000000000007856341234120040040000000000000018000000000000000500000000000000230000000000000008000000000000002e0000000000000009000000000000003900000000000000"
+stdout = ""
+stdout_hex = "00000000000000000000000000000000007100000000000000000000000000000100000000000000c98732fba8fbf903cb8b290a602ad601010000000000000000000000000000000000000000000000009c0000000000000200000000000000030000000000000097a1aedad5aae5399b5f7d2536701f7a010000000000000000000000000000000000000000000000007c00000000000004000000000000000200000000000000d72a5d1cbc2acedb04be38748cbb0c9a0100000000000000ffffffffffffffff0d00000000000000005b00000000000005000000000000000000000000000000b7ff7a485b4641bbe81b46a49c36f5e90200000000000000ffffffffffffffff2800000000000000005b0000000000000800000000000000000000000000000085eb1db11894d69a8475a264cf6582c70200000000000000ffffffffffffffff0200000000000000005b00000000000009000000000000000000000000000000ddfdffe01279a89607021a5161dd954d0200000000000000"
+stderr = ""
+oracle = ["reference:linux-process-abi", "diff:glibc", "diff:musl"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "process-execvp-allocation-fault"
+sources = ["tests/phase6/exec_identity/allocation_fault.c"]
+requires = ["execvp"]
+args = []
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-exec-path"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The scoped GNU ld wrapper observes the candidate allocation and release boundary."
+link_wraps = ["malloc", "free"]

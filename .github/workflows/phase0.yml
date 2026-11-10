@@ -77,6 +77,57 @@ jobs:
             build/evidence/pipe2.production.json
           if-no-files-found: error
 
+  pathname_production:
+    name: Open and pathname production gates
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b
+      - name: Run full pathname proofs and the scoped getcwd checks
+        timeout-minutes: 35
+        run: ./tools/container sh -ec 'python3 tests/tooling/test_verification_tiers.py && make -k production-open production-paths verify-getcwd-wrapper'
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: pathname-production-evidence
+          path: |
+            build/evidence/open.production.json
+            build/evidence/openat.production.json
+            build/evidence/readlink.production.json
+            build/evidence/unlink.production.json
+            build/evidence/rmdir.production.json
+            build/evidence/getcwd.getcwd-wrapper.json
+          if-no-files-found: error
+
+  wait_exec_production:
+    name: Wait and exec production gates
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b
+      - name: Run full wait and exec proofs and the scoped execvp checks
+        timeout-minutes: 35
+        run: ./tools/container make -k production-wait production-exec verify-execvp-wrapper
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: wait-exec-production-evidence
+          path: |
+            build/evidence/waitpid.production.json
+            build/evidence/wait.production.json
+            build/evidence/execve.production.json
+            build/evidence/execv.production.json
+            build/evidence/execvp.execvp-wrapper.json
+          if-no-files-found: error
+
   stream_indicators:
     name: Scoped stdio stream indicator checks
     runs-on: ubuntu-24.04
@@ -298,7 +349,7 @@ jobs:
   acceptance:
     name: acceptance
     if: always()
-    needs: [core, integration, process_production, stream_indicators, mathematics, applications, threads, locale, real_programs, network, platform, extensions, extension_formats]
+    needs: [core, integration, process_production, pathname_production, wait_exec_production, stream_indicators, mathematics, applications, threads, locale, real_programs, network, platform, extensions, extension_formats]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions: {}
@@ -306,6 +357,8 @@ jobs:
       CORE_RESULT: ${{ needs.core.result }}
       INTEGRATION_RESULT: ${{ needs.integration.result }}
       PROCESS_PRODUCTION_RESULT: ${{ needs.process_production.result }}
+      PATHNAME_PRODUCTION_RESULT: ${{ needs.pathname_production.result }}
+      WAIT_EXEC_PRODUCTION_RESULT: ${{ needs.wait_exec_production.result }}
       STREAM_INDICATORS_RESULT: ${{ needs.stream_indicators.result }}
       MATH_RESULT: ${{ needs.mathematics.result }}
       APPLICATION_RESULT: ${{ needs.applications.result }}
@@ -327,6 +380,9 @@ jobs:
           test "$INTEGRATION_RESULT" = success
           printf 'Process production: %s\n' "$PROCESS_PRODUCTION_RESULT"
           test "$PROCESS_PRODUCTION_RESULT" = success
+          printf 'Pathname production: %s\nWait and exec production: %s\n' "$PATHNAME_PRODUCTION_RESULT" "$WAIT_EXEC_PRODUCTION_RESULT"
+          test "$PATHNAME_PRODUCTION_RESULT" = success
+          test "$WAIT_EXEC_PRODUCTION_RESULT" = success
           printf 'Scoped stream indicators: %s\n' "$STREAM_INDICATORS_RESULT"
           test "$STREAM_INDICATORS_RESULT" = success
           test "$MATH_RESULT" = success

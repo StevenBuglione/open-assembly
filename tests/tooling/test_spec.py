@@ -394,11 +394,11 @@ member = [
         source = self.write(path, comment_header(spec))
         return source, self.write("build/evidence/attempt-control.json", "{}")
 
-    def record_attempt(self, source, report, category, *, change_inputs=False):
+    def record_attempt(self, source, report, category, *, change_inputs=False, function="strlen", spec_path=STRLEN):
         def run(attempt):
-            inputs = snapshot_inputs(self.root, [STRLEN, source.relative_to(self.root), "devenv.lock"])
+            inputs = snapshot_inputs(self.root, [spec_path, source.relative_to(self.root), "devenv.lock"])
             evidence = {
-                "scope": "production-function", "function": "strlen", "inputs": inputs,
+                "scope": "production-function", "function": function, "inputs": inputs,
                 "checks": {"candidate_build": {"outcome": "pass",
                                                "source": attempt.source["path"],
                                                "source_sha256": attempt.source["sha256"]}},
@@ -413,7 +413,27 @@ member = [
             attempt.record(evidence, report)
             return int(category is not None)
 
-        return run_with_journal(self.root, "strlen", run)
+        return run_with_journal(self.root, function, run)
+
+    def test_attempt_binds_nested_header_spec_and_rejects_duplicate(self):
+        self.write("devenv.lock", "pinned identity")
+        spec = load_project(self.root).functions["waitpid"]
+        self.assertEqual(spec.path, Path("spec/functions/sys/wait/waitpid.toml"))
+        source = self.write("src/x86_64-linux/posix/waitpid.asm", comment_header(spec))
+        report = self.write("build/evidence/attempt-control.json", "{}")
+        self.record_attempt(source, report, None, function=spec.name, spec_path=spec.path)
+        journal = self.root / "build/attempts/waitpid"
+        first = json.loads((journal / "00000001.json").read_text())
+        self.assertEqual(first["outcome"], "pass")
+        self.assertEqual(first["specification"], {"path": spec.path.as_posix(), "sha256":
+                         snapshot_inputs(self.root, [spec.path])[spec.path.as_posix()]})
+
+        self.write("spec/functions/other/waitpid.toml", (self.root / spec.path).read_text())
+        self.record_attempt(source, report, "semantic", function=spec.name, spec_path=spec.path)
+        duplicate = json.loads((journal / "00000002.json").read_text())
+        self.assertIsNone(duplicate["specification"])
+        self.assertEqual(duplicate["failure_class"], "harness")
+        self.assertEqual(load_history(self.root, spec.name).failures, ())
 
     def test_attempts_suspend_and_require_review_note(self):
         source, report = self.attempt_fixture()
