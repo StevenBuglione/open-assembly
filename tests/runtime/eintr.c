@@ -1,6 +1,6 @@
 #include <errno.h>
 #include <signal.h>
-#include <sys/time.h>
+#include <linux/time.h>
 #include <unistd.h>
 
 #include "linux_abi.h"

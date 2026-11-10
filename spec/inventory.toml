@@ -525,8 +525,8 @@ types = ["DIR", "struct dirent"]
 [[headers]]
 name = "setjmp.h"
 standard = "POSIX.1-2024 XBD <setjmp.h>"
-count = 4
-functions = ["setjmp", "siglongjmp", "sigsetjmp"]
+count = 3
+functions = ["siglongjmp", "sigsetjmp"]
 types = ["sigjmp_buf"]
 
 [[headers]]

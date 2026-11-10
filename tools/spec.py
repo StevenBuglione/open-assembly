@@ -67,7 +67,7 @@ POSIX_SCOPE = {
     "sys/wait.h": {"functions": {"wait", "waitpid"}, "types": {"pid_t"},
                    "macros": {"WNOHANG", "WUNTRACED", "WCONTINUED", "WIFEXITED", "WEXITSTATUS",
                               "WIFSIGNALED", "WTERMSIG", "WIFSTOPPED", "WSTOPSIG", "WIFCONTINUED"}},
-    "setjmp.h": {"functions": {"setjmp", "sigsetjmp", "siglongjmp"}, "types": {"sigjmp_buf"}},
+    "setjmp.h": {"functions": {"sigsetjmp", "siglongjmp"}, "types": {"sigjmp_buf"}},
     "signal.h": {"functions": {"kill", "sigaction", "sigaddset", "sigdelset", "sigemptyset", "sigfillset",
                                "sigismember", "sigpending", "sigprocmask", "sigsuspend"},
                  "types": {"pid_t", "siginfo_t", "sigset_t", "struct sigaction"},
@@ -81,6 +81,7 @@ EXTENSION_SCOPE = {
     "sys/ioctl.h": {"ioctl"},
 }
 RUNTIME_ABI = {"compiler_rt.h": "__stack_chk_fail", "errno.h": "__errno_location"}
+MACRO_BACKED_ABI = {("setjmp.h", "setjmp")}
 
 
 class SpecError(ValueError):
@@ -567,10 +568,15 @@ def load_deviations(root, functions):
     return tuple(raw["deviations"])
 
 
+def has_runtime_entry(item):
+    return item.kind == "functions" or (item.kind == "macros" and item.standard.startswith("C17 ")
+                                        and (item.header, item.name) in MACRO_BACKED_ABI)
+
+
 def load_project(root=ROOT):
     root = Path(root).resolve()
     inventory = load_inventory(root)
-    listed = {(item.header, item.name): item for item in inventory if item.kind == "functions"}
+    listed = {(item.header, item.name): item for item in inventory if has_runtime_entry(item)}
     functions = {}
     for path in sorted((root / "spec/functions").rglob("*.toml")):
         regular_file(root, path.relative_to(root), path)
@@ -591,7 +597,7 @@ def load_project(root=ROOT):
         if group.startswith("Extension ABI ") and f"Extension ABI {spec.name}" not in spec.standard:
             fail(path, f"expected a compatibility extension reference for {spec.name}")
         functions[spec.name] = spec
-    inventory_names = {item.name for item in inventory if item.kind == "functions"}
+    inventory_names = {item.name for item in listed.values()}
     visited, active = set(), []
 
     def visit(name):

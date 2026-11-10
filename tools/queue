@@ -9,7 +9,7 @@ import re
 import sys
 
 from spec import (
-    ROOT, SpecError, check_comment_header, load_project, production_sources,
+    ROOT, SpecError, check_comment_header, has_runtime_entry, load_project, production_sources,
     phase0_input_paths, regular_file, snapshot_inputs,
 )
 
@@ -205,7 +205,7 @@ def main():
                     return 0
             print("queue: no eligible specified function", file=sys.stderr)
             return 1
-        inventory = {item.name for item in project.inventory if item.kind == "functions"}
+        inventory = {item.name for item in project.inventory if has_runtime_entry(item)}
         names = by_name.keys()
         if args.function is not None:
             if args.function not in inventory:

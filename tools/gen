@@ -2,13 +2,13 @@
 """Generate declarations and the API index from function specifications."""
 
 import argparse
-from collections import Counter, defaultdict
+from collections import defaultdict
 from pathlib import Path
 import os
 import sys
 import tempfile
 
-from spec import (POSIX_FDS, ROOT, SEEK_ORIGINS, STAT_FILE_KINDS, SpecError, comment_header,
+from spec import (POSIX_FDS, ROOT, SEEK_ORIGINS, STAT_FILE_KINDS, SpecError, comment_header, has_runtime_entry,
                   load_file_abi, load_process_abi, load_project, load_signal_abi, nasm_name)
 
 
@@ -140,6 +140,8 @@ def make_outputs(project, include_tracked=True, include_test=True):
             for spec in specs:
                 attributes = " __attribute__((returns_twice))" if spec.name in {"setjmp", "sigsetjmp"} else ""
                 lines.append(f"{spec.prototype}{attributes};")
+            if header == "setjmp.h" and any(spec.name == "setjmp" for spec in specs):
+                lines.extend(("", "#define setjmp(env) (setjmp)(env)"))
             lines.extend(("", "#endif", ""))
             outputs[C / header] = "\n".join(lines)
     if include_tracked:
@@ -149,10 +151,10 @@ def make_outputs(project, include_tracked=True, include_test=True):
             lines.extend(f"%define __AL_NR_{name.upper()} {number}" for name, number in abi["syscalls"].items())
             lines.extend(("", "%endif", ""))
             outputs[ASM / f"linux-x86_64-{family}.inc"] = "\n".join(lines)
-        counts = Counter((i.standard.split()[0], i.kind) for i in project.inventory)
+        entry_count = sum(has_runtime_entry(item) for item in project.inventory)
         lines = [f"<!-- {MARKER} -->", "# Open Assembly API index", "",
                  "This index lists authored function specifications. For implementation state, run `tools/queue status`.", "",
-                 f"Specs: {len(project.functions)} of {sum(n for (_, kind), n in counts.items() if kind == 'functions')} "
+                 f"Specs: {len(project.functions)} of {entry_count} "
                  "inventoried functions. The inventory covers C17, the named POSIX subset, runtime ABI entries, "
                  "and Linux compatibility extensions. "
                  "see [inventory scope](cookbook/specifications.md#inventory-scope).", "",
