@@ -182,7 +182,7 @@ def host_binary(compiler, sources, directory, commands, *, host_macro="OA_PHASE4
     return binary
 
 
-def libc_test(directory, runtime, runners, record, *, cases=None, c_flags=()):
+def libc_test(directory, runtime, runners, record, *, cases=None, c_flags=(), common=None):
     path = os.environ.get("OPEN_ASSEMBLY_LIBC_TEST")
     if not path:
         raise GateError("the pinned toolchain did not provide the libc-test source")
@@ -202,7 +202,17 @@ def libc_test(directory, runtime, runners, record, *, cases=None, c_flags=()):
         source = fixture_directory / original.name
         shutil.copyfile(original, source)
         shutil.copyfile(header, fixture_directory / header.name)
-        case = Case("libc-test-" + name, (source, Path("tests/phase4/libc_test_support.c")),
+        helpers, helper_hashes = [], {}
+        for filename in (common or {}).get(name, ()):
+            helper_source = root / "src/common" / filename
+            helper = fixture_directory / filename
+            shutil.copyfile(helper_source, helper)
+            digest = sha256_file(helper_source)
+            if sha256_file(helper) != digest:
+                raise GateError(f"copied libc-test common source differs for {filename}")
+            helpers.append(helper)
+            helper_hashes[f"common/{filename}"] = digest
+        case = Case("libc-test-" + name, (source, *helpers, Path("tests/phase4/libc_test_support.c")),
                     requires, [], {}, 0, "", "", ("suite:libc-test",), tuple(runners), {})
         probe = Probe(case, b"", b"", b"", {}, (), "The upstream assertions are the oracle.")
         source_hash = sha256_file(original)
@@ -210,6 +220,8 @@ def libc_test(directory, runtime, runners, record, *, cases=None, c_flags=()):
             raise GateError(f"copied libc-test source or header differs for {relative}")
         item = {"outcome": "fail", "source_path": relative, "source_sha256": source_hash,
                 "commands": [], "runs": {}}
+        if helper_hashes:
+            item["common_sources"] = helper_hashes
         record["cases"][name] = item
         binary, item["artifacts"] = build_case(case, fixture_directory / "link", runtime, item["commands"], c_flags=c_flags)
         execute_probe(probe, binary, fixture_directory / "inputs", item["runs"], runners)
