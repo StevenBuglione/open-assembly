@@ -1,0 +1,22 @@
+name = "openat"
+header = "fcntl.h"
+prototype = "int openat(int dirfd, const char *path, int flags, ...)"
+standard = ["POSIX.1-2024 XSH openat"]
+deps = ["__errno_location"]
+errno = ["EACCES", "EBADF", "EDQUOT", "EEXIST", "EFAULT", "EINTR", "EINVAL", "EISDIR", "ELOOP", "EMFILE", "ENAMETOOLONG", "ENFILE", "ENODEV", "ENOENT", "ENOMEM", "ENOSPC", "ENOTDIR", "ENXIO", "EOVERFLOW", "EPERM", "EROFS", "ETXTBSY"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-file-abi"]
+provenance = "original"
+semantics = [
+  "Resolve a relative path from dirfd or from the working directory for AT_FDCWD.",
+  "Ignore dirfd for an absolute path.",
+  "Return a newly opened file descriptor on success.",
+  "Read the optional mode only for O_CREAT or the complete Linux O_TMPFILE flag pattern.",
+  "The kernel applies the process umask and atomically sets close-on-exec when requested.",
+  "Preserve errno on success. Translate a Linux kernel error to -1 and thread-local errno.",
+]
+
+[abi]
+narrow_args = ["edi:s32", "edx:s32"]
+variadic = true

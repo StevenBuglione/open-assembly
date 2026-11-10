@@ -7,9 +7,29 @@
 %define STDERR_FILENO 2
 
 extern environ:data
+extern optarg:data
+extern opterr:data
+extern optind:data
+extern optopt:data
+%define SEEK_SET 0
+%define SEEK_CUR 1
+%define SEEK_END 2
+%define SEEK_DATA 3
+%define SEEK_HOLE 4
+
 extern _exit
 extern close
+extern dup
+extern dup2
+extern getcwd
+extern getopt
+extern isatty
+extern lseek
+extern pipe
 extern read
+extern readlink
+extern rmdir
+extern unlink
 extern write
 
 %endif

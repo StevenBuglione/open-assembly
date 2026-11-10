@@ -1,0 +1,20 @@
+name = "readdir"
+header = "dirent.h"
+prototype = "struct dirent *readdir(DIR *dirp)"
+standard = ["POSIX.1-2024 XSH readdir"]
+deps = ["__errno_location"]
+errno = ["EBADF", "EIO", "ENOENT", "ENOTDIR"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:linux-file-abi"]
+provenance = "original"
+semantics = [
+  "Return the next validated directory entry in storage owned by the stream.",
+  "The returned record can be overwritten by a later call on the same stream.",
+  "Return a null pointer at end of directory without changing errno.",
+  "On failure return a null pointer and set errno. Report malformed kernel records as EIO.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

@@ -1,0 +1,371 @@
+schema = 1
+
+[[case]]
+name = "compat-chmod"
+sources = ["tests/phase6/compat/paths.c"]
+requires = ["chmod"]
+args = ["chmod"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-busybox-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "compat-umask"
+sources = ["tests/phase6/compat/paths.c"]
+requires = ["umask"]
+args = ["umask"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-busybox-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "compat-getcwd"
+sources = ["tests/phase6/compat/paths.c"]
+requires = ["getcwd"]
+args = ["getcwd"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-busybox-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "compat-ioctl"
+sources = ["tests/phase6/compat/paths.c"]
+requires = ["ioctl"]
+args = ["ioctl"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-busybox-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "compat-isatty"
+sources = ["tests/phase6/compat/paths.c"]
+requires = ["isatty"]
+args = ["isatty"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-busybox-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "compat-readlink"
+sources = ["tests/phase6/compat/paths.c"]
+requires = ["readlink"]
+args = ["readlink"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-busybox-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "compat-dirname"
+sources = ["tests/phase6/compat/paths.c"]
+requires = ["dirname"]
+args = ["dirname"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-busybox-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "compat-strdup"
+sources = ["tests/phase6/compat/paths.c"]
+requires = ["strdup"]
+args = ["strdup"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-busybox-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "compat-getopt"
+sources = ["tests/phase6/compat/getopt.c"]
+requires = ["getopt", "optind", "optarg", "opterr", "optopt"]
+args = []
+env = { POSIXLY_CORRECT = "1" }
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-busybox-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "compat-vasprintf"
+sources = ["tests/phase6/compat/vasprintf.c"]
+requires = ["vasprintf"]
+args = ["plain"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-busybox-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "compat-getc-unlocked"
+sources = ["tests/phase6/compat/unlocked.c"]
+requires = ["getc_unlocked"]
+args = ["get"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-busybox-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "compat-ferror-unlocked"
+sources = ["tests/phase6/compat/unlocked.c"]
+requires = ["ferror_unlocked"]
+args = ["error"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-busybox-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "compat-fputs-unlocked"
+sources = ["tests/phase6/compat/unlocked.c"]
+requires = ["fputs_unlocked"]
+args = ["puts"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-busybox-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "compat-putchar-unlocked"
+sources = ["tests/phase6/compat/unlocked.c"]
+requires = ["putchar_unlocked"]
+args = ["put"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = "U"
+stderr = ""
+oracle = ["reference:linux-busybox-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "compat-vasprintf-order"
+sources = ["tests/phase6/compat/vasprintf.c"]
+requires = ["vasprintf"]
+args = ["alias"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-busybox-abi"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The alias case asserts the project's single-pass formatting contract."
+
+[[case]]
+name = "compat-vasprintf-fault"
+sources = ["tests/phase6/compat/vasprintf_fault.c"]
+requires = ["vasprintf"]
+args = []
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-busybox-abi"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The fault probe wraps allocation only within the candidate link."
+link_wraps = ["realloc", "free"]
+
+[[case]]
+name = "compat-unlocked-lock"
+sources = ["tests/phase6/compat/unlocked_lock.c"]
+requires = ["getc_unlocked", "putchar_unlocked", "fputs_unlocked", "ferror_unlocked"]
+args = []
+env = {}
+status = 0
+stdin_hex = ""
+stdout = "U"
+stderr = ""
+oracle = ["reference:linux-busybox-abi"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The probe counts calls to the project's internal lock hooks."
+link_wraps = ["__al_lock", "__al_unlock"]
+files = { input = "4142" }
+
+[[stub]]
+symbol = "chmod"
+case = "compat-chmod"
+status = 12
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "umask"
+case = "compat-umask"
+status = 21
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "getcwd"
+case = "compat-getcwd"
+status = 31
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "ioctl"
+case = "compat-ioctl"
+status = 42
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "isatty"
+case = "compat-isatty"
+status = 51
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "readlink"
+case = "compat-readlink"
+status = 61
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "dirname"
+case = "compat-dirname"
+status = 71
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "strdup"
+case = "compat-strdup"
+status = 81
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "getopt"
+case = "compat-getopt"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "vasprintf"
+case = "compat-vasprintf"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "getc_unlocked"
+case = "compat-getc-unlocked"
+status = 12
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "ferror_unlocked"
+case = "compat-ferror-unlocked"
+status = 21
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "fputs_unlocked"
+case = "compat-fputs-unlocked"
+status = 32
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "putchar_unlocked"
+case = "compat-putchar-unlocked"
+status = 41
+stdout = ""
+stderr = ""
+
+[[case]]
+name = "compat-vasprintf-float"
+sources = ["tests/phase6/compat/vasprintf_float.c"]
+requires = ["vasprintf"]
+args = ["common"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["c17:formatted-output", "reference:linux-busybox-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "compat-vasprintf-extended"
+sources = ["tests/phase6/compat/vasprintf_float.c"]
+requires = ["vasprintf"]
+args = ["precision"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["c17:formatted-output", "reference:linux-busybox-abi"]
+backends = ["native", "qemu"]
+host = true
+
+[case.skip]
+valgrind = "The expected decimal distinguishes 1 + 2^-63 from 1. Memcheck's x87 emulation loses that extended bit."

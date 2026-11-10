@@ -1,0 +1,19 @@
+name = "closedir"
+header = "dirent.h"
+prototype = "int closedir(DIR *dirp)"
+standard = ["POSIX.1-2024 XSH closedir"]
+deps = ["close", "free"]
+errno = ["EBADF", "EINTR", "EIO"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:linux-file-abi"]
+provenance = "original"
+semantics = [
+  "Close the owned descriptor and release the stream storage.",
+  "Return zero on success and preserve errno. Return -1 and set errno on error.",
+  "The stream is invalid after the call.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

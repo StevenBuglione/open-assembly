@@ -1,0 +1,507 @@
+schema = 1
+
+[[case]]
+name = "file-open"
+sources = ["tests/phase6/files.c"]
+requires = ["open"]
+args = ["open"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-file-abi", "posix:open"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "file-openat"
+sources = ["tests/phase6/files.c"]
+requires = ["openat"]
+args = ["openat"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-file-abi", "posix:openat"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "file-creat"
+sources = ["tests/phase6/files.c"]
+requires = ["creat"]
+args = ["creat"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-file-abi", "posix:creat"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "file-lseek"
+sources = ["tests/phase6/files.c"]
+requires = ["lseek"]
+args = ["lseek"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-file-abi", "posix:lseek"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "file-dup"
+sources = ["tests/phase6/files.c"]
+requires = ["dup"]
+args = ["dup"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-file-abi", "posix:dup"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "file-dup2"
+sources = ["tests/phase6/files.c"]
+requires = ["dup2"]
+args = ["dup2"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-file-abi", "posix:dup2"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "file-pipe"
+sources = ["tests/phase6/files.c"]
+requires = ["pipe"]
+args = ["pipe"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-file-abi", "posix:pipe"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "file-mkdir"
+sources = ["tests/phase6/files.c"]
+requires = ["mkdir"]
+args = ["mkdir"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-file-abi", "posix:mkdir"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "file-rmdir"
+sources = ["tests/phase6/files.c"]
+requires = ["rmdir"]
+args = ["rmdir"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-file-abi", "posix:rmdir"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "file-unlink"
+sources = ["tests/phase6/files.c"]
+requires = ["unlink"]
+args = ["unlink"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-file-abi", "posix:unlink"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "file-pipe-exhaustion"
+sources = ["tests/phase6/files.c"]
+requires = ["pipe"]
+args = ["pipe-exhaustion"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-file-abi", "posix:pipe"]
+backends = ["native", "qemu"]
+host = true
+
+[case.skip]
+valgrind = "Valgrind rejects the prlimit64 setup that lowers RLIMIT_NOFILE to three. Its wrapped EMFILE case still checks pipe failure atomicity."
+
+[[case]]
+name = "info-stat"
+sources = ["tests/phase6/stat.c"]
+requires = ["stat"]
+args = ["stat"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-file-abi", "posix:stat"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "info-lstat"
+sources = ["tests/phase6/stat.c"]
+requires = ["lstat"]
+args = ["lstat"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-file-abi", "posix:lstat"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "info-fstat"
+sources = ["tests/phase6/stat.c"]
+requires = ["fstat"]
+args = ["fstat"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-file-abi", "posix:fstat"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "info-fstatat"
+sources = ["tests/phase6/stat.c"]
+requires = ["fstatat"]
+args = ["fstatat"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-file-abi", "posix:fstatat"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "directory-opendir"
+sources = ["tests/phase6/directory.c"]
+requires = ["opendir"]
+args = ["opendir"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-file-abi", "posix:opendir"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "directory-fdopendir"
+sources = ["tests/phase6/directory.c"]
+requires = ["fdopendir"]
+args = ["fdopendir"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-file-abi", "posix:fdopendir"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "directory-readdir"
+sources = ["tests/phase6/directory.c"]
+requires = ["readdir"]
+args = ["readdir"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-file-abi", "posix:readdir"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "directory-closedir"
+sources = ["tests/phase6/directory.c"]
+requires = ["closedir"]
+args = ["closedir"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-file-abi", "posix:closedir"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "directory-dirfd"
+sources = ["tests/phase6/directory.c"]
+requires = ["dirfd"]
+args = ["dirfd"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-file-abi", "posix:dirfd"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "directory-refill"
+sources = ["tests/phase6/directory.c"]
+requires = ["readdir"]
+args = ["readdir-refill"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-file-abi", "posix:readdir"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "directory-read-error"
+sources = ["tests/phase6/directory.c"]
+requires = ["readdir", "closedir"]
+args = ["readdir-error"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-file-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "directory-malformed-records"
+sources = ["tests/phase6/fault.c"]
+requires = ["readdir"]
+args = ["bad-records"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-file-abi", "project:directory-record-validation"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The test-only fault injector wraps the private runtime syscall boundary."
+link_wraps = ["__al_syscall"]
+
+[[case]]
+name = "file-pipe-injected-emfile"
+sources = ["tests/phase6/fault.c"]
+requires = ["pipe"]
+args = ["pipe-failure"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-file-abi", "posix:pipe"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The test-only fault injector wraps the private runtime syscall boundary."
+link_wraps = ["__al_syscall"]
+
+[[case]]
+name = "file-abi"
+sources = ["tests/phase6/abi.c", "tests/phase6/abi_varargs.asm", "tests/phase2/abi.asm"]
+requires = ["open", "openat", "creat", "lseek", "dup", "dup2", "pipe", "mkdir", "rmdir", "unlink"]
+args = ["files"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["abi:sysv-amd64"]
+backends = ["native", "qemu"]
+host_skip = "The ABI probe targets the project symbols and directly inspects machine state."
+[case.skip]
+valgrind = "A no-op callback reports x87 and MXCSR control differences (probe mask 0x300) in Valgrind and zero on native Linux and QEMU."
+
+[[case]]
+name = "file-info-abi"
+sources = ["tests/phase6/abi.c", "tests/phase6/abi_varargs.asm", "tests/phase2/abi.asm"]
+requires = ["stat", "lstat", "fstat", "fstatat", "opendir", "fdopendir", "readdir", "closedir", "dirfd"]
+args = ["info"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["abi:sysv-amd64"]
+backends = ["native", "qemu"]
+host_skip = "The ABI probe targets the project symbols and directly inspects machine state."
+[case.skip]
+valgrind = "A no-op callback reports x87 and MXCSR control differences (probe mask 0x300) in Valgrind and zero on native Linux and QEMU."
+
+[[stub]]
+symbol = "open"
+case = "file-open"
+status = 12
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "openat"
+case = "file-openat"
+status = 33
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "creat"
+case = "file-creat"
+status = 52
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "lseek"
+case = "file-lseek"
+status = 62
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "dup"
+case = "file-dup"
+status = 72
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "dup2"
+case = "file-dup2"
+status = 82
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "pipe"
+case = "file-pipe"
+status = 92
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "mkdir"
+case = "file-mkdir"
+status = 113
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "rmdir"
+case = "file-rmdir"
+status = 123
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "unlink"
+case = "file-unlink"
+status = 133
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "stat"
+case = "info-stat"
+status = 16
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "lstat"
+case = "info-lstat"
+status = 16
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "fstat"
+case = "info-fstat"
+status = 16
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "fstatat"
+case = "info-fstatat"
+status = 16
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "opendir"
+case = "directory-opendir"
+status = 40
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "fdopendir"
+case = "directory-fdopendir"
+status = 51
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "readdir"
+case = "directory-readdir"
+status = 35
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "closedir"
+case = "directory-closedir"
+status = 71
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "dirfd"
+case = "directory-dirfd"
+status = 61
+stdout = ""
+stderr = ""

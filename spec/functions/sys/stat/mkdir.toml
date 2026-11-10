@@ -1,0 +1,19 @@
+name = "mkdir"
+header = "sys/stat.h"
+prototype = "int mkdir(const char *path, mode_t mode)"
+standard = ["POSIX.1-2024 XSH mkdir"]
+deps = ["__errno_location"]
+errno = ["EACCES", "EDQUOT", "EEXIST", "EFAULT", "EINVAL", "ELOOP", "EMLINK", "ENAMETOOLONG", "ENOENT", "ENOMEM", "ENOSPC", "ENOTDIR", "EPERM", "EROFS"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-file-abi"]
+provenance = "original"
+semantics = [
+  "Create a directory using the requested mode and the process umask.",
+  "Return zero on success.",
+  "Preserve errno on success. Translate a Linux kernel error to -1 and thread-local errno.",
+]
+
+[abi]
+narrow_args = ["esi:u32"]
+variadic = false

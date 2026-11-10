@@ -76,6 +76,11 @@ The allocator and environment milestone adds `posix_memalign`, `putenv`,
 `__stack_chk_fail` have separate inventory groups. The API index lists
 authored function specifications. [POSIX.1-2024 stdlib.h](https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/stdlib.h.html) · [API index](../api-index.md)
 
+The first file slice adds `open`, `openat`, `creat`, `lseek`, `dup`,
+`dup2`, `pipe`, `mkdir`, `rmdir`, and `unlink`. The generator reads
+Linux flag values, seek origins, mode bits, and syscall numbers from
+`spec/types/linux-x86_64-files.toml`. [Phase 6 ABI](../adr/0007-linux-files-process-signal-time.md)
+
 ## Generated files
 
 Run `tools/gen` to refresh `include/asm/<header>.inc`,

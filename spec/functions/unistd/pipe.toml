@@ -1,0 +1,20 @@
+name = "pipe"
+header = "unistd.h"
+prototype = "int pipe(int fildes[2])"
+standard = ["POSIX.1-2024 XSH pipe"]
+deps = ["__errno_location"]
+errno = ["EFAULT", "EMFILE", "ENFILE", "ENOMEM"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-file-abi"]
+provenance = "original"
+semantics = [
+  "Create a blocking pipe and store the read descriptor first and the write descriptor second.",
+  "Both descriptors start with close-on-exec clear.",
+  "Return zero on success and leave the array unchanged on kernel failure.",
+  "Preserve errno on success. Translate a Linux kernel error to -1 and thread-local errno.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

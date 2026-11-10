@@ -1,0 +1,18 @@
+name = "fputs_unlocked"
+header = "stdio.h"
+prototype = "int fputs_unlocked(const char *restrict s, FILE *restrict stream)"
+standard = ["Extension ABI fputs_unlocked"]
+deps = ["strlen"]
+errno = ["EBADF", "EIO"]
+mt_safe = false
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:linux-busybox-abi"]
+provenance = "original"
+semantics = [
+  "Write the string without its terminating NUL. Return a nonnegative value, or EOF on failure.",
+  "Do not acquire the stdio lock. The caller is responsible for synchronization.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

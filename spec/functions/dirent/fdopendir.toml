@@ -1,0 +1,20 @@
+name = "fdopendir"
+header = "dirent.h"
+prototype = "DIR *fdopendir(int fd)"
+standard = ["POSIX.1-2024 XSH fdopendir"]
+deps = ["fstat", "malloc", "free", "__errno_location"]
+errno = ["EBADF", "EINVAL", "ENOMEM", "ENOTDIR"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:linux-file-abi"]
+provenance = "original"
+semantics = [
+  "Require a readable directory descriptor. Reject a path-only descriptor.",
+  "Transfer descriptor ownership on success and set close-on-exec.",
+  "On failure leave descriptor ownership with the caller.",
+  "Success preserves errno. Failure returns a null pointer and sets errno.",
+]
+
+[abi]
+narrow_args = ["edi:s32"]
+variadic = false

@@ -1,0 +1,18 @@
+name = "putchar_unlocked"
+header = "stdio.h"
+prototype = "int putchar_unlocked(int c)"
+standard = ["POSIX.1-2024 XSH putchar_unlocked"]
+deps = []
+errno = ["EBADF", "EIO"]
+mt_safe = false
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:linux-busybox-abi"]
+provenance = "original"
+semantics = [
+  "Write c converted to unsigned char to stdout and return that byte, or EOF on failure.",
+  "Do not acquire the stdio lock. The caller is responsible for synchronization.",
+]
+
+[abi]
+narrow_args = ["edi:s32"]
+variadic = false

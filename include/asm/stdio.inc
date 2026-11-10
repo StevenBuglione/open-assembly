@@ -7,9 +7,6 @@
 %define _IOFBF 0
 %define _IOLBF 1
 %define _IONBF 2
-%define SEEK_SET 0
-%define SEEK_CUR 1
-%define SEEK_END 2
 %define FOPEN_MAX 16
 %define FILENAME_MAX 4096
 
@@ -17,10 +14,15 @@ extern stdin:data
 extern stdout:data
 extern stderr:data
 
+%define SEEK_SET 0
+%define SEEK_CUR 1
+%define SEEK_END 2
+
 extern clearerr
 extern fclose
 extern feof
 extern ferror
+extern ferror_unlocked
 extern fflush
 extern fgetc
 extern fgetpos
@@ -29,6 +31,7 @@ extern fopen
 extern fprintf
 extern fputc
 extern fputs
+extern fputs_unlocked
 extern fread
 extern freopen
 extern fscanf
@@ -37,11 +40,13 @@ extern fsetpos
 extern ftell
 extern fwrite
 extern getc
+extern getc_unlocked
 extern getchar
 extern perror
 extern printf
 extern putc
 extern putchar
+extern putchar_unlocked
 extern puts
 extern rewind
 extern scanf
@@ -51,6 +56,7 @@ extern snprintf
 extern sprintf
 extern sscanf
 extern ungetc
+extern vasprintf
 extern vfprintf
 extern vfscanf
 extern vprintf

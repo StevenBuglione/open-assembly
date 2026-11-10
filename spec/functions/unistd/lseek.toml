@@ -1,0 +1,20 @@
+name = "lseek"
+header = "unistd.h"
+prototype = "off_t lseek(int fd, off_t offset, int whence)"
+standard = ["POSIX.1-2024 XSH lseek"]
+deps = ["__errno_location"]
+errno = ["EBADF", "EINVAL", "ENXIO", "EOVERFLOW", "ESPIPE"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-file-abi"]
+provenance = "original"
+semantics = [
+  "Pass the full signed 64-bit offset to the Linux kernel.",
+  "Return the full resulting offset and update the shared open file description.",
+  "The filesystem determines support and results for Linux data and hole seeks.",
+  "Preserve errno on success. Translate a Linux kernel error to -1 and thread-local errno.",
+]
+
+[abi]
+narrow_args = ["edi:s32", "edx:s32"]
+variadic = false

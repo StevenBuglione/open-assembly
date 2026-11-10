@@ -1,0 +1,21 @@
+name = "dirname"
+header = "libgen.h"
+prototype = "char *dirname(char *path)"
+standard = ["POSIX.1-2024 XSH dirname"]
+deps = ["strlen"]
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:linux-busybox-abi"]
+provenance = "original"
+semantics = [
+  "Return the directory component of a pathname after removing trailing slashes.",
+  "A null or empty input and a slash-free name return the dot string.",
+  "A leading run of slashes with no remaining directory component yields one slash.",
+  "The result can point into the caller storage and the operation may modify path.",
+  "The returned fallback strings have static storage. Preserve errno.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

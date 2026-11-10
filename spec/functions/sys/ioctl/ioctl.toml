@@ -1,0 +1,19 @@
+name = "ioctl"
+header = "sys/ioctl.h"
+prototype = "int ioctl(int fd, unsigned long request, ...)"
+standard = ["Extension ABI ioctl"]
+deps = ["__errno_location"]
+errno = ["EBADF", "EFAULT", "EINVAL", "ENOTTY"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:linux-busybox-abi"]
+provenance = "original"
+semantics = [
+  "Pass the descriptor, Linux command, and machine-word payload to the kernel ioctl operation.",
+  "Linux commands with no payload ignore the third machine word.",
+  "Return the kernel result and preserve errno on success. Translate a kernel failure to -1 and errno.",
+]
+
+[abi]
+narrow_args = ["edi:s32"]
+variadic = true

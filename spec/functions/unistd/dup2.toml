@@ -1,0 +1,20 @@
+name = "dup2"
+header = "unistd.h"
+prototype = "int dup2(int oldfd, int newfd)"
+standard = ["POSIX.1-2024 XSH dup2"]
+deps = ["__errno_location"]
+errno = ["EBADF", "EBUSY", "EINTR", "EMFILE", "ENOMEM"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-file-abi"]
+provenance = "original"
+semantics = [
+  "Atomically replace newfd with a duplicate of oldfd.",
+  "If oldfd is valid and equals newfd, return it with its descriptor flags preserved.",
+  "An invalid oldfd leaves an existing newfd in place.",
+  "Preserve errno on success. Translate a Linux kernel error to -1 and thread-local errno.",
+]
+
+[abi]
+narrow_args = ["edi:s32", "esi:s32"]
+variadic = false

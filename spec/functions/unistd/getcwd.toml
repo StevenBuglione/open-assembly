@@ -1,0 +1,22 @@
+name = "getcwd"
+header = "unistd.h"
+prototype = "char *getcwd(char *buf, size_t size)"
+standard = ["POSIX.1-2024 XSH getcwd"]
+deps = ["malloc", "free", "__errno_location"]
+errno = ["EACCES", "EFAULT", "EINVAL", "ENAMETOOLONG", "ENOENT", "ENOMEM", "ERANGE"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:linux-busybox-abi"]
+provenance = "original"
+semantics = [
+  "Write the absolute working-directory pathname and its terminating NUL into caller storage.",
+  "A nonnull buf needs positive size. Return buf on success, or null and errno on failure.",
+  "For the Linux allocator extension, allocate size bytes when buf is null and size is positive.",
+  "When both buf and size are zero, allocate enough storage for the direct Linux getcwd limit.",
+  "The caller owns allocated results. Preserve errno on success and discard temporary storage on error.",
+  "Report the direct Linux getcwd pathname limit and reject unreachable working directories.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

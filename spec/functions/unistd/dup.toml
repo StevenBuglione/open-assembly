@@ -1,0 +1,20 @@
+name = "dup"
+header = "unistd.h"
+prototype = "int dup(int oldfd)"
+standard = ["POSIX.1-2024 XSH dup"]
+deps = ["__errno_location"]
+errno = ["EBADF", "EINTR", "EMFILE", "ENOMEM"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-file-abi"]
+provenance = "original"
+semantics = [
+  "Duplicate the descriptor to the lowest free descriptor.",
+  "Both descriptors refer to the same open file description.",
+  "The new descriptor starts with close-on-exec clear.",
+  "Preserve errno on success. Translate a Linux kernel error to -1 and thread-local errno.",
+]
+
+[abi]
+narrow_args = ["edi:s32"]
+variadic = false

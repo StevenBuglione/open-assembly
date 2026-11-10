@@ -1,0 +1,21 @@
+name = "open"
+header = "fcntl.h"
+prototype = "int open(const char *path, int flags, ...)"
+standard = ["POSIX.1-2024 XSH open"]
+deps = ["__errno_location"]
+errno = ["EACCES", "EBADF", "EDQUOT", "EEXIST", "EFAULT", "EINTR", "EINVAL", "EISDIR", "ELOOP", "EMFILE", "ENAMETOOLONG", "ENFILE", "ENODEV", "ENOENT", "ENOMEM", "ENOSPC", "ENOTDIR", "ENXIO", "EOVERFLOW", "EPERM", "EROFS", "ETXTBSY"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-file-abi"]
+provenance = "original"
+semantics = [
+  "Use the process working directory for a relative path.",
+  "Return a newly opened file descriptor on success.",
+  "Read the optional mode only for O_CREAT or the complete Linux O_TMPFILE flag pattern.",
+  "The kernel applies the process umask and atomically sets close-on-exec when requested.",
+  "Preserve errno on success. Translate a Linux kernel error to -1 and thread-local errno.",
+]
+
+[abi]
+narrow_args = ["esi:s32"]
+variadic = true

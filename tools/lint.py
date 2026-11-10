@@ -81,16 +81,35 @@ PRIVATE_FUNCTIONS = {
     "stdlib/__al_env_change", "stdlib/__al_env_match", "stdlib/__al_env_name",
     "stdlib/__al_env_collect",
     "internal/__al_syscall", "internal/__al_syscall_result", "internal/__al_rt_sigreturn",
+    "internal/__al_fcntl", "internal/__al_stat_query",
     "internal/__al_lock", "internal/__al_unlock", "rt/_start", "rt/__al_tls_init",
     "rt/__al_panic", "rt/__al_abort", "rt/__al_diagnostic", "stdlib/__al_strtox",
 }
 PRIVATE_NORETURN = {"_start", "__al_rt_sigreturn", "__al_panic", "__al_abort", "__al_heap_bad", "__al_big_bad"}
 COMPARATOR_ARGUMENTS = {"bsearch": "r8", "qsort": "rcx"}
+
+
+@dataclass(frozen=True)
+class KernelStackRecord:
+    extent: int
+    setup: tuple[tuple[str, tuple[str, ...]], ...]
+
+
+KERNEL_STACK_RECORDS = {
+    "internal/__al_stat_query": {
+        ("rdx", "rsp + 8"): KernelStackRecord(144, (("mov", ("edi", "5")),)),
+        ("rcx", "rsp + 8"): KernelStackRecord(144, (("mov", ("edi", "262")),)),
+    },
+    "posix/isatty": {
+        ("rcx", "rsp + 8"): KernelStackRecord(64, (("mov", ("edi", "16")), ("mov", ("edx", "0x5401")))),
+    },
+}
 PRIVATE_DATA = {
     "stdin": "rt/__al_stdio_init", "stdout": "rt/__al_stdio_init", "stderr": "rt/__al_stdio_init",
     "__al_stdio_lock": "rt/__al_stdio_init", "__al_streams": "rt/__al_stdio_init",
     "__al_heap_seed": "stdlib/__al_heap",
     "environ": "rt/__al_env_init",
+    "optarg": "posix/getopt", "opterr": "posix/getopt", "optind": "posix/getopt", "optopt": "posix/getopt",
     "__al_env_lock": "rt/__al_env_init",
     "__al_env_owned": "stdlib/__al_env_change",
     "__al_initial_envp": "rt/_start",
@@ -224,6 +243,7 @@ class Program:
     varargs_frame: bool = False
     fenv_access: bool = False
     fenv_controls: bool = False
+    kernel_stack_records: dict[tuple[str, str], KernelStackRecord] | None = None
 
 
 def parse(source, narrow, variadic, allow_seed_metadata):
@@ -553,12 +573,15 @@ def transfer_data(state, program, ins):
         elif src.kind == "mem":
             process_stack_address = (state.process_entry and state.rsp == 0 and
                                      re.fullmatch(r"rsp\s*\+\s*8", src.value, re.I))
-            modeled_frame_address = process_stack_address or program.varargs_frame
-            if opcode == "lea" and not modeled_frame_address and set(src.address) & {"rsp", "rbp"}:
-                reject(line, "STACK_ACCESS", "stack address escape is unsupported")
             if opcode == "lea":
                 if src.segment:
                     reject(line, "TLS_ADDRESS", "LEA does not apply an FS segment base")
+                record = (program.kernel_stack_records or {}).get((dest.value, src.value))
+                modeled_frame_address = process_stack_address or program.varargs_frame or record
+                if set(src.address) & {"rsp", "rbp"} and not modeled_frame_address:
+                    reject(line, "STACK_ACCESS", "stack address escape is unsupported")
+                if record:
+                    state, _ = access_memory(state, src, record.extent, line, write=True)
                 read_registers(state, src.address, line, allow_stack_register=bool(modeled_frame_address))
             else:
                 src_width = src.size if opcode in ("movzx", "movsx") else width(src) or width(dest)
@@ -891,6 +914,23 @@ def check_file(path, function, fixture_syscall):
         f"fenv/{name}" for name in ("feclearexcept", "fegetenv", "feholdexcept", "fesetenv", "fetestexcept")
     }
     program.fenv_controls = relative_runtime in {"fenv/feholdexcept", "fenv/fesetenv", "fenv/fesetround"}
+    program.kernel_stack_records = KERNEL_STACK_RECORDS.get(relative_runtime)
+    if program.kernel_stack_records:
+        instructions = program.instructions
+        for index, ins in enumerate(instructions):
+            if ins.opcode != "lea" or len(ins.operands) != 2:
+                continue
+            dest, src = (operand(value, ins.line) for value in ins.operands)
+            record = program.kernel_stack_records.get((dest.value, src.value))
+            if record is None:
+                continue
+            start = index - len(record.setup)
+            preceding = tuple((prior.opcode, prior.operands) for prior in instructions[max(0, start):index])
+            following = instructions[index + 1] if index + 1 < len(instructions) else None
+            if (preceding != record.setup or following is None or following.opcode != "call"
+                    or following.operands != ("__al_syscall",)
+                    or any(start < target <= index + 1 for target in program.labels.values())):
+                reject(ins.line, "STACK_ACCESS", "bounded kernel stack record must go directly to its modeled syscall")
     if relative_runtime in VARARGS_WRAPPERS:
         target, fixed, register = VARARGS_WRAPPERS[relative_runtime]
         expected = [("push", ("rbp",)), ("mov", ("rbp", "rsp")), ("sub", ("rsp", "208"))]
