@@ -1,0 +1,17 @@
+name = "ccosl"
+header = "complex.h"
+prototype = "long double _Complex ccosl(long double _Complex z)"
+standard = ["C17 7.3.5.4"]
+deps = ["fegetround", "feraiseexcept", "__errno_location"]
+errno = ["ERANGE"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:mpfr", "reference:complex-branch-cut", "diff:glibc"]
+provenance = "original"
+semantics = [
+  "Return the complex cosine, with final range effects assessed for each component. Conjugation preserves the real result and reflects the sign of the imaginary result.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

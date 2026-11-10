@@ -6,7 +6,8 @@ bits 64
 default rel
 
 global __al_vformat:function
-extern __al_stdio_lock:data
+extern __al_stream_lock:function
+extern __al_stream_unlock:function
 extern __al_lock:function
 extern __al_unlock:function
 extern __al_va_next:function
@@ -37,7 +38,11 @@ __al_vformat:
     mov [rsp + 16], r8
     mov rbx, rdx                  ; format cursor
     mov r12, rcx                  ; variadic cursor
-    lea rdi, [rel __al_stdio_lock]
+    cmp qword [rsp + 16], 1
+    jne .scratch_lock
+    call __al_stream_lock
+.scratch_lock:
+    lea rdi, [rel format_lock]
     call __al_lock
     lea r13, [rel output]
     lea r15, [rel fields]
@@ -384,8 +389,13 @@ __al_vformat:
     mov rcx, [r13 + 48]
     mov [rcx], rax
 .unlock:
-    lea rdi, [rel __al_stdio_lock]
+    lea rdi, [rel format_lock]
     call __al_unlock
+    cmp qword [rsp + 16], 1
+    jne .result
+    mov rdi, [rsp]
+    call __al_stream_unlock
+.result:
     mov eax, r14d
     add rsp, 24
     pop r15
@@ -405,5 +415,8 @@ output:
     resb 128
 fields:
     resq 5
+
+format_lock:
+    resd 1
 
 section .note.GNU-stack noalloc noexec nowrite progbits

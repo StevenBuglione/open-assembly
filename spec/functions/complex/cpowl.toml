@@ -1,0 +1,20 @@
+name = "cpowl"
+header = "complex.h"
+prototype = "long double _Complex cpowl(long double _Complex x, long double _Complex y)"
+standard = ["C17 7.3.8.2"]
+deps = ["fegetround", "feraiseexcept", "__errno_location"]
+errno = ["EDOM", "ERANGE"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:mpfr", "reference:complex-branch-cut", "diff:glibc"]
+provenance = "original"
+semantics = [
+  "Return x raised to the complex exponent y. Use the principal logarithm with the negative real branch cut of the base. Preserve the caller's floating control state.",
+  "A zero exponent returns one for a non-signaling base. A nonnegative real base with a real exponent follows scalar pow range effects.",
+  "A zero or infinite base with a finite real exponent uses its limiting magnitude in the principal quadrant. Other nonfinite cases with no defined limit return quiet NaNs with the invalid exception and EDOM when a domain error occurs.",
+  "Assess underflow and overflow separately for each final component. Annex G permits additional floating exceptions from intermediate calculation.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

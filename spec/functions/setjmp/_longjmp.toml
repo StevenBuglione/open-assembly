@@ -1,0 +1,19 @@
+name = "_longjmp"
+header = "setjmp.h"
+prototype = "_Noreturn void _longjmp(jmp_buf env, int value)"
+standard = ["Extension ABI _longjmp"]
+deps = ["longjmp"]
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:lua-posix-abi"]
+provenance = "original"
+semantics = [
+  "Resume a live context from _setjmp or setjmp in the same thread.",
+  "Resume with value or with one for a zero input. Leave the signal mask and floating-point controls in effect.",
+]
+
+[abi]
+narrow_args = ["esi:s32"]
+variadic = false
+noreturn = true

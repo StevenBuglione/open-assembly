@@ -19,9 +19,8 @@ bits 64
 default rel
 
 global fwrite:function
-extern __al_stdio_lock:data
-extern __al_lock:function
-extern __al_unlock:function
+extern __al_stream_lock:function
+extern __al_stream_unlock:function
 extern __al_stream_write:function
 extern __al_stdio_errno:function
 
@@ -41,8 +40,8 @@ fwrite:
     mov r12, rsi                 ; element width
     mov r13, rdx                 ; element count
     mov r14, rdi                 ; data pointer
-    lea rdi, [rel __al_stdio_lock]
-    call __al_lock
+    mov rdi, rbx
+    call __al_stream_lock
     mov rax, -1
     xor edx, edx
     div r12
@@ -63,8 +62,8 @@ fwrite:
     call __al_stdio_errno
     xor r13d, r13d
 .unlock:
-    lea rdi, [rel __al_stdio_lock]
-    call __al_unlock
+    mov rdi, rbx
+    call __al_stream_unlock
     mov rax, r13
     pop r14
     pop r13

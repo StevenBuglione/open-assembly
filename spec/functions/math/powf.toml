@@ -1,0 +1,19 @@
+name = "powf"
+header = "math.h"
+prototype = "float powf(float x, float y)"
+standard = ["C17 7.12.7.4"]
+deps = ["fegetround", "feraiseexcept", "__errno_location"]
+errno = ["EDOM", "ERANGE"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:mpfr", "reference:fixed-point-interval", "diff:glibc"]
+provenance = "original"
+semantics = [
+  "Compute x raised to y. Respect the sign rules for odd integral exponents and the active rounding mode.",
+  "A finite negative nonzero base and finite nonintegral exponent report EDOM and FE_INVALID. A finite negative exponent with a zero base reports ERANGE and FE_DIVBYZERO.",
+  "Overflow or an inexact tiny result reports ERANGE with the corresponding flags. Signaling NaNs take precedence and are quieted with FE_INVALID.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

@@ -1,0 +1,123 @@
+#!/usr/bin/env python3
+"""Certify the 2/pi table and its separation from quadrant boundaries."""
+
+import argparse
+from fractions import Fraction
+from hashlib import sha256
+from pathlib import Path
+
+import gmpy2
+
+TABLE_BITS = 16896
+MANTISSA_MAX = (1 << 64) - 1
+SEPARATION_BITS = 128
+
+
+def two_over_pi_floor():
+    pi = []
+    for mode in (gmpy2.RoundDown, gmpy2.RoundUp):
+        with gmpy2.context(precision=TABLE_BITS + 256, round=mode):
+            pi.append(gmpy2.const_pi())
+    floors = []
+    for mode, denominator in zip((gmpy2.RoundDown, gmpy2.RoundUp), reversed(pi)):
+        with gmpy2.context(precision=TABLE_BITS + 256, round=mode):
+            floors.append(int(gmpy2.floor(gmpy2.mul_2exp(2 / denominator, TABLE_BITS))))
+    if floors[0] != floors[1]:
+        raise ValueError("MPFR interval straddles the table's final bit")
+    return floors[0]
+
+
+def floor_sum(count, modulus, multiplier, offset):
+    """Sum floor((multiplier*i+offset)/modulus) for 0 <= i < count."""
+    total = 0
+    while True:
+        whole, multiplier = divmod(multiplier, modulus)
+        total += count * (count - 1) // 2 * whole
+        whole, offset = divmod(offset, modulus)
+        total += count * whole
+        crossing = multiplier * count + offset
+        if crossing < modulus:
+            return total
+        count, offset = divmod(crossing, modulus)
+        modulus, multiplier = multiplier, modulus
+
+
+def certify(table):
+    for k in range(-64, 16321):
+        modulus = 1 << (TABLE_BITS - k)
+        multiplier = (table * 2) % modulus
+        threshold = (modulus >> SEPARATION_BITS) + 2 * MANTISSA_MAX
+        base = floor_sum(MANTISSA_MAX, modulus, multiplier, multiplier)
+        below = MANTISSA_MAX + base - floor_sum(
+            MANTISSA_MAX, modulus, multiplier, multiplier + modulus - threshold)
+        above = floor_sum(MANTISSA_MAX, modulus, multiplier, multiplier + threshold) - base
+        if below or above:
+            raise ValueError(f"exponent {k}: {below} low and {above} high ambiguous residues")
+
+
+def certify_axis_constants():
+    bounds = []
+    for mode, sign in ((gmpy2.RoundDown, -1), (gmpy2.RoundUp, 1)):
+        with gmpy2.context(precision=512, round=mode):
+            pi = gmpy2.const_pi()
+            margin = gmpy2.mul_2exp(gmpy2.mpfr(sign), -79)
+            bounds.append([pi * multiple / 4 + margin for multiple in range(1, 5)])
+    for precision in (24, 53, 64):
+        for mode in (gmpy2.RoundToNearest, gmpy2.RoundDown, gmpy2.RoundUp, gmpy2.RoundToZero):
+            with gmpy2.context(precision=precision, round=mode):
+                for low, high in zip(*bounds, strict=True):
+                    if gmpy2.mpfr(low) != gmpy2.mpfr(high):
+                        raise ValueError("an axis constant straddles a target rounding boundary")
+
+
+def certify_erfc_tail():
+    def convergent(depth):
+        numerator, denominator = 0, 1
+        for n in range(depth, 0, -1):
+            numerator, denominator = 2 * n * denominator, 4 * denominator + numerator
+        return Fraction(2 * denominator, 4 * denominator + numerator)
+
+    # The denominator polynomials of adjacent convergents increase
+    # for positive x. Their gap is largest at the lower endpoint x=2.
+    gap = abs(convergent(384) - convergent(385))
+    if gap >= Fraction(1, 1 << 151):
+        raise ValueError("Gaussian continued-fraction interval is too wide")
+
+
+def certify_stirling_remainder():
+    values = [Fraction(0)] * 59
+    coefficients = []
+    for degree in range(59):
+        values[degree] = Fraction(1, degree + 1)
+        for index in range(degree, 0, -1):
+            values[index - 1] = index * (values[index - 1] - values[index])
+        if degree and degree % 2 == 0:
+            coefficients.append(abs(values[0]) / (degree * (degree - 1) * 64**(degree - 1)))
+    if not all(right < left for left, right in zip(coefficients, coefficients[1:])):
+        raise ValueError("Stirling correction terms are out of order")
+    if coefficients[-1] >= Fraction(1, 1 << 245):
+        raise ValueError("Stirling remainder bound at 64 is too large")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--table", type=Path, help="write the certified little-endian table bytes")
+    args = parser.parse_args()
+    for n in range(8):
+        for m in range(1, 10):
+            for a in range(10):
+                for b in range(10):
+                    assert floor_sum(n, m, a, b) == sum((a*i+b)//m for i in range(n))
+    table = two_over_pi_floor()
+    certify(table)
+    certify_axis_constants()
+    certify_erfc_tail()
+    certify_stirling_remainder()
+    raw = table.to_bytes(TABLE_BITS // 8, "little")
+    print("Certified 16,385 exponents for all nonzero 64-bit significands.")
+    print("Certified the pi/4 multiples within 2^-79 for all target rounding modes.")
+    print("Certified the 384-level Gaussian continued-fraction gap below 2^-151.")
+    print("Certified the positive-real Stirling remainder at 64 below 2^-245.")
+    print(f"{gmpy2.mpfr_version()} table SHA-256 {sha256(raw).hexdigest()}")
+    if args.table:
+        args.table.write_bytes(raw)

@@ -1,0 +1,45 @@
+#!/usr/bin/env python3
+"""Report production source and specification coverage of the math inventories."""
+
+import argparse
+import json
+
+from spec import load_project, production_sources
+
+
+def inventory_status(project, sources, header):
+    expected = {item.name for item in project.inventory
+                if item.header == header and item.kind == "functions"}
+    authored = {name for name in expected
+                if name in project.functions and project.functions[name].header == header}
+    implemented = authored & sources.keys()
+    missing = expected - implemented
+    families = {}
+    for name in sorted(missing):
+        family = name[:-1] if name[-1] in "fl" and name[:-1] in expected else name
+        families.setdefault(family, []).append(name)
+    return {
+        "inventoried": len(expected),
+        "specified": len(authored),
+        "implemented": len(implemented),
+        "missing_spec": sorted(expected - authored),
+        "missing_source": sorted(authored - implemented),
+        "remaining_families": families,
+    }
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--require-complete", action="store_true",
+                        help="fail when an inventoried math or complex function lacks its spec or source")
+    args = parser.parse_args()
+    project = load_project()
+    sources = production_sources(project)
+    report = {header: inventory_status(project, sources, header)
+              for header in ("math.h", "complex.h")}
+    print(json.dumps(report, indent=2))
+    return int(args.require_complete and any(row["remaining_families"] for row in report.values()))
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

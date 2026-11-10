@@ -19,9 +19,8 @@ bits 64
 default rel
 
 global perror:function
-extern __al_stdio_lock:data
-extern __al_lock:function
-extern __al_unlock:function
+extern __al_stream_lock:function
+extern __al_stream_unlock:function
 extern __errno_location:function
 extern stderr:data
 extern strlen:function
@@ -39,9 +38,9 @@ perror:
     mov r12, rdi
     call __errno_location
     mov r13d, [rax]
-    lea rdi, [rel __al_stdio_lock]
-    call __al_lock
     mov rbx, [rel stderr]
+    mov rdi, rbx
+    call __al_stream_lock
     test r12, r12
     jz .message
     mov rdi, r12
@@ -77,8 +76,8 @@ perror:
     mov edx, 1
     call __al_stream_write
 .unlock:
-    lea rdi, [rel __al_stdio_lock]
-    call __al_unlock
+    mov rdi, rbx
+    call __al_stream_unlock
     pop r14
     pop r13
     pop r12

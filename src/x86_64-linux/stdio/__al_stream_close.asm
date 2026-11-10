@@ -1,10 +1,13 @@
 ; Original locked disassociation. rdi = FILE, rsi != 0 keeps the object.
-; Input is discarded without seeking. Only buffered output is flushed.
+; The caller owns the stream and releases or retires the object afterwards.
 bits 64
 default rel
 
 global __al_stream_close:function
 extern __al_streams:data
+extern __al_stdio_lock:data
+extern __al_lock:function
+extern __al_unlock:function
 extern __al_stream_flush:function
 extern __al_stdio_errno:function
 extern close:function
@@ -23,8 +26,30 @@ __al_stream_close:
     xor r13d, r13d
     cmp qword [rbx], 0
     jl .already_closed
+
+    ; Unlink before closing the descriptor. A concurrent popen child
+    ; walks the registry and can never observe a reused descriptor here.
+    lea rdi, [rel __al_stdio_lock]
+    call __al_lock
+    lea rax, [rel __al_streams]
+.find:
+    mov rdx, [rax]
+    cmp rdx, rbx
+    je .unlink
+    test rdx, rdx
+    jz .unlinked
+    lea rax, [rdx + 16]
+    jmp .find
+.unlink:
+    mov rdx, [rbx + 16]
+    mov [rax], rdx
+.unlinked:
+    lea rdi, [rel __al_stdio_lock]
+    call __al_unlock
+
     cmp qword [rbx + 56], 2
     jne .close_descriptor
+    mov rdi, rbx
     call __al_stream_flush
     mov r13d, eax
 .close_descriptor:
@@ -33,34 +58,15 @@ __al_stream_close:
     or r13d, eax
     mov qword [rbx], -1
 
-    lea rax, [rel __al_streams]
-.find:
-    mov rdx, [rax]
-    cmp rdx, rbx
-    je .unlink
-    test rdx, rdx
-    jz .release_buffer
-    lea rax, [rdx + 16]
-    jmp .find
-.unlink:
-    mov rdx, [rbx + 16]
-    mov [rax], rdx
-.release_buffer:
     mov r14, [rbx + 8]
     test r14, 128                 ; separately allocated library buffer
-    jz .release_file
+    jz .release_buffer
     mov rdi, [rbx + 24]
     call free
-.release_file:
-    and r14, 8                    ; retain only dynamic object ownership
+.release_buffer:
+    and r14, 8
     mov [rbx + 8], r14
     mov qword [rbx + 24], 0
-    test r12, r12
-    jnz .done
-    test r14, r14
-    jz .done
-    mov rdi, rbx
-    call free
     jmp .done
 .already_closed:
     test r12, r12

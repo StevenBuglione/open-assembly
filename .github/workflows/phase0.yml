@@ -53,21 +53,64 @@ jobs:
           path: build/evidence/
           if-no-files-found: warn
 
+  mathematics:
+    name: Real and complex math gates
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b
+      - name: Run the independent math suites
+        run: ./tools/container make -k phase7-exact phase7-transcendental phase7-complex
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: mathematics-verification-evidence
+          path: build/evidence/
+          if-no-files-found: warn
+
+  applications:
+    name: Calendar formatting and Lua gates
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b
+      - name: Run date-formatting and Lua suites
+        run: ./tools/container make -k phase6-strftime phase6-lua
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: application-verification-evidence
+          path: build/evidence/
+          if-no-files-found: warn
+
   acceptance:
     name: acceptance
     if: always()
-    needs: [core, integration]
+    needs: [core, integration, mathematics, applications]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions: {}
     env:
       CORE_RESULT: ${{ needs.core.result }}
       INTEGRATION_RESULT: ${{ needs.integration.result }}
+      MATH_RESULT: ${{ needs.mathematics.result }}
+      APPLICATION_RESULT: ${{ needs.applications.result }}
     steps:
-      - name: Require both verification jobs
+      - name: Require all verification jobs
         shell: bash
         run: |
           set -euo pipefail
-          printf 'Core: %s\nIntegration: %s\n' "$CORE_RESULT" "$INTEGRATION_RESULT"
+          printf 'Core: %s\nIntegration: %s\nMathematics: %s\nApplications: %s\n' \
+            "$CORE_RESULT" "$INTEGRATION_RESULT" "$MATH_RESULT" "$APPLICATION_RESULT"
           test "$CORE_RESULT" = success
           test "$INTEGRATION_RESULT" = success
+          test "$MATH_RESULT" = success
+          test "$APPLICATION_RESULT" = success

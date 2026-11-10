@@ -1,0 +1,18 @@
+name = "nan"
+header = "math.h"
+prototype = "double nan(const char *tagp)"
+standard = ["C17 7.12.11.2"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:mpfr", "reference:ieee-bits", "diff:glibc"]
+provenance = "original"
+semantics = [
+  "Return the canonical positive quiet NaN. The payload tag is ignored.",
+  "Preserve errno and the floating exception flags.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

@@ -27,6 +27,7 @@ extern fflush
 extern fgetc
 extern fgetpos
 extern fgets
+extern flockfile
 extern fopen
 extern fprintf
 extern fputc
@@ -36,8 +37,11 @@ extern fread
 extern freopen
 extern fscanf
 extern fseek
+extern fseeko
 extern fsetpos
 extern ftell
+extern ftello
+extern funlockfile
 extern fwrite
 extern getc
 extern getc_unlocked

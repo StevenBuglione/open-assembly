@@ -19,9 +19,9 @@ bits 64
 default rel
 
 global fclose:function
-extern __al_stdio_lock:data
-extern __al_lock:function
-extern __al_unlock:function
+extern __al_stream_lock:function
+extern __al_stream_unlock_all:function
+extern __al_stream_unpin:function
 extern __al_stream_close:function
 
 section .text.fclose alloc exec nowrite progbits
@@ -31,14 +31,16 @@ fclose:
     push rbx
     push r12
     mov rbx, rdi
-    lea rdi, [rel __al_stdio_lock]
-    call __al_lock
+    call __al_stream_lock
     mov rdi, rbx
     xor esi, esi
     call __al_stream_close
     mov r12d, eax
-    lea rdi, [rel __al_stdio_lock]
-    call __al_unlock
+    mov rdi, rbx
+    call __al_stream_unlock_all
+    mov rdi, rbx
+    mov esi, 1
+    call __al_stream_unpin
     mov eax, r12d
     pop r12
     pop rbx

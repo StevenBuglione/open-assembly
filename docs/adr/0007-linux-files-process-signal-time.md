@@ -232,6 +232,16 @@ The calendar record uses nine consecutive 32-bit integers from `tm_sec`
 through `tm_isdst`, then a signed offset in seconds at byte 40 and a zone
 abbreviation pointer at byte 48. Its LP64 size and alignment are 56 and 8.
 
+`strftime` supports the C17 C locale conversions. Expand its compound
+forms through the same bounded renderer. Reserve the destination
+terminator before writing the first byte. The year and ISO week-year use
+at least four magnitude digits, with a sign for negative years. The
+two-digit forms use a nonnegative modulo 100. A negative `tm_isdst`
+makes the zone unavailable. Otherwise `%z` uses `tm_gmtoff` with minute
+precision when the hour magnitude fits two digits, and `%Z` uses the
+null-terminated `tm_zone` when present. Unsupported conversion sequences
+return zero. [C17 time formatting](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2310.pdf)
+
 For local time, consume TZif using bounded input and checked byte counts.
 Use the 64-bit transition block when present. Validate transition order,
 type indices, string offsets, and the format version before publishing a
@@ -240,7 +250,31 @@ beyond the recorded transitions. An empty `TZ` selects UTC. An absent
 `TZ` reads the system zone file. If a selected zone is unavailable or
 invalid, the initial policy falls back to UTC. Keep POSIX leap-free
 timestamps separate from leap-second metadata in TZif.
-Keep zone storage ownership and synchronization separate from clock syscalls.
+A file-backed zone is a regular file of at most 1 MiB. Open it without
+blocking, read its exact declared extent, and reject an incomplete record.
+Absolute paths are read directly. Relative zone names use
+`/usr/share/zoneinfo`, then `/etc/zoneinfo` for distributions with that
+layout. An initial colon selects file interpretation.
+Other TZ values may select an explicit POSIX rule. Rule designations
+have three through 63 ASCII characters. Support month/week/weekday
+and both year-day rule forms. An omitted DST schedule uses the March
+and November US transitions. A TZif v3 or v4 footer supports signed
+transition times through 167 hours. A validated cached
+zone owns its bytes until the environment value changes. A zone
+abbreviation remains usable until the caller changes TZ. Serialize zone
+replacement and conversion. Application code must synchronize concurrent
+changes to the environment.
+
+`localtime_r` adds the selected offset with checked signed arithmetic
+before applying the existing UTC Gregorian conversion. It publishes the
+offset, DST flag, and abbreviation with the calendar fields. `mktime`
+first normalizes arbitrary signed calendar fields. It checks candidate
+UTC instants against the zone rather than accepting an offset from the
+caller. A supplied DST flag selects a matching candidate when available.
+An unspecified fold selects the earlier instant. An unspecified gap
+normalizes forward from the pre-transition offset. Return an exact
+`time_t` and preserve errno on success, including a result of minus one.
+Leave the caller's record unchanged on representation failure.
 [TZif format](https://www.rfc-editor.org/rfc/rfc9636.html) · [Linux clock_gettime](https://man7.org/linux/man-pages/man2/clock_gettime.2.html)
 
 The Phase 6 exit gate is a pinned BusyBox applet subset linked against the

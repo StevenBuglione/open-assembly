@@ -1,0 +1,18 @@
+name = "nearbyintf"
+header = "math.h"
+prototype = "float nearbyintf(float x)"
+standard = ["C17 7.12.9.3"]
+deps = ["feraiseexcept", "fegetround"]
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:mpfr", "reference:ieee-bits", "diff:glibc"]
+provenance = "original"
+semantics = [
+  "Round x to an integral value in the active rounding mode. Preserve zero sign.",
+  "Do not raise FE_INEXACT merely for a discarded fraction.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

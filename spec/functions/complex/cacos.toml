@@ -1,0 +1,17 @@
+name = "cacos"
+header = "complex.h"
+prototype = "double _Complex cacos(double _Complex z)"
+standard = ["C17 7.3.5.1"]
+deps = ["fegetround", "feraiseexcept", "__errno_location"]
+errno = ["ERANGE"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:mpfr", "reference:complex-branch-cut", "diff:glibc"]
+provenance = "original"
+semantics = [
+  "Return the complex arc cosine on the principal branch, preserving the input side of the branch cut and the floating control state.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

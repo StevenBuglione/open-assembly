@@ -3,7 +3,7 @@
 
 This index lists authored function specifications. For implementation state, run `tools/queue status`.
 
-Specs: 214 of 591 inventoried functions. The inventory covers C17, the named POSIX subset, runtime ABI entries, and Linux compatibility extensions. see [inventory scope](cookbook/specifications.md#inventory-scope).
+Specs: 464 of 598 inventoried functions. The inventory covers C17, the named POSIX subset, runtime ABI entries, and Linux compatibility extensions. see [inventory scope](cookbook/specifications.md#inventory-scope).
 
 | Function | Header | Prototype | Standard |
 | --- | --- | --- | --- |
@@ -11,33 +11,160 @@ Specs: 214 of 591 inventoried functions. The inventory covers C17, the named POS
 | [`__errno_location`](../spec/functions/errno/__errno_location.toml) | `<errno.h>` | `int *__errno_location(void)` | Runtime ABI __errno_location, C17 7.5 |
 | [`__stack_chk_fail`](../spec/functions/compiler_rt/__stack_chk_fail.toml) | `<compiler_rt.h>` | `_Noreturn void __stack_chk_fail(void)` | Runtime ABI __stack_chk_fail |
 | [`_exit`](../spec/functions/unistd/_exit.toml) | `<unistd.h>` | `_Noreturn void _exit(int status)` | POSIX.1-2024 XSH _exit |
+| [`_longjmp`](../spec/functions/setjmp/_longjmp.toml) | `<setjmp.h>` | `_Noreturn void _longjmp(jmp_buf env, int value)` | Extension ABI _longjmp |
+| [`_setjmp`](../spec/functions/setjmp/_setjmp.toml) | `<setjmp.h>` | `int _setjmp(jmp_buf env)` | Extension ABI _setjmp |
+| [`abort`](../spec/functions/stdlib/abort.toml) | `<stdlib.h>` | `_Noreturn void abort(void)` | C17 7.22.4.1 |
+| [`abs`](../spec/functions/stdlib/abs.toml) | `<stdlib.h>` | `int abs(int value)` | C17 7.22.6.1 |
+| [`acos`](../spec/functions/math/acos.toml) | `<math.h>` | `double acos(double x)` | C17 7.12.4.1 |
+| [`acosf`](../spec/functions/math/acosf.toml) | `<math.h>` | `float acosf(float x)` | C17 7.12.4.1 |
+| [`acosh`](../spec/functions/math/acosh.toml) | `<math.h>` | `double acosh(double x)` | C17 7.12.5.1 |
+| [`acoshf`](../spec/functions/math/acoshf.toml) | `<math.h>` | `float acoshf(float x)` | C17 7.12.5.1 |
+| [`acoshl`](../spec/functions/math/acoshl.toml) | `<math.h>` | `long double acoshl(long double x)` | C17 7.12.5.1 |
+| [`acosl`](../spec/functions/math/acosl.toml) | `<math.h>` | `long double acosl(long double x)` | C17 7.12.4.1 |
 | [`aligned_alloc`](../spec/functions/stdlib/aligned_alloc.toml) | `<stdlib.h>` | `void *aligned_alloc(size_t alignment, size_t size)` | C17 7.22.3.1 |
+| [`asin`](../spec/functions/math/asin.toml) | `<math.h>` | `double asin(double x)` | C17 7.12.4.2 |
+| [`asinf`](../spec/functions/math/asinf.toml) | `<math.h>` | `float asinf(float x)` | C17 7.12.4.2 |
+| [`asinh`](../spec/functions/math/asinh.toml) | `<math.h>` | `double asinh(double x)` | C17 7.12.5.2 |
+| [`asinhf`](../spec/functions/math/asinhf.toml) | `<math.h>` | `float asinhf(float x)` | C17 7.12.5.2 |
+| [`asinhl`](../spec/functions/math/asinhl.toml) | `<math.h>` | `long double asinhl(long double x)` | C17 7.12.5.2 |
+| [`asinl`](../spec/functions/math/asinl.toml) | `<math.h>` | `long double asinl(long double x)` | C17 7.12.4.2 |
+| [`atan`](../spec/functions/math/atan.toml) | `<math.h>` | `double atan(double x)` | C17 7.12.4.3 |
+| [`atan2`](../spec/functions/math/atan2.toml) | `<math.h>` | `double atan2(double y, double x)` | C17 7.12.4.4 |
+| [`atan2f`](../spec/functions/math/atan2f.toml) | `<math.h>` | `float atan2f(float y, float x)` | C17 7.12.4.4 |
+| [`atan2l`](../spec/functions/math/atan2l.toml) | `<math.h>` | `long double atan2l(long double y, long double x)` | C17 7.12.4.4 |
+| [`atanf`](../spec/functions/math/atanf.toml) | `<math.h>` | `float atanf(float x)` | C17 7.12.4.3 |
+| [`atanh`](../spec/functions/math/atanh.toml) | `<math.h>` | `double atanh(double x)` | C17 7.12.5.3 |
+| [`atanhf`](../spec/functions/math/atanhf.toml) | `<math.h>` | `float atanhf(float x)` | C17 7.12.5.3 |
+| [`atanhl`](../spec/functions/math/atanhl.toml) | `<math.h>` | `long double atanhl(long double x)` | C17 7.12.5.3 |
+| [`atanl`](../spec/functions/math/atanl.toml) | `<math.h>` | `long double atanl(long double x)` | C17 7.12.4.3 |
 | [`atexit`](../spec/functions/stdlib/atexit.toml) | `<stdlib.h>` | `int atexit(void (*func)(void))` | C17 7.22.4.2 |
 | [`atof`](../spec/functions/stdlib/atof.toml) | `<stdlib.h>` | `double atof(const char *s)` | C17 7.22.1.1 |
 | [`atoi`](../spec/functions/stdlib/atoi.toml) | `<stdlib.h>` | `int atoi(const char *s)` | C17 7.22.1.2 |
 | [`atol`](../spec/functions/stdlib/atol.toml) | `<stdlib.h>` | `long atol(const char *s)` | C17 7.22.1.2 |
 | [`atoll`](../spec/functions/stdlib/atoll.toml) | `<stdlib.h>` | `long long atoll(const char *s)` | C17 7.22.1.2 |
 | [`bsearch`](../spec/functions/stdlib/bsearch.toml) | `<stdlib.h>` | `void *bsearch(const void *key, const void *base, size_t nmemb, size_t size, int (*compar)(const void *, const void *))` | C17 7.22.5.1 |
+| [`cabs`](../spec/functions/complex/cabs.toml) | `<complex.h>` | `double cabs(double _Complex z)` | C17 7.3.8.1 |
+| [`cabsf`](../spec/functions/complex/cabsf.toml) | `<complex.h>` | `float cabsf(float _Complex z)` | C17 7.3.8.1 |
+| [`cabsl`](../spec/functions/complex/cabsl.toml) | `<complex.h>` | `long double cabsl(long double _Complex z)` | C17 7.3.8.1 |
+| [`cacos`](../spec/functions/complex/cacos.toml) | `<complex.h>` | `double _Complex cacos(double _Complex z)` | C17 7.3.5.1 |
+| [`cacosf`](../spec/functions/complex/cacosf.toml) | `<complex.h>` | `float _Complex cacosf(float _Complex z)` | C17 7.3.5.1 |
+| [`cacosh`](../spec/functions/complex/cacosh.toml) | `<complex.h>` | `double _Complex cacosh(double _Complex z)` | C17 7.3.6.1 |
+| [`cacoshf`](../spec/functions/complex/cacoshf.toml) | `<complex.h>` | `float _Complex cacoshf(float _Complex z)` | C17 7.3.6.1 |
+| [`cacoshl`](../spec/functions/complex/cacoshl.toml) | `<complex.h>` | `long double _Complex cacoshl(long double _Complex z)` | C17 7.3.6.1 |
+| [`cacosl`](../spec/functions/complex/cacosl.toml) | `<complex.h>` | `long double _Complex cacosl(long double _Complex z)` | C17 7.3.5.1 |
 | [`calloc`](../spec/functions/stdlib/calloc.toml) | `<stdlib.h>` | `void *calloc(size_t nmemb, size_t size)` | C17 7.22.3.2 |
+| [`carg`](../spec/functions/complex/carg.toml) | `<complex.h>` | `double carg(double _Complex z)` | C17 7.3.9.1 |
+| [`cargf`](../spec/functions/complex/cargf.toml) | `<complex.h>` | `float cargf(float _Complex z)` | C17 7.3.9.1 |
+| [`cargl`](../spec/functions/complex/cargl.toml) | `<complex.h>` | `long double cargl(long double _Complex z)` | C17 7.3.9.1 |
+| [`casin`](../spec/functions/complex/casin.toml) | `<complex.h>` | `double _Complex casin(double _Complex z)` | C17 7.3.5.2 |
+| [`casinf`](../spec/functions/complex/casinf.toml) | `<complex.h>` | `float _Complex casinf(float _Complex z)` | C17 7.3.5.2 |
+| [`casinh`](../spec/functions/complex/casinh.toml) | `<complex.h>` | `double _Complex casinh(double _Complex z)` | C17 7.3.6.2 |
+| [`casinhf`](../spec/functions/complex/casinhf.toml) | `<complex.h>` | `float _Complex casinhf(float _Complex z)` | C17 7.3.6.2 |
+| [`casinhl`](../spec/functions/complex/casinhl.toml) | `<complex.h>` | `long double _Complex casinhl(long double _Complex z)` | C17 7.3.6.2 |
+| [`casinl`](../spec/functions/complex/casinl.toml) | `<complex.h>` | `long double _Complex casinl(long double _Complex z)` | C17 7.3.5.2 |
+| [`catan`](../spec/functions/complex/catan.toml) | `<complex.h>` | `double _Complex catan(double _Complex z)` | C17 7.3.5.3 |
+| [`catanf`](../spec/functions/complex/catanf.toml) | `<complex.h>` | `float _Complex catanf(float _Complex z)` | C17 7.3.5.3 |
+| [`catanh`](../spec/functions/complex/catanh.toml) | `<complex.h>` | `double _Complex catanh(double _Complex z)` | C17 7.3.6.3 |
+| [`catanhf`](../spec/functions/complex/catanhf.toml) | `<complex.h>` | `float _Complex catanhf(float _Complex z)` | C17 7.3.6.3 |
+| [`catanhl`](../spec/functions/complex/catanhl.toml) | `<complex.h>` | `long double _Complex catanhl(long double _Complex z)` | C17 7.3.6.3 |
+| [`catanl`](../spec/functions/complex/catanl.toml) | `<complex.h>` | `long double _Complex catanl(long double _Complex z)` | C17 7.3.5.3 |
+| [`cbrt`](../spec/functions/math/cbrt.toml) | `<math.h>` | `double cbrt(double x)` | C17 7.12.7.1 |
+| [`cbrtf`](../spec/functions/math/cbrtf.toml) | `<math.h>` | `float cbrtf(float x)` | C17 7.12.7.1 |
+| [`cbrtl`](../spec/functions/math/cbrtl.toml) | `<math.h>` | `long double cbrtl(long double x)` | C17 7.12.7.1 |
+| [`ccos`](../spec/functions/complex/ccos.toml) | `<complex.h>` | `double _Complex ccos(double _Complex z)` | C17 7.3.5.4 |
+| [`ccosf`](../spec/functions/complex/ccosf.toml) | `<complex.h>` | `float _Complex ccosf(float _Complex z)` | C17 7.3.5.4 |
+| [`ccosh`](../spec/functions/complex/ccosh.toml) | `<complex.h>` | `double _Complex ccosh(double _Complex z)` | C17 7.3.6.4 |
+| [`ccoshf`](../spec/functions/complex/ccoshf.toml) | `<complex.h>` | `float _Complex ccoshf(float _Complex z)` | C17 7.3.6.4 |
+| [`ccoshl`](../spec/functions/complex/ccoshl.toml) | `<complex.h>` | `long double _Complex ccoshl(long double _Complex z)` | C17 7.3.6.4 |
+| [`ccosl`](../spec/functions/complex/ccosl.toml) | `<complex.h>` | `long double _Complex ccosl(long double _Complex z)` | C17 7.3.5.4 |
+| [`ceil`](../spec/functions/math/ceil.toml) | `<math.h>` | `double ceil(double x)` | C17 7.12.9.1 |
+| [`ceilf`](../spec/functions/math/ceilf.toml) | `<math.h>` | `float ceilf(float x)` | C17 7.12.9.1 |
+| [`ceill`](../spec/functions/math/ceill.toml) | `<math.h>` | `long double ceill(long double x)` | C17 7.12.9.1 |
+| [`cexp`](../spec/functions/complex/cexp.toml) | `<complex.h>` | `double _Complex cexp(double _Complex z)` | C17 7.3.7.1 |
+| [`cexpf`](../spec/functions/complex/cexpf.toml) | `<complex.h>` | `float _Complex cexpf(float _Complex z)` | C17 7.3.7.1 |
+| [`cexpl`](../spec/functions/complex/cexpl.toml) | `<complex.h>` | `long double _Complex cexpl(long double _Complex z)` | C17 7.3.7.1 |
 | [`chmod`](../spec/functions/sys/stat/chmod.toml) | `<sys/stat.h>` | `int chmod(const char *path, mode_t mode)` | POSIX.1-2024 XSH chmod |
+| [`cimag`](../spec/functions/complex/cimag.toml) | `<complex.h>` | `double cimag(double _Complex z)` | C17 7.3.9.2 |
+| [`cimagf`](../spec/functions/complex/cimagf.toml) | `<complex.h>` | `float cimagf(float _Complex z)` | C17 7.3.9.2 |
+| [`cimagl`](../spec/functions/complex/cimagl.toml) | `<complex.h>` | `long double cimagl(long double _Complex z)` | C17 7.3.9.2 |
 | [`clearerr`](../spec/functions/stdio/clearerr.toml) | `<stdio.h>` | `void clearerr(FILE *stream)` | C17 7.21.10.1 |
 | [`clock`](../spec/functions/time/clock.toml) | `<time.h>` | `clock_t clock(void)` | C17 7.27.2.1 |
 | [`clock_getres`](../spec/functions/time/clock_getres.toml) | `<time.h>` | `int clock_getres(clockid_t clock_id, struct timespec *res)` | POSIX.1-2024 XSH clock_getres |
 | [`clock_gettime`](../spec/functions/time/clock_gettime.toml) | `<time.h>` | `int clock_gettime(clockid_t clock_id, struct timespec *tp)` | POSIX.1-2024 XSH clock_gettime |
 | [`clock_nanosleep`](../spec/functions/time/clock_nanosleep.toml) | `<time.h>` | `int clock_nanosleep(clockid_t clock_id, int flags, const struct timespec *request, struct timespec *remaining)` | POSIX.1-2024 XSH clock_nanosleep |
+| [`clog`](../spec/functions/complex/clog.toml) | `<complex.h>` | `double _Complex clog(double _Complex z)` | C17 7.3.7.2 |
+| [`clogf`](../spec/functions/complex/clogf.toml) | `<complex.h>` | `float _Complex clogf(float _Complex z)` | C17 7.3.7.2 |
+| [`clogl`](../spec/functions/complex/clogl.toml) | `<complex.h>` | `long double _Complex clogl(long double _Complex z)` | C17 7.3.7.2 |
 | [`close`](../spec/functions/unistd/close.toml) | `<unistd.h>` | `int close(int fd)` | POSIX.1-2024 XSH close |
 | [`closedir`](../spec/functions/dirent/closedir.toml) | `<dirent.h>` | `int closedir(DIR *dirp)` | POSIX.1-2024 XSH closedir |
+| [`conj`](../spec/functions/complex/conj.toml) | `<complex.h>` | `double _Complex conj(double _Complex z)` | C17 7.3.9.4 |
+| [`conjf`](../spec/functions/complex/conjf.toml) | `<complex.h>` | `float _Complex conjf(float _Complex z)` | C17 7.3.9.4 |
+| [`conjl`](../spec/functions/complex/conjl.toml) | `<complex.h>` | `long double _Complex conjl(long double _Complex z)` | C17 7.3.9.4 |
+| [`copysign`](../spec/functions/math/copysign.toml) | `<math.h>` | `double copysign(double x, double y)` | C17 7.12.11.1 |
+| [`copysignf`](../spec/functions/math/copysignf.toml) | `<math.h>` | `float copysignf(float x, float y)` | C17 7.12.11.1 |
+| [`copysignl`](../spec/functions/math/copysignl.toml) | `<math.h>` | `long double copysignl(long double x, long double y)` | C17 7.12.11.1 |
+| [`cos`](../spec/functions/math/cos.toml) | `<math.h>` | `double cos(double x)` | C17 7.12.4.5 |
+| [`cosf`](../spec/functions/math/cosf.toml) | `<math.h>` | `float cosf(float x)` | C17 7.12.4.5 |
+| [`cosh`](../spec/functions/math/cosh.toml) | `<math.h>` | `double cosh(double x)` | C17 7.12.5.4 |
+| [`coshf`](../spec/functions/math/coshf.toml) | `<math.h>` | `float coshf(float x)` | C17 7.12.5.4 |
+| [`coshl`](../spec/functions/math/coshl.toml) | `<math.h>` | `long double coshl(long double x)` | C17 7.12.5.4 |
+| [`cosl`](../spec/functions/math/cosl.toml) | `<math.h>` | `long double cosl(long double x)` | C17 7.12.4.5 |
+| [`cpow`](../spec/functions/complex/cpow.toml) | `<complex.h>` | `double _Complex cpow(double _Complex x, double _Complex y)` | C17 7.3.8.2 |
+| [`cpowf`](../spec/functions/complex/cpowf.toml) | `<complex.h>` | `float _Complex cpowf(float _Complex x, float _Complex y)` | C17 7.3.8.2 |
+| [`cpowl`](../spec/functions/complex/cpowl.toml) | `<complex.h>` | `long double _Complex cpowl(long double _Complex x, long double _Complex y)` | C17 7.3.8.2 |
+| [`cproj`](../spec/functions/complex/cproj.toml) | `<complex.h>` | `double _Complex cproj(double _Complex z)` | C17 7.3.9.5 |
+| [`cprojf`](../spec/functions/complex/cprojf.toml) | `<complex.h>` | `float _Complex cprojf(float _Complex z)` | C17 7.3.9.5 |
+| [`cprojl`](../spec/functions/complex/cprojl.toml) | `<complex.h>` | `long double _Complex cprojl(long double _Complex z)` | C17 7.3.9.5 |
+| [`creal`](../spec/functions/complex/creal.toml) | `<complex.h>` | `double creal(double _Complex z)` | C17 7.3.9.6 |
+| [`crealf`](../spec/functions/complex/crealf.toml) | `<complex.h>` | `float crealf(float _Complex z)` | C17 7.3.9.6 |
+| [`creall`](../spec/functions/complex/creall.toml) | `<complex.h>` | `long double creall(long double _Complex z)` | C17 7.3.9.6 |
 | [`creat`](../spec/functions/fcntl/creat.toml) | `<fcntl.h>` | `int creat(const char *path, mode_t mode)` | POSIX.1-2024 XSH creat |
+| [`csin`](../spec/functions/complex/csin.toml) | `<complex.h>` | `double _Complex csin(double _Complex z)` | C17 7.3.5.5 |
+| [`csinf`](../spec/functions/complex/csinf.toml) | `<complex.h>` | `float _Complex csinf(float _Complex z)` | C17 7.3.5.5 |
+| [`csinh`](../spec/functions/complex/csinh.toml) | `<complex.h>` | `double _Complex csinh(double _Complex z)` | C17 7.3.6.5 |
+| [`csinhf`](../spec/functions/complex/csinhf.toml) | `<complex.h>` | `float _Complex csinhf(float _Complex z)` | C17 7.3.6.5 |
+| [`csinhl`](../spec/functions/complex/csinhl.toml) | `<complex.h>` | `long double _Complex csinhl(long double _Complex z)` | C17 7.3.6.5 |
+| [`csinl`](../spec/functions/complex/csinl.toml) | `<complex.h>` | `long double _Complex csinl(long double _Complex z)` | C17 7.3.5.5 |
+| [`csqrt`](../spec/functions/complex/csqrt.toml) | `<complex.h>` | `double _Complex csqrt(double _Complex z)` | C17 7.3.8.3 |
+| [`csqrtf`](../spec/functions/complex/csqrtf.toml) | `<complex.h>` | `float _Complex csqrtf(float _Complex z)` | C17 7.3.8.3 |
+| [`csqrtl`](../spec/functions/complex/csqrtl.toml) | `<complex.h>` | `long double _Complex csqrtl(long double _Complex z)` | C17 7.3.8.3 |
+| [`ctan`](../spec/functions/complex/ctan.toml) | `<complex.h>` | `double _Complex ctan(double _Complex z)` | C17 7.3.5.6 |
+| [`ctanf`](../spec/functions/complex/ctanf.toml) | `<complex.h>` | `float _Complex ctanf(float _Complex z)` | C17 7.3.5.6 |
+| [`ctanh`](../spec/functions/complex/ctanh.toml) | `<complex.h>` | `double _Complex ctanh(double _Complex z)` | C17 7.3.6.6 |
+| [`ctanhf`](../spec/functions/complex/ctanhf.toml) | `<complex.h>` | `float _Complex ctanhf(float _Complex z)` | C17 7.3.6.6 |
+| [`ctanhl`](../spec/functions/complex/ctanhl.toml) | `<complex.h>` | `long double _Complex ctanhl(long double _Complex z)` | C17 7.3.6.6 |
+| [`ctanl`](../spec/functions/complex/ctanl.toml) | `<complex.h>` | `long double _Complex ctanl(long double _Complex z)` | C17 7.3.5.6 |
 | [`difftime`](../spec/functions/time/difftime.toml) | `<time.h>` | `double difftime(time_t later, time_t earlier)` | C17 7.27.2.2 |
 | [`dirfd`](../spec/functions/dirent/dirfd.toml) | `<dirent.h>` | `int dirfd(DIR *dirp)` | POSIX.1-2024 XSH dirfd |
 | [`dirname`](../spec/functions/libgen/dirname.toml) | `<libgen.h>` | `char *dirname(char *path)` | POSIX.1-2024 XSH dirname |
 | [`dup`](../spec/functions/unistd/dup.toml) | `<unistd.h>` | `int dup(int oldfd)` | POSIX.1-2024 XSH dup |
 | [`dup2`](../spec/functions/unistd/dup2.toml) | `<unistd.h>` | `int dup2(int oldfd, int newfd)` | POSIX.1-2024 XSH dup2 |
+| [`erf`](../spec/functions/math/erf.toml) | `<math.h>` | `double erf(double x)` | C17 7.12.8.1 |
+| [`erfc`](../spec/functions/math/erfc.toml) | `<math.h>` | `double erfc(double x)` | C17 7.12.8.2 |
+| [`erfcf`](../spec/functions/math/erfcf.toml) | `<math.h>` | `float erfcf(float x)` | C17 7.12.8.2 |
+| [`erfcl`](../spec/functions/math/erfcl.toml) | `<math.h>` | `long double erfcl(long double x)` | C17 7.12.8.2 |
+| [`erff`](../spec/functions/math/erff.toml) | `<math.h>` | `float erff(float x)` | C17 7.12.8.1 |
+| [`erfl`](../spec/functions/math/erfl.toml) | `<math.h>` | `long double erfl(long double x)` | C17 7.12.8.1 |
 | [`execv`](../spec/functions/unistd/execv.toml) | `<unistd.h>` | `int execv(const char *path, char *const argv[])` | POSIX.1-2024 XSH execv |
 | [`execve`](../spec/functions/unistd/execve.toml) | `<unistd.h>` | `int execve(const char *path, char *const argv[], char *const envp[])` | POSIX.1-2024 XSH execve |
 | [`execvp`](../spec/functions/unistd/execvp.toml) | `<unistd.h>` | `int execvp(const char *file, char *const argv[])` | POSIX.1-2024 XSH execvp |
 | [`exit`](../spec/functions/stdlib/exit.toml) | `<stdlib.h>` | `_Noreturn void exit(int status)` | C17 7.22.4.4 |
+| [`exp`](../spec/functions/math/exp.toml) | `<math.h>` | `double exp(double x)` | C17 7.12.6.1 |
+| [`exp2`](../spec/functions/math/exp2.toml) | `<math.h>` | `double exp2(double x)` | C17 7.12.6.2 |
+| [`exp2f`](../spec/functions/math/exp2f.toml) | `<math.h>` | `float exp2f(float x)` | C17 7.12.6.2 |
+| [`exp2l`](../spec/functions/math/exp2l.toml) | `<math.h>` | `long double exp2l(long double x)` | C17 7.12.6.2 |
+| [`expf`](../spec/functions/math/expf.toml) | `<math.h>` | `float expf(float x)` | C17 7.12.6.1 |
+| [`expl`](../spec/functions/math/expl.toml) | `<math.h>` | `long double expl(long double x)` | C17 7.12.6.1 |
+| [`expm1`](../spec/functions/math/expm1.toml) | `<math.h>` | `double expm1(double x)` | C17 7.12.6.4 |
+| [`expm1f`](../spec/functions/math/expm1f.toml) | `<math.h>` | `float expm1f(float x)` | C17 7.12.6.4 |
+| [`expm1l`](../spec/functions/math/expm1l.toml) | `<math.h>` | `long double expm1l(long double x)` | C17 7.12.6.4 |
+| [`fabs`](../spec/functions/math/fabs.toml) | `<math.h>` | `double fabs(double x)` | C17 7.12.7.2 |
+| [`fabsf`](../spec/functions/math/fabsf.toml) | `<math.h>` | `float fabsf(float x)` | C17 7.12.7.2 |
+| [`fabsl`](../spec/functions/math/fabsl.toml) | `<math.h>` | `long double fabsl(long double x)` | C17 7.12.7.2 |
 | [`fclose`](../spec/functions/stdio/fclose.toml) | `<stdio.h>` | `int fclose(FILE *stream)` | C17 7.21.5.1 |
+| [`fdim`](../spec/functions/math/fdim.toml) | `<math.h>` | `double fdim(double x, double y)` | C17 7.12.12.1 |
+| [`fdimf`](../spec/functions/math/fdimf.toml) | `<math.h>` | `float fdimf(float x, float y)` | C17 7.12.12.1 |
+| [`fdiml`](../spec/functions/math/fdiml.toml) | `<math.h>` | `long double fdiml(long double x, long double y)` | C17 7.12.12.1 |
 | [`fdopendir`](../spec/functions/dirent/fdopendir.toml) | `<dirent.h>` | `DIR *fdopendir(int fd)` | POSIX.1-2024 XSH fdopendir |
 | [`feclearexcept`](../spec/functions/fenv/feclearexcept.toml) | `<fenv.h>` | `int feclearexcept(int excepts)` | C17 7.6.2.1 |
 | [`fegetenv`](../spec/functions/fenv/fegetenv.toml) | `<fenv.h>` | `int fegetenv(fenv_t *envp)` | C17 7.6.4.1 |
@@ -57,6 +184,22 @@ Specs: 214 of 591 inventoried functions. The inventory covers C17, the named POS
 | [`fgetc`](../spec/functions/stdio/fgetc.toml) | `<stdio.h>` | `int fgetc(FILE *stream)` | C17 7.21.7.1 |
 | [`fgetpos`](../spec/functions/stdio/fgetpos.toml) | `<stdio.h>` | `int fgetpos(FILE *restrict stream, fpos_t *restrict pos)` | C17 7.21.9.1 |
 | [`fgets`](../spec/functions/stdio/fgets.toml) | `<stdio.h>` | `char * fgets(char *restrict dest, int n, FILE *restrict stream)` | C17 7.21.7.2 |
+| [`flockfile`](../spec/functions/stdio/flockfile.toml) | `<stdio.h>` | `void flockfile(FILE *stream)` | POSIX.1-2024 XSH flockfile |
+| [`floor`](../spec/functions/math/floor.toml) | `<math.h>` | `double floor(double x)` | C17 7.12.9.2 |
+| [`floorf`](../spec/functions/math/floorf.toml) | `<math.h>` | `float floorf(float x)` | C17 7.12.9.2 |
+| [`floorl`](../spec/functions/math/floorl.toml) | `<math.h>` | `long double floorl(long double x)` | C17 7.12.9.2 |
+| [`fma`](../spec/functions/math/fma.toml) | `<math.h>` | `double fma(double x, double y, double z)` | C17 7.12.13.1 |
+| [`fmaf`](../spec/functions/math/fmaf.toml) | `<math.h>` | `float fmaf(float x, float y, float z)` | C17 7.12.13.1 |
+| [`fmal`](../spec/functions/math/fmal.toml) | `<math.h>` | `long double fmal(long double x, long double y, long double z)` | C17 7.12.13.1 |
+| [`fmax`](../spec/functions/math/fmax.toml) | `<math.h>` | `double fmax(double x, double y)` | C17 7.12.12.2 |
+| [`fmaxf`](../spec/functions/math/fmaxf.toml) | `<math.h>` | `float fmaxf(float x, float y)` | C17 7.12.12.2 |
+| [`fmaxl`](../spec/functions/math/fmaxl.toml) | `<math.h>` | `long double fmaxl(long double x, long double y)` | C17 7.12.12.2 |
+| [`fmin`](../spec/functions/math/fmin.toml) | `<math.h>` | `double fmin(double x, double y)` | C17 7.12.12.3 |
+| [`fminf`](../spec/functions/math/fminf.toml) | `<math.h>` | `float fminf(float x, float y)` | C17 7.12.12.3 |
+| [`fminl`](../spec/functions/math/fminl.toml) | `<math.h>` | `long double fminl(long double x, long double y)` | C17 7.12.12.3 |
+| [`fmod`](../spec/functions/math/fmod.toml) | `<math.h>` | `double fmod(double x, double y)` | C17 7.12.10.1 |
+| [`fmodf`](../spec/functions/math/fmodf.toml) | `<math.h>` | `float fmodf(float x, float y)` | C17 7.12.10.1 |
+| [`fmodl`](../spec/functions/math/fmodl.toml) | `<math.h>` | `long double fmodl(long double x, long double y)` | C17 7.12.10.1 |
 | [`fopen`](../spec/functions/stdio/fopen.toml) | `<stdio.h>` | `FILE * fopen(const char *restrict path, const char *restrict mode)` | C17 7.21.5.3 |
 | [`fork`](../spec/functions/unistd/fork.toml) | `<unistd.h>` | `pid_t fork(void)` | POSIX.1-2024 XSH fork |
 | [`fprintf`](../spec/functions/stdio/fprintf.toml) | `<stdio.h>` | `int fprintf(FILE *restrict stream, const char *restrict format, ...)` | C17 7.21.6.1 |
@@ -66,12 +209,18 @@ Specs: 214 of 591 inventoried functions. The inventory covers C17, the named POS
 | [`fread`](../spec/functions/stdio/fread.toml) | `<stdio.h>` | `size_t fread(void *restrict dest, size_t size, size_t count, FILE *restrict stream)` | C17 7.21.8.1 |
 | [`free`](../spec/functions/stdlib/free.toml) | `<stdlib.h>` | `void free(void *ptr)` | C17 7.22.3.3 |
 | [`freopen`](../spec/functions/stdio/freopen.toml) | `<stdio.h>` | `FILE * freopen(const char *restrict path, const char *restrict mode, FILE *restrict stream)` | C17 7.21.5.4 |
+| [`frexp`](../spec/functions/math/frexp.toml) | `<math.h>` | `double frexp(double x, int *exp)` | C17 7.12.6.4 |
+| [`frexpf`](../spec/functions/math/frexpf.toml) | `<math.h>` | `float frexpf(float x, int *exp)` | C17 7.12.6.4 |
+| [`frexpl`](../spec/functions/math/frexpl.toml) | `<math.h>` | `long double frexpl(long double x, int *exp)` | C17 7.12.6.4 |
 | [`fscanf`](../spec/functions/stdio/fscanf.toml) | `<stdio.h>` | `int fscanf(FILE *restrict stream, const char *restrict format, ...)` | C17 7.21.6.2 |
 | [`fseek`](../spec/functions/stdio/fseek.toml) | `<stdio.h>` | `int fseek(FILE *stream, long offset, int whence)` | C17 7.21.9.2 |
+| [`fseeko`](../spec/functions/stdio/fseeko.toml) | `<stdio.h>` | `int fseeko(FILE *stream, off_t offset, int whence)` | POSIX.1-2024 XSH fseeko |
 | [`fsetpos`](../spec/functions/stdio/fsetpos.toml) | `<stdio.h>` | `int fsetpos(FILE *stream, const fpos_t *pos)` | C17 7.21.9.3 |
 | [`fstat`](../spec/functions/sys/stat/fstat.toml) | `<sys/stat.h>` | `int fstat(int fd, struct stat *buf)` | POSIX.1-2024 XSH fstat |
 | [`fstatat`](../spec/functions/sys/stat/fstatat.toml) | `<sys/stat.h>` | `int fstatat(int dirfd, const char *restrict path, struct stat *restrict buf, int flags)` | POSIX.1-2024 XSH fstatat |
 | [`ftell`](../spec/functions/stdio/ftell.toml) | `<stdio.h>` | `long ftell(FILE *stream)` | C17 7.21.9.4 |
+| [`ftello`](../spec/functions/stdio/ftello.toml) | `<stdio.h>` | `off_t ftello(FILE *stream)` | POSIX.1-2024 XSH ftello |
+| [`funlockfile`](../spec/functions/stdio/funlockfile.toml) | `<stdio.h>` | `void funlockfile(FILE *stream)` | POSIX.1-2024 XSH funlockfile |
 | [`fwrite`](../spec/functions/stdio/fwrite.toml) | `<stdio.h>` | `size_t fwrite(const void *restrict src, size_t size, size_t count, FILE *restrict stream)` | C17 7.21.8.2 |
 | [`getc`](../spec/functions/stdio/getc.toml) | `<stdio.h>` | `int getc(FILE *stream)` | C17 7.21.7.5 |
 | [`getc_unlocked`](../spec/functions/stdio/getc_unlocked.toml) | `<stdio.h>` | `int getc_unlocked(FILE *stream)` | POSIX.1-2024 XSH getc_unlocked |
@@ -83,6 +232,12 @@ Specs: 214 of 591 inventoried functions. The inventory covers C17, the named POS
 | [`getppid`](../spec/functions/unistd/getppid.toml) | `<unistd.h>` | `pid_t getppid(void)` | POSIX.1-2024 XSH getppid |
 | [`gmtime`](../spec/functions/time/gmtime.toml) | `<time.h>` | `struct tm *gmtime(const time_t *timer)` | C17 7.27.3.3 |
 | [`gmtime_r`](../spec/functions/time/gmtime_r.toml) | `<time.h>` | `struct tm *gmtime_r(const time_t *restrict timer, struct tm *restrict result)` | POSIX.1-2024 XSH gmtime_r |
+| [`hypot`](../spec/functions/math/hypot.toml) | `<math.h>` | `double hypot(double x, double y)` | C17 7.12.7.3 |
+| [`hypotf`](../spec/functions/math/hypotf.toml) | `<math.h>` | `float hypotf(float x, float y)` | C17 7.12.7.3 |
+| [`hypotl`](../spec/functions/math/hypotl.toml) | `<math.h>` | `long double hypotl(long double x, long double y)` | C17 7.12.7.3 |
+| [`ilogb`](../spec/functions/math/ilogb.toml) | `<math.h>` | `int ilogb(double x)` | C17 7.12.6.5 |
+| [`ilogbf`](../spec/functions/math/ilogbf.toml) | `<math.h>` | `int ilogbf(float x)` | C17 7.12.6.5 |
+| [`ilogbl`](../spec/functions/math/ilogbl.toml) | `<math.h>` | `int ilogbl(long double x)` | C17 7.12.6.5 |
 | [`ioctl`](../spec/functions/sys/ioctl/ioctl.toml) | `<sys/ioctl.h>` | `int ioctl(int fd, unsigned long request, ...)` | Extension ABI ioctl |
 | [`isalnum`](../spec/functions/ctype/isalnum.toml) | `<ctype.h>` | `int isalnum(int c)` | C17 7.4.1.1 |
 | [`isalpha`](../spec/functions/ctype/isalpha.toml) | `<ctype.h>` | `int isalpha(int c)` | C17 7.4.1.2 |
@@ -98,7 +253,42 @@ Specs: 214 of 591 inventoried functions. The inventory covers C17, the named POS
 | [`isupper`](../spec/functions/ctype/isupper.toml) | `<ctype.h>` | `int isupper(int c)` | C17 7.4.1.11 |
 | [`isxdigit`](../spec/functions/ctype/isxdigit.toml) | `<ctype.h>` | `int isxdigit(int c)` | C17 7.4.1.12 |
 | [`kill`](../spec/functions/signal/kill.toml) | `<signal.h>` | `int kill(pid_t pid, int sig)` | POSIX.1-2024 XSH kill |
+| [`ldexp`](../spec/functions/math/ldexp.toml) | `<math.h>` | `double ldexp(double x, int n)` | C17 7.12.6.6 |
+| [`ldexpf`](../spec/functions/math/ldexpf.toml) | `<math.h>` | `float ldexpf(float x, int n)` | C17 7.12.6.6 |
+| [`ldexpl`](../spec/functions/math/ldexpl.toml) | `<math.h>` | `long double ldexpl(long double x, int n)` | C17 7.12.6.6 |
+| [`lgamma`](../spec/functions/math/lgamma.toml) | `<math.h>` | `double lgamma(double x)` | C17 7.12.8.3 |
+| [`lgammaf`](../spec/functions/math/lgammaf.toml) | `<math.h>` | `float lgammaf(float x)` | C17 7.12.8.3 |
+| [`lgammal`](../spec/functions/math/lgammal.toml) | `<math.h>` | `long double lgammal(long double x)` | C17 7.12.8.3 |
+| [`llrint`](../spec/functions/math/llrint.toml) | `<math.h>` | `long long llrint(double x)` | C17 7.12.9.5 |
+| [`llrintf`](../spec/functions/math/llrintf.toml) | `<math.h>` | `long long llrintf(float x)` | C17 7.12.9.5 |
+| [`llrintl`](../spec/functions/math/llrintl.toml) | `<math.h>` | `long long llrintl(long double x)` | C17 7.12.9.5 |
+| [`llround`](../spec/functions/math/llround.toml) | `<math.h>` | `long long llround(double x)` | C17 7.12.9.7 |
+| [`llroundf`](../spec/functions/math/llroundf.toml) | `<math.h>` | `long long llroundf(float x)` | C17 7.12.9.7 |
+| [`llroundl`](../spec/functions/math/llroundl.toml) | `<math.h>` | `long long llroundl(long double x)` | C17 7.12.9.7 |
+| [`localeconv`](../spec/functions/locale/localeconv.toml) | `<locale.h>` | `struct lconv *localeconv(void)` | C17 7.11.2.1 |
+| [`localtime_r`](../spec/functions/time/localtime_r.toml) | `<time.h>` | `struct tm *localtime_r(const time_t *restrict timer, struct tm *restrict result)` | POSIX.1-2024 XSH localtime_r |
+| [`log`](../spec/functions/math/log.toml) | `<math.h>` | `double log(double x)` | C17 7.12.6.7 |
+| [`log10`](../spec/functions/math/log10.toml) | `<math.h>` | `double log10(double x)` | C17 7.12.6.8 |
+| [`log10f`](../spec/functions/math/log10f.toml) | `<math.h>` | `float log10f(float x)` | C17 7.12.6.8 |
+| [`log10l`](../spec/functions/math/log10l.toml) | `<math.h>` | `long double log10l(long double x)` | C17 7.12.6.8 |
+| [`log1p`](../spec/functions/math/log1p.toml) | `<math.h>` | `double log1p(double x)` | C17 7.12.6.9 |
+| [`log1pf`](../spec/functions/math/log1pf.toml) | `<math.h>` | `float log1pf(float x)` | C17 7.12.6.9 |
+| [`log1pl`](../spec/functions/math/log1pl.toml) | `<math.h>` | `long double log1pl(long double x)` | C17 7.12.6.9 |
+| [`log2`](../spec/functions/math/log2.toml) | `<math.h>` | `double log2(double x)` | C17 7.12.6.10 |
+| [`log2f`](../spec/functions/math/log2f.toml) | `<math.h>` | `float log2f(float x)` | C17 7.12.6.10 |
+| [`log2l`](../spec/functions/math/log2l.toml) | `<math.h>` | `long double log2l(long double x)` | C17 7.12.6.10 |
+| [`logb`](../spec/functions/math/logb.toml) | `<math.h>` | `double logb(double x)` | C17 7.12.6.11 |
+| [`logbf`](../spec/functions/math/logbf.toml) | `<math.h>` | `float logbf(float x)` | C17 7.12.6.11 |
+| [`logbl`](../spec/functions/math/logbl.toml) | `<math.h>` | `long double logbl(long double x)` | C17 7.12.6.11 |
+| [`logf`](../spec/functions/math/logf.toml) | `<math.h>` | `float logf(float x)` | C17 7.12.6.7 |
+| [`logl`](../spec/functions/math/logl.toml) | `<math.h>` | `long double logl(long double x)` | C17 7.12.6.7 |
 | [`longjmp`](../spec/functions/setjmp/longjmp.toml) | `<setjmp.h>` | `_Noreturn void longjmp(jmp_buf env, int val)` | C17 7.13.2.1 |
+| [`lrint`](../spec/functions/math/lrint.toml) | `<math.h>` | `long lrint(double x)` | C17 7.12.9.5 |
+| [`lrintf`](../spec/functions/math/lrintf.toml) | `<math.h>` | `long lrintf(float x)` | C17 7.12.9.5 |
+| [`lrintl`](../spec/functions/math/lrintl.toml) | `<math.h>` | `long lrintl(long double x)` | C17 7.12.9.5 |
+| [`lround`](../spec/functions/math/lround.toml) | `<math.h>` | `long lround(double x)` | C17 7.12.9.7 |
+| [`lroundf`](../spec/functions/math/lroundf.toml) | `<math.h>` | `long lroundf(float x)` | C17 7.12.9.7 |
+| [`lroundl`](../spec/functions/math/lroundl.toml) | `<math.h>` | `long lroundl(long double x)` | C17 7.12.9.7 |
 | [`lseek`](../spec/functions/unistd/lseek.toml) | `<unistd.h>` | `off_t lseek(int fd, off_t offset, int whence)` | POSIX.1-2024 XSH lseek |
 | [`lstat`](../spec/functions/sys/stat/lstat.toml) | `<sys/stat.h>` | `int lstat(const char *restrict path, struct stat *restrict buf)` | POSIX.1-2024 XSH lstat |
 | [`malloc`](../spec/functions/stdlib/malloc.toml) | `<stdlib.h>` | `void *malloc(size_t size)` | C17 7.22.3.4 |
@@ -109,7 +299,23 @@ Specs: 214 of 591 inventoried functions. The inventory covers C17, the named POS
 | [`memset`](../spec/functions/string/memset.toml) | `<string.h>` | `void *memset(void *s, int c, size_t n)` | C17 7.24.6.1 |
 | [`mkdir`](../spec/functions/sys/stat/mkdir.toml) | `<sys/stat.h>` | `int mkdir(const char *path, mode_t mode)` | POSIX.1-2024 XSH mkdir |
 | [`mkstemp`](../spec/functions/stdlib/mkstemp.toml) | `<stdlib.h>` | `int mkstemp(char *template)` | POSIX.1-2024 XSH mkstemp |
+| [`mktime`](../spec/functions/time/mktime.toml) | `<time.h>` | `time_t mktime(struct tm *value)` | C17 7.27.2.3 |
+| [`modf`](../spec/functions/math/modf.toml) | `<math.h>` | `double modf(double x, double *iptr)` | C17 7.12.6.12 |
+| [`modff`](../spec/functions/math/modff.toml) | `<math.h>` | `float modff(float x, float *iptr)` | C17 7.12.6.12 |
+| [`modfl`](../spec/functions/math/modfl.toml) | `<math.h>` | `long double modfl(long double x, long double *iptr)` | C17 7.12.6.12 |
+| [`nan`](../spec/functions/math/nan.toml) | `<math.h>` | `double nan(const char *tagp)` | C17 7.12.11.2 |
+| [`nanf`](../spec/functions/math/nanf.toml) | `<math.h>` | `float nanf(const char *tagp)` | C17 7.12.11.2 |
+| [`nanl`](../spec/functions/math/nanl.toml) | `<math.h>` | `long double nanl(const char *tagp)` | C17 7.12.11.2 |
 | [`nanosleep`](../spec/functions/time/nanosleep.toml) | `<time.h>` | `int nanosleep(const struct timespec *request, struct timespec *remaining)` | POSIX.1-2024 XSH nanosleep |
+| [`nearbyint`](../spec/functions/math/nearbyint.toml) | `<math.h>` | `double nearbyint(double x)` | C17 7.12.9.3 |
+| [`nearbyintf`](../spec/functions/math/nearbyintf.toml) | `<math.h>` | `float nearbyintf(float x)` | C17 7.12.9.3 |
+| [`nearbyintl`](../spec/functions/math/nearbyintl.toml) | `<math.h>` | `long double nearbyintl(long double x)` | C17 7.12.9.3 |
+| [`nextafter`](../spec/functions/math/nextafter.toml) | `<math.h>` | `double nextafter(double x, double y)` | C17 7.12.11.3 |
+| [`nextafterf`](../spec/functions/math/nextafterf.toml) | `<math.h>` | `float nextafterf(float x, float y)` | C17 7.12.11.3 |
+| [`nextafterl`](../spec/functions/math/nextafterl.toml) | `<math.h>` | `long double nextafterl(long double x, long double y)` | C17 7.12.11.3 |
+| [`nexttoward`](../spec/functions/math/nexttoward.toml) | `<math.h>` | `double nexttoward(double x, long double y)` | C17 7.12.11.4 |
+| [`nexttowardf`](../spec/functions/math/nexttowardf.toml) | `<math.h>` | `float nexttowardf(float x, long double y)` | C17 7.12.11.4 |
+| [`nexttowardl`](../spec/functions/math/nexttowardl.toml) | `<math.h>` | `long double nexttowardl(long double x, long double y)` | C17 7.12.11.4 |
 | [`open`](../spec/functions/fcntl/open.toml) | `<fcntl.h>` | `int open(const char *path, int flags, ...)` | POSIX.1-2024 XSH open |
 | [`openat`](../spec/functions/fcntl/openat.toml) | `<fcntl.h>` | `int openat(int dirfd, const char *path, int flags, ...)` | POSIX.1-2024 XSH openat |
 | [`opendir`](../spec/functions/dirent/opendir.toml) | `<dirent.h>` | `DIR *opendir(const char *name)` | POSIX.1-2024 XSH opendir |
@@ -136,6 +342,9 @@ Specs: 214 of 591 inventoried functions. The inventory covers C17, the named POS
 | [`posix_spawnattr_setsigdefault`](../spec/functions/spawn/posix_spawnattr_setsigdefault.toml) | `<spawn.h>` | `int posix_spawnattr_setsigdefault(posix_spawnattr_t *restrict attr, const sigset_t *restrict value)` | POSIX.1-2024 XSH posix_spawnattr_setsigdefault |
 | [`posix_spawnattr_setsigmask`](../spec/functions/spawn/posix_spawnattr_setsigmask.toml) | `<spawn.h>` | `int posix_spawnattr_setsigmask(posix_spawnattr_t *restrict attr, const sigset_t *restrict value)` | POSIX.1-2024 XSH posix_spawnattr_setsigmask |
 | [`posix_spawnp`](../spec/functions/spawn/posix_spawnp.toml) | `<spawn.h>` | `int posix_spawnp(pid_t *restrict pid, const char *restrict file, const posix_spawn_file_actions_t *restrict actions, const posix_spawnattr_t *restrict attr, char *const argv[restrict], char *const envp[restrict])` | POSIX.1-2024 XSH posix_spawnp |
+| [`pow`](../spec/functions/math/pow.toml) | `<math.h>` | `double pow(double x, double y)` | C17 7.12.7.4 |
+| [`powf`](../spec/functions/math/powf.toml) | `<math.h>` | `float powf(float x, float y)` | C17 7.12.7.4 |
+| [`powl`](../spec/functions/math/powl.toml) | `<math.h>` | `long double powl(long double x, long double y)` | C17 7.12.7.4 |
 | [`printf`](../spec/functions/stdio/printf.toml) | `<stdio.h>` | `int printf(const char *restrict format, ...)` | C17 7.21.6.3 |
 | [`putc`](../spec/functions/stdio/putc.toml) | `<stdio.h>` | `int putc(int c, FILE *stream)` | C17 7.21.7.7 |
 | [`putchar`](../spec/functions/stdio/putchar.toml) | `<stdio.h>` | `int putchar(int c)` | C17 7.21.7.8 |
@@ -148,14 +357,33 @@ Specs: 214 of 591 inventoried functions. The inventory covers C17, the named POS
 | [`readdir`](../spec/functions/dirent/readdir.toml) | `<dirent.h>` | `struct dirent *readdir(DIR *dirp)` | POSIX.1-2024 XSH readdir |
 | [`readlink`](../spec/functions/unistd/readlink.toml) | `<unistd.h>` | `ssize_t readlink(const char *restrict path, char *restrict buf, size_t size)` | POSIX.1-2024 XSH readlink |
 | [`realloc`](../spec/functions/stdlib/realloc.toml) | `<stdlib.h>` | `void *realloc(void *ptr, size_t size)` | C17 7.22.3.5 |
+| [`remainder`](../spec/functions/math/remainder.toml) | `<math.h>` | `double remainder(double x, double y)` | C17 7.12.10.2 |
+| [`remainderf`](../spec/functions/math/remainderf.toml) | `<math.h>` | `float remainderf(float x, float y)` | C17 7.12.10.2 |
+| [`remainderl`](../spec/functions/math/remainderl.toml) | `<math.h>` | `long double remainderl(long double x, long double y)` | C17 7.12.10.2 |
 | [`remove`](../spec/functions/stdio/remove.toml) | `<stdio.h>` | `int remove(const char *path)` | C17 7.21.4.1 |
+| [`remquo`](../spec/functions/math/remquo.toml) | `<math.h>` | `double remquo(double x, double y, int *quo)` | C17 7.12.10.3 |
+| [`remquof`](../spec/functions/math/remquof.toml) | `<math.h>` | `float remquof(float x, float y, int *quo)` | C17 7.12.10.3 |
+| [`remquol`](../spec/functions/math/remquol.toml) | `<math.h>` | `long double remquol(long double x, long double y, int *quo)` | C17 7.12.10.3 |
 | [`rename`](../spec/functions/stdio/rename.toml) | `<stdio.h>` | `int rename(const char *oldpath, const char *newpath)` | C17 7.21.4.2 |
 | [`rewind`](../spec/functions/stdio/rewind.toml) | `<stdio.h>` | `void rewind(FILE *stream)` | C17 7.21.9.5 |
+| [`rint`](../spec/functions/math/rint.toml) | `<math.h>` | `double rint(double x)` | C17 7.12.9.4 |
+| [`rintf`](../spec/functions/math/rintf.toml) | `<math.h>` | `float rintf(float x)` | C17 7.12.9.4 |
+| [`rintl`](../spec/functions/math/rintl.toml) | `<math.h>` | `long double rintl(long double x)` | C17 7.12.9.4 |
 | [`rmdir`](../spec/functions/unistd/rmdir.toml) | `<unistd.h>` | `int rmdir(const char *path)` | POSIX.1-2024 XSH rmdir |
+| [`round`](../spec/functions/math/round.toml) | `<math.h>` | `double round(double x)` | C17 7.12.9.6 |
+| [`roundf`](../spec/functions/math/roundf.toml) | `<math.h>` | `float roundf(float x)` | C17 7.12.9.6 |
+| [`roundl`](../spec/functions/math/roundl.toml) | `<math.h>` | `long double roundl(long double x)` | C17 7.12.9.6 |
+| [`scalbln`](../spec/functions/math/scalbln.toml) | `<math.h>` | `double scalbln(double x, long n)` | C17 7.12.6.13 |
+| [`scalblnf`](../spec/functions/math/scalblnf.toml) | `<math.h>` | `float scalblnf(float x, long n)` | C17 7.12.6.13 |
+| [`scalblnl`](../spec/functions/math/scalblnl.toml) | `<math.h>` | `long double scalblnl(long double x, long n)` | C17 7.12.6.13 |
+| [`scalbn`](../spec/functions/math/scalbn.toml) | `<math.h>` | `double scalbn(double x, int n)` | C17 7.12.6.13 |
+| [`scalbnf`](../spec/functions/math/scalbnf.toml) | `<math.h>` | `float scalbnf(float x, int n)` | C17 7.12.6.13 |
+| [`scalbnl`](../spec/functions/math/scalbnl.toml) | `<math.h>` | `long double scalbnl(long double x, int n)` | C17 7.12.6.13 |
 | [`scanf`](../spec/functions/stdio/scanf.toml) | `<stdio.h>` | `int scanf(const char *restrict format, ...)` | C17 7.21.6.4 |
 | [`setbuf`](../spec/functions/stdio/setbuf.toml) | `<stdio.h>` | `void setbuf(FILE *restrict stream, char *restrict buffer)` | C17 7.21.5.5 |
 | [`setenv`](../spec/functions/stdlib/setenv.toml) | `<stdlib.h>` | `int setenv(const char *name, const char *value, int overwrite)` | POSIX.1-2024 XSH setenv |
 | [`setjmp`](../spec/functions/setjmp/setjmp.toml) | `<setjmp.h>` | `int setjmp(jmp_buf env)` | C17 7.13.1.1, POSIX.1-2024 XSH setjmp |
+| [`setlocale`](../spec/functions/locale/setlocale.toml) | `<locale.h>` | `char *setlocale(int category, const char *locale)` | C17 7.11.1.1 |
 | [`setvbuf`](../spec/functions/stdio/setvbuf.toml) | `<stdio.h>` | `int setvbuf(FILE *restrict stream, char *restrict buffer, int mode, size_t size)` | C17 7.21.5.6 |
 | [`sigaction`](../spec/functions/signal/sigaction.toml) | `<signal.h>` | `int sigaction(int sig, const struct sigaction *restrict act, struct sigaction *restrict oldact)` | POSIX.1-2024 XSH sigaction |
 | [`sigaddset`](../spec/functions/signal/sigaddset.toml) | `<signal.h>` | `int sigaddset(sigset_t *set, int sig)` | POSIX.1-2024 XSH sigaddset |
@@ -169,8 +397,17 @@ Specs: 214 of 591 inventoried functions. The inventory covers C17, the named POS
 | [`sigprocmask`](../spec/functions/signal/sigprocmask.toml) | `<signal.h>` | `int sigprocmask(int how, const sigset_t *restrict set, sigset_t *restrict oldset)` | POSIX.1-2024 XSH sigprocmask |
 | [`sigsetjmp`](../spec/functions/setjmp/sigsetjmp.toml) | `<setjmp.h>` | `int sigsetjmp(sigjmp_buf env, int savemask)` | POSIX.1-2024 XSH sigsetjmp |
 | [`sigsuspend`](../spec/functions/signal/sigsuspend.toml) | `<signal.h>` | `int sigsuspend(const sigset_t *mask)` | POSIX.1-2024 XSH sigsuspend |
+| [`sin`](../spec/functions/math/sin.toml) | `<math.h>` | `double sin(double x)` | C17 7.12.4.6 |
+| [`sinf`](../spec/functions/math/sinf.toml) | `<math.h>` | `float sinf(float x)` | C17 7.12.4.6 |
+| [`sinh`](../spec/functions/math/sinh.toml) | `<math.h>` | `double sinh(double x)` | C17 7.12.5.5 |
+| [`sinhf`](../spec/functions/math/sinhf.toml) | `<math.h>` | `float sinhf(float x)` | C17 7.12.5.5 |
+| [`sinhl`](../spec/functions/math/sinhl.toml) | `<math.h>` | `long double sinhl(long double x)` | C17 7.12.5.5 |
+| [`sinl`](../spec/functions/math/sinl.toml) | `<math.h>` | `long double sinl(long double x)` | C17 7.12.4.6 |
 | [`snprintf`](../spec/functions/stdio/snprintf.toml) | `<stdio.h>` | `int snprintf(char *restrict dest, size_t size, const char *restrict format, ...)` | C17 7.21.6.5 |
 | [`sprintf`](../spec/functions/stdio/sprintf.toml) | `<stdio.h>` | `int sprintf(char *restrict dest, const char *restrict format, ...)` | C17 7.21.6.6 |
+| [`sqrt`](../spec/functions/math/sqrt.toml) | `<math.h>` | `double sqrt(double x)` | C17 7.12.7.5 |
+| [`sqrtf`](../spec/functions/math/sqrtf.toml) | `<math.h>` | `float sqrtf(float x)` | C17 7.12.7.5 |
+| [`sqrtl`](../spec/functions/math/sqrtl.toml) | `<math.h>` | `long double sqrtl(long double x)` | C17 7.12.7.5 |
 | [`sscanf`](../spec/functions/stdio/sscanf.toml) | `<stdio.h>` | `int sscanf(const char *restrict src, const char *restrict format, ...)` | C17 7.21.6.7 |
 | [`stat`](../spec/functions/sys/stat/stat.toml) | `<sys/stat.h>` | `int stat(const char *restrict path, struct stat *restrict buf)` | POSIX.1-2024 XSH stat |
 | [`strcat`](../spec/functions/string/strcat.toml) | `<string.h>` | `char *strcat(char *restrict dest, const char *restrict src)` | C17 7.24.3.1 |
@@ -181,6 +418,7 @@ Specs: 214 of 591 inventoried functions. The inventory covers C17, the named POS
 | [`strcspn`](../spec/functions/string/strcspn.toml) | `<string.h>` | `size_t strcspn(const char *s, const char *reject)` | C17 7.24.5.3 |
 | [`strdup`](../spec/functions/string/strdup.toml) | `<string.h>` | `char *strdup(const char *s)` | POSIX.1-2024 XSH strdup |
 | [`strerror`](../spec/functions/string/strerror.toml) | `<string.h>` | `char *strerror(int error)` | C17 7.24.6.2 |
+| [`strftime`](../spec/functions/time/strftime.toml) | `<time.h>` | `size_t strftime(char *restrict dest, size_t size, const char *restrict format, const struct tm *restrict value)` | C17 7.27.3.5 |
 | [`strlen`](../spec/functions/string/strlen.toml) | `<string.h>` | `size_t strlen(const char *s)` | C17 7.24.6.3 |
 | [`strncat`](../spec/functions/string/strncat.toml) | `<string.h>` | `char *strncat(char *restrict dest, const char *restrict src, size_t n)` | C17 7.24.3.2 |
 | [`strncmp`](../spec/functions/string/strncmp.toml) | `<string.h>` | `int strncmp(const char *a, const char *b, size_t n)` | C17 7.24.4.4 |
@@ -201,11 +439,23 @@ Specs: 214 of 591 inventoried functions. The inventory covers C17, the named POS
 | [`strtoumax`](../spec/functions/inttypes/strtoumax.toml) | `<inttypes.h>` | `uintmax_t strtoumax(const char *restrict s, char **restrict endptr, int base)` | C17 7.8.2.3 |
 | [`strxfrm`](../spec/functions/string/strxfrm.toml) | `<string.h>` | `size_t strxfrm(char *restrict dest, const char *restrict src, size_t n)` | C17 7.24.4.5 |
 | [`system`](../spec/functions/stdlib/system.toml) | `<stdlib.h>` | `int system(const char *command)` | C17 7.22.4.8 |
+| [`tan`](../spec/functions/math/tan.toml) | `<math.h>` | `double tan(double x)` | C17 7.12.4.7 |
+| [`tanf`](../spec/functions/math/tanf.toml) | `<math.h>` | `float tanf(float x)` | C17 7.12.4.7 |
+| [`tanh`](../spec/functions/math/tanh.toml) | `<math.h>` | `double tanh(double x)` | C17 7.12.5.6 |
+| [`tanhf`](../spec/functions/math/tanhf.toml) | `<math.h>` | `float tanhf(float x)` | C17 7.12.5.6 |
+| [`tanhl`](../spec/functions/math/tanhl.toml) | `<math.h>` | `long double tanhl(long double x)` | C17 7.12.5.6 |
+| [`tanl`](../spec/functions/math/tanl.toml) | `<math.h>` | `long double tanl(long double x)` | C17 7.12.4.7 |
+| [`tgamma`](../spec/functions/math/tgamma.toml) | `<math.h>` | `double tgamma(double x)` | C17 7.12.8.4 |
+| [`tgammaf`](../spec/functions/math/tgammaf.toml) | `<math.h>` | `float tgammaf(float x)` | C17 7.12.8.4 |
+| [`tgammal`](../spec/functions/math/tgammal.toml) | `<math.h>` | `long double tgammal(long double x)` | C17 7.12.8.4 |
 | [`time`](../spec/functions/time/time.toml) | `<time.h>` | `time_t time(time_t *out)` | C17 7.27.2.4 |
 | [`timespec_get`](../spec/functions/time/timespec_get.toml) | `<time.h>` | `int timespec_get(struct timespec *ts, int base)` | C17 7.27.2.5 |
 | [`tmpfile`](../spec/functions/stdio/tmpfile.toml) | `<stdio.h>` | `FILE *tmpfile(void)` | C17 7.21.4.3 |
 | [`tolower`](../spec/functions/ctype/tolower.toml) | `<ctype.h>` | `int tolower(int c)` | C17 7.4.2.1 |
 | [`toupper`](../spec/functions/ctype/toupper.toml) | `<ctype.h>` | `int toupper(int c)` | C17 7.4.2.2 |
+| [`trunc`](../spec/functions/math/trunc.toml) | `<math.h>` | `double trunc(double x)` | C17 7.12.9.8 |
+| [`truncf`](../spec/functions/math/truncf.toml) | `<math.h>` | `float truncf(float x)` | C17 7.12.9.8 |
+| [`truncl`](../spec/functions/math/truncl.toml) | `<math.h>` | `long double truncl(long double x)` | C17 7.12.9.8 |
 | [`umask`](../spec/functions/sys/stat/umask.toml) | `<sys/stat.h>` | `mode_t umask(mode_t mask)` | POSIX.1-2024 XSH umask |
 | [`ungetc`](../spec/functions/stdio/ungetc.toml) | `<stdio.h>` | `int ungetc(int c, FILE *stream)` | C17 7.21.7.10 |
 | [`unlink`](../spec/functions/unistd/unlink.toml) | `<unistd.h>` | `int unlink(const char *path)` | POSIX.1-2024 XSH unlink |

@@ -1,0 +1,17 @@
+name = "cimag"
+header = "complex.h"
+prototype = "double cimag(double _Complex z)"
+standard = ["C17 7.3.9.2"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:ieee-bits", "reference:mpfr", "diff:glibc"]
+provenance = "original"
+semantics = [
+  "Return the imaginary component without changing its representation or the floating environment.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

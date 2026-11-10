@@ -1,0 +1,19 @@
+name = "log2l"
+header = "math.h"
+prototype = "long double log2l(long double x)"
+standard = ["C17 7.12.6.10"]
+deps = ["fegetround", "feraiseexcept", "__errno_location"]
+errno = ["EDOM", "ERANGE"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:mpfr", "reference:fixed-point-interval", "diff:glibc"]
+provenance = "original"
+semantics = [
+  "Compute the base-two logarithm of x in the active rounding mode.",
+  "Either zero reports a pole with negative infinity, ERANGE and FE_DIVBYZERO. A negative nonzero operand reports a domain error with a quiet NaN, EDOM and FE_INVALID.",
+  "Positive infinity stays infinity. Quiet NaNs propagate, and signaling NaNs are quieted with FE_INVALID.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

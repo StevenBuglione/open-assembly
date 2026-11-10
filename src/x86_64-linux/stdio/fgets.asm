@@ -19,9 +19,8 @@ bits 64
 default rel
 
 global fgets:function
-extern __al_stdio_lock:data
-extern __al_lock:function
-extern __al_unlock:function
+extern __al_stream_lock:function
+extern __al_stream_unlock:function
 extern __al_stream_read:function
 
 section .text.fgets alloc exec nowrite progbits
@@ -39,8 +38,8 @@ fgets:
     mov r12, rdi                 ; destination
     lea r13, [rsi - 1]           ; bytes before the terminator
     xor r14d, r14d               ; bytes read
-    lea rdi, [rel __al_stdio_lock]
-    call __al_lock
+    mov rdi, rbx
+    call __al_stream_lock
     test r13, r13
     jz .terminate
 .next:
@@ -67,8 +66,8 @@ fgets:
 .terminate:
     mov byte [r12 + r14], 0
 .unlock:
-    lea rdi, [rel __al_stdio_lock]
-    call __al_unlock
+    mov rdi, rbx
+    call __al_stream_unlock
     mov rax, r12
     pop r14
     pop r13

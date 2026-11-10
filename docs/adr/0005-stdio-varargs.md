@@ -19,9 +19,19 @@ streams start fully buffered.
 
 Each stream owns a descriptor, buffer state, direction, one byte of
 pushback, EOF and error indicators, and a registry link. The library
-serializes operations through the existing lock hooks. It acquires the
-stdio lock before calling the allocator. Locked helpers can compose a
-single public operation without acquiring the same lock twice. Caller
+serializes ordinary operations with a recursive per-stream lock. Explicit
+`flockfile` ownership and implicit I/O share that lock and use the calling
+thread's TLS identity. Unlocked entry points bypass acquisition. The
+registry has a separate lock. It may be acquired under a stream lock
+during disassociation and rebinding. Code releases the registry lock
+before waiting for a stream. A flush of all streams pins a pointer
+snapshot under the registry lock, flushes each open output stream under
+its own lock, and drops the pins. Allocation failure returns EOF.
+Closing unlinks the stream before closing its descriptor, releases
+the stream lock, and defers object disposal until the last pin drops.
+Formatter and scanner scratch records each have their own lock, taken
+after any stream lock. These operations may acquire the allocator lock.
+Caller
 buffers supplied to setvbuf stay caller-owned. No library path frees those
 buffers. Future stream layouts can add wide orientation and conversion
 state without changing the public pointer ABI.

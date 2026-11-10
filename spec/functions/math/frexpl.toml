@@ -1,0 +1,18 @@
+name = "frexpl"
+header = "math.h"
+prototype = "long double frexpl(long double x, int *exp)"
+standard = ["C17 7.12.6.4"]
+deps = ["feraiseexcept"]
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:mpfr", "reference:ieee-bits", "diff:glibc"]
+provenance = "original"
+semantics = [
+  "Decompose finite nonzero x into a signed fraction of magnitude in [0.5, 1) and an integer power of two.",
+  "Store exponent zero for zero, infinity or NaN. Preserve the sign of zero.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

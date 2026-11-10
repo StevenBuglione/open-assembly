@@ -532,8 +532,8 @@ types = ["sigjmp_buf"]
 [[headers]]
 name = "time.h"
 standard = "POSIX.1-2024 XBD <time.h>"
-count = 11
-functions = ["clock_getres", "clock_gettime", "clock_nanosleep", "gmtime_r", "nanosleep"]
+count = 12
+functions = ["clock_getres", "clock_gettime", "clock_nanosleep", "gmtime_r", "localtime_r", "nanosleep"]
 types = ["clockid_t"]
 macros = ["CLOCK_REALTIME", "CLOCK_MONOTONIC", "CLOCK_PROCESS_CPUTIME_ID", "CLOCK_THREAD_CPUTIME_ID", "TIMER_ABSTIME"]
 
@@ -576,14 +576,20 @@ functions = ["dirname"]
 [[headers]]
 name = "stdio.h"
 standard = "POSIX.1-2024 XBD <stdio.h>"
-count = 4
-functions = ["getc_unlocked", "pclose", "popen", "putchar_unlocked"]
+count = 8
+functions = ["flockfile", "fseeko", "ftello", "funlockfile", "getc_unlocked", "pclose", "popen", "putchar_unlocked"]
 
 [[headers]]
 name = "string.h"
 standard = "POSIX.1-2024 XBD <string.h>"
 count = 1
 functions = ["strdup"]
+
+[[headers]]
+name = "setjmp.h"
+standard = "Extension ABI <setjmp.h>"
+count = 2
+functions = ["_longjmp", "_setjmp"]
 
 [[headers]]
 name = "stdio.h"

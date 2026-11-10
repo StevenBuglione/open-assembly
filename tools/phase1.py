@@ -255,10 +255,16 @@ def generate_stub(spec, directory, log):
     call __al_syscall
     ud2
 """
+    elif result_type == "long double _Complex":
+        external = ""
+        body = "    fldz\n    fldz\n    ret\n"
+    elif result_type == "double _Complex":
+        external = ""
+        body = "    pxor xmm0, xmm0\n    pxor xmm1, xmm1\n    ret\n"
     elif result_type == "long double":
         external = ""
         body = "    fldz\n    ret\n"
-    elif result_type in {"float", "double"}:
+    elif result_type in {"float", "double", "float _Complex"}:
         external = ""
         body = "    pxor xmm0, xmm0\n    ret\n"
     else:

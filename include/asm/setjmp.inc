@@ -2,6 +2,8 @@
 %ifndef OPEN_ASSEMBLY_7365746A6D702E68
 %define OPEN_ASSEMBLY_7365746A6D702E68
 
+extern _longjmp
+extern _setjmp
 extern longjmp
 extern setjmp
 extern siglongjmp

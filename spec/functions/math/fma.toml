@@ -1,0 +1,19 @@
+name = "fma"
+header = "math.h"
+prototype = "double fma(double x, double y, double z)"
+standard = ["C17 7.12.13.1"]
+deps = ["fegetround", "feraiseexcept", "__errno_location"]
+errno = ["EDOM", "ERANGE"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:mpfr", "reference:exact-rational", "diff:glibc"]
+provenance = "original"
+semantics = [
+  "Evaluate x times y plus z exactly and round once to the return type in the active mode.",
+  "When no NaN argument takes precedence, an infinite operand times zero or opposite infinite summands report EDOM and FE_INVALID.",
+  "Report ERANGE for overflow or an inexact tiny result. An exact cancellation is negative zero only under downward rounding.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

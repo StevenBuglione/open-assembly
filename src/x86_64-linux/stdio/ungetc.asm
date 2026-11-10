@@ -19,9 +19,8 @@ bits 64
 default rel
 
 global ungetc:function
-extern __al_stdio_lock:data
-extern __al_lock:function
-extern __al_unlock:function
+extern __al_stream_lock:function
+extern __al_stream_unlock:function
 extern __al_stream_flush:function
 extern __al_stdio_errno:function
 
@@ -37,8 +36,8 @@ ungetc:
     mov rbx, rsi
     mov r12, rdi
     and r12d, 255
-    lea rdi, [rel __al_stdio_lock]
-    call __al_lock
+    mov rdi, rbx
+    call __al_stream_lock
     cmp qword [rbx], 0
     jl .closed
     test qword [rbx + 8], 1
@@ -63,8 +62,8 @@ ungetc:
 .failure:
     mov r12d, -1
 .unlock:
-    lea rdi, [rel __al_stdio_lock]
-    call __al_unlock
+    mov rdi, rbx
+    call __al_stream_unlock
     mov eax, r12d
     pop r12
     pop rbx

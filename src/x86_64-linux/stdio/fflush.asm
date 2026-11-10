@@ -19,11 +19,12 @@ bits 64
 default rel
 
 global fflush:function
-extern __al_stdio_lock:data
-extern __al_lock:function
-extern __al_unlock:function
-extern __al_streams:data
+extern __al_stream_lock:function
+extern __al_stream_unlock:function
+extern __al_stream_snapshot:function
+extern __al_stream_unpin:function
 extern __al_stream_flush:function
+extern free:function
 
 section .text.fflush alloc exec nowrite progbits
 fflush:
@@ -31,33 +32,60 @@ fflush:
     mov rbp, rsp
     push rbx
     push r12
+    push r13
+    push r14
+    push r15
+    sub rsp, 8
     mov rbx, rdi
     xor r12d, r12d
-    lea rdi, [rel __al_stdio_lock]
-    call __al_lock
     test rbx, rbx
     jz .all
+    call __al_stream_lock
     mov rdi, rbx
     call __al_stream_flush
     mov r12d, eax
-    jmp .unlock
+    mov rdi, rbx
+    call __al_stream_unlock
+    jmp .done
 .all:
-    mov rbx, [rel __al_streams]
+    call __al_stream_snapshot
+    test rdx, rdx
+    jz .done
+    js .failure
+    mov r13, rax
+    mov r14, rdx
+    xor r15d, r15d
 .next:
-    test rbx, rbx
-    jz .unlock
+    mov rbx, [r13 + r15*8]
+    mov rdi, rbx
+    call __al_stream_lock
+    cmp qword [rbx], 0
+    jl .release
     cmp qword [rbx + 56], 2
-    jne .advance
+    jne .release
     mov rdi, rbx
     call __al_stream_flush
     or r12d, eax
-.advance:
-    mov rbx, [rbx + 16]
-    jmp .next
-.unlock:
-    lea rdi, [rel __al_stdio_lock]
-    call __al_unlock
+.release:
+    mov rdi, rbx
+    call __al_stream_unlock
+    mov rdi, rbx
+    xor esi, esi
+    call __al_stream_unpin
+    inc r15
+    cmp r15, r14
+    jb .next
+    mov rdi, r13
+    call free
+    jmp .done
+.failure:
+    mov r12d, -1
+.done:
     mov eax, r12d
+    add rsp, 8
+    pop r15
+    pop r14
+    pop r13
     pop r12
     pop rbx
     pop rbp

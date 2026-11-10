@@ -1,0 +1,19 @@
+name = "erfcl"
+header = "math.h"
+prototype = "long double erfcl(long double x)"
+standard = ["C17 7.12.8.2"]
+deps = ["fegetround", "feraiseexcept", "__errno_location"]
+errno = ["ERANGE"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:mpfr", "reference:fixed-point-interval", "diff:glibc"]
+provenance = "original"
+semantics = [
+  "Compute the complementary error function in the active rounding mode.",
+  "Return one for either zero, zero for positive infinity, and two for negative infinity.",
+  "Quiet signaling NaNs and raise FE_INVALID. A tiny inexact result raises FE_UNDERFLOW and FE_INEXACT with ERANGE.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

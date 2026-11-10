@@ -24,8 +24,11 @@ extern __al_lock:function
 extern __al_unlock:function
 extern __al_stream_close:function
 extern __al_stdio_open:function
-extern __al_stream_init:function
-extern free:function
+extern __al_stream_rebind:function
+extern __al_stream_lock:function
+extern __al_stream_unlock:function
+extern __al_stream_unlock_all:function
+extern __al_stream_unpin:function
 
 section .text.freopen alloc exec nowrite progbits
 freopen:
@@ -38,8 +41,8 @@ freopen:
     mov rbx, rdx                 ; existing stream
     mov r12, rdi                 ; pathname
     mov r13, rsi                 ; mode
-    lea rdi, [rel __al_stdio_lock]
-    call __al_lock
+    mov rdi, rbx
+    call __al_stream_lock
     mov rdi, rbx
     mov esi, 1                   ; keep the stream object
     call __al_stream_close
@@ -48,21 +51,29 @@ freopen:
     call __al_stdio_open
     test rax, rax
     js .failure
+    mov r12, rax                  ; replacement descriptor
+    mov r13, rdx
+    or r13, [rbx + 8]            ; retain allocation ownership
+    lea rdi, [rel __al_stdio_lock]
+    call __al_lock
     mov rdi, rbx
-    mov rsi, rax
-    or rdx, [rbx + 8]           ; retain allocation ownership
-    call __al_stream_init
-    mov r14, rbx
-    jmp .unlock
-.failure:
-    xor r14d, r14d
-    test qword [rbx + 8], 8
-    jz .unlock
-    mov rdi, rbx
-    call free
-.unlock:
+    mov rsi, r12
+    mov rdx, r13
+    call __al_stream_rebind
     lea rdi, [rel __al_stdio_lock]
     call __al_unlock
+    mov rdi, rbx
+    call __al_stream_unlock
+    mov r14, rbx
+    jmp .done
+.failure:
+    mov rdi, rbx
+    call __al_stream_unlock_all
+    mov rdi, rbx
+    mov esi, 1
+    call __al_stream_unpin
+    xor r14d, r14d
+.done:
     mov rax, r14
     pop r14
     pop r13

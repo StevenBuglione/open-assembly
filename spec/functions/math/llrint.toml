@@ -1,0 +1,18 @@
+name = "llrint"
+header = "math.h"
+prototype = "long long llrint(double x)"
+standard = ["C17 7.12.9.5"]
+deps = ["__errno_location", "feraiseexcept", "fegetround"]
+errno = ["EDOM"]
+mt_safe = true
+as_safe = true
+oracles = ["reference:mpfr", "reference:ieee-bits", "diff:glibc"]
+provenance = "original"
+semantics = [
+  "Use the current rounding mode and raise FE_INEXACT for an inexact valid result.",
+  "For infinity, NaN, or a result outside the signed return type, return the signed minimum and report EDOM and FE_INVALID.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

@@ -1,0 +1,18 @@
+name = "ceill"
+header = "math.h"
+prototype = "long double ceill(long double x)"
+standard = ["C17 7.12.9.1"]
+deps = ["feraiseexcept"]
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:mpfr", "reference:ieee-bits", "diff:glibc"]
+provenance = "original"
+semantics = [
+  "Return x rounded toward positive infinity to an integral value, preserving zero sign.",
+  "Do not raise FE_INEXACT merely for a discarded fraction.",
+]
+
+[abi]
+narrow_args = []
+variadic = false
