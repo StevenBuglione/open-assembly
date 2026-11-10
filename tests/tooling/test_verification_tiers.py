@@ -11,17 +11,18 @@ import unittest
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "tools"))
+from failure_journal import hash_json
 from gate import GateError
 from math_production import SCOPE as MATH_WRAPPER_SCOPE, SECONDS as MATH_WRAPPER_SECONDS, WRAPPERS
 from production import libfuzzer_seconds
 from spec import sha256_file, snapshot_inputs
 from musl_authorship import ARCHIVE_SHA256, POLICY
 from runtime_manifest_gate import (FILENO_DESCRIPTORLESS, FILENO_REVIEW, FUZZ_SEED, PLANS as MANIFEST_PLANS,
-                                   REQUIRED_CHECKS as MANIFEST_CHECKS, bind_descriptorless_scope,
+                                   REQUIRED_CHECKS as MANIFEST_CHECKS, STAT_ENGINE, bind_descriptorless_scope,
                                    manifest_dependency_bindings, pending_dependency)
 from verify_tiers import (MANIFEST_PRODUCTION_GROUPS, PHASES, SCOPED_WRAPPER_BATCHES, check_allocator_benchmark,
                           check_authorship, evidence_json, fresh_report, gate, invoke, manifest_production_reports,
-                          math_wrapper_report, scoped_wrapper_report)
+                          math_wrapper_report, scoped_wrapper_report, stat_tier_binding)
 
 
 class TierEvidence(unittest.TestCase):
@@ -113,6 +114,22 @@ class TierEvidence(unittest.TestCase):
         self.enterContext(patch("verify_tiers.manifest_inputs", side_effect=lambda name: records[name]["inputs"]))
         self.enterContext(patch("runtime_manifest_gate.ROOT", self.root))
         self.enterContext(patch("runtime_manifest_gate.manifest_inputs", side_effect=lambda name: records[name]["inputs"]))
+        archive = {"crt1.o": "b" * 64, "libopenasm.a": "d" * 64,
+                   "obj/internal/__al_stat_query.o": "c" * 64, "obj/rt/__errno_location.o": "c" * 64}
+        archive.update({f"obj/posix/{name}.o": "c" * 64
+                        for symbols in MANIFEST_PRODUCTION_GROUPS.values() for name in symbols})
+        functions = {}
+        for name, scope, obj in ((STAT_ENGINE, "production-private-dependency", "obj/internal/__al_stat_query.o"),
+                                 ("__errno_location", "production-runtime-function", "obj/rt/__errno_location.o")):
+            record = {**self.data, "scope": scope, "function": name}
+            path = self.report.parent / f"{name}.production.json"
+            path.write_text(json.dumps(record))
+            functions[name] = {"evidence": path.relative_to(self.root).as_posix(), "evidence_sha256": sha256_file(path),
+                               "object": obj, "object_sha256": "c" * 64, "archive_sha256": "d" * 64}
+        self.stat_binding = {"outcome": "pass", "engine": STAT_ENGINE, "functions": functions,
+                             "runtime_artifacts_sha256": hash_json(archive)}
+        self.enterContext(patch("verify_tiers.manifest_stat_binding", return_value=self.stat_binding))
+        self.enterContext(patch("runtime_manifest_gate.manifest_stat_binding", return_value=self.stat_binding))
         for symbols in MANIFEST_PRODUCTION_GROUPS.values():
             for name in symbols:
                 source = Path(f"src/x86_64-linux/posix/{name}.asm")
@@ -125,8 +142,9 @@ class TierEvidence(unittest.TestCase):
                 checks["differential_fuzz"].update(
                     elapsed_s=60.01, records=512, runs=["candidate", "glibc", "musl"],
                     sha256={"candidate": "a" * 64, "glibc": "a" * 64, "musl": "a" * 64, "input": "b" * 64})
-                archive = {"libopenasm.a": "d" * 64}
                 checks["runtime_build"]["artifacts"] = {"first": archive, "second": archive}
+                if MANIFEST_PLANS[name].private_engine == STAT_ENGINE:
+                    checks["dependency_closure"] = self.stat_binding
                 if required := MANIFEST_PLANS[name].required_production:
                     checks["production_dependencies"] = manifest_dependency_bindings(required)
                 record = {**self.data, "scope": "production-runtime-manifest-function", "function": name,
@@ -142,7 +160,8 @@ class TierEvidence(unittest.TestCase):
         self.assertTrue(MANIFEST_PRODUCTION_GROUPS.keys() <= set(PHASES))
         self.assertEqual({name for group in MANIFEST_PRODUCTION_GROUPS.values() for name in group},
                          {"getpid", "getppid", "pipe", "pipe2", "open", "openat", "readlink", "unlink", "rmdir",
-                          "waitpid", "wait", "execve", "execv"})
+                          "waitpid", "wait", "execve", "execv", "fstat", "fstatat", "stat", "lstat",
+                          "wcslen", "wcscmp", "wcsncmp", "wmemchr"})
         with patch("verify_tiers.time_ns", return_value=self.started):
             for group, symbols in MANIFEST_PRODUCTION_GROUPS.items():
                 with self.subTest(group=group), patch("verify_tiers.invoke") as invoke_gate:
@@ -245,6 +264,33 @@ class TierEvidence(unittest.TestCase):
                 manifest_production_reports(self.started, group)
             child.write_bytes(original)
             self.assertEqual(tuple(manifest_production_reports(self.started, group)), (dependency, dependent))
+
+    def test_stat_tier_requires_fresh_helper_and_errno_and_the_same_artifacts(self):
+        records = self.manifest_reports()
+        group = "production-stat"
+        self.assertEqual(tuple(manifest_production_reports(self.started, group)), ("fstat", "fstatat", "stat", "lstat"))
+        for name in (STAT_ENGINE, "__errno_location"):
+            child = self.report.parent / f"{name}.production.json"
+            original = child.read_bytes()
+            os.utime(child, ns=(self.started - 1, self.started - 1))
+            with self.assertRaisesRegex(GateError, "no fresh report"):
+                stat_tier_binding(self.started)
+            child.write_bytes(original + b" ")
+            with self.assertRaisesRegex(GateError, "report changed after binding"):
+                stat_tier_binding(self.started)
+            child.write_bytes(original)
+        path = self.report.parent / "fstat.production.json"
+        record = deepcopy(records["fstat"])
+        record["checks"]["runtime_build"]["artifacts"]["second"] = {"libopenasm.a": "d" * 64}
+        path.write_text(json.dumps(record))
+        with self.assertRaisesRegex(GateError, "complete matching candidate runtime builds"):
+            manifest_production_reports(self.started, group)
+        record = deepcopy(records["fstat"])
+        record["checks"]["runtime_build"]["artifacts"] = {stage: {"libopenasm.a": "d" * 64}
+                                                          for stage in ("first", "second")}
+        path.write_text(json.dumps(record))
+        with self.assertRaisesRegex(ValueError, "archive or object differs"):
+            manifest_production_reports(self.started, group)
 
     def scoped_reports(self):
         sources, records, groups = {}, {}, {}

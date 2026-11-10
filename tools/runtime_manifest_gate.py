@@ -7,6 +7,7 @@ from functools import partial
 from hashlib import sha256
 from itertools import chain
 import json
+import math
 import os
 from pathlib import Path
 import random
@@ -19,12 +20,14 @@ import tempfile
 import time
 
 from branch_coverage import verify_coverage
+from failure_journal import hash_json, unique_object
 from gate import (BUILD, COMPILE_FLAGS, EVIDENCE, LINK_FLAGS, CandidateFailure, GateError, checked,
                   finish_function_gate, identify_tools, nm_symbols, verify_setup, write_evidence)
 from phase1 import NASM, build_case, build_runtime, load_manifest as load_phase1_manifest
 from phase4 import Probe, load_probes, observation, parse_probe
 from phase6 import (ABI_FIXTURES, COMPAT as COMPAT_PUBLIC, COMPAT_FAULT_WRAPPERS, PATH_EXEC,
                     PROCESS as PROCESS_PUBLIC, PUBLIC as FILE_PUBLIC, SUITE as FILE_SUITE, run_cases, run_stubs)
+from phase9 import WIDE as WIDE_PUBLIC
 from production import CANDIDATE_ROOT, applicable_variants, phase2_inputs, result_type, source_paths
 from spec import ROOT, load_project, regular_file, sha256_file, snapshot_inputs
 
@@ -49,6 +52,7 @@ class Plan:
     private_helpers: tuple = ()
     abi_result: bool = False
     required_production: tuple = ()
+    original_host_macro: str = "OA_PHASE6_HOST"
 
 
 FCNTL = Path("tests/phase6/fcntl")
@@ -126,6 +130,19 @@ EXEC_SEMANTIC_MUTANTS = {
 }
 EXECVP_FAULT = ((EXEC_IDENTITY / "allocation_fault.c", ("malloc", "free")),)
 EXECVP_HELPERS = ("__al_exec_path_env", "__al_heap", "getenv", "malloc", "free")
+STAT_IDENTITY = Path("tests/phase6/stat_identity")
+STAT_WRAPPER_SUFFIX = "stat-wrapper"
+STAT_ENGINE = "__al_stat_query"
+STAT_SEMANTIC_MUTANTS = {
+    "stat": (("stat-do-not-follow-link", "    xor ecx, ecx\n", "    mov ecx, 256\n"),),
+    "lstat": (("lstat-follow-link", "    mov ecx, 256                  ; AT_SYMLINK_NOFOLLOW\n", "    xor ecx, ecx\n"),),
+    "fstat": (("fstat-discard-descriptor", "    movsxd rsi, edi\n", "    mov rsi, -1\n"),),
+    "fstatat": (("fstatat-drop-flags", "    movsxd rcx, ecx\n", "    xor ecx, ecx\n"),),
+}
+WIDE_CORE = ("wcslen", "wcscmp", "wcsncmp", "wmemchr")
+WIDE_SUITE = Path("tests/phase9/wide")
+WIDE_SUPPLEMENT = Path("tests/phase9/wide_core")
+WIDE_CONTRACT = Path("docs/adr/0012-c-utf8-multibyte.md")
 FILE_CONTRACTS = (Path("docs/adr/0007-linux-files-process-signal-time.md"),
                   Path("docs/cookbook/linux-file-verification.md"))
 ALLOCATOR = Path("tests/allocator-production")
@@ -173,7 +190,7 @@ FILENO_DOMAIN_FIXED_INPUTS = (
     "Makefile", "tools/gen", "tools/phase1.py", "tools/spec.py",
     *(str(path) for path in (*STREAM_CONTRACTS, *FILENO_DOMAIN_CONTRACTS)),
 )
-FILENO_DOMAIN_SHA256 = "2826cbb0a797195dfde1165cb2585fba70471254138976105e4d19f3eaa2c3f7"
+FILENO_DOMAIN_SHA256 = "e3ddd8d9541f121d2dd599efd804eff5201306f09a3c228b521bd77ea6aad36f"
 PLANS = {
     **{name: Plan(FILE_SUITE, frozenset(FILE_PUBLIC), ABI_FIXTURES,
                   "file-abi", f"file-{name}", ((f"file-{name}", codes),),
@@ -241,6 +258,18 @@ PLANS = {
                   wrapper_suffix="execvp-wrapper", private_helpers=EXECVP_HELPERS if name == "execvp" else (),
                   abi_result=True, required_production=("execve",) if name == "execv" else ())
        for name, mutations in EXEC_MUTATIONS.items()},
+    **{name: Plan(FILE_SUITE, frozenset(FILE_PUBLIC), ABI_FIXTURES, f"info-{name}-typed-abi", f"info-{name}",
+                  ((f"info-{name}", (16, 17, 18)),), f"info-{name}-fuzz", (16, 64), FILE_CONTRACTS,
+                  ((FILE_SUITE / "fault.c", ("__al_syscall",)),), private_engine=STAT_ENGINE,
+                  semantic_mutants=mutants, supplement=STAT_IDENTITY, wrapper_suffix=STAT_WRAPPER_SUFFIX,
+                  private_helpers=("fstatat",) if name in {"stat", "lstat"} else (), abi_result=True,
+                  required_production=("fstatat",) if name in {"stat", "lstat"} else ())
+       for name, mutants in STAT_SEMANTIC_MUTANTS.items()},
+    **{name: Plan(WIDE_SUITE, frozenset(WIDE_PUBLIC), (Path("tests/phase2/abi.asm"),),
+                  f"wide-core-{name}-typed-abi", f"wide-core-{name}-guard",
+                  ((f"wide-core-{name}-typed-abi", (11, 12, 13)),), f"wide-core-{name}-fuzz", (16, 64),
+                  (WIDE_CONTRACT,), supplement=WIDE_SUPPLEMENT, abi_result=True, original_host_macro="OA_PHASE9_HOST")
+       for name in WIDE_CORE},
     "fcntl": Plan(
         FCNTL, frozenset({"fcntl"}), (Path("tests/phase2/abi.asm"), FCNTL / "variadic.asm"),
         "fcntl-abi", "fcntl-dispatch",
@@ -264,12 +293,48 @@ def manifest_inputs(function):
     return dict(sorted(inputs.items()))
 
 
+def finite_json_number(value):
+    number = float(value)
+    if not math.isfinite(number):
+        raise ValueError(f"invalid nonfinite JSON number: {value}")
+    return number
+
+
+def read_manifest_json(raw):
+    return json.loads(raw, object_pairs_hook=unique_object,
+                      parse_constant=finite_json_number, parse_float=finite_json_number)
+
+
+def manifest_stat_binding():
+    from stat_query_production import stat_dependency_bindings
+
+    return stat_dependency_bindings()
+
+
+def check_stat_archive(binding, artifacts):
+    if (type(artifacts) is not dict or hash_json(artifacts) != binding["runtime_artifacts_sha256"] or any(
+            item["archive_sha256"] != artifacts.get("libopenasm.a") or item["object_sha256"] != artifacts.get(item["object"])
+            for item in binding["functions"].values())):
+        raise ValueError("stat dependency archive or object differs from the candidate runtime")
+
+
+def check_stat_dependency_binding(checks):
+    current = manifest_stat_binding()
+    if checks.get("dependency_closure") != current:
+        raise ValueError("stat dependency evidence changed or is missing from the wrapper report")
+    artifacts = checks["runtime_build"].get("artifacts")
+    if (type(artifacts) is not dict or artifacts.keys() != {"first", "second"}
+            or type(artifacts["first"]) is not dict or artifacts["first"] != artifacts["second"]):
+        raise ValueError("stat wrapper candidate runtime maps are incomplete or differ between builds")
+    check_stat_archive(current, artifacts["first"])
+
+
 def manifest_dependency_bindings(names):
     bindings = {}
     for name in names:
         relative = EVIDENCE / f"{name}.production.json"
         raw = regular_file(ROOT, relative, "manifest production dependency").read_bytes()
-        record = json.loads(raw)
+        record = read_manifest_json(raw)
         inputs = manifest_inputs(name)
         if (type(record) is not dict or type(record.get("schema_version")) is not int
                 or record["schema_version"] != 1 or record.get("function") != name
@@ -292,6 +357,8 @@ def manifest_dependency_bindings(names):
                 or any(type(value) is not str or re.fullmatch(r"[0-9a-f]{64}", value) is None
                        for value in (archive, object_hash)) or first != builds.get("second")):
             raise ValueError(f"{name}: manifest production dependency does not bind the source and archive")
+        if PLANS[name].private_engine == STAT_ENGINE:
+            check_stat_dependency_binding(checks)
         bindings[name] = {"evidence": relative.as_posix(), "evidence_sha256": sha256(raw).hexdigest(),
                           "archive_sha256": archive}
     return {"outcome": "pass", "functions": bindings}
@@ -325,6 +392,12 @@ def load_plan_probes(function, plan, *, required_cases=None):
         status, stdout, stderr = rejection
         controls[function] = selected[case.name], (status, stdout.encode(), stderr.encode())
     return selected, controls
+
+
+def manifest_host_macro(plan, probe):
+    if any(source.parent == plan.suite for source in probe.case.sources):
+        return plan.original_host_macro
+    return "OA_PHASE6_HOST"
 
 
 def candidate_object(path, source, name, original, log, *, debug=False):
@@ -576,18 +649,21 @@ def runtime_manifest_production(function, only=None, *, attempt=None, wrapper_on
             raise GateError("scoped wrapper verification requires a private-engine plan and no production attempt")
         if plan.private_engine:
             checks["dependency_closure"] = pending_dependency(plan)
-            if only is None and not wrapper_only:
+            if only is None and not wrapper_only and plan.private_engine != STAT_ENGINE:
                 raise GateError(f"{function}: shared implementation {plan.private_engine} needs separate production proof")
         evidence["toolchain"] = identify_tools("ar", "make", "objdump", "qemu-x86_64", "musl-gcc")
         evidence["inputs"] = verify_setup(checks, False, snapshot=snapshot)
         project = load_project()
         spec = project.functions[function]
         source = source_paths()[function]
-        dependencies = None
-        if only is None and plan.required_production:
-            if not set(plan.required_production) <= set(spec.deps):
-                raise GateError(f"{function}: undeclared required production dependency")
-            dependencies = checks["production_dependencies"] = manifest_dependency_bindings(plan.required_production)
+        stat_binding = dependencies = None
+        if only is None and not wrapper_only:
+            if plan.private_engine == STAT_ENGINE:
+                stat_binding = checks["dependency_closure"] = manifest_stat_binding()
+            if plan.required_production:
+                if not set(plan.required_production) <= set(spec.deps):
+                    raise GateError(f"{function}: undeclared required production dependency")
+                dependencies = checks["production_dependencies"] = manifest_dependency_bindings(plan.required_production)
         required_cases = {"coverage": {plan.trace}, "mutation": {case for case, _ in plan.mutations},
                           "stub": set(), "fuzz": {plan.fuzz}}
         selected = {plan.abi}.union(*required_cases.values()) if only is None else required_cases[only]
@@ -612,6 +688,8 @@ def runtime_manifest_production(function, only=None, *, attempt=None, wrapper_on
                 if dependencies is not None and any(item["archive_sha256"] != runtime[3]["libopenasm.a"]
                                                     for item in dependencies["functions"].values()):
                     raise GateError(f"{function}: runtime archive differs from its production dependency")
+                if stat_binding is not None:
+                    check_stat_archive(stat_binding, runtime[3])
             build["outcome"] = "pass"
             original = directory / "runtime/obj" / source.relative_to("src/x86_64-linux").with_suffix(".o")
             candidate = checks["candidate_build"] = {"outcome": "fail", "commands": []}
@@ -626,7 +704,7 @@ def runtime_manifest_production(function, only=None, *, attempt=None, wrapper_on
                     target.mkdir()
                     record = checks[check] = {"outcome": "fail", "cases": {}}
                     run_cases(cases, target, runtime, second, runners, record["cases"],
-                              host_macro="OA_PHASE6_HOST", classify_native=True)
+                              host_macro=partial(manifest_host_macro, plan), classify_native=True)
                     if check == "abi" and plan.abi_result:
                         probe = probes[plan.abi].case
                         objects = [target / plan.abi / "first" / f"test-{index}.o"
@@ -656,6 +734,8 @@ def runtime_manifest_production(function, only=None, *, attempt=None, wrapper_on
                 timed_fuzz(function, probes[plan.fuzz], plan, directory / "fuzz", runtime, fuzz)
         if evidence["inputs"] != snapshot():
             raise GateError("runtime manifest verification inputs changed during the run")
+        if stat_binding is not None:
+            check_stat_dependency_binding(checks)
         if dependencies is not None and dependencies != manifest_dependency_bindings(plan.required_production):
             raise GateError(f"{function}: production dependency evidence changed during verification")
         required = REQUIRED_CHECKS - {"branch_coverage"} if function == "fileno" and wrapper_only else REQUIRED_CHECKS
@@ -678,7 +758,7 @@ def wrapper_batch(functions, available, suffix, label):
         try:
             status = runtime_manifest_production(name, wrapper_only=True)
             path = EVIDENCE / f"{name}.{suffix}.json"
-            record = json.loads(path.read_text(encoding="utf-8"))
+            record = read_manifest_json(path.read_bytes())
             item.update(evidence=str(path), evidence_sha256=sha256_file(path))
             dependency = pending_dependency(PLANS[name])
             if (status == 0 and record.get("outcome") == "pass" and record.get("scope") == scope
@@ -713,6 +793,7 @@ if __name__ == "__main__":
     modes.add_argument("--stream-indicators", action="store_true")
     modes.add_argument("--getcwd-wrapper", action="store_true")
     modes.add_argument("--execvp-wrapper", action="store_true")
+    modes.add_argument("--stat-wrappers", action="store_true")
     parser.add_argument("functions", nargs="*")
     args = parser.parse_args()
     if args.getcwd_wrapper or args.execvp_wrapper:
@@ -722,6 +803,8 @@ if __name__ == "__main__":
         raise SystemExit(runtime_manifest_production(name, wrapper_only=True))
     if args.allocator_wrappers:
         available, suffix, label = ALLOCATOR_FUNCTIONS, "allocator-wrapper", "Allocator"
+    elif args.stat_wrappers:
+        available, suffix, label = STAT_SEMANTIC_MUTANTS.keys(), STAT_WRAPPER_SUFFIX, "Stat"
     else:
         available, suffix, label = STREAM_FAILURES.keys(), STREAM_WRAPPER_SUFFIX, "Stream indicator"
     if len(set(args.functions)) != len(args.functions) or set(args.functions) - available:

@@ -90,6 +90,30 @@ assert sizes, alignment, and every offset in both records. Treat symlink
 following and descriptor-relative lookup as distinct operations.
 [Linux stat](https://man7.org/linux/man-pages/man2/stat.2.html) · [x86-64 Linux stat UAPI](https://github.com/torvalds/linux/blob/master/arch/x86/include/uapi/asm/stat.h)
 
+The private SysV helper has this prototype for internal callers and
+independent tests.
+
+```c
+long __al_stat_query(int syscall_number, long descriptor, const char *path,
+                     long flags, struct stat *result);
+```
+
+Selector 5 issues x86-64 Linux `fstat` on `descriptor`. It ignores
+`path` and `flags`. Selector 262 issues Linux `newfstatat` with the
+supplied descriptor, path, and flags. Callers pass an open descriptor,
+`AT_FDCWD`, or a Linux descriptor value whose rejection they need to
+observe. The helper forwards pathname and flag validation to Linux.
+
+A null result returns -1 with EFAULT before issuing a syscall. An
+unrecognized selector with a valid result buffer returns -1 with EINVAL.
+A nonnull result points to writable storage for one aligned public stat
+record. On Linux success the helper writes all 144 bytes, clears the four
+padding bytes at offset 36 and the 24 reserved bytes at offset 120, returns
+0, and preserves errno. A Linux error returns -1 with its positive errno
+and leaves the entire record unchanged. The kernel errno range includes
+4095 when an installed seccomp filter returns it.
+[Linux seccomp errno boundary selftest](https://github.com/torvalds/linux/blob/f91a3aa6bce480fe6e08df540129f4a923222419/tools/testing/selftests/seccomp/seccomp_bpf.c#L923)
+
 `opendir` opens a directory descriptor with close-on-exec, then
 allocates an opaque `DIR`. `fdopendir` transfers ownership after a
 successful stream creation. A private buffer holds `getdents64`

@@ -77,8 +77,9 @@ def run_cases(probes, directory, first, second, runners, checks, host_macro, *, 
             execute_probe(probe, binary, work / backend, item["runs"], {backend: runners[backend]},
                           classify_native=classify_native)
         if probe.host_skip is None:
+            macro = host_macro(probe) if callable(host_macro) else host_macro
             for compiler, oracle in (("gcc", "diff:glibc"), ("musl-gcc", "diff:musl")):
-                host = host_binary(compiler, case.sources, hosts, item["commands"], host_macro=host_macro)
+                host = host_binary(compiler, case.sources, hosts, item["commands"], host_macro=macro)
                 execute_probe(probe, host, work / compiler, item["host_runs"], {oracle: []})
                 item["host_runs"][oracle]["artifact_sha256"] = sha256_file(host)
         item["outcome"] = "pass"

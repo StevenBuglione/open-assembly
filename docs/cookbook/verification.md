@@ -413,6 +413,20 @@ The adjacent `verify-getcwd-wrapper` and `verify-execvp-wrapper` targets
 run the public checks and independent allocation-failure cases. Their
 reports retain pending allocator or search-engine dependencies.
 
+Run `./tools/container make production-stat` to rebuild and verify errno,
+the shared Linux stat translator, and the four public stat interfaces.
+The public reports bind the fresh helper and errno report bytes, source
+and object identities, complete matching runtime artifact maps, and
+archive. The `stat` and `lstat` reports also require the current full
+`fstatat` report. The raw helper mutation report retains its surviving
+cutoff-minus-one operator. The independent unit, installed filter, and
+packet observations keep their individual scope.
+
+Run `./tools/container make production-wide-core` for `wcslen`, `wcscmp`,
+`wcsncmp`, and `wmemchr`. The new packet and typed ABI cases use the same
+source against the candidate and hosted libcs, while the inherited
+Phase 9 C-locale cases retain their original adapter and stub controls.
+
 ## Nightly and tagged verification
 
 ```sh
@@ -423,8 +437,8 @@ reports retain pending allocator or search-engine dependencies.
 The nightly entry point runs the available matrix, including Phase 2
 production mutation and 300-second libFuzzer observations, the eight
 scalar arithmetic production gates with the same libFuzzer floor, the
-Linux descriptor, process identity, pipe, pathname, wait, and exec gates
-with timed glibc and musl packet comparisons, exact binary32 rounding
+Linux descriptor, process identity, pipe, pathname, stat, wait, exec, and
+wide core gates with timed glibc and musl packet comparisons, exact binary32 rounding
 groups, selected transcendental shards, the
 pinned application and upstream suites, and independent address-family
 selection. The isolated memcpy, allocator, and warmed vDSO time benchmarks
