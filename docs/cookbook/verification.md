@@ -374,7 +374,10 @@ production mutation and 300-second libFuzzer observations, exact binary32
 rounding groups, selected transcendental shards, the isolated memcpy benchmark,
 and the pinned application and external suites. The extension smoke control runs in a separate clone.
 Its unimplemented, scoped, and production-required reports are archived
-with the main evidence. The host wrapper first starts the separate
+with the main evidence. The separate shipped extension check runs declared
+packages in dependency order and validates each fresh per-function production
+report. A missing independent plan or unmet package dependency keeps that
+scope pending. The host wrapper first starts the separate
 QEMU-system image for the pinned old-kernel boot check. The tier validates
 that report against the current inputs and records the four installed
 seccomp filter observations independently. The musl authorship scan

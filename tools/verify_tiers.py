@@ -16,6 +16,8 @@ import sys
 import tempfile
 from time import monotonic, time_ns
 
+from extension_build import dependency_order
+from extensions import load_packages
 from gate import BUILD, EVIDENCE, GateError, checked, identify_tools, verify_setup, write_evidence
 from musl_authorship import ARCHIVE_SHA256 as MUSL_ARCHIVE_SHA, POLICY as AUTHORSHIP_POLICY
 from musl_authorship import inputs as authorship_inputs
@@ -38,7 +40,7 @@ PHASES = (
     "phase11-static-pie", "phase11-allocator", "phase11-copy-benchmark", "phase11-allocator-benchmark",
     "phase11-seccomp", "phase11-old-kernel", "scan-musl-authorship",
 )
-EXTRA = ("fcntl-production", "extension-control")
+EXTRA = ("fcntl-production", "extension-control", "extension-packages")
 FUZZ_SECONDS = 300
 GAPS = {
     "remaining_old_current_kernel_matrix": "The boot gate covers its named runtime checks. The remaining old/current kernel matrix needs its own evidence.",
@@ -181,6 +183,87 @@ def extension_control(commit, record):
             if digest != sha256_file(path):
                 raise GateError(f"the archived extension {name} evidence changed bytes")
             evidence[name] = {"path": archived.resolve().relative_to(ROOT).as_posix(), "sha256": digest}
+
+
+
+def check_extension_production(data, package, inputs):
+    name = package.name
+    checks = data.get("checks", {})
+    production = checks.get("full_production", {})
+    controls = checks.get("stub_controls", {})
+    functions, stubs = production.get("functions"), controls.get("symbols")
+    if (data.get("package") != name or data.get("stability") != package.stability
+            or data.get("oracle") != package.oracle or data.get("dependencies") != list(package.dependencies)
+            or data.get("inputs") != inputs or data.get("production_verified") is not True
+            or production.get("outcome") != "pass" or type(functions) is not dict
+            or functions.keys() != package.functions.keys()
+            or controls.get("outcome") != "pass" or type(stubs) is not dict
+            or stubs.keys() != package.functions.keys()):
+        raise GateError(f"{name}: incomplete current extension production evidence")
+    for symbol, item in functions.items():
+        source = package.source(symbol).as_posix()
+        edges = item.get("branch_coverage", {})
+        mutants = item.get("production_mutation", {})
+        fuzz = item.get("differential_fuzz", {})
+        digests = fuzz.get("sha256", {})
+        if (item.get("outcome") != "pass" or stubs[symbol].get("outcome") != "pass"
+                or item.get("source") != source or source not in inputs
+                or item.get("source_sha256") != inputs[source]
+                or edges.get("outcome") != "pass" or type(edges.get("total")) is not int
+                or edges.get("covered") != edges["total"] or edges["total"] < 0
+                or mutants.get("outcome") != "pass" or mutants.get("threshold_percent") != 90
+                or type(mutants.get("total")) is not int or type(mutants.get("killed")) is not int
+                or not 0 < mutants["killed"] <= mutants["total"]
+                or 100 * mutants["killed"] < 90 * mutants["total"]
+                or fuzz.get("outcome") != "pass" or type(fuzz.get("elapsed_s")) not in (int, float)
+                or fuzz["elapsed_s"] < 60 or type(fuzz.get("records")) is not int or fuzz["records"] < 1
+                or fuzz.get("oracle") != package.oracle or fuzz.get("model") not in inputs
+                or fuzz.get("model_sha256") != inputs[fuzz["model"]]
+                or set(digests) != {"candidate", "reference", "input"}
+                or digests["candidate"] != digests["reference"]):
+            raise GateError(f"{symbol}: incomplete extension ABI, coverage, mutation or differential evidence")
+
+
+def extension_packages(record, inputs):
+    declared = load_packages(load_project())
+    packages = {item.name: item for name in sorted(declared) for item in dependency_order(declared, name)}
+    children = record["packages"] = {}
+    for name, package in packages.items():
+        child = children[name] = {"outcome": "pending", "dependencies": {}}
+        unmet = [dependency for dependency in package.dependencies
+                 if children[dependency]["outcome"] != "pass"]
+        if unmet:
+            child["reason"] = "Requires current passing package evidence for " + ", ".join(unmet)
+            continue
+        missing = [path.as_posix() for path in (package.tests / "manifest.toml", package.tests / "production.toml")
+                   if not (ROOT / path).is_file()]
+        if missing:
+            child.update(reason="Requires an independent manifest and production plan.", missing=missing)
+            continue
+        started = time_ns()
+        child["outcome"] = "fail"
+        try:
+            for dependency in package.dependencies:
+                prior = children[dependency]
+                path = regular_file(ROOT, prior["evidence"], f"{name} extension dependency")
+                if sha256_file(path) != prior["evidence_sha256"]:
+                    raise GateError(f"{name}: current {dependency} evidence was replaced")
+                child["dependencies"][dependency] = prior["evidence_sha256"]
+            invoke(["tools/extension-gate", name, "--require-production"], child,
+                   timeout=max(1800, 300 + 180 * len(package.functions)))
+            path, data = fresh_report(ROOT, f"extension-{name}.json", "extension-package", started)
+            check_extension_production(data, package, inputs)
+            child.update(outcome="pass", evidence=path.relative_to(ROOT).as_posix(),
+                         evidence_sha256=sha256_file(path))
+            print(f"PASS extension production {name}", flush=True)
+        except (GateError, OSError, SpecError, ValueError) as error:
+            child["error"] = str(error)
+            print(f"FAIL extension production {name}: {error}", file=sys.stderr, flush=True)
+    for child in children.values():
+        if child["outcome"] == "pass" and sha256_file(ROOT / child["evidence"]) != child["evidence_sha256"]:
+            child.update(outcome="fail", error="Extension evidence changed before the tier finished.")
+    outcomes = {child["outcome"] for child in children.values()}
+    return "fail" if "fail" in outcomes else "pending" if "pending" in outcomes else "pass"
 
 
 def check_allocator_benchmark(data):
@@ -481,6 +564,10 @@ def execute(tier, only, tag, old_started, old_status):
             try:
                 if name == "extension-control":
                     extension_control(commit, item)
+                elif name == "extension-packages":
+                    item["outcome"] = extension_packages(item, evidence["inputs"])
+                    print(f"{item['outcome'].upper()} {scope} {name}", flush=True)
+                    continue
                 elif name == "reproducible":
                     reproducible(item)
                 elif name == "phase11-old-kernel":
