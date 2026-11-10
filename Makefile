@@ -20,6 +20,10 @@ phase1:
 phase2:
 	python3 tools/phase2.py
 
+.PHONY: production-scalars
+production-scalars:
+	python3 tools/phase2.py --scalars
+
 phase3:
 	python3 tools/phase3.py
 
