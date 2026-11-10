@@ -1,0 +1,17 @@
+name = "fputws"
+header = "wchar.h"
+prototype = "int fputws(const wchar_t *restrict string, FILE *restrict stream)"
+standard = ["C17 7.29.3.4"]
+deps = []
+errno = ["EBADF", "EILSEQ", "EIO"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:c17-wide-stdio", "diff:glibc", "diff:musl"]
+provenance = "original"
+semantics = [
+  "Write a wide string without the terminating null. Return zero on success or EOF on error.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

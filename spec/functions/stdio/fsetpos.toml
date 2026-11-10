@@ -10,6 +10,7 @@ oracles = ["diff:glibc", "diff:musl", "reference:phase4-stdio"]
 provenance = "original"
 semantics = [
   "Set the position previously saved by fgetpos and clear EOF and pushback on success.",
+  "Restore the saved multibyte conversion state under the stream lock.",
 ]
 
 [abi]

@@ -77,6 +77,10 @@ COMPLEX_EXTENDED_ARGUMENTS = {**{name + "l": 2 for name in (
     "creal", "cimag", "conj", "cproj", "cabs", "carg", "clog", "csqrt", "cexp", "ccos", "csin", "ccosh", "csinh", "ctan", "ctanh", "catan", "catanh", "casin", "cacos", "casinh", "cacosh",
 )}, "cpowl": 4}
 PRIVATE_FUNCTIONS = {
+    "stdio/__al_scan_wset", "stdio/__al_scan_wmember", "stdio/__al_scan_wchars",
+    "stdio/__al_fmt_unit", "stdio/__al_fmt_wemit", "stdio/__al_fmt_wtext",
+    "stdio/__al_stream_orient", "stdio/__al_stream_read_raw", "stdio/__al_stream_write_raw",
+    "stdio/__al_stream_getwc", "stdio/__al_stream_putwc",
     "complex/__al_complex_power", "complex/__al_complex_power_log", "complex/__al_complex_power_arg",
     "complex/__al_fixed_ratio_precision", "complex/__al_fixed_mul_precision",
     "complex/__al_fixed_odd_series", "complex/__al_complex_scaled_ratio_precision",
@@ -328,12 +332,18 @@ DATA_SECTIONS = {
     ".bss": {"nobits", "alloc", "noexec", "write"},
 }
 VARARGS_WRAPPERS = {
-    f"stdio/{name}": (target, fixed, register)
+    name: (target, fixed, register)
     for name, target, fixed, register in (
-        ("printf", "vprintf", 1, "rsi"), ("fprintf", "vfprintf", 2, "rdx"),
-        ("sprintf", "vsprintf", 2, "rdx"), ("snprintf", "vsnprintf", 3, "rcx"),
-        ("scanf", "vscanf", 1, "rsi"), ("fscanf", "vfscanf", 2, "rdx"),
-        ("sscanf", "vsscanf", 2, "rdx"),
+        ("stdio/printf", "vprintf", 1, "rsi"), ("stdio/fprintf", "vfprintf", 2, "rdx"),
+        ("stdio/sprintf", "vsprintf", 2, "rdx"), ("stdio/snprintf", "vsnprintf", 3, "rcx"),
+        ("stdio/scanf", "vscanf", 1, "rsi"), ("stdio/fscanf", "vfscanf", 2, "rdx"),
+        ("stdio/sscanf", "vsscanf", 2, "rdx"),
+        ("wchar/fwprintf", "vfwprintf", 2, "rdx"),
+        ("wchar/swprintf", "vswprintf", 3, "rcx"),
+        ("wchar/wprintf", "vwprintf", 1, "rsi"),
+        ("wchar/fwscanf", "vfwscanf", 2, "rdx"),
+        ("wchar/swscanf", "vswscanf", 2, "rdx"),
+        ("wchar/wscanf", "vwscanf", 1, "rsi"),
     )
 }
 
@@ -1216,7 +1226,7 @@ def check_file(path, function, fixture_syscall, functions_snapshot=project_funct
         expected = [("push", ("rbp",)), ("mov", ("rbp", "rsp")), ("sub", ("rsp", "208"))]
         expected += [("mov", (f"[rsp + {32 + index * 8}]", argument))
                      for index, argument in enumerate(("rdi", "rsi", "rdx", "rcx", "r8", "r9"))]
-        if target in {"vprintf", "vfprintf", "vsprintf", "vsnprintf"}:
+        if target in {"vprintf", "vfprintf", "vsprintf", "vsnprintf", "vfwprintf", "vswprintf", "vwprintf"}:
             expected += [("movdqa", (f"[rsp + {80 + index * 16}]", f"xmm{index}"))
                          for index in range(8)]
         expected += [

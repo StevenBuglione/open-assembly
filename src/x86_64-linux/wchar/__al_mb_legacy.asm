@@ -27,6 +27,7 @@ __al_mb_legacy:
     mov rdi, r12
     mov rsi, r13
     mov rdx, r14
+    xor ecx, ecx                ; use current LC_CTYPE
     call __al_mb_decode
     cmp rax, -2
     je .incomplete

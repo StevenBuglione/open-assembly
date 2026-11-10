@@ -27,6 +27,7 @@ __al_wcr_scalar:
     mov rdi, r12
     mov esi, r13d
     mov rdx, r14
+    xor ecx, ecx                ; use current LC_CTYPE
     call __al_mb_encode
     pop r14
     pop r13

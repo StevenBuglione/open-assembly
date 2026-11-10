@@ -1,0 +1,19 @@
+name = "swprintf"
+header = "wchar.h"
+prototype = "int swprintf(wchar_t *restrict dest, size_t size, const wchar_t *restrict format, ...)"
+standard = ["C17 7.29.2.3"]
+deps = ["vswprintf"]
+errno = ["EILSEQ", "EINVAL", "EIO", "EOVERFLOW"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:c17-wide-stdio", "reference:sysv-amd64", "diff:glibc", "diff:musl"]
+provenance = "original"
+semantics = [
+  "Interpret C17 wide format conversions, with widths, precisions and counts in wide characters.",
+  "Return the number of wide characters written or a negative value on failure.",
+  "Reserve space for a terminating wide null. A result that does not fit returns a negative value.",
+]
+
+[abi]
+narrow_args = []
+variadic = true

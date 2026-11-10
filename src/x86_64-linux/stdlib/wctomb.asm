@@ -39,6 +39,7 @@ wctomb:
     jz .done
     mov rdi, rbx
     mov esi, r12d
+    xor ecx, ecx                ; use current LC_CTYPE
     call __al_mb_encode
 .done:
     add rsp, 8

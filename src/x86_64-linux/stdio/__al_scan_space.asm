@@ -1,4 +1,4 @@
-; Original C-locale scanner whitespace skip. rdi = source context.
+; Original scanner whitespace skip. rdi = source context.
 bits 64
 default rel
 
@@ -6,6 +6,7 @@ global __al_scan_space:function
 extern __al_scan_peek:function
 extern __al_scan_take:function
 extern isspace:function
+extern iswspace:function
 
 section .text.__al_scan_space alloc exec nowrite progbits
 __al_scan_space:
@@ -20,7 +21,13 @@ __al_scan_space:
     test rax, rax
     js .done
     mov edi, eax
+    cmp qword [rbx + 8], 2
+    jae .wide_space
     call isspace
+    jmp .class
+.wide_space:
+    call iswspace
+.class:
     test eax, eax
     jz .done
     mov rdi, rbx

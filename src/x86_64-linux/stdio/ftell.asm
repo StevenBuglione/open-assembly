@@ -57,6 +57,8 @@ ftell:
     jne .record
     mov rcx, [rbx + 48]
     sub rcx, [rbx + 40]
+    mov edx, [rbx + 160]         ; bytes decoded for scanner lookahead
+    add rcx, rdx
     cmp qword [rbx + 72], -1
     je .subtract
     inc rcx

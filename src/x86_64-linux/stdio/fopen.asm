@@ -45,7 +45,7 @@ fopen:
     js .failure
     mov r13, rax                 ; new descriptor
     mov r14, rdx                 ; access flags
-    mov edi, 4224                ; FILE and its inline buffer
+    mov edi, 4272                ; FILE and its inline buffer
     call malloc
     test rax, rax
     jz .no_memory

@@ -28,6 +28,7 @@ __al_wcs_convert:
     mov [rsp], esi
     xor edi, edi
     mov rdx, r13
+    xor ecx, ecx                ; use current LC_CTYPE
     call __al_mb_encode
     test rax, rax
     js .invalid
@@ -40,6 +41,7 @@ __al_wcs_convert:
     lea rdi, [rbx + r15]
     mov esi, [rsp]
     mov rdx, r13
+    xor ecx, ecx                ; use current LC_CTYPE
     call __al_mb_encode
     test rax, rax
     js .invalid

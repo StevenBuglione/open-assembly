@@ -1,4 +1,4 @@
-; Original decimal format-field parser. rdi = cursor.
+; Original decimal format-field parser. rdi = cursor, rsi = stride.
 ; rax = count clamped to INT_MAX+1, rdx = first non-digit.
 bits 64
 default rel
@@ -11,11 +11,17 @@ __al_fmt_decimal:
     mov rdx, rdi
     mov r8d, 2147483648
 .next:
+    cmp esi, 4
+    je .wide
     movzx ecx, byte [rdx]
+    jmp .digit
+.wide:
+    mov ecx, [rdx]
+.digit:
     sub ecx, 48
     cmp ecx, 9
     ja .done
-    inc rdx
+    add rdx, rsi
     cmp rax, r8
     jae .next
     lea rax, [rax + rax*4]

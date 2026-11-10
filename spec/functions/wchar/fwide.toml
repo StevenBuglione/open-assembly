@@ -1,0 +1,18 @@
+name = "fwide"
+header = "wchar.h"
+prototype = "int fwide(FILE *stream, int mode)"
+standard = ["C17 7.29.3.5"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["reference:c17-wide-stdio", "diff:glibc", "diff:musl"]
+provenance = "original"
+semantics = [
+  "Query stream orientation, establishing the sign of mode only while unoriented.",
+  "Capture the LC_CTYPE encoding when establishing wide orientation.",
+]
+
+[abi]
+narrow_args = ["esi:s32"]
+variadic = false

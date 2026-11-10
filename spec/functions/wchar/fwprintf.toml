@@ -1,0 +1,19 @@
+name = "fwprintf"
+header = "wchar.h"
+prototype = "int fwprintf(FILE *restrict stream, const wchar_t *restrict format, ...)"
+standard = ["C17 7.29.2.1"]
+deps = ["vfwprintf"]
+errno = ["EILSEQ", "EINVAL", "EIO", "EOVERFLOW"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:c17-wide-stdio", "reference:sysv-amd64", "diff:glibc", "diff:musl"]
+provenance = "original"
+semantics = [
+  "Interpret C17 wide format conversions, with widths, precisions and counts in wide characters.",
+  "Return the number of wide characters written or a negative value on failure.",
+  "Establish wide orientation on an unoriented stream and preserve its captured output encoding.",
+]
+
+[abi]
+narrow_args = []
+variadic = true

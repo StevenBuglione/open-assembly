@@ -1,0 +1,17 @@
+name = "fgetwc"
+header = "wchar.h"
+prototype = "wint_t fgetwc(FILE *stream)"
+standard = ["C17 7.29.3.1"]
+deps = []
+errno = ["EBADF", "EILSEQ", "EIO"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:c17-wide-stdio", "diff:glibc", "diff:musl"]
+provenance = "original"
+semantics = [
+  "Read one wide character through the stream encoding and return it or WEOF.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

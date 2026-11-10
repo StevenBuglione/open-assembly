@@ -34,6 +34,7 @@ strftime:
     jc .failure
     push rbx
     mov rbx, rdi
+    xor r8d, r8d                 ; ASCII format and destination
     call __al_strftime_render
     test rax, rax
     jz .restore

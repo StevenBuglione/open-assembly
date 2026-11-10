@@ -73,6 +73,7 @@ c16rtomb:
     mov rdi, r12
     mov esi, r13d
     mov rdx, r14
+    xor ecx, ecx                ; use current LC_CTYPE
     call __al_mb_encode
     jmp .done
 .error:

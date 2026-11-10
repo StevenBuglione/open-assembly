@@ -66,7 +66,7 @@ setvbuf:
 .capacity:
     cmp r14, 4096
     ja .allocate
-    lea r12, [rbx + 128]
+    lea r12, [rbx + 176]
     jmp .install
 .allocate:
     mov rdi, r14

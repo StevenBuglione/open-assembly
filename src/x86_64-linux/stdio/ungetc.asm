@@ -38,6 +38,9 @@ ungetc:
     and r12d, 255
     mov rdi, rbx
     call __al_stream_lock
+    cmp dword [rbx + 128], 1
+    je .failure
+    mov dword [rbx + 128], -1
     cmp qword [rbx], 0
     jl .closed
     test qword [rbx + 8], 1

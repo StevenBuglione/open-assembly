@@ -55,6 +55,7 @@ mbrtoc16:
     mov rdi, r13
     mov rsi, r14
     mov rdx, r15
+    xor ecx, ecx                ; use current LC_CTYPE
     call __al_mb_decode
     test rax, rax
     js .done

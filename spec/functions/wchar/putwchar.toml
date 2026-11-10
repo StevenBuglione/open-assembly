@@ -1,0 +1,17 @@
+name = "putwchar"
+header = "wchar.h"
+prototype = "wint_t putwchar(wchar_t character)"
+standard = ["C17 7.29.3.9"]
+deps = ["fputwc"]
+errno = ["EBADF", "EILSEQ", "EIO"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:c17-wide-stdio", "diff:glibc", "diff:musl"]
+provenance = "original"
+semantics = [
+  "Write one wide character to stdout as fputwc.",
+]
+
+[abi]
+narrow_args = ["edi:s32"]
+variadic = false

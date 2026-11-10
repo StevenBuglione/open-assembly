@@ -5,6 +5,7 @@ default rel
 
 global __al_fmt_emit:function
 extern __al_stream_write:function
+extern __al_fmt_wemit:function
 extern __al_stdio_errno:function
 extern memcpy:function
 extern memset:function
@@ -12,6 +13,14 @@ extern realloc:function
 
 section .text.__al_fmt_emit alloc exec nowrite progbits
 __al_fmt_emit:
+    cmp qword [rdi + 24], 3
+    jb .byte_sink
+    mov r8d, 1                  ; widen ASCII source and padding
+    sub rsp, 8
+    call __al_fmt_wemit
+    add rsp, 8
+    ret
+.byte_sink:
     push rbp
     mov rbp, rsp
     push rbx
