@@ -744,3 +744,6 @@ Specs: 729 of 729 inventoried functions. The inventory covers C17, the named POS
 | [`arena_alloc`](../ext/arena/spec/functions/arena_alloc.toml) | `<arena.h>` | `int arena_alloc(size_t *restrict state, size_t size, size_t alignment, void **restrict result)` | Extension ABI arena |
 | [`arena_init`](../ext/arena/spec/functions/arena_init.toml) | `<arena.h>` | `int arena_init(size_t state[3], void *storage, size_t capacity)` | Extension ABI arena |
 | [`arena_reset`](../ext/arena/spec/functions/arena_reset.toml) | `<arena.h>` | `int arena_reset(size_t state[3])` | Extension ABI arena |
+| [`slice_find_byte`](../ext/slice/spec/functions/slice_find_byte.toml) | `<slice.h>` | `int slice_find_byte(const unsigned char *bytes, size_t length, unsigned int needle, size_t *restrict offset)` | Extension ABI slice |
+| [`slice_load_u32be`](../ext/slice/spec/functions/slice_load_u32be.toml) | `<slice.h>` | `int slice_load_u32be(const unsigned char *bytes, size_t length, unsigned int *restrict result)` | Extension ABI slice |
+| [`slice_take`](../ext/slice/spec/functions/slice_take.toml) | `<slice.h>` | `int slice_take(const unsigned char **restrict cursor, size_t *restrict available, size_t length, const unsigned char **restrict result)` | Extension ABI slice |

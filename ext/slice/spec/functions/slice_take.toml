@@ -1,0 +1,16 @@
+name = "slice_take"
+header = "slice.h"
+prototype = "int slice_take(const unsigned char **restrict cursor, size_t *restrict available, size_t length, const unsigned char **restrict result)"
+standard = ["Extension ABI slice"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:bounded-slice-model"]
+provenance = "original"
+semantics = ["Publish the current cursor and advance it by length while reducing available.", "Return -EINVAL for invalid metadata, -EOVERFLOW for a wrapping span, or -ERANGE for insufficient bytes.", "Read no slice bytes and preserve metadata, result and errno on failure."]
+
+[abi]
+narrow_args = []
+variadic = false
+noreturn = false
