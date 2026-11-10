@@ -79,6 +79,21 @@ C_INTEGER_LIMITS = (
 )
 
 
+LOCALE_CONSTANTS = {
+    "LC_CTYPE": 0, "LC_NUMERIC": 1, "LC_TIME": 2, "LC_COLLATE": 3,
+    "LC_MONETARY": 4, "LC_MESSAGES": 5, "LC_ALL": 6,
+}
+LCONV_STRINGS = (
+    "decimal_point", "thousands_sep", "grouping", "int_curr_symbol", "currency_symbol",
+    "mon_decimal_point", "mon_thousands_sep", "mon_grouping", "positive_sign", "negative_sign",
+)
+LCONV_NUMBERS = (
+    "int_frac_digits", "frac_digits", "p_cs_precedes", "p_sep_by_space", "n_cs_precedes",
+    "n_sep_by_space", "p_sign_posn", "n_sign_posn", "int_p_cs_precedes", "int_p_sep_by_space",
+    "int_n_cs_precedes", "int_n_sep_by_space", "int_p_sign_posn", "int_n_sign_posn",
+)
+
+
 def make_outputs(project, include_tracked=True, include_test=True):
     file_abi = load_file_abi(project.root)
     process_abi = load_process_abi(project.root)
@@ -136,6 +151,11 @@ def make_outputs(project, include_tracked=True, include_test=True):
             if header in header_constants:
                 lines.extend(f"%define {name} {value}" for name, value in header_constants[header].items())
                 lines.append("")
+            if header == "locale.h":
+                lines.extend(f"%define {name} {value}" for name, value in LOCALE_CONSTANTS.items())
+                lines.append("")
+            if header == "stdlib.h" and "mbrtowc" in project.functions:
+                lines.extend(("extern __al_mb_cur_max", ""))
             lines.extend(f"extern {nasm_name(spec.name)}" for spec in specs)
             lines.extend(("", "%endif", ""))
             outputs[ASM / (header[:-2] + ".inc")] = "\n".join(lines)
@@ -239,6 +259,24 @@ def make_outputs(project, include_tracked=True, include_test=True):
                               "typedef struct { unsigned char x87[28]; unsigned int mxcsr; } fenv_t;", ""))
                 lines.extend(f"#define {name} ({value})" for name, value in FENV_CONSTANTS.items())
                 lines.extend(("#define FE_DFL_ENV ((const fenv_t *)-1)", ""))
+            elif header == "locale.h":
+                lines.extend(f"#define {name} {value}" for name, value in LOCALE_CONSTANTS.items())
+                lines.extend(("", "struct lconv {"))
+                lines.extend(f"    char *{name};" for name in LCONV_STRINGS)
+                lines.extend(f"    char {name};" for name in LCONV_NUMBERS)
+                lines.extend(("};", ""))
+            elif header == "wchar.h":
+                lines.extend(("typedef unsigned int wint_t;",
+                              "typedef struct { unsigned int __value, __state; } mbstate_t;",
+                              "#define WEOF ((wint_t)-1)",
+                              "#ifndef WCHAR_MIN", "#define WCHAR_MIN __WCHAR_MIN__", "#endif",
+                              "#ifndef WCHAR_MAX", "#define WCHAR_MAX __WCHAR_MAX__", "#endif", ""))
+            elif header == "wctype.h":
+                lines.extend(("#include <wchar.h>", "typedef unsigned long wctype_t;",
+                              "typedef unsigned long wctrans_t;", ""))
+            elif header == "uchar.h":
+                lines.extend(("#include <wchar.h>", "typedef __CHAR16_TYPE__ char16_t;",
+                              "typedef __CHAR32_TYPE__ char32_t;", ""))
             elif header == "math.h":
                 lines.extend(("typedef float float_t;", "typedef double double_t;", ""))
                 lines.extend(f"#define {name} ({value})" for name, value in MATH_CONSTANTS.items())
@@ -291,6 +329,9 @@ def make_outputs(project, include_tracked=True, include_test=True):
             if header in header_constants:
                 lines.extend(f"#define {name} ({value})" for name, value in header_constants[header].items())
                 lines.append("")
+            if header == "stdlib.h" and "mbrtowc" in project.functions:
+                lines.extend(("size_t __al_mb_cur_max(void);",
+                              "#define MB_CUR_MAX (__al_mb_cur_max())", ""))
             for spec in specs:
                 attributes = " __attribute__((returns_twice))" if spec.name in {"setjmp", "sigsetjmp", "_setjmp"} else ""
                 lines.append(f"{spec.prototype}{attributes};")

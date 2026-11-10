@@ -1,0 +1,18 @@
+name = "mbrlen"
+header = "wchar.h"
+prototype = "size_t mbrlen(const char *restrict s, size_t n, mbstate_t *restrict ps)"
+standard = ["C17 7.29.6.3.1"]
+deps = ["__errno_location"]
+errno = ["EILSEQ"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:unicode-scalar", "reference:mbstate-transition", "diff:glibc"]
+provenance = "original"
+semantics = [
+  "Count the bytes completing one multibyte character in the current LC_CTYPE, with a separate default conversion state.",
+  "Clear the affected state on an encoding error. Preserve errno for successful or incomplete conversions.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

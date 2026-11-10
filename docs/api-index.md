@@ -3,7 +3,7 @@
 
 This index lists authored function specifications. For implementation state, run `tools/queue status`.
 
-Specs: 530 of 639 inventoried functions. The inventory covers C17, the named POSIX subset, runtime ABI entries, and Linux compatibility extensions. see [inventory scope](cookbook/specifications.md#inventory-scope).
+Specs: 586 of 639 inventoried functions. The inventory covers C17, the named POSIX subset, runtime ABI entries, and Linux compatibility extensions. see [inventory scope](cookbook/specifications.md#inventory-scope).
 
 | Function | Header | Prototype | Standard |
 | --- | --- | --- | --- |
@@ -43,6 +43,9 @@ Specs: 530 of 639 inventoried functions. The inventory covers C17, the named POS
 | [`atol`](../spec/functions/stdlib/atol.toml) | `<stdlib.h>` | `long atol(const char *s)` | C17 7.22.1.2 |
 | [`atoll`](../spec/functions/stdlib/atoll.toml) | `<stdlib.h>` | `long long atoll(const char *s)` | C17 7.22.1.2 |
 | [`bsearch`](../spec/functions/stdlib/bsearch.toml) | `<stdlib.h>` | `void *bsearch(const void *key, const void *base, size_t nmemb, size_t size, int (*compar)(const void *, const void *))` | C17 7.22.5.1 |
+| [`btowc`](../spec/functions/wchar/btowc.toml) | `<wchar.h>` | `wint_t btowc(int c)` | C17 7.29.6.1.1 |
+| [`c16rtomb`](../spec/functions/uchar/c16rtomb.toml) | `<uchar.h>` | `size_t c16rtomb(char *restrict s, char16_t c16, mbstate_t *restrict ps)` | C17 7.28.1.2 |
+| [`c32rtomb`](../spec/functions/uchar/c32rtomb.toml) | `<uchar.h>` | `size_t c32rtomb(char *restrict s, char32_t c32, mbstate_t *restrict ps)` | C17 7.28.1.4 |
 | [`cabs`](../spec/functions/complex/cabs.toml) | `<complex.h>` | `double cabs(double _Complex z)` | C17 7.3.8.1 |
 | [`cabsf`](../spec/functions/complex/cabsf.toml) | `<complex.h>` | `float cabsf(float _Complex z)` | C17 7.3.8.1 |
 | [`cabsl`](../spec/functions/complex/cabsl.toml) | `<complex.h>` | `long double cabsl(long double _Complex z)` | C17 7.3.8.1 |
@@ -258,6 +261,19 @@ Specs: 530 of 639 inventoried functions. The inventory covers C17, the named POS
 | [`ispunct`](../spec/functions/ctype/ispunct.toml) | `<ctype.h>` | `int ispunct(int c)` | C17 7.4.1.9 |
 | [`isspace`](../spec/functions/ctype/isspace.toml) | `<ctype.h>` | `int isspace(int c)` | C17 7.4.1.10 |
 | [`isupper`](../spec/functions/ctype/isupper.toml) | `<ctype.h>` | `int isupper(int c)` | C17 7.4.1.11 |
+| [`iswalnum`](../spec/functions/wctype/iswalnum.toml) | `<wctype.h>` | `int iswalnum(wint_t wc)` | C17 7.30.2.1.1 |
+| [`iswalpha`](../spec/functions/wctype/iswalpha.toml) | `<wctype.h>` | `int iswalpha(wint_t wc)` | C17 7.30.2.1.2 |
+| [`iswblank`](../spec/functions/wctype/iswblank.toml) | `<wctype.h>` | `int iswblank(wint_t wc)` | C17 7.30.2.1.3 |
+| [`iswcntrl`](../spec/functions/wctype/iswcntrl.toml) | `<wctype.h>` | `int iswcntrl(wint_t wc)` | C17 7.30.2.1.4 |
+| [`iswctype`](../spec/functions/wctype/iswctype.toml) | `<wctype.h>` | `int iswctype(wint_t wc, wctype_t desc)` | C17 7.30.2.2.1 |
+| [`iswdigit`](../spec/functions/wctype/iswdigit.toml) | `<wctype.h>` | `int iswdigit(wint_t wc)` | C17 7.30.2.1.5 |
+| [`iswgraph`](../spec/functions/wctype/iswgraph.toml) | `<wctype.h>` | `int iswgraph(wint_t wc)` | C17 7.30.2.1.6 |
+| [`iswlower`](../spec/functions/wctype/iswlower.toml) | `<wctype.h>` | `int iswlower(wint_t wc)` | C17 7.30.2.1.7 |
+| [`iswprint`](../spec/functions/wctype/iswprint.toml) | `<wctype.h>` | `int iswprint(wint_t wc)` | C17 7.30.2.1.8 |
+| [`iswpunct`](../spec/functions/wctype/iswpunct.toml) | `<wctype.h>` | `int iswpunct(wint_t wc)` | C17 7.30.2.1.9 |
+| [`iswspace`](../spec/functions/wctype/iswspace.toml) | `<wctype.h>` | `int iswspace(wint_t wc)` | C17 7.30.2.1.10 |
+| [`iswupper`](../spec/functions/wctype/iswupper.toml) | `<wctype.h>` | `int iswupper(wint_t wc)` | C17 7.30.2.1.11 |
+| [`iswxdigit`](../spec/functions/wctype/iswxdigit.toml) | `<wctype.h>` | `int iswxdigit(wint_t wc)` | C17 7.30.2.1.12 |
 | [`isxdigit`](../spec/functions/ctype/isxdigit.toml) | `<ctype.h>` | `int isxdigit(int c)` | C17 7.4.1.12 |
 | [`kill`](../spec/functions/signal/kill.toml) | `<signal.h>` | `int kill(pid_t pid, int sig)` | POSIX.1-2024 XSH kill |
 | [`ldexp`](../spec/functions/math/ldexp.toml) | `<math.h>` | `double ldexp(double x, int n)` | C17 7.12.6.6 |
@@ -299,6 +315,15 @@ Specs: 530 of 639 inventoried functions. The inventory covers C17, the named POS
 | [`lseek`](../spec/functions/unistd/lseek.toml) | `<unistd.h>` | `off_t lseek(int fd, off_t offset, int whence)` | POSIX.1-2024 XSH lseek |
 | [`lstat`](../spec/functions/sys/stat/lstat.toml) | `<sys/stat.h>` | `int lstat(const char *restrict path, struct stat *restrict buf)` | POSIX.1-2024 XSH lstat |
 | [`malloc`](../spec/functions/stdlib/malloc.toml) | `<stdlib.h>` | `void *malloc(size_t size)` | C17 7.22.3.4 |
+| [`mblen`](../spec/functions/stdlib/mblen.toml) | `<stdlib.h>` | `int mblen(const char *s, size_t n)` | C17 7.22.7.1 |
+| [`mbrlen`](../spec/functions/wchar/mbrlen.toml) | `<wchar.h>` | `size_t mbrlen(const char *restrict s, size_t n, mbstate_t *restrict ps)` | C17 7.29.6.3.1 |
+| [`mbrtoc16`](../spec/functions/uchar/mbrtoc16.toml) | `<uchar.h>` | `size_t mbrtoc16(char16_t *restrict pc16, const char *restrict s, size_t n, mbstate_t *restrict ps)` | C17 7.28.1.1 |
+| [`mbrtoc32`](../spec/functions/uchar/mbrtoc32.toml) | `<uchar.h>` | `size_t mbrtoc32(char32_t *restrict pc32, const char *restrict s, size_t n, mbstate_t *restrict ps)` | C17 7.28.1.3 |
+| [`mbrtowc`](../spec/functions/wchar/mbrtowc.toml) | `<wchar.h>` | `size_t mbrtowc(wchar_t *restrict pwc, const char *restrict s, size_t n, mbstate_t *restrict ps)` | C17 7.29.6.3.2 |
+| [`mbsinit`](../spec/functions/wchar/mbsinit.toml) | `<wchar.h>` | `int mbsinit(const mbstate_t *ps)` | C17 7.29.6.2.1 |
+| [`mbsrtowcs`](../spec/functions/wchar/mbsrtowcs.toml) | `<wchar.h>` | `size_t mbsrtowcs(wchar_t *restrict dst, const char **restrict src, size_t len, mbstate_t *restrict ps)` | C17 7.29.6.4.1 |
+| [`mbstowcs`](../spec/functions/stdlib/mbstowcs.toml) | `<stdlib.h>` | `size_t mbstowcs(wchar_t *restrict dst, const char *restrict src, size_t len)` | C17 7.22.8.1 |
+| [`mbtowc`](../spec/functions/stdlib/mbtowc.toml) | `<stdlib.h>` | `int mbtowc(wchar_t *restrict pwc, const char *restrict s, size_t n)` | C17 7.22.7.2 |
 | [`memchr`](../spec/functions/string/memchr.toml) | `<string.h>` | `void *memchr(const void *s, int c, size_t n)` | C17 7.24.5.1 |
 | [`memcmp`](../spec/functions/string/memcmp.toml) | `<string.h>` | `int memcmp(const void *a, const void *b, size_t n)` | C17 7.24.4.1 |
 | [`memcpy`](../spec/functions/string/memcpy.toml) | `<string.h>` | `void *memcpy(void *restrict dest, const void *restrict src, size_t n)` | C17 7.24.2.1 |
@@ -515,6 +540,9 @@ Specs: 530 of 639 inventoried functions. The inventory covers C17, the named POS
 | [`tmpfile`](../spec/functions/stdio/tmpfile.toml) | `<stdio.h>` | `FILE *tmpfile(void)` | C17 7.21.4.3 |
 | [`tolower`](../spec/functions/ctype/tolower.toml) | `<ctype.h>` | `int tolower(int c)` | C17 7.4.2.1 |
 | [`toupper`](../spec/functions/ctype/toupper.toml) | `<ctype.h>` | `int toupper(int c)` | C17 7.4.2.2 |
+| [`towctrans`](../spec/functions/wctype/towctrans.toml) | `<wctype.h>` | `wint_t towctrans(wint_t wc, wctrans_t desc)` | C17 7.30.3.2.1 |
+| [`towlower`](../spec/functions/wctype/towlower.toml) | `<wctype.h>` | `wint_t towlower(wint_t wc)` | C17 7.30.3.1.1 |
+| [`towupper`](../spec/functions/wctype/towupper.toml) | `<wctype.h>` | `wint_t towupper(wint_t wc)` | C17 7.30.3.1.2 |
 | [`trunc`](../spec/functions/math/trunc.toml) | `<math.h>` | `double trunc(double x)` | C17 7.12.9.8 |
 | [`truncf`](../spec/functions/math/truncf.toml) | `<math.h>` | `float truncf(float x)` | C17 7.12.9.8 |
 | [`truncl`](../spec/functions/math/truncl.toml) | `<math.h>` | `long double truncl(long double x)` | C17 7.12.9.8 |
@@ -536,4 +564,32 @@ Specs: 530 of 639 inventoried functions. The inventory covers C17, the named POS
 | [`vsscanf`](../spec/functions/stdio/vsscanf.toml) | `<stdio.h>` | `int vsscanf(const char *restrict src, const char *restrict format, va_list args)` | C17 7.21.6.14 |
 | [`wait`](../spec/functions/sys/wait/wait.toml) | `<sys/wait.h>` | `pid_t wait(int *wstatus)` | POSIX.1-2024 XSH wait |
 | [`waitpid`](../spec/functions/sys/wait/waitpid.toml) | `<sys/wait.h>` | `pid_t waitpid(pid_t pid, int *wstatus, int options)` | POSIX.1-2024 XSH waitpid |
+| [`wcrtomb`](../spec/functions/wchar/wcrtomb.toml) | `<wchar.h>` | `size_t wcrtomb(char *restrict s, wchar_t wc, mbstate_t *restrict ps)` | C17 7.29.6.3.3 |
+| [`wcscat`](../spec/functions/wchar/wcscat.toml) | `<wchar.h>` | `wchar_t *wcscat(wchar_t *restrict dst, const wchar_t *restrict src)` | C17 7.29.4.3.1 |
+| [`wcschr`](../spec/functions/wchar/wcschr.toml) | `<wchar.h>` | `wchar_t *wcschr(const wchar_t *s, wchar_t c)` | C17 7.29.4.5.1 |
+| [`wcscmp`](../spec/functions/wchar/wcscmp.toml) | `<wchar.h>` | `int wcscmp(const wchar_t *a, const wchar_t *b)` | C17 7.29.4.4.1 |
+| [`wcscoll`](../spec/functions/wchar/wcscoll.toml) | `<wchar.h>` | `int wcscoll(const wchar_t *a, const wchar_t *b)` | C17 7.29.4.4.2 |
+| [`wcscpy`](../spec/functions/wchar/wcscpy.toml) | `<wchar.h>` | `wchar_t *wcscpy(wchar_t *restrict dst, const wchar_t *restrict src)` | C17 7.29.4.2.1 |
+| [`wcscspn`](../spec/functions/wchar/wcscspn.toml) | `<wchar.h>` | `size_t wcscspn(const wchar_t *s, const wchar_t *reject)` | C17 7.29.4.5.2 |
+| [`wcslen`](../spec/functions/wchar/wcslen.toml) | `<wchar.h>` | `size_t wcslen(const wchar_t *s)` | C17 7.29.4.6.1 |
+| [`wcsncat`](../spec/functions/wchar/wcsncat.toml) | `<wchar.h>` | `wchar_t *wcsncat(wchar_t *restrict dst, const wchar_t *restrict src, size_t n)` | C17 7.29.4.3.2 |
+| [`wcsncmp`](../spec/functions/wchar/wcsncmp.toml) | `<wchar.h>` | `int wcsncmp(const wchar_t *a, const wchar_t *b, size_t n)` | C17 7.29.4.4.3 |
+| [`wcsncpy`](../spec/functions/wchar/wcsncpy.toml) | `<wchar.h>` | `wchar_t *wcsncpy(wchar_t *restrict dst, const wchar_t *restrict src, size_t n)` | C17 7.29.4.2.2 |
+| [`wcspbrk`](../spec/functions/wchar/wcspbrk.toml) | `<wchar.h>` | `wchar_t *wcspbrk(const wchar_t *s, const wchar_t *accept)` | C17 7.29.4.5.3 |
+| [`wcsrchr`](../spec/functions/wchar/wcsrchr.toml) | `<wchar.h>` | `wchar_t *wcsrchr(const wchar_t *s, wchar_t c)` | C17 7.29.4.5.4 |
+| [`wcsrtombs`](../spec/functions/wchar/wcsrtombs.toml) | `<wchar.h>` | `size_t wcsrtombs(char *restrict dst, const wchar_t **restrict src, size_t len, mbstate_t *restrict ps)` | C17 7.29.6.4.2 |
+| [`wcsspn`](../spec/functions/wchar/wcsspn.toml) | `<wchar.h>` | `size_t wcsspn(const wchar_t *s, const wchar_t *accept)` | C17 7.29.4.5.5 |
+| [`wcsstr`](../spec/functions/wchar/wcsstr.toml) | `<wchar.h>` | `wchar_t *wcsstr(const wchar_t *haystack, const wchar_t *needle)` | C17 7.29.4.5.6 |
+| [`wcstok`](../spec/functions/wchar/wcstok.toml) | `<wchar.h>` | `wchar_t *wcstok(wchar_t *restrict s, const wchar_t *restrict separators, wchar_t **restrict context)` | C17 7.29.4.5.7 |
+| [`wcstombs`](../spec/functions/stdlib/wcstombs.toml) | `<stdlib.h>` | `size_t wcstombs(char *restrict dst, const wchar_t *restrict src, size_t len)` | C17 7.22.8.2 |
+| [`wcsxfrm`](../spec/functions/wchar/wcsxfrm.toml) | `<wchar.h>` | `size_t wcsxfrm(wchar_t *restrict dst, const wchar_t *restrict src, size_t n)` | C17 7.29.4.4.4 |
+| [`wctob`](../spec/functions/wchar/wctob.toml) | `<wchar.h>` | `int wctob(wint_t c)` | C17 7.29.6.1.2 |
+| [`wctomb`](../spec/functions/stdlib/wctomb.toml) | `<stdlib.h>` | `int wctomb(char *s, wchar_t wc)` | C17 7.22.7.3 |
+| [`wctrans`](../spec/functions/wctype/wctrans.toml) | `<wctype.h>` | `wctrans_t wctrans(const char *property)` | C17 7.30.3.2.2 |
+| [`wctype`](../spec/functions/wctype/wctype.toml) | `<wctype.h>` | `wctype_t wctype(const char *property)` | C17 7.30.2.2.2 |
+| [`wmemchr`](../spec/functions/wchar/wmemchr.toml) | `<wchar.h>` | `wchar_t *wmemchr(const wchar_t *s, wchar_t c, size_t n)` | C17 7.29.4.5.8 |
+| [`wmemcmp`](../spec/functions/wchar/wmemcmp.toml) | `<wchar.h>` | `int wmemcmp(const wchar_t *a, const wchar_t *b, size_t n)` | C17 7.29.4.4.5 |
+| [`wmemcpy`](../spec/functions/wchar/wmemcpy.toml) | `<wchar.h>` | `wchar_t *wmemcpy(wchar_t *restrict dst, const wchar_t *restrict src, size_t n)` | C17 7.29.4.2.3 |
+| [`wmemmove`](../spec/functions/wchar/wmemmove.toml) | `<wchar.h>` | `wchar_t *wmemmove(wchar_t *dst, const wchar_t *src, size_t n)` | C17 7.29.4.2.4 |
+| [`wmemset`](../spec/functions/wchar/wmemset.toml) | `<wchar.h>` | `wchar_t *wmemset(wchar_t *s, wchar_t c, size_t n)` | C17 7.29.4.6.2 |
 | [`write`](../spec/functions/unistd/write.toml) | `<unistd.h>` | `ssize_t write(int fd, const void *buf, size_t count)` | POSIX.1-2024 XSH write |

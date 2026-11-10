@@ -1,0 +1,18 @@
+name = "towlower"
+header = "wctype.h"
+prototype = "wint_t towlower(wint_t wc)"
+standard = ["C17 7.30.3.1.1"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:unicode-16.0.0", "diff:glibc", "diff:musl"]
+provenance = "original"
+semantics = [
+  "Apply the corresponding simple lowercase mapping or return the original value.",
+  "Preserve errno.",
+]
+
+[abi]
+narrow_args = ["edi:u32"]
+variadic = false

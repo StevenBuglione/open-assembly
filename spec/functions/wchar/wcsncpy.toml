@@ -1,0 +1,18 @@
+name = "wcsncpy"
+header = "wchar.h"
+prototype = "wchar_t *wcsncpy(wchar_t *restrict dst, const wchar_t *restrict src, size_t n)"
+standard = ["C17 7.29.4.2.2"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:wide-object-bounds", "diff:glibc", "diff:musl"]
+provenance = "original"
+semantics = [
+  "Copy at most n source elements and zero-pad the rest of the n output elements.",
+  "Preserve errno.",
+]
+
+[abi]
+narrow_args = []
+variadic = false
