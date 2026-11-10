@@ -12,6 +12,7 @@ extern __al_lock:function
 extern __al_unlock:function
 extern __al_heap_alloc:function
 extern __al_heap_inspect:function
+extern __al_heap_remap:function
 extern __al_heap_free:function
 extern __al_heap_tag:function
 extern __al_heap_bad:function
@@ -76,6 +77,16 @@ __al_heap:
 
 .move:
     mov [rsp], rax                ; old requested size
+    test rcx, 1                   ; direct allocation, validated by inspect
+    jz .copy_grow
+    mov rdi, rbx
+    mov rsi, r12
+    call __al_heap_remap
+    test rax, rax
+    jz .copy_grow
+    mov r15, rax
+    jmp .unlock
+.copy_grow:
     mov rdi, r12
     mov rsi, r13
     call __al_heap_alloc

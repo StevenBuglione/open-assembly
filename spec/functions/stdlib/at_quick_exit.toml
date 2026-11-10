@@ -1,0 +1,19 @@
+name = "at_quick_exit"
+header = "stdlib.h"
+prototype = "int at_quick_exit(void (*function)(void))"
+standard = ["C17 7.22.4.3"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["reference:c17-quick-exit", "diff:glibc", "diff:musl"]
+provenance = "original"
+semantics = [
+  "Register a callback for quick termination in a registry independent of normal termination.",
+  "Accept 32 pending registrations. Return zero on success or nonzero when the registry is full.",
+  "Count each registration separately. Running callbacks can reuse a slot after it is popped.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

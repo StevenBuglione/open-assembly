@@ -1,0 +1,16 @@
+name = "arena_reset"
+header = "arena.h"
+prototype = "int arena_reset(size_t state[3])"
+standard = ["Extension ABI arena"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:arena-state-model"]
+provenance = "original"
+semantics = ["Clear the used word and preserve the base, capacity, and storage bytes.", "Return -EINVAL for a null state. Preserve errno."]
+
+[abi]
+narrow_args = []
+variadic = false
+noreturn = false

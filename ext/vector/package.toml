@@ -1,0 +1,5 @@
+schema_version = 1
+name = "vector"
+stability = "experimental"
+dependencies = ["arena"]
+oracle = "reference:arena-vector-model"

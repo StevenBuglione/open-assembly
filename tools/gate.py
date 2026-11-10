@@ -40,12 +40,12 @@ class GateError(Exception):
     pass
 
 
-def run(command, *, timeout=30, environment=None):
+def run(command, *, timeout=30, environment=None, cwd=ROOT):
     command = list(map(str, command))
     try:
         if environment is None:
             environment = {**os.environ, "LC_ALL": "C"}
-        result = subprocess.run(command, cwd=ROOT, capture_output=True,
+        result = subprocess.run(command, cwd=cwd, capture_output=True,
                                 timeout=timeout, env=environment)
         return {"command": command, "returncode": result.returncode,
                 "stdout": result.stdout.decode("utf-8", errors="surrogateescape"),
@@ -182,6 +182,12 @@ def nm_symbols(log, path, flags):
     return {fields[0]: fields[1] for line in lines if len(fields := line.split()) >= 2}
 
 
+def check_strlen_prototype(log, compiler):
+    # Keep the generated project header separate from the hosted oracle headers.
+    checked(log, [compiler, *COMPILE_FLAGS, "-I", "build/include/c", "-fsyntax-only",
+                  "tests/tooling/strlen_prototype.c"])
+
+
 class Harness:
     def __init__(self, directory, log):
         self.directory = directory
@@ -189,10 +195,10 @@ class Harness:
         self.test_obj = directory / "checks.o"
         self.abi_obj = directory / "abi.o"
         oracle_obj = directory / "glibc-oracle.o"
+        check_strlen_prototype(log, "gcc")
         for source, target in (("tests/unit/strlen.c", self.test_obj),
                                ("tests/external/strlen_glibc.c", oracle_obj)):
-            checked(log, ["gcc", *COMPILE_FLAGS, "-include", "build/include/c/string.h",
-                          "-c", source, "-o", target])
+            checked(log, ["gcc", *COMPILE_FLAGS, "-c", source, "-o", target])
         checked(log, ["nasm", "-f", "elf64", "-o", self.abi_obj, "tests/abi/strlen.asm"])
         checked(log, ["tools/elf-audit", "--assembly-object", self.abi_obj])
         for path in (self.test_obj, self.abi_obj):
@@ -444,6 +450,9 @@ def main(default_fixture=None):
         parser.error("invalid function name")
     if args.production or (args.function is not None and args.fixture is None
                            and any(Path("src/x86_64-linux").glob(f"*/{args.function}.asm"))):
+        from runtime_manifest_gate import PLANS, runtime_manifest_production
+        if args.function in PLANS:
+            return runtime_manifest_production(args.function, default_fixture)
         from runtime_gate import ERRNO, runtime_production
         if args.function == ERRNO:
             return runtime_production(args.function, default_fixture)

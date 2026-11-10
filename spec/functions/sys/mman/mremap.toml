@@ -1,0 +1,15 @@
+name = "mremap"
+header = "sys/mman.h"
+prototype = "void *mremap(void *old_address, size_t old_length, size_t new_length, int flags, ...)"
+standard = ["Extension ABI mremap"]
+deps = ["__errno_location"]
+errno = ["EAGAIN", "EFAULT", "EINVAL", "ENOMEM"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:linux-filesystem-time-abi"]
+provenance = "original"
+semantics = ["Resize or move a mapping. Read the optional new address only when MREMAP_FIXED is set.", "Preserve errno on success and translate Linux errors."]
+
+[abi]
+narrow_args = ["ecx:s32"]
+variadic = true

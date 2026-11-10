@@ -1,0 +1,18 @@
+name = "setsockopt"
+header = "sys/socket.h"
+prototype = "int setsockopt(int fd, int level, int option, const void *value, socklen_t length)"
+standard = ["POSIX.1-2024 XSH setsockopt"]
+deps = ["__errno_location"]
+errno = ["EBADF", "EFAULT", "EINVAL", "ENOPROTOOPT", "ENOTSOCK"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:linux-x86-64-network-abi", "diff:glibc", "diff:musl"]
+provenance = "original"
+semantics = [
+  "Set the socket option from the supplied bytes.",
+  "Return the Linux result or minus one with TLS errno. Preserve errno on success.",
+]
+
+[abi]
+narrow_args = ["edi:s32", "esi:s32", "edx:s32", "r8d:u32"]
+variadic = false

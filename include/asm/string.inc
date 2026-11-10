@@ -15,6 +15,7 @@ extern strcpy
 extern strcspn
 extern strdup
 extern strerror
+extern strerror_r
 extern strlen
 extern strncat
 extern strncmp

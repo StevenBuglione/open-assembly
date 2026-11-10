@@ -1,0 +1,19 @@
+name = "tcsetattr"
+header = "termios.h"
+prototype = "int tcsetattr(int fd, int optional_actions, const struct termios *termios_p)"
+standard = ["POSIX.1-2024 XSH tcsetattr"]
+deps = ["__errno_location"]
+errno = ["EBADF", "EFAULT", "EINTR", "EINVAL", "EIO", "ENOTTY"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-termios-uapi"]
+provenance = "original"
+semantics = [
+  "Apply Linux terminal attributes immediately, after output drains, or after drain and input flush.",
+  "Reject an unknown action with EINVAL before any ioctl.",
+  "Return zero and preserve errno on success. Return -1 and set errno on failure.",
+]
+
+[abi]
+narrow_args = ["edi:s32", "esi:s32"]
+variadic = false

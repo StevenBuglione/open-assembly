@@ -6,7 +6,7 @@ deps = []
 errno = []
 mt_safe = true
 as_safe = true
-oracles = ["diff:glibc", "diff:musl", "reference:lua-posix-abi"]
+oracles = ["diff:glibc", "diff:musl", "reference:lua-posix-abi", "reference:c17-integer-arithmetic"]
 provenance = "original"
 semantics = [
   "Return the absolute value of the signed integer when the result is representable.",

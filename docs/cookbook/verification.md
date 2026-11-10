@@ -13,6 +13,13 @@ has an exact generated-stub rejection. Fault probes cover malformed directory
 records, pipe descriptor exhaustion, allocated formatting failure, and unlocked
 stream lock ownership. The manifests record backend-specific omissions.
 
+`./tools/container make phase6-fcntl` checks typed variadic descriptor
+control, 64-bit process and OFD locks, and successful negative process
+group owners. It also exercises the reserved -1 result using the
+container's PID namespace and requires the exact bad-fd stub rejection.
+Evidence is written to `build/evidence/phase6-fcntl.json`.
+[Descriptor control fixtures](../../tests/phase6/fcntl/README.md)
+
 The BusyBox gate extracts the pinned 1.37.0 source with networking disabled.
 It builds the six selected upstream applets with freestanding, no-builtin
 flags, then uses the actual Kbuild link objects and the Open Assembly startup
@@ -55,6 +62,12 @@ production checks have separate requirements.
 The `phase6-strftime` gate checks C-locale directives and modifiers,
 exact buffer limits, and the ISO week-year across a full 400-year cycle.
 Its manifest records the host comparison scope for custom zone names.
+
+`./tools/container make phase6-sqlite` runs three pinned SQLite 3.53.3
+workloads: speedtest1, the threadtest3 shared-cache readers, and the
+single-worker threadtest5 control. The gate checks reproducible archive-only
+links and compares results under native Linux, QEMU, Memcheck, glibc and musl.
+[SQLite workload details](../../tests/external/sqlite/README.md)
 
 ## Phase 8 thread lifecycle
 
@@ -348,3 +361,42 @@ independent Phase 2 manifest.
 On pull requests, CI compares the protected oracle and external test paths
 with the base commit. New files are allowed. Edits, deletions, moves and
 type changes to existing files fail the check.
+
+## Nightly and tagged verification
+
+```sh
+./tools/verify-tier nightly
+./tools/verify-tier release --tag v1.0.0
+```
+
+The nightly entry point runs the available matrix, including Phase 2
+production mutation and 300-second libFuzzer observations, exact binary32
+rounding groups, selected transcendental shards, the isolated memcpy benchmark,
+and the pinned application and external suites. The extension smoke control runs in a separate clone.
+Its unimplemented, scoped, and production-required reports are archived
+with the main evidence. The separate shipped extension check runs declared
+packages in dependency order and validates each fresh per-function production
+report. A missing independent plan or unmet package dependency keeps that
+scope pending. The host wrapper first starts the separate
+QEMU-system image for the pinned old-kernel boot check. The tier validates
+that report against the current inputs. It requires all 13 paired native
+and guest case results and their exact guest manifest. The nine installed
+seccomp filter observations have a separate exact scope. The musl authorship scan
+checks the relocated-copy and distinct NASM controls and archives its
+hash-linked review queue. Entries in that queue are similarity signals
+for human review.
+
+The release tier additionally validates the checked-out tag and compares
+two independently built and audited sets of runtime, PIE startup and
+application artifacts. Its JSON evidence includes fresh per-function
+coverage, mutation summaries, the outstanding inventory, and the declared
+deviations. Both workflows upload evidence even when verification fails.
+
+Every listed gate must produce a fresh passing report with matching input
+hashes. Use repeated `--only` selections for focused diagnosis. Such a run
+exits nonzero with a partial report. The current matrix also records unmet
+the remaining full binary32 domains,
+LTP and gnulib, and performance requirements. A tier
+with any failure or unmet requirement exits nonzero and cannot qualify
+a release. The platform section records the actual native kernel and
+seccomp mode separately from those matrix requirements.

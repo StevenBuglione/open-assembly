@@ -17,13 +17,16 @@
 %define CLOCK_TAI 11
 %define TIMER_ABSTIME 1
 
+extern asctime
 extern clock
 extern clock_getres
 extern clock_gettime
 extern clock_nanosleep
+extern ctime
 extern difftime
 extern gmtime
 extern gmtime_r
+extern localtime
 extern localtime_r
 extern mktime
 extern nanosleep

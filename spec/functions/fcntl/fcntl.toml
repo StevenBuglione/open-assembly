@@ -1,0 +1,22 @@
+name = "fcntl"
+header = "fcntl.h"
+prototype = "int fcntl(int fd, int command, ...)"
+standard = ["POSIX.1-2024 XSH fcntl"]
+deps = ["__errno_location"]
+errno = ["EACCES", "EAGAIN", "EBADF", "EDEADLK", "EFAULT", "EINTR", "EINVAL", "EMFILE", "ENOLCK", "EOVERFLOW", "EPERM", "ESRCH"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-fcntl-abi"]
+provenance = "original"
+semantics = [
+  "Dispatch the selected Linux descriptor, status flag, owner, record lock, and pipe size commands.",
+  "Select a no-argument, promoted int, or pointer argument by command before forwarding to Linux.",
+  "Use the LP64 flock layout for process and open-file-description record locks.",
+  "Preserve successful negative process group IDs for F_GETOWN. Use F_GETOWN_EX when the result would equal the error sentinel.",
+  "Return the command result and preserve errno on success. Return -1 with errno for errors.",
+  "Report EINVAL for an unrecognized command without consuming an argument.",
+]
+
+[abi]
+narrow_args = ["edi:s32", "esi:s32"]
+variadic = true

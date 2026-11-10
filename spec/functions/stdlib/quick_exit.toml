@@ -1,0 +1,20 @@
+name = "quick_exit"
+header = "stdlib.h"
+prototype = "_Noreturn void quick_exit(int status)"
+standard = ["C17 7.22.4.7"]
+deps = ["_Exit", "at_quick_exit"]
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["reference:c17-quick-exit", "diff:glibc", "diff:musl"]
+provenance = "original"
+semantics = [
+  "Invoke registered quick termination callbacks in reverse registration order.",
+  "Run callbacks registered by the active callback before older pending callbacks.",
+  "Finish with _Exit and the supplied status. Leave ordinary exit callbacks and stdio flushing to normal termination.",
+]
+
+[abi]
+narrow_args = ["edi:s32"]
+variadic = false
+noreturn = true

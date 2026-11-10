@@ -19,12 +19,15 @@ bits 64
 default rel
 
 global memcpy:function
+extern __al_memcpy_bulk:function
 
 section .text.memcpy alloc exec nowrite progbits
 memcpy:
     mov rax, rdi
     test rdx, rdx
     jz .done
+    cmp rdx, 256
+    jae .bulk
 .next:
     mov cl, [rsi]
     mov [rdi], cl
@@ -33,6 +36,11 @@ memcpy:
     dec rdx
     jnz .next
 .done:
+    ret
+.bulk:
+    sub rsp, 8
+    call __al_memcpy_bulk
+    add rsp, 8
     ret
 
 section .note.GNU-stack noalloc noexec nowrite progbits

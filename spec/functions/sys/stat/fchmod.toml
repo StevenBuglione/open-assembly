@@ -1,0 +1,15 @@
+name = "fchmod"
+header = "sys/stat.h"
+prototype = "int fchmod(int fd, mode_t mode)"
+standard = ["POSIX.1-2024 XSH fchmod"]
+deps = ["__errno_location"]
+errno = ["EBADF", "EINTR", "EIO", "EINVAL", "EPERM", "EROFS"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-filesystem-time-abi"]
+provenance = "original"
+semantics = ["Set access and mode bits through the descriptor.", "Preserve errno on success and translate Linux errors."]
+
+[abi]
+narrow_args = ["edi:s32", "esi:u32"]
+variadic = false

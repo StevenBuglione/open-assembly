@@ -3,15 +3,24 @@ schema_version = 1
 [types]
 off_t = "long"
 mode_t = "unsigned int"
+uid_t = "unsigned int"
+gid_t = "unsigned int"
 
 [syscalls]
 fstat = 5
 lseek = 8
+mmap = 9
+munmap = 11
 ioctl = 16
+pread64 = 17
+pwrite64 = 18
 pipe = 22
+mremap = 25
 dup = 32
 dup2 = 33
 fcntl = 72
+fsync = 74
+ftruncate = 77
 getcwd = 79
 rename = 82
 mkdir = 83
@@ -19,11 +28,15 @@ rmdir = 84
 unlink = 87
 readlink = 89
 chmod = 90
+fchmod = 91
+fchown = 93
 umask = 95
+fstatfs = 138
 getdents64 = 217
 openat = 257
 newfstatat = 262
 getrandom = 318
+pwritev2 = 328
 
 [seek]
 SEEK_SET = 0
@@ -90,8 +103,53 @@ DT_LNK = 10
 DT_SOCK = 12
 
 [descriptor_flags]
+F_DUPFD = 0
 F_GETFD = 1
 F_SETFD = 2
 F_GETFL = 3
+F_SETFL = 4
+F_GETLK = 5
+F_SETLK = 6
+F_SETLKW = 7
+F_SETOWN = 8
+F_GETOWN = 9
+F_SETOWN_EX = 15
+F_GETOWN_EX = 16
+F_OFD_GETLK = 36
+F_OFD_SETLK = 37
+F_OFD_SETLKW = 38
 F_DUPFD_CLOEXEC = 1030
+F_SETPIPE_SZ = 1031
+F_GETPIPE_SZ = 1032
+F_RDLCK = 0
+F_WRLCK = 1
+F_UNLCK = 2
+F_OWNER_TID = 0
+F_OWNER_PID = 1
+F_OWNER_PGRP = 2
 FD_CLOEXEC = 1
+
+[access_modes]
+F_OK = 0
+X_OK = 1
+W_OK = 2
+R_OK = 4
+
+[sysconf_names]
+_SC_PAGESIZE = 30
+_SC_PAGE_SIZE = 30
+
+[mapping]
+PROT_NONE = 0
+PROT_READ = 1
+PROT_WRITE = 2
+PROT_EXEC = 4
+MAP_SHARED = 0x01
+MAP_PRIVATE = 0x02
+MAP_SHARED_VALIDATE = 0x03
+MAP_FIXED = 0x10
+MAP_ANONYMOUS = 0x20
+MAP_FIXED_NOREPLACE = 0x100000
+MREMAP_MAYMOVE = 1
+MREMAP_FIXED = 2
+MREMAP_DONTUNMAP = 4

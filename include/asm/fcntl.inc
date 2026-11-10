@@ -22,13 +22,37 @@
 %define O_SYNC 1052672
 %define O_PATH 2097152
 %define O_TMPFILE 4259840
+%define F_DUPFD 0
 %define F_GETFD 1
 %define F_SETFD 2
 %define F_GETFL 3
+%define F_SETFL 4
+%define F_GETLK 5
+%define F_SETLK 6
+%define F_SETLKW 7
+%define F_SETOWN 8
+%define F_GETOWN 9
+%define F_SETOWN_EX 15
+%define F_GETOWN_EX 16
+%define F_OFD_GETLK 36
+%define F_OFD_SETLK 37
+%define F_OFD_SETLKW 38
 %define F_DUPFD_CLOEXEC 1030
+%define F_SETPIPE_SZ 1031
+%define F_GETPIPE_SZ 1032
+%define F_RDLCK 0
+%define F_WRLCK 1
+%define F_UNLCK 2
+%define F_OWNER_TID 0
+%define F_OWNER_PID 1
+%define F_OWNER_PGRP 2
 %define FD_CLOEXEC 1
+%define SEEK_SET 0
+%define SEEK_CUR 1
+%define SEEK_END 2
 
 extern creat
+extern fcntl
 extern open
 extern openat
 

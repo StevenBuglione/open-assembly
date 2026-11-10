@@ -1,0 +1,174 @@
+schema = 1
+
+[[case]]
+name = "netdb-lookup-forward"
+sources = ["tests/phase10/netdb/lookup.c"]
+requires = ["getaddrinfo"]
+args = ["forward"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:rfc3493", "reference:local-netdb"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "netdb-lookup-reverse"
+sources = ["tests/phase10/netdb/lookup.c"]
+requires = ["getnameinfo"]
+args = ["reverse"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:rfc3493", "reference:local-netdb"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "netdb-lookup-errors"
+sources = ["tests/phase10/netdb/lookup.c"]
+requires = ["gai_strerror"]
+args = ["errors"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:rfc3493", "reference:local-netdb"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "netdb-lookup-forward-policy"
+sources = ["tests/phase10/netdb/lookup.c"]
+requires = ["getaddrinfo"]
+args = ["forward-policy"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:rfc3493", "reference:local-netdb"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Project EAI publication and synthetic address and transport ordering."
+
+[[case]]
+name = "netdb-lookup-reverse-policy"
+sources = ["tests/phase10/netdb/lookup.c"]
+requires = ["getnameinfo"]
+args = ["reverse-policy"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:rfc3493", "reference:local-netdb"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Project output atomicity and numeric scope ID policy."
+
+[[case]]
+name = "netdb-lifetime-free"
+sources = ["tests/phase10/netdb/lifetime.c"]
+requires = ["getaddrinfo", "freeaddrinfo"]
+args = ["free"]
+env = {}
+link_wraps = ["malloc", "calloc", "free"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:rfc3493", "reference:local-netdb"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Observes the project allocator across a detached sublist and null list."
+
+[[case]]
+name = "netdb-lifetime-oom"
+sources = ["tests/phase10/netdb/lifetime.c"]
+requires = ["getaddrinfo", "freeaddrinfo"]
+args = ["oom"]
+env = {}
+link_wraps = ["malloc", "calloc", "free"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:rfc3493", "reference:local-netdb"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Injects failure at each allocation request in a successful numeric lookup."
+
+[[case]]
+name = "netdb-files-forward"
+sources = ["tests/phase10/netdb/files.c"]
+requires = ["getaddrinfo"]
+args = ["forward"]
+env = {}
+link_wraps = ["fopen"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:rfc3493", "reference:local-netdb"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Uses exact fixture hosts and services via a targeted fopen wrapper."
+
+[[case]]
+name = "netdb-files-reverse"
+sources = ["tests/phase10/netdb/files.c"]
+requires = ["getnameinfo"]
+args = ["reverse"]
+env = {}
+link_wraps = ["fopen"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:rfc3493", "reference:local-netdb"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Uses exact fixture hosts and services via a targeted fopen wrapper."
+
+[[case]]
+name = "netdb-files-many"
+sources = ["tests/phase10/netdb/files.c"]
+requires = ["getaddrinfo"]
+args = ["many"]
+env = {}
+link_wraps = ["fopen"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:rfc3493", "reference:local-netdb"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Uses exact fixture hosts and services via a targeted fopen wrapper."
+
+[[stub]]
+symbol = "getaddrinfo"
+case = "netdb-lookup-forward"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "getnameinfo"
+case = "netdb-lookup-reverse"
+status = 31
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "gai_strerror"
+case = "netdb-lookup-errors"
+status = 40
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "freeaddrinfo"
+case = "netdb-lifetime-free"
+status = 51
+stdout = ""
+stderr = ""

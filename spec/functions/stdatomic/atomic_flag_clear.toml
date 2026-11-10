@@ -1,0 +1,15 @@
+name = "atomic_flag_clear"
+header = "stdatomic.h"
+prototype = "void atomic_flag_clear(volatile atomic_flag *object)"
+standard = ["C17 7.17.8.2"]
+deps = ["atomic_flag_clear_explicit"]
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:c17-atomic-ordering", "reference:amd64-atomic-flag"]
+provenance = "original"
+semantics = ["Atomically clear the flag using sequential consistency."]
+
+[abi]
+narrow_args = []
+variadic = false

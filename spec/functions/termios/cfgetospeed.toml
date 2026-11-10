@@ -1,0 +1,17 @@
+name = "cfgetospeed"
+header = "termios.h"
+prototype = "speed_t cfgetospeed(const struct termios *termios_p)"
+standard = ["POSIX.1-2024 XSH cfgetospeed"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:linux-termios-uapi", "reference:posix-terminal-speed"]
+provenance = "original"
+semantics = [
+  "Return the encoded output baud rate stored in the terminal record.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

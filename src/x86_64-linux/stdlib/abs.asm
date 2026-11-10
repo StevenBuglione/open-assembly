@@ -7,7 +7,7 @@
 ; errno: -
 ; mt_safe: true
 ; as_safe: true
-; oracles: diff:glibc, diff:musl, reference:lua-posix-abi
+; oracles: diff:glibc, diff:musl, reference:lua-posix-abi, reference:c17-integer-arithmetic
 ; provenance: original
 ; narrow_args: edi:s32
 ; variadic: false

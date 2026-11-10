@@ -1,0 +1,15 @@
+name = "pread"
+header = "unistd.h"
+prototype = "ssize_t pread(int fd, void *buffer, size_t count, off_t offset)"
+standard = ["POSIX.1-2024 XSH pread"]
+deps = ["__errno_location"]
+errno = ["EAGAIN", "EBADF", "EFAULT", "EINTR", "EINVAL", "EIO", "EISDIR", "ESPIPE"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-filesystem-time-abi"]
+provenance = "original"
+semantics = ["Read at the explicit signed file offset without changing the current file offset.", "Preserve errno on success and translate Linux errors."]
+
+[abi]
+narrow_args = ["edi:s32"]
+variadic = false

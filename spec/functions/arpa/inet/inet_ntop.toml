@@ -1,0 +1,19 @@
+name = "inet_ntop"
+header = "arpa/inet.h"
+prototype = "const char *inet_ntop(int family, const void *restrict source, char *restrict destination, socklen_t size)"
+standard = ["POSIX.1-2024 XSH inet_ntop"]
+deps = ["__errno_location"]
+errno = ["EAFNOSUPPORT", "ENOSPC"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:rfc5952", "diff:glibc", "diff:musl"]
+provenance = "original"
+semantics = [
+  "Render a numeric IPv4 or IPv6 address into a null-terminated destination and return its address.",
+  "Use canonical IPv6 zero compression and dotted-decimal output for IPv4-mapped addresses.",
+  "Return null on failure without changing the destination. Preserve errno on success.",
+]
+
+[abi]
+narrow_args = ["edi:s32", "ecx:u32"]
+variadic = false

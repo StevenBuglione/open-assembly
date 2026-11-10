@@ -1,0 +1,18 @@
+name = "send"
+header = "sys/socket.h"
+prototype = "ssize_t send(int fd, const void *buffer, size_t length, int flags)"
+standard = ["POSIX.1-2024 XSH send"]
+deps = ["__errno_location"]
+errno = ["EACCES", "EAGAIN", "EBADF", "ECONNRESET", "EDESTADDRREQ", "EFAULT", "EINTR", "EINVAL", "EISCONN", "EMSGSIZE", "ENOBUFS", "ENOMEM", "ENOTCONN", "ENOTSOCK", "EOPNOTSUPP", "EPIPE"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:linux-x86-64-network-abi", "diff:glibc", "diff:musl"]
+provenance = "original"
+semantics = [
+  "Send bytes through a connected socket using Linux send flags.",
+  "Return the Linux result or minus one with TLS errno. Preserve errno on success.",
+]
+
+[abi]
+narrow_args = ["edi:s32", "ecx:s32"]
+variadic = false

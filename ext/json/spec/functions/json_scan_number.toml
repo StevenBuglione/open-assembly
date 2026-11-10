@@ -1,0 +1,16 @@
+name = "json_scan_number"
+header = "json.h"
+prototype = "long json_scan_number(const unsigned char *data, size_t length, size_t offset)"
+standard = ["Extension ABI json"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:json-token-model"]
+provenance = "original"
+semantics = ["Scan a JSON decimal number without evaluating or rounding it.", "Return its exclusive end offset or a negative error without changing errno."]
+
+[abi]
+narrow_args = []
+variadic = false
+noreturn = false

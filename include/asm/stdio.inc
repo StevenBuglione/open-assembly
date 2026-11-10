@@ -9,6 +9,8 @@
 %define _IONBF 2
 %define FOPEN_MAX 16
 %define FILENAME_MAX 4096
+%define L_tmpnam 41
+%define TMP_MAX 32767
 
 extern stdin:data
 extern stdout:data
@@ -65,6 +67,7 @@ extern snprintf
 extern sprintf
 extern sscanf
 extern tmpfile
+extern tmpnam
 extern ungetc
 extern vasprintf
 extern vfprintf

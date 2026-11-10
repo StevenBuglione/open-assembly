@@ -1,0 +1,15 @@
+name = "munmap"
+header = "sys/mman.h"
+prototype = "int munmap(void *address, size_t length)"
+standard = ["POSIX.1-2024 XSH munmap"]
+deps = ["__errno_location"]
+errno = ["EINVAL", "ENOMEM"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:linux-filesystem-time-abi"]
+provenance = "original"
+semantics = ["Unmap the specified range using the native Linux mapping boundaries.", "Preserve errno on success and translate Linux errors."]
+
+[abi]
+narrow_args = []
+variadic = false

@@ -23,7 +23,7 @@ OPERATIONS = Path("tests/phase7/transcendental/operations.def")
 NATIVE = Path("tests/phase7/campaign")
 NATIVE_ARTIFACTS = ("native-unary", "mpfr.h", "gmp.h")
 NATIVE_BACKEND = "native-mpfr-unary"
-NATIVE_OPERATIONS = {"exp2", "log2"}
+NATIVE_OPERATIONS = {"exp2", "log2", "exp", "log", "sin", "cos", "tan"}
 
 
 def digest(path):
@@ -133,7 +133,8 @@ def prepare(args, root):
     backend = "python"
     if args.native_headers is not None:
         if args.operation not in NATIVE_OPERATIONS or args.second is not None:
-            raise ValueError("native MPFR oracle supports only unary exp2 and log2")
+            raise ValueError("native MPFR oracle supports only these unary operations: "
+                             + ", ".join(sorted(NATIVE_OPERATIONS)))
         backend = NATIVE_BACKEND
     folder = args.campaign.resolve()
     folder.mkdir(parents=True, exist_ok=False)

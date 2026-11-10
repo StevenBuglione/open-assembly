@@ -1,0 +1,15 @@
+name = "div"
+header = "stdlib.h"
+prototype = "div_t div(int numerator, int denominator)"
+standard = ["C17 7.22.6.2"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:c17-integer-arithmetic"]
+provenance = "original"
+semantics = ["Return the quotient rounded toward zero and remainder as two signed int members.", "The denominator must be nonzero and the quotient must be representable.", "AMD64 returns the two int members in one integer eightbyte."]
+
+[abi]
+narrow_args = ["edi:s32", "esi:s32"]
+variadic = false

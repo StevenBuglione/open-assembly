@@ -3,6 +3,7 @@ bits 64
 default rel
 
 global phase2_abi_probe:function
+global phase2_abi_probe_result:function
 
 %define rsp_changed     (1 << 0)
 %define df_set          (1 << 1)
@@ -25,6 +26,7 @@ global phase2_abi_probe:function
 
 %define caller_fp       0
 %define candidate_fp    512
+%define output_pointer  1024
 %define frame_size      1032
 %define fxsave_x87_cw   0
 %define fxsave_x87_tag  4
@@ -54,6 +56,9 @@ section .text
 ; unsigned phase2_abi_probe(uintptr_t function, const uint64_t arguments[6]);
 ; Test up to six integer or pointer arguments and report an ABI failure mask.
 phase2_abi_probe:
+    xor edx, edx
+; Optional uint64_t result[2] in rdx receives the candidate's rax and rdx.
+phase2_abi_probe_result:
     push rbx
     push rbp
     push r12
@@ -63,6 +68,7 @@ phase2_abi_probe:
     sub rsp, frame_size
 
     mov [rel expected_rsp], rsp
+    mov [rsp + output_pointer], rdx
     fxsave64 [rsp + caller_fp]
     fninit
     fldcw [rel probe_x87_cw]
@@ -86,12 +92,18 @@ phase2_abi_probe:
     call r11
 
     xor ecx, ecx
-    mov rdx, [rel expected_rsp]
-    cmp rsp, rdx
+    mov r10, [rel expected_rsp]
+    mov r11, [r10 + output_pointer]
+    test r11, r11
+    jz .no_results
+    mov [r11], rax
+    mov [r11 + 8], rdx
+.no_results:
+    cmp rsp, r10
     je .rsp_ok
     or ecx, rsp_changed
 .rsp_ok:
-    mov rsp, rdx
+    mov rsp, r10
 
     pushfq
     pop rdx

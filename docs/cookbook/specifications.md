@@ -127,3 +127,57 @@ The queue reports stale and malformed evidence separately. Phase 0 fixture
 reports and Phase 1 and Phase 3 milestone reports have separate scopes.
 Only per-function production reports can unlock dependencies. Computed
 failure history and `blocked` status are pending.
+
+## Extension package scaffolding
+
+An extension declares its namespace, independent oracle, stability and
+package dependencies in `ext/<package>/package.toml`. Public function
+specifications use the existing ABI and provenance schema. The prefix
+`<package>_` is added to the function's short name. Function dependencies
+must name a specified runtime function or a function in the same package
+or a declared dependency package. The loader rejects dependency cycles
+and symbolic links in package input paths.
+
+```sh
+tools/new-package word_math --oracle reference:unsigned-minimum
+tools/new-function word_math clamp_u32 \
+  --prototype 'unsigned int word_math_clamp_u32(unsigned int value, unsigned int ceiling)' \
+  --narrow-arg edi:u32 --narrow-arg esi:u32 \
+  --mt-safe --as-safe \
+  --semantics 'Return the smaller unsigned value.'
+tools/gen
+tools/gen --comment-header word_math_clamp_u32
+```
+
+Use the generated comment in the hand-authored NASM source at
+`ext/word_math/src/x86_64-linux/word_math_clamp_u32.asm`. Generation also
+updates the package include, test declarations and API index. Keep the
+independently authored C fixtures and their manifest under
+`tests/ext/word_math/`. Every fixture names the package oracle and each
+public entry point needs a generated-stub rejection. An extension can use
+an external suite or an independent model under the protected oracle path.
+
+Run `./tools/container tools/extension-gate word_math` after writing the
+implementation and tests. The scope uses reproducible static links, ABI and
+source checks, native/QEMU/Memcheck cases, and the generated stub controls.
+An empty scaffold cannot pass. Use `--require-production` with
+`tests/ext/<package>/production.toml` to require direct SysV ABI, all
+conditional edges observed under QEMU, at least 90 percent NASM mutation
+rejection, and at least 60 seconds of differential packets. Each function
+names a Python model under `tests/oracle/<package>/` and declares the fixed
+request and result record sizes. The evidence binds the model and exact
+candidate bytes. See the disposable word_math production fixture for the
+manifest format. Pinned suite adapters and stable ABI layout baselines
+remain explicit pending requirements.
+Run `./tools/container tools/build-extension word_math` to produce a
+static package for an application. The command audits two isolated builds
+and publishes their matching `crt1.o`, `libopenasm-extension.a`, and
+generated C headers in `build/extensions/word_math/current/`. The archive
+includes the core and the declared extension dependency closure. The
+hash-addressed bundle also contains a manifest with source and artifact
+identities. The `current` link is updated only after a complete build.
+Run `extension-gate` separately for behavioral evidence.
+
+A full smoke control is available in a disposable checkout through
+`./tools/container tests/tooling/extensions/setup.sh`. It exercises both
+rejections and an independently tested scalar package.

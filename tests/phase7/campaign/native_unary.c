@@ -10,7 +10,26 @@
 _Static_assert(FLT_MANT_DIG == 24 && sizeof(float) == 4, "binary32");
 
 enum { INVALID = 1, DIVBYZERO = 4, OVERFLOW = 8, UNDERFLOW = 16, INEXACT = 32, TEST_ERRNO = 947 };
-enum { EXP2 = 0, LOG2 = 1, BATCH = 512 };
+enum { BATCH = 512 };
+#define OP(name) OP_##name,
+#define OP2(name) OP(name)
+enum operation {
+#include "../transcendental/operations.def"
+};
+#undef OP2
+#undef OP
+
+typedef int (*unary_mpfr)(mpfr_ptr, mpfr_srcptr, mpfr_rnd_t);
+
+static const struct {
+    const char *name;
+    enum operation operation;
+    unary_mpfr evaluate;
+} functions[] = {
+    {"exp2", OP_exp2, mpfr_exp2}, {"log2", OP_log2, mpfr_log2},
+    {"exp", OP_exp, mpfr_exp}, {"log", OP_log, mpfr_log},
+    {"sin", OP_sin, mpfr_sin}, {"cos", OP_cos, mpfr_cos}, {"tan", OP_tan, mpfr_tan},
+};
 
 struct request {
     uint64_t low;
@@ -32,37 +51,39 @@ union binary32 {
     float value;
 };
 
-static struct response expected(unsigned operation, uint32_t bits, mpfr_t input,
-                                mpfr_t output, mpfr_rnd_t rounding)
+static struct response expected(enum operation operation, unary_mpfr evaluate, uint32_t bits,
+                                mpfr_t input, mpfr_t output, mpfr_rnd_t rounding)
 {
     const uint32_t magnitude = bits & UINT32_C(0x7fffffff);
     const uint32_t infinity = UINT32_C(0x7f800000);
     const uint32_t quiet = UINT32_C(0x00400000);
+    const uint32_t one = UINT32_C(0x3f800000);
+    const int logarithm = operation == OP_log || operation == OP_log2;
+    const int trigonometric = operation == OP_sin || operation == OP_cos || operation == OP_tan;
     struct response result = {0, 0, DIVBYZERO, TEST_ERRNO};
     if (magnitude > infinity) {
         result.low = bits | quiet;
         if (!(bits & quiet))
             result.flags |= INVALID;
-    } else if (operation == LOG2 && !magnitude) {
+    } else if (logarithm && !magnitude) {
         result.low = UINT32_C(0xff800000);
         result.flags = DIVBYZERO | UNDERFLOW;
         result.error = ERANGE;
-    } else if (operation == LOG2 && bits >> 31) {
+    } else if ((logarithm && bits >> 31) || (trigonometric && magnitude == infinity)) {
         result.low = UINT32_C(0x7fc00000);
         result.flags |= INVALID;
         result.error = EDOM;
     } else if (magnitude == infinity) {
         result.low = bits == infinity ? infinity : 0;
     } else if (!magnitude) {
-        result.low = UINT32_C(0x3f800000);
-    } else if (operation == LOG2 && bits == UINT32_C(0x3f800000)) {
+        result.low = operation == OP_sin || operation == OP_tan ? bits : one;
+    } else if (logarithm && bits == one) {
         result.low = 0;
     } else {
         union binary32 value = {.bits = bits};
         mpfr_set_flt(input, value.value, MPFR_RNDN);
         mpfr_clear_flags();
-        int ternary = operation == EXP2 ? mpfr_exp2(output, input, rounding) :
-                                          mpfr_log2(output, input, rounding);
+        int ternary = evaluate(output, input, rounding);
         ternary = mpfr_subnormalize(output, ternary, rounding);
         int overflowed = mpfr_overflow_p();
         value.value = mpfr_get_flt(output, MPFR_RNDN);
@@ -98,13 +119,13 @@ int main(int argc, char **argv)
     if (argc != 7 || !index_argument(argv[2], &first) || !index_argument(argv[3], &count) ||
         !index_argument(argv[4], &mode) || !count || count > (UINT64_C(1) << 32) - first || mode > 3)
         return 2;
-    unsigned operation;
-    if (strcmp(argv[1], "exp2") == 0)
-        operation = EXP2;
-    else if (strcmp(argv[1], "log2") == 0)
-        operation = LOG2;
-    else
+    size_t selected = 0;
+    const size_t operation_count = sizeof functions / sizeof *functions;
+    while (selected < operation_count && strcmp(argv[1], functions[selected].name))
+        ++selected;
+    if (selected == operation_count)
         return 2;
+    enum operation operation = functions[selected].operation;
     static const mpfr_rnd_t roundings[] = {MPFR_RNDN, MPFR_RNDD, MPFR_RNDU, MPFR_RNDZ};
     if (mpfr_set_emin(-148) || mpfr_set_emax(128))
         return 3;
@@ -122,9 +143,9 @@ int main(int argc, char **argv)
         size_t size = count - offset < BATCH ? (size_t)(count - offset) : BATCH;
         for (size_t i = 0; i < size; ++i) {
             uint32_t bits = (uint32_t)(first + offset + i);
-            responses[i] = expected(operation, bits, input, output, roundings[mode]);
-            unsigned seed = operation == LOG2 && (bits & UINT32_C(0x7fffffff)) == 0 ?
-                            UNDERFLOW : DIVBYZERO;
+            responses[i] = expected(operation, functions[selected].evaluate, bits, input, output,
+                                    roundings[mode]);
+            unsigned seed = responses[i].flags == (DIVBYZERO | UNDERFLOW) ? UNDERFLOW : DIVBYZERO;
             requests[i] = (struct request){.low = bits, .mode = (uint16_t)(mode << 10),
                                            .operation = operation, .seed = (uint16_t)seed};
         }

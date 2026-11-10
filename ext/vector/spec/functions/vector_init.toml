@@ -1,0 +1,16 @@
+name = "vector_init"
+header = "vector.h"
+prototype = "int vector_init(size_t state[5], size_t element_size, size_t alignment)"
+standard = ["Extension ABI vector"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:arena-vector-model"]
+provenance = "original"
+semantics = ["Initialize an empty caller-owned vector and record a nonzero element size and power-of-two alignment.", "Require element_size to be a multiple of alignment. Return -EINVAL on invalid arguments.", "Preserve state on failure and preserve errno."]
+
+[abi]
+narrow_args = []
+variadic = false
+noreturn = false

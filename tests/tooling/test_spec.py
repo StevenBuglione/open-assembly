@@ -11,7 +11,8 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
-from spec import SpecError, check_comment_header, comment_header, load_project, phase0_input_paths, snapshot_inputs, PHASE0_FIXED_INPUTS
+from spec import (COMPILER_ATOMIC_ABI, PHASE0_FIXED_INPUTS, SpecError, check_comment_header,
+                  comment_header, load_project, phase0_input_paths, snapshot_inputs)
 
 
 STRLEN = Path("spec/functions/string/strlen.toml")
@@ -24,7 +25,7 @@ class ProjectTest(unittest.TestCase):
         self.root = Path(self.tmp.name)
         shutil.copytree(ROOT / "spec", self.root / "spec")
         (self.root / "tools").mkdir()
-        for name in ("spec.py", "gen", "queue", "provenance"):
+        for name in ("spec.py", "extensions.py", "gen", "queue", "provenance"):
             shutil.copy(ROOT / "tools" / name, self.root / "tools" / name)
 
     def write(self, path, content):
@@ -69,6 +70,44 @@ class ProjectTest(unittest.TestCase):
         self.assertEqual("generic_functions", by_item["stdatomic.h", "atomic_fetch_xor_explicit"].kind)
         self.assertNotEqual("required", by_item["stdint.h", "uint{N}_t"].availability)
         self.assertEqual("POSIX.1-2024 XBD <unistd.h>", by_item["unistd.h", "ssize_t"].standard)
+
+    def test_inttypes_format_macros_match_selected_stdint(self):
+        self.run_tool("gen", "--test-headers")
+        fixture = ROOT / "tests/tooling/inttypes_formats.c"
+        headers = self.root / "build/include/c"
+        for compiler in ("gcc", "al-clang", "musl-gcc"):
+            for mode in ("-fhosted", "-ffreestanding"):
+                with self.subTest(compiler=compiler, mode=mode):
+                    wrapper_flags = ["-Wno-unused-command-line-argument"] if compiler == "al-clang" else []
+                    run = subprocess.run(
+                        [compiler, "-std=c17", mode, "-fno-builtin", "-Wformat=2", "-Werror", *wrapper_flags,
+                         "-fsyntax-only", "-I", str(headers), str(fixture)],
+                        text=True, capture_output=True, check=False,
+                    )
+                    self.assertEqual(0, run.returncode, run.stdout + run.stderr)
+
+    def test_baseline_compilers_emit_the_named_atomic_libcalls(self):
+        self.run_tool("gen", "--test-headers")
+        fixture = ROOT / "tests/tooling/atomic_abi_emission.c"
+        headers = self.root / "build/include/c"
+        for compiler in ("gcc", "al-clang"):
+            for inline_only in (False, True):
+                with self.subTest(compiler=compiler, inline_only=inline_only):
+                    flags = ["-Wno-atomic-alignment", "-Wno-unused-command-line-argument"] if compiler == "al-clang" else []
+                    if inline_only:
+                        flags.append("-DLOCK_FREE_ONLY=1")
+                    obj = self.root / "atomic-abi.o"
+                    result = subprocess.run(
+                        [compiler, "-std=c17", "-O2", "-march=x86-64", "-mno-cx16", "-ffreestanding",
+                         "-fno-builtin", "-fno-pie", "-Wall", "-Wextra", "-Werror", *flags,
+                         "-I", str(headers), "-c", str(fixture), "-o", str(obj)],
+                        text=True, capture_output=True, check=False,
+                    )
+                    self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+                    undefined = subprocess.run(["nm", "-P", "-g", "-u", str(obj)],
+                                               text=True, capture_output=True, check=True)
+                    symbols = {line.split()[0] for line in undefined.stdout.splitlines()}
+                    self.assertEqual(set() if inline_only else COMPILER_ATOMIC_ABI, symbols)
 
     def test_inventory_rejects_missing_header_duplicate_and_count_drift(self):
         path = self.root / "spec/inventory.toml"

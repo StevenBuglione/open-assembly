@@ -106,6 +106,7 @@ def production_status(project, spec, implementation):
     try:
         from production import REQUIRED_CHECKS, SUITE_CASES, phase2_inputs
         from runtime_gate import ERRNO, REQUIRED_CHECKS as RUNTIME_CHECKS
+        from runtime_manifest_gate import PLANS, REQUIRED_CHECKS as MANIFEST_CHECKS, manifest_inputs
 
         source = regular_file(project.root, relative, "production evidence")
         with source.open(encoding="utf-8") as stream:
@@ -114,8 +115,10 @@ def production_status(project, spec, implementation):
                 or record["schema_version"] != 1 or record.get("function") != spec.name):
             return False, "malformed production evidence identity"
         scope = record.get("scope")
-        runtime = spec.name == ERRNO
-        expected_scope = "production-runtime-function" if runtime else "production-function"
+        manifest = spec.name in PLANS
+        runtime = spec.name == ERRNO or manifest
+        expected_scope = ("production-runtime-manifest-function" if manifest else
+                          "production-runtime-function" if runtime else "production-function")
         if scope != expected_scope:
             return False, "production report has the wrong verification scope"
         if record.get("outcome") == "fail" and record.get("production_verified") is False:
@@ -126,7 +129,7 @@ def production_status(project, spec, implementation):
             return False, "malformed production evidence outcome"
 
         checks = record.get("checks")
-        required_checks = RUNTIME_CHECKS if runtime else REQUIRED_CHECKS
+        required_checks = MANIFEST_CHECKS if manifest else RUNTIME_CHECKS if runtime else REQUIRED_CHECKS
         if type(checks) is not dict or not required_checks <= checks.keys():
             return False, "production evidence is missing required checks"
         for key, item in checks.items():
@@ -141,6 +144,8 @@ def production_status(project, spec, implementation):
         toolchain = record.get("toolchain")
         required_tools = {"nasm", "gcc", "qemu-x86_64", "valgrind"}
         required_tools |= {"ar", "make", "objdump"} if runtime else {"musl-gcc", "al-clang"}
+        if manifest:
+            required_tools.add("musl-gcc")
         if (type(toolchain) is not dict or not required_tools <= toolchain.keys() or any(
                 type(item) is not dict or not is_hash(item.get("sha256"))
                 or type(item.get("version")) is not str or not item["version"].strip()
@@ -150,7 +155,7 @@ def production_status(project, spec, implementation):
         hashes = record.get("inputs")
         if type(hashes) is not dict or any(not is_hash(digest) for digest in hashes.values()):
             return False, "missing or malformed production input identities"
-        current = phase2_inputs()
+        current = manifest_inputs(spec.name) if manifest else phase2_inputs()
         if set(current) != set(hashes):
             return False, "stale production evidence (input path set changed)"
         changed = [name for name in current if hashes[name] != current[name]]

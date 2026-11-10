@@ -1,0 +1,20 @@
+name = "strerror_r"
+header = "string.h"
+prototype = "int strerror_r(int errnum, char *strerrbuf, size_t buflen)"
+standard = ["POSIX.1-2024 XSH strerror_r"]
+deps = ["strerror"]
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:posix-error-message"]
+provenance = "original"
+semantics = [
+  "Write the complete project error message and terminating NUL into the supplied buffer.",
+  "Zero denotes no error. Unknown numbers produce the message Unknown error.",
+  "Return zero on success or ERANGE if the whole message does not fit. An insufficient buffer remains unchanged.",
+  "The returned error number does not modify errno.",
+]
+
+[abi]
+narrow_args = ["edi:s32"]
+variadic = false

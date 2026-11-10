@@ -1,0 +1,15 @@
+name = "fchown"
+header = "unistd.h"
+prototype = "int fchown(int fd, uid_t owner, gid_t group)"
+standard = ["POSIX.1-2024 XSH fchown"]
+deps = ["__errno_location"]
+errno = ["EBADF", "EINTR", "EIO", "EINVAL", "EPERM", "EROFS"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-filesystem-time-abi"]
+provenance = "original"
+semantics = ["Set file ownership through its descriptor. All-one bits in either ID preserve that field.", "Preserve errno on success and translate Linux errors."]
+
+[abi]
+narrow_args = ["edi:s32", "esi:u32", "edx:u32"]
+variadic = false

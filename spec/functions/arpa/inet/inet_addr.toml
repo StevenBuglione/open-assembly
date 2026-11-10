@@ -1,0 +1,19 @@
+name = "inet_addr"
+header = "arpa/inet.h"
+prototype = "in_addr_t inet_addr(const char *source)"
+standard = ["POSIX.1-2024 XSH inet_addr"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:posix-ipv4-address", "diff:glibc", "diff:musl", "suite:libc-test"]
+provenance = "original"
+semantics = [
+  "Convert one to four IPv4 parts in decimal, octal or hexadecimal to network byte order.",
+  "Require the complete spelling and range-check every part. Return INADDR_NONE on failure.",
+  "Preserve errno.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

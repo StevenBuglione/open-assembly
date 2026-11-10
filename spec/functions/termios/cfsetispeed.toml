@@ -1,0 +1,19 @@
+name = "cfsetispeed"
+header = "termios.h"
+prototype = "int cfsetispeed(struct termios *termios_p, speed_t speed)"
+standard = ["POSIX.1-2024 XSH cfsetispeed"]
+deps = ["__errno_location"]
+errno = ["EINVAL"]
+mt_safe = true
+as_safe = true
+oracles = ["reference:linux-termios-uapi", "reference:posix-terminal-speed"]
+provenance = "original"
+semantics = [
+  "Set the encoded input baud rate without changing unrelated terminal flags.",
+  "B0 follows the output rate.",
+  "Unsupported speed codes leave the record unchanged and return -1 with EINVAL.",
+]
+
+[abi]
+narrow_args = ["esi:u32"]
+variadic = false

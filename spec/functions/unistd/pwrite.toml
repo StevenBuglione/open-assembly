@@ -1,0 +1,15 @@
+name = "pwrite"
+header = "unistd.h"
+prototype = "ssize_t pwrite(int fd, const void *buffer, size_t count, off_t offset)"
+standard = ["POSIX.1-2024 XSH pwrite"]
+deps = ["__errno_location"]
+errno = ["EAGAIN", "EBADF", "EFAULT", "EFBIG", "EINTR", "EINVAL", "EIO", "ENOSPC", "EOPNOTSUPP", "EPERM", "ESPIPE"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-filesystem-time-abi"]
+provenance = "original"
+semantics = ["Write at the explicit nonnegative offset without changing the current file offset. Follow the documented Linux append support boundary.", "Reject unsupported append backing before a nonempty transfer. Zero-byte writes do not change a regular file.", "Preserve errno on success and translate Linux errors."]
+
+[abi]
+narrow_args = ["edi:s32"]
+variadic = false

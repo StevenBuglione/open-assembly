@@ -32,6 +32,7 @@ LUAFILES = {"mkstemp", "remove", "rename", "tmpfile"}
 SHELL = {"system", "popen", "pclose"}
 PATH_EXEC = {"execv", "execvp", "posix_spawnp"}
 STRFTIME = {"strftime"}
+FCNTL = {"fcntl"}
 ZONE = {"localtime_r", "mktime"}
 SPAWN = {
     "posix_spawn", "posix_spawn_file_actions_init", "posix_spawn_file_actions_destroy",
@@ -99,7 +100,7 @@ def execute_phase6(suite_name):
     suite = SUITE if suite_name == "files" else SUITE / suite_name
     public = {"files": PUBLIC, "compat": COMPAT, "process": PROCESS, "signal": SIGNAL, "jump": JUMP,
               "time": TIME, "calendar": CALENDAR, "luafiles": LUAFILES, "spawn": SPAWN,
-              "shell": SHELL, "path": PATH_EXEC, "strftime": STRFTIME, "zone": ZONE}[suite_name]
+              "shell": SHELL, "path": PATH_EXEC, "strftime": STRFTIME, "fcntl": FCNTL, "zone": ZONE}[suite_name]
     fault_wrappers = {
         SUITE / "fault.c": ("__al_syscall",),
         SUITE / "compat/vasprintf_fault.c": ("realloc", "free"),
@@ -109,14 +110,16 @@ def execute_phase6(suite_name):
         SUITE / "spawn/lifetime.c": ("malloc", "calloc", "realloc", "free"),
         SUITE / "shell/fault.c": ("__al_syscall",),
     }
-    assembly = {"files": ABI_FIXTURES, "jump": (SUITE / "jump/registers.asm",)}.get(suite_name, ())
+    assembly = {"files": ABI_FIXTURES, "jump": (SUITE / "jump/registers.asm",),
+                "fcntl": (Path("tests/phase2/abi.asm"), SUITE / "fcntl/variadic.asm")}.get(suite_name, ())
     return execute_manifest_gate(
         scope, suite, public, fault_wrappers, assembly, phase6_inputs, "OA_PHASE6_HOST",
-        {"pending_phase6": ["additional per-function coverage and mutation"]},
+        {"pending_phase6": ["additional per-function mutation and coverage"]},
     )
 
 
-def execute_manifest_gate(scope, suite, public, fault_wrappers, assembly, inputs, host_macro, metadata):
+def execute_manifest_gate(scope, suite, public, fault_wrappers, assembly, inputs, host_macro, metadata, *,
+                          external=None):
     evidence = {"schema_version": 1, "scope": scope, "production_verified": False,
                 "outcome": "fail", "checks": {}, **metadata}
     checks = evidence["checks"]
@@ -149,6 +152,8 @@ def execute_manifest_gate(scope, suite, public, fault_wrappers, assembly, inputs
             run_cases(probes, directory, first, second, runners, checks["cases"], host_macro)
             checks["stub_controls"] = {"outcome": "fail", "symbols": {}}
             run_stubs(controls, project, directory, first, checks["stub_controls"])
+            if external is not None:
+                external(directory, first, runners, checks)
         if evidence["inputs"] != inputs():
             raise GateError(f"inputs changed during {scope} verification")
         evidence["outcome"] = "pass"
@@ -185,6 +190,8 @@ if __name__ == "__main__":
                       help="run the PATH execution and spawn probes")
     mode.add_argument("--strftime", dest="suite", action="store_const", const="strftime",
                       help="run the C-locale date-formatting probes")
+    mode.add_argument("--fcntl", dest="suite", action="store_const", const="fcntl",
+                      help="run the variadic descriptor-control API probes")
     mode.add_argument("--zone", dest="suite", action="store_const", const="zone",
                       help="run the local civil time and TZif probes")
     parser.set_defaults(suite="files")

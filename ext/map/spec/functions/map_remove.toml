@@ -1,0 +1,16 @@
+name = "map_remove"
+header = "map.h"
+prototype = "int map_remove(size_t *restrict state, const unsigned char *key, size_t length, size_t *restrict value)"
+standard = ["Extension ABI map"]
+deps = ["map_probe"]
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:bounded-map-model"]
+provenance = "original"
+semantics = ["Remove an existing key and optionally return its value. A missing key returns -ENOENT.", "Preserve outputs on failure and preserve errno."]
+
+[abi]
+narrow_args = []
+variadic = false
+noreturn = false

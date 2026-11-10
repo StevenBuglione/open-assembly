@@ -1,0 +1,15 @@
+name = "imaxdiv"
+header = "inttypes.h"
+prototype = "imaxdiv_t imaxdiv(intmax_t numerator, intmax_t denominator)"
+standard = ["C17 7.8.2.2"]
+deps = ["ldiv"]
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:c17-integer-arithmetic"]
+provenance = "original"
+semantics = ["Return the quotient rounded toward zero and remainder as two signed intmax_t members.", "The denominator must be nonzero and the quotient must be representable.", "AMD64 returns quotient in RAX and remainder in RDX."]
+
+[abi]
+narrow_args = []
+variadic = false

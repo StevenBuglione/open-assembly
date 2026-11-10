@@ -1,0 +1,19 @@
+name = "glob"
+header = "glob.h"
+prototype = "int glob(const char *restrict pattern, int flags, int (*errfunc)(const char *, int), glob_t *restrict result)"
+standard = ["POSIX.1-2024 XSH glob"]
+deps = ["__errno_location", "calloc", "closedir", "fnmatch", "free", "lstat", "memcpy", "memset", "opendir", "qsort", "readdir", "realloc", "stat", "strcoll", "strdup", "strlen"]
+errno = ["EINVAL", "ENOMEM"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:posix-pathname-expansion", "diff:glibc", "diff:musl"]
+provenance = "original"
+semantics = [
+  "Expand pathname components under the POSIX glob flags and append or sort the resulting batch.",
+  "Return zero on success or the specified GLOB error code. Preserve matches already stored on failure.",
+  "Call errfunc for reportable directory open or read errors and stop if it returns nonzero or GLOB_ERR is set.",
+]
+
+[abi]
+narrow_args = ["esi:s32"]
+variadic = false

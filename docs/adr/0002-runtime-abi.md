@@ -104,3 +104,14 @@ program-header fields. The bootstrap labels numeric operands with these
 names in assembly, and independent tests obtain kernel numbers from the
 pinned UAPI headers. Future public kernel structure translations should
 share named layout definitions and verify offsets against those headers.
+
+## Assertion diagnostics
+
+The C17 assert header evaluates the inclusion-time NDEBUG setting
+on every inclusion. A disabled assertion does not evaluate its
+argument. An enabled assertion evaluates the scalar expression
+once. Failure passes its text and the file, line, and function
+to the freestanding assertion ABI. The helper writes to standard
+error through the raw fatal diagnostic path and then calls abort.
+The static_assert macro expands to the compiler's _Static_assert.
+[C17 7.2 draft](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2310.pdf)

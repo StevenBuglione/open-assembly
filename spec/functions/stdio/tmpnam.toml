@@ -1,0 +1,21 @@
+name = "tmpnam"
+header = "stdio.h"
+prototype = "char *tmpnam(char *buffer)"
+standard = ["C17 7.21.4.4"]
+deps = ["__errno_location", "getpid", "lstat", "memcpy", "stat"]
+errno = ["EACCES", "EAGAIN", "EIO", "ELOOP", "ENOENT", "ENOTDIR", "ENOSYS"]
+mt_safe = false
+as_safe = false
+oracles = ["reference:c17-temporary-name", "reference:linux-entropy", "diff:glibc", "diff:musl"]
+provenance = "original"
+semantics = [
+  "Generate at least TMP_MAX distinct names per process in the fixed /tmp directory.",
+  "Use process identity, a monotonically increasing success counter, and Linux random bytes.",
+  "Check the candidate with lstat, including dangling links. Leave creation and reservation to the caller.",
+  "Write the result to the caller buffer or static storage only on success. Preserve errno on success.",
+  "After TMP_MAX successes, report EAGAIN without publishing another name.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

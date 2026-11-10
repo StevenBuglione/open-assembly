@@ -1,0 +1,18 @@
+name = "epoll_pwait"
+header = "sys/epoll.h"
+prototype = "int epoll_pwait(int epfd, struct epoll_event *events, int capacity, int timeout, const sigset_t *mask)"
+standard = ["Extension ABI epoll_pwait"]
+deps = ["__errno_location"]
+errno = ["EBADF", "EFAULT", "EINTR", "EINVAL"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:linux-x86-64-network-abi", "diff:glibc", "diff:musl"]
+provenance = "original"
+semantics = [
+  "Wait for readiness while the kernel applies an optional temporary mask.",
+  "Return the Linux result or minus one with TLS errno. Preserve errno on success.",
+]
+
+[abi]
+narrow_args = ["edi:s32", "edx:s32", "ecx:s32"]
+variadic = false

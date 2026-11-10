@@ -1,0 +1,19 @@
+name = "rand"
+header = "stdlib.h"
+prototype = "int rand(void)"
+standard = ["C17 7.22.2.1"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["reference:c17-rand-repeatability"]
+provenance = "original"
+semantics = [
+  "Return the next pseudorandom integer between zero and RAND_MAX inclusive.",
+  "A call before any srand uses the sequence for seed one.",
+  "Serialize updates to the shared sequence. Preserve errno.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

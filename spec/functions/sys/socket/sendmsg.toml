@@ -1,0 +1,18 @@
+name = "sendmsg"
+header = "sys/socket.h"
+prototype = "ssize_t sendmsg(int fd, const struct msghdr *message, int flags)"
+standard = ["POSIX.1-2024 XSH sendmsg"]
+deps = ["__errno_location"]
+errno = ["EACCES", "EAGAIN", "EBADF", "ECONNRESET", "EDESTADDRREQ", "EFAULT", "EINTR", "EINVAL", "EISCONN", "EMSGSIZE", "ENOBUFS", "ENOMEM", "ENOTCONN", "ENOTSOCK", "EOPNOTSUPP", "EPIPE"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:linux-x86-64-network-abi", "diff:glibc", "diff:musl"]
+provenance = "original"
+semantics = [
+  "Send a Linux scatter-gather message and any ancillary records.",
+  "Return the Linux result or minus one with TLS errno. Preserve errno on success.",
+]
+
+[abi]
+narrow_args = ["edi:s32", "edx:s32"]
+variadic = false

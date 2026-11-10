@@ -9,12 +9,12 @@ import sys
 import tempfile
 
 from branch_coverage import verify_coverage
-from gate import (BUILD, COMPILE_FLAGS, GateError, LINK_FLAGS, checked, identify_tools,
+from gate import (BUILD, COMPILE_FLAGS, GateError, LINK_FLAGS, check_strlen_prototype, checked, identify_tools,
                   inputs, nm_symbols, run, verify_setup, write_evidence)
 from lint import JCC
 from phase1 import NASM
 from spec import (IDENTIFIER, ROOT, comment_header, keys, load_project, matching, read_toml,
-                  regular_file, relative_path, sha256_file, snapshot_inputs, string_list,
+                  nasm_name, regular_file, relative_path, sha256_file, snapshot_inputs, string_list,
                   version_one)
 
 MANIFEST = Path("tests/phase2/manifest.toml")
@@ -22,6 +22,8 @@ LEGACY_ORACLES = {"gcc": Path("tests/external/strlen_glibc.c"),
                   "musl-gcc": Path("tests/external/strlen_musl.c")}
 CANDIDATE_ROOT = Path("src/x86_64-linux")
 MODES = ("abi", "unit", "guard", "differential", "fuzz")
+SCALAR_FUNCTIONS = ("abs", "labs", "llabs", "div", "ldiv", "lldiv", "imaxabs", "imaxdiv")
+TWO_REGISTER_RETURNS = {"ldiv_t", "lldiv_t", "imaxdiv_t"}
 REQUIRED_CHECKS = {
     "generated_outputs", "candidate_build", "branch_coverage", "native_oracles",
     "musl_differential", "platform_matrix", "generated_stub", "production_mutation",
@@ -51,6 +53,12 @@ for left, right in CONDITIONS:
 SIGNED = dict(zip(("ja", "jae", "jb", "jbe", "jg", "jge", "jl", "jle"),
                   ("jg", "jge", "jl", "jle", "ja", "jae", "jb", "jbe"), strict=True))
 MUTATION_EQUIVALENCES = {
+    "memcpy": ("74ee3ddf94d9634b2f7997471965faa1adec9158e14bbe13babd8f2463554969", {
+        "comparison-plus-one-29": "The one rerouted length 256 is copied byte for byte by the original baseline.",
+        "comparison-minus-one-29": "The one rerouted length 255 is within the bulk helper's valid range and is copied byte for byte.",
+        "invert-branch-30": "The baseline and bulk paths copy the same positive disjoint range. The unchanged zero test returns before selection.",
+        "comparison-signedness-30": "Any disjoint valid user object extent has bit 63 clear, so the dispatch comparison is unchanged.",
+    }),
     "__al_strtox": ("a5631fe7518c5ad2f1f484da046b77afd56621dc4cbc07e45e3aefa125155ba9", {
         "comparison-signedness-29": "A negative base reaches .zero_result through one of the two range checks with either comparison.",
         "comparison-signedness-139": "Code units below ASCII '0' remain invalid. The later unsigned digit/base comparison rejects the negative offset before accumulation.",
@@ -87,6 +95,7 @@ class Plan:
     oracle: tuple
     fuzz_sources: tuple
     guard_skip: str
+    fuzz_host: bool = False
 
     @property
     def legacy_strlen(self):
@@ -116,7 +125,7 @@ def read_plan(function):
     names, ids = {}, set()
     for table in document["function"]:
         keys(table, {"name", "id", "sources", "host_symbols", "coverage_modes", "oracle"}, MANIFEST,
-             ("fuzz_sources", "guard_skip"))
+             ("fuzz_sources", "guard_skip", "fuzz_host"))
         name = matching(table["name"], IDENTIFIER, MANIFEST)
         id_ = table["id"]
         if type(id_) is not int or id_ <= 0 or id_ in ids or name in names:
@@ -131,9 +140,12 @@ def read_plan(function):
         skip = table.get("guard_skip", "")
         if type(skip) is not str or (skip and (not skip.strip() or "guard" in modes)):
             raise GateError(f"{where}: an inapplicable guard requires a reason and no guard mode")
+        fuzz_host = table.get("fuzz_host", False)
+        if type(fuzz_host) is not bool or (fuzz_host and "diff:glibc" not in oracle):
+            raise GateError(f"{where}: hosted fuzz requires a boolean and the glibc oracle")
         names[name] = Plan(name, id_, test_paths(table, "sources", where, required=True),
                            host_symbols, modes, oracle,
-                           test_paths(table, "fuzz_sources", where, required=False), skip)
+                           test_paths(table, "fuzz_sources", where, required=False), skip, fuzz_host)
     if function not in names:
         raise GateError(f"{function}: independent production test manifest is pending")
     return names[function]
@@ -142,7 +154,9 @@ def read_plan(function):
 def phase2_inputs():
     bound = inputs()
     headers = sorted(path.relative_to(ROOT) for path in (ROOT / BUILD / "include/c").rglob("*.h"))
-    bound.update(snapshot_inputs(ROOT, [*headers, Path("docs/adr/0002-runtime-abi.md")]))
+    contracts = [Path("docs/adr/0002-runtime-abi.md"), Path("docs/adr/0035-memcpy-dispatch.md"),
+                 Path("docs/cookbook/scalar-verification.md")]
+    bound.update(snapshot_inputs(ROOT, [*headers, *contracts]))
     return dict(sorted(bound.items()))
 
 
@@ -215,8 +229,6 @@ def build_checks(plan, compiler, directory, log):
         path = directory / f"checks-{index}.o"
         if source.suffix == ".c":
             flags = ["-DTEST_HOST_MUSL=1"] if compiler == "musl-gcc" else []
-            if plan.legacy_strlen:
-                flags.extend(("-include", "build/include/c/string.h"))
             checked(log, [compiler, *COMPILE_FLAGS, *plan.defines, *flags, "-c", source, "-o", path])
             checked(log, ["tools/elf-audit", "--test-object", path])
             refs.update(name for name, kind in nm_symbols(log, path, ["-g", "-u"]).items() if kind == "U")
@@ -245,8 +257,8 @@ def link_checks(plan, compiler, objects, candidate, binary, log):
 def legacy_oracle(compiler, directory, log):
     obj = directory / f"oracle-{compiler}.o"
     binary = directory / f"oracle-{compiler}"
-    checked(log, [compiler, *COMPILE_FLAGS, "-include", "build/include/c/string.h",
-                  "-c", LEGACY_ORACLES[compiler], "-o", obj])
+    check_strlen_prototype(log, compiler)
+    checked(log, [compiler, *COMPILE_FLAGS, "-c", LEGACY_ORACLES[compiler], "-o", obj])
     checked(log, ["tools/elf-audit", "--test-object", obj])
     if nm_symbols(log, obj, ["-g", "-u"]).get("strlen") != "U":
         raise GateError(f"{compiler}: strlen oracle lacks its host reference")
@@ -289,22 +301,28 @@ def expect_probe(plan, record, binary, mode, oracle=None, *, expected="pass", **
     print((item["stdout"] or item["stderr"]).strip(), flush=True)
 
 
+def result_type(spec):
+    return spec.prototype.split("(", 1)[0].removesuffix(spec.name).strip()
+
+
 def stub_source(spec, directory):
     path = directory / f"{spec.name}.stub.asm"
+    remainder = "    xor edx, edx\n" if result_type(spec) in TWO_REGISTER_RETURNS else ""
+    symbol = nasm_name(spec.name)
     path.write_text(comment_header(spec) + f"""
 bits 64
 default rel
-global {spec.name}:function
+global {symbol}:function
 section .text.{spec.name} progbits alloc exec nowrite
-{spec.name}:
+{symbol}:
     xor eax, eax
-    ret
+{remainder}    ret
 section .note.GNU-stack noalloc noexec nowrite progbits
 """, encoding="utf-8")
     return path
 
 
-def variants(source, *, returns_value=True):
+def variants(source, *, returns_value=True, result_pair=None):
     lines = source.read_text(encoding="utf-8").splitlines(keepends=True)
     for index, line in enumerate(lines):
         statement, comment, remainder = line.rstrip("\n").partition(";")
@@ -326,20 +344,26 @@ def variants(source, *, returns_value=True):
                     [*lines[:index], f"{operand}{int(value, base) + offset} {comment}{remainder}\n",
                      *lines[index + 1:]])
     if returns_value:
-        for opcode, name in (("inc", "return-plus-one"), ("dec", "return-minus-one")):
-            mutated = [f"    {opcode} rax\n{line}" if re.match(r"^\s*ret\s*(?:;.*)?$", line) else line
+        mutations = {"return-plus-one": "inc rax", "return-minus-one": "dec rax"}
+        if result_pair == "rdx":
+            mutations.update({"remainder-plus-one": "inc rdx", "remainder-minus-one": "dec rdx"})
+        elif result_pair == "packed32":
+            mutations.update({"remainder-plus-one": "mov rcx, 0x100000000\n    add rax, rcx",
+                              "remainder-minus-one": "mov rcx, 0x100000000\n    sub rax, rcx"})
+        for name, instruction in mutations.items():
+            mutated = [f"    {instruction}\n{line}" if re.match(r"^\s*ret\s*(?:;.*)?$", line) else line
                        for line in lines]
             if mutated != lines:
                 yield name, "".join(mutated)
 
 
-def applicable_variants(function, source, record, *, returns_value=True):
+def applicable_variants(function, source, record, *, returns_value=True, result_pair=None):
     proof_hash, exclusions = MUTATION_EQUIVALENCES.get(function, ("", {}))
     if exclusions and sha256_file(source) != proof_hash:
         raise GateError(f"{function}: source changed since its reviewed mutation equivalence proofs")
     applied_exclusions = set()
     record["equivalent"] = []
-    for name, contents in variants(source, returns_value=returns_value):
+    for name, contents in variants(source, returns_value=returns_value, result_pair=result_pair):
         if name in exclusions:
             record["equivalent"].append({"operator": name, "source_sha256": proof_hash,
                                          "reason": exclusions[name]})
@@ -352,8 +376,11 @@ def applicable_variants(function, source, record, *, returns_value=True):
 
 def mutation_campaign(plan, spec, source, directory, test_objects, oracle, record):
     directory.mkdir()
-    for name, contents in applicable_variants(
-            plan.name, source, record, returns_value=not spec.prototype.startswith("void ")):
+    returns_void = re.match(rf"(?:_Noreturn )?void +{re.escape(spec.name)}\s*\(", spec.prototype) is not None
+    type_name = result_type(spec)
+    result_pair = "rdx" if type_name in TWO_REGISTER_RETURNS else "packed32" if type_name == "div_t" else None
+    for name, contents in applicable_variants(plan.name, source, record, returns_value=not returns_void,
+                                              result_pair=result_pair):
         work = directory / name
         work.mkdir()
         mutant = work / f"{plan.name}.asm"
@@ -404,7 +431,7 @@ def dependency_evidence(dependencies, inputs_snapshot):
                 and candidate.get("source") == source
                 and candidate.get("source_sha256") == inputs_snapshot.get(source)):
             item.update(outcome="pass", evidence=str(path), evidence_sha256=sha256_file(path))
-        elif (name == "__al_strtox" and record.get("scope") == "production-private-dependency"
+        elif (name in {"__al_strtox", "__al_memcpy_bulk"} and record.get("scope") == "production-private-dependency"
               and record.get("function") == name and record.get("outcome") == "pass"
               and record.get("inputs") == inputs_snapshot
               and record.get("source_sha256") == inputs_snapshot.get(source)
@@ -417,7 +444,15 @@ def dependency_evidence(dependencies, inputs_snapshot):
     return result
 
 
+def libfuzzer_seconds():
+    value = os.environ.get("OPEN_ASSEMBLY_LIBFUZZER_SECONDS", "60")
+    if re.fullmatch(r"[0-9]{2,4}", value) is None or not 60 <= int(value) <= 3600:
+        raise GateError("OPEN_ASSEMBLY_LIBFUZZER_SECONDS must be an integer from 60 to 3600")
+    return int(value)
+
+
 def run_libfuzzer(plan, objects, directory, record):
+    duration = libfuzzer_seconds()
     directory.mkdir()
     log = record["commands"]
     if not plan.fuzz_sources:
@@ -425,19 +460,21 @@ def run_libfuzzer(plan, objects, directory, record):
         return
     fixture_objects = []
     refs = set()
+    host_flag = ("-DTEST_FUZZ_HOST=1",) if plan.fuzz_host else ()
     for index, source in enumerate(plan.fuzz_sources):
         path = directory / f"fuzz-{index}.o"
         if source.suffix == ".c":
             checked(log, ["al-clang", *COMPILE_FLAGS, *plan.defines, "-DTEST_LIBFUZZER=1",
-                          "-fsanitize=fuzzer-no-link", "-c", source, "-o", path])
+                          *host_flag, "-fsanitize=fuzzer-no-link", "-c", source, "-o", path])
             checked(log, ["tools/elf-audit", "--test-object", path])
             refs.update(nm_symbols(log, path, ["-g", "-u"]))
         else:
             checked(log, [*NASM, "-o", path, source])
             checked(log, ["tools/elf-audit", "--assembly-object", path])
         fixture_objects.append(path)
-    if candidate_symbol(plan.name) not in refs:
-        raise GateError(f"{plan.name}: libFuzzer fixture does not reference the candidate")
+    required = {candidate_symbol(plan.name)} | (set(plan.host_symbols) if plan.fuzz_host else set())
+    if required - refs:
+        raise GateError(f"{plan.name}: libFuzzer fixture lacks required references {sorted(required - refs)}")
     binary = directory / "libfuzzer"
     checked(log, ["al-clang", "-no-pie", "-fsanitize=fuzzer", "-o", binary,
                   *fixture_objects, *objects], timeout=60)
@@ -446,12 +483,16 @@ def run_libfuzzer(plan, objects, directory, record):
     if not {"LLVMFuzzerTestOneInput", candidate_symbol(plan.name)} <= defined.keys():
         raise GateError("libFuzzer executable is missing fixture or candidate entry")
     record["artifacts"] = {path.name: sha256_file(path) for path in (binary, *fixture_objects)}
-    stdout = checked(log, [binary, "-seed=1634488114", "-max_total_time=60", "-max_len=8192",
-                           "-print_final_stats=1"], timeout=90)
-    if stdout or not re.search(r"(?m)^Done [1-9][0-9]* runs in \d+ second\(s\)$", log[-1]["stderr"]):
-        raise GateError(f"{plan.name}: libFuzzer did not report completed execution")
-    record["outcome"] = "pass"
-    print(f"PASS {plan.name} 60-second libFuzzer campaign", flush=True)
+    stdout = checked(log, [binary, "-seed=1634488114", f"-max_total_time={duration}", "-max_len=8192",
+                           "-print_final_stats=1"], timeout=duration + 30)
+    done = re.search(r"(?m)^Done ([1-9][0-9]*) runs in (\d+) second\(s\)$", log[-1]["stderr"])
+    if stdout or done is None or int(done[2]) < duration:
+        raise GateError(f"{plan.name}: libFuzzer did not report the required completed execution")
+    record.update(outcome="pass", requested_seconds=duration, elapsed_seconds=int(done[2]), runs=int(done[1]),
+                  seed=1634488114)
+    if plan.fuzz_host:
+        record["differential_oracle"] = "diff:glibc"
+    print(f"PASS {plan.name} {duration}-second libFuzzer campaign", flush=True)
 
 
 def run_external(plan, candidate, stub, directory, record):
@@ -549,7 +590,8 @@ def production(function, only=None):
             if only in (None, "coverage"):
                 checks["branch_coverage"] = {"outcome": "fail", "commands": [], "runs": []}
                 verify_coverage(checks["branch_coverage"], directory, binary, function, source,
-                                [arguments(plan, mode, oracle) for mode in plan.coverage_modes])
+                                [arguments(plan, mode, oracle) for mode in plan.coverage_modes],
+                                require_entry=function in SCALAR_FUNCTIONS)
             if only is None:
                 behavior = {"outcome": "fail", "probes": [], "oracle": plan.oracle}
                 checks["native_oracles"] = behavior
@@ -579,6 +621,8 @@ def production(function, only=None):
                 platform = {"outcome": "fail", "probes": []}
                 checks["platform_matrix"] = platform
                 mode = "unit" if plan.guard_skip else "guard"
+                if function in SCALAR_FUNCTIONS:
+                    mode = "differential"
                 expect_probe(plan, platform, binary, mode,
                              prefix=("valgrind", "--quiet", "--error-exitcode=99", "--leak-check=full"))
                 platform.update(outcome="pass", scope="pinned local native, QEMU user mode, Valgrind")

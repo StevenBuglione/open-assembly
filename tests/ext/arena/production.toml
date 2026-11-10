@@ -1,0 +1,31 @@
+schema = 1
+
+[[function]]
+symbol = "arena_init"
+abi = "arena-init-abi"
+trace = "arena-init-unit"
+mutations = { arena-init-unit = [11, 12, 13, 14, 15, 16, 17, 18] }
+fuzz = "arena-init-packets"
+model = "tests/oracle/arena/init.py"
+record_size = 56
+result_size = 48
+
+[[function]]
+symbol = "arena_alloc"
+abi = "arena-alloc-abi"
+trace = "arena-alloc-unit"
+mutations = { arena-alloc-unit = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35] }
+fuzz = "arena-alloc-packets"
+model = "tests/oracle/arena/alloc.py"
+record_size = 56
+result_size = 48
+
+[[function]]
+symbol = "arena_reset"
+abi = "arena-reset-abi"
+trace = "arena-reset-unit"
+mutations = { arena-reset-unit = [11, 12] }
+fuzz = "arena-reset-packets"
+model = "tests/oracle/arena/reset.py"
+record_size = 56
+result_size = 48

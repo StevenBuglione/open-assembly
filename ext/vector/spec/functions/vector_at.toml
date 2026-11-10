@@ -1,0 +1,16 @@
+name = "vector_at"
+header = "vector.h"
+prototype = "int vector_at(const size_t *restrict state, size_t index, void **restrict result)"
+standard = ["Extension ABI vector"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:arena-vector-model"]
+provenance = "original"
+semantics = ["Publish a pointer to an existing indexed element. Return -ERANGE for an out-of-range index.", "Preserve result on failure and preserve errno."]
+
+[abi]
+narrow_args = []
+variadic = false
+noreturn = false

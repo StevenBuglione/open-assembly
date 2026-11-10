@@ -1,0 +1,15 @@
+name = "__atomic_compare_exchange"
+header = "compiler_rt.h"
+prototype = "_Bool __atomic_compare_exchange(size_t size, volatile void *object, void *expected, const void *desired, int success_order, int failure_order)"
+standard = ["Runtime ABI __atomic_compare_exchange"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["reference:compiler-atomic-abi", "diff:libatomic"]
+provenance = "original"
+semantics = ["Atomically replace matching bytes. On mismatch, publish the observed bytes to expected.", "Use sequentially consistent ordering and the baseline alignment policy.", "Preserve errno."]
+
+[abi]
+narrow_args = ["r8d:s32", "r9d:s32"]
+variadic = false

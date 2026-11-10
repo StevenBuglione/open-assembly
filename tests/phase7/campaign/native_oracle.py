@@ -34,6 +34,10 @@ def exact_result(operation, input_bits):
     if operation == "exp2":
         return (not magnitude or exponent >= 150 or
                 exponent >= 127 and not magnitude & ((1 << (150 - exponent)) - 1))
+    if operation in {"exp", "cos", "sin", "tan"}:
+        return not magnitude
+    if operation == "log":
+        return input_bits == 0x3f800000
     if operation != "log2":
         raise ValueError(f"unknown native oracle operation {operation}")
     fraction = magnitude & 0x7fffff
@@ -43,6 +47,10 @@ def exact_result(operation, input_bits):
 def compare_native(actual, expected, operation, start, count):
     if len(actual) != len(expected) or len(expected) != count * OBSERVATION.size:
         raise RuntimeError("wrong response length")
+    # Identical representations also establish exact exception, errno and
+    # control-state bytes for every row. Only differences need per-row review.
+    if actual == expected:
+        return 0
     maximum = 0
     for index, (got, wanted) in enumerate(zip(OBSERVATION.iter_unpack(actual),
                                                OBSERVATION.iter_unpack(expected), strict=True)):
@@ -52,7 +60,7 @@ def compare_native(actual, expected, operation, start, count):
             raise OracleMismatch(f"environment or representation mismatch at {start + index:#x}")
         if value == reference:
             continue
-        if operation == "log2" and wanted_error == EDOM and value & 0x7fc00000 == 0x7fc00000:
+        if wanted_error == EDOM and value & 0x7fc00000 == 0x7fc00000:
             continue
         same_sign = (reference ^ value) >> 31 == 0
         normal = all(0x00800000 <= (bits & 0x7fffffff) < 0x7f800000 for bits in (reference, value))

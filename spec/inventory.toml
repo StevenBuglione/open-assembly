@@ -493,26 +493,26 @@ types = ["wctrans_t", "wctype_t", "wint_t"]
 [[headers]]
 name = "unistd.h"
 standard = "POSIX.1-2024 XBD <unistd.h>"
-count = 36
-functions = ["_exit", "close", "dup", "dup2", "execv", "execve", "execvp", "fork", "getcwd", "getopt", "getpid", "getppid", "isatty", "lseek", "pipe", "pipe2", "read", "readlink", "rmdir", "unlink", "write"]
-types = ["size_t", "ssize_t", "off_t", "pid_t"]
-macros = ["STDIN_FILENO", "STDOUT_FILENO", "STDERR_FILENO", "SEEK_SET", "SEEK_CUR", "SEEK_END"]
+count = 52
+functions = ["_exit", "access", "close", "dup", "dup2", "execv", "execve", "execvp", "fchown", "fork", "fsync", "ftruncate", "getcwd", "geteuid", "getopt", "getpid", "getppid", "isatty", "lseek", "pipe", "pipe2", "pread", "pwrite", "read", "readlink", "rmdir", "sysconf", "unlink", "write"]
+types = ["size_t", "ssize_t", "off_t", "pid_t", "uid_t", "gid_t"]
+macros = ["STDIN_FILENO", "STDOUT_FILENO", "STDERR_FILENO", "SEEK_SET", "SEEK_CUR", "SEEK_END", "F_OK", "R_OK", "W_OK", "X_OK", "_SC_PAGESIZE", "_SC_PAGE_SIZE"]
 objects = ["environ", "optarg", "opterr", "optind", "optopt"]
 
 [[headers]]
 name = "fcntl.h"
 standard = "POSIX.1-2024 XBD <fcntl.h>"
-count = 21
-functions = ["creat", "open", "openat"]
-types = ["mode_t"]
-macros = ["AT_FDCWD", "AT_SYMLINK_NOFOLLOW", "O_RDONLY", "O_WRONLY", "O_RDWR", "O_ACCMODE", "O_CREAT", "O_EXCL", "O_NOCTTY", "O_TRUNC", "O_APPEND", "O_NONBLOCK", "O_DSYNC", "O_DIRECTORY", "O_NOFOLLOW", "O_CLOEXEC", "O_SYNC"]
+count = 51
+functions = ["creat", "fcntl", "open", "openat"]
+types = ["mode_t", "off_t", "pid_t", "struct f_owner_ex", "struct flock"]
+macros = ["AT_FDCWD", "AT_SYMLINK_NOFOLLOW", "FD_CLOEXEC", "F_DUPFD", "F_DUPFD_CLOEXEC", "F_GETFD", "F_GETFL", "F_GETLK", "F_GETOWN", "F_GETOWN_EX", "F_OFD_GETLK", "F_OFD_SETLK", "F_OFD_SETLKW", "F_OWNER_PGRP", "F_OWNER_PID", "F_RDLCK", "F_SETFD", "F_SETFL", "F_SETLK", "F_SETLKW", "F_SETOWN", "F_SETOWN_EX", "F_UNLCK", "F_WRLCK", "O_ACCMODE", "O_APPEND", "O_CLOEXEC", "O_CREAT", "O_DIRECTORY", "O_DSYNC", "O_EXCL", "O_NOCTTY", "O_NOFOLLOW", "O_NONBLOCK", "O_RDONLY", "O_RDWR", "O_SYNC", "O_TRUNC", "O_WRONLY", "SEEK_CUR", "SEEK_END", "SEEK_SET"]
 
 [[headers]]
 name = "sys/stat.h"
 standard = "POSIX.1-2024 XBD <sys/stat.h>"
-count = 39
-functions = ["chmod", "fstat", "fstatat", "lstat", "mkdir", "stat", "umask"]
-types = ["mode_t", "struct stat"]
+count = 42
+functions = ["chmod", "fchmod", "fstat", "fstatat", "lstat", "mkdir", "stat", "umask"]
+types = ["mode_t", "uid_t", "gid_t", "struct stat"]
 macros = ["S_IRWXU", "S_IRUSR", "S_IWUSR", "S_IXUSR", "S_IRWXG", "S_IRGRP", "S_IWGRP", "S_IXGRP", "S_IRWXO", "S_IROTH", "S_IWOTH", "S_IXOTH", "S_ISUID", "S_ISGID", "S_ISVTX", "S_IFMT", "S_IFIFO", "S_IFCHR", "S_IFDIR", "S_IFBLK", "S_IFREG", "S_IFLNK", "S_IFSOCK", "S_ISFIFO", "S_ISCHR", "S_ISDIR", "S_ISBLK", "S_ISREG", "S_ISLNK", "S_ISSOCK"]
 
 [[headers]]
@@ -596,8 +596,8 @@ functions = ["fileno", "flockfile", "fseeko", "ftello", "funlockfile", "getc_unl
 [[headers]]
 name = "string.h"
 standard = "POSIX.1-2024 XBD <string.h>"
-count = 1
-functions = ["strdup"]
+count = 2
+functions = ["strdup", "strerror_r"]
 
 [[headers]]
 name = "setjmp.h"
@@ -618,16 +618,163 @@ count = 1
 functions = ["ioctl"]
 
 [[headers]]
+name = "sys/socket.h"
+standard = "POSIX.1-2024 XBD <sys/socket.h>"
+count = 61
+functions = ["accept", "bind", "connect", "getpeername", "getsockname", "getsockopt", "listen", "recv", "recvfrom", "recvmsg", "send", "sendmsg", "sendto", "setsockopt", "shutdown", "socket", "socketpair"]
+types = ["sa_family_t", "socklen_t", "struct cmsghdr", "struct linger", "struct msghdr", "struct sockaddr", "struct sockaddr_storage"]
+macros = ["AF_INET", "AF_INET6", "AF_UNIX", "AF_UNSPEC", "CMSG_DATA", "CMSG_FIRSTHDR", "CMSG_LEN", "CMSG_NXTHDR", "CMSG_SPACE", "MSG_CTRUNC", "MSG_DONTROUTE", "MSG_EOR", "MSG_NOSIGNAL", "MSG_OOB", "MSG_PEEK", "MSG_TRUNC", "MSG_WAITALL", "PF_INET", "SCM_RIGHTS", "SHUT_RD", "SHUT_RDWR", "SHUT_WR", "SOCK_DGRAM", "SOCK_RAW", "SOCK_SEQPACKET", "SOCK_STREAM", "SOL_SOCKET", "SO_ACCEPTCONN", "SO_BROADCAST", "SO_ERROR", "SO_KEEPALIVE", "SO_LINGER", "SO_RCVBUF", "SO_RCVTIMEO", "SO_REUSEADDR", "SO_SNDBUF", "SO_TYPE"]
+
+[[headers]]
+name = "sys/un.h"
+standard = "POSIX.1-2024 XBD <sys/un.h>"
+count = 1
+types = ["struct sockaddr_un"]
+
+[[headers]]
+name = "sys/uio.h"
+standard = "POSIX.1-2024 XBD <sys/uio.h>"
+count = 1
+types = ["struct iovec"]
+
+[[headers]]
+name = "netinet/in.h"
+standard = "POSIX.1-2024 XBD <netinet/in.h>"
+count = 19
+types = ["in_addr_t", "in_port_t", "struct in6_addr", "struct in_addr", "struct sockaddr_in", "struct sockaddr_in6"]
+macros = ["IN6ADDR_ANY_INIT", "IN6ADDR_LOOPBACK_INIT", "INADDR_ANY", "INADDR_BROADCAST", "INADDR_LOOPBACK", "INADDR_NONE", "INET_ADDRSTRLEN", "INET6_ADDRSTRLEN", "IPPROTO_ICMP", "IPPROTO_IP", "IPPROTO_IPV6", "IPPROTO_TCP", "IPPROTO_UDP"]
+
+[[headers]]
+name = "arpa/inet.h"
+standard = "POSIX.1-2024 XBD <arpa/inet.h>"
+count = 8
+functions = ["htonl", "htons", "inet_addr", "inet_ntoa", "inet_ntop", "inet_pton", "ntohl", "ntohs"]
+
+[[headers]]
+name = "poll.h"
+standard = "POSIX.1-2024 XBD <poll.h>"
+count = 13
+functions = ["poll"]
+types = ["nfds_t", "struct pollfd"]
+macros = ["POLLERR", "POLLHUP", "POLLIN", "POLLNVAL", "POLLOUT", "POLLPRI", "POLLRDBAND", "POLLRDNORM", "POLLWRBAND", "POLLWRNORM"]
+
+[[headers]]
+name = "sys/socket.h"
+standard = "Extension ABI <sys/socket.h>"
+count = 12
+functions = ["accept4"]
+macros = ["AF_LOCAL", "CMSG_ALIGN", "MSG_CMSG_CLOEXEC", "MSG_DONTWAIT", "SCM_CREDENTIALS", "SOCK_CLOEXEC", "SOCK_NONBLOCK", "SO_PASSCRED", "SO_PEERCRED", "SO_REUSEPORT"]
+types = ["struct ucred"]
+
+[[headers]]
+name = "poll.h"
+standard = "Extension ABI <poll.h>"
+count = 2
+functions = ["ppoll"]
+macros = ["POLLRDHUP"]
+
+[[headers]]
+name = "sys/epoll.h"
+standard = "Extension ABI <sys/epoll.h>"
+count = 25
+functions = ["epoll_create", "epoll_create1", "epoll_ctl", "epoll_pwait", "epoll_wait"]
+types = ["epoll_data_t", "struct epoll_event"]
+macros = ["EPOLLERR", "EPOLLET", "EPOLLEXCLUSIVE", "EPOLLHUP", "EPOLLIN", "EPOLLONESHOT", "EPOLLOUT", "EPOLLPRI", "EPOLLRDBAND", "EPOLLRDHUP", "EPOLLRDNORM", "EPOLLWAKEUP", "EPOLLWRBAND", "EPOLLWRNORM", "EPOLL_CLOEXEC", "EPOLL_CTL_ADD", "EPOLL_CTL_DEL", "EPOLL_CTL_MOD"]
+
+[[headers]]
+name = "sys/mman.h"
+standard = "POSIX.1-2024 XBD <sys/mman.h>"
+count = 13
+functions = ["mmap", "munmap"]
+types = ["off_t", "size_t"]
+macros = ["MAP_ANONYMOUS", "MAP_FAILED", "MAP_FIXED", "MAP_PRIVATE", "MAP_SHARED", "PROT_EXEC", "PROT_NONE", "PROT_READ", "PROT_WRITE"]
+
+[[headers]]
+name = "sys/time.h"
+standard = "POSIX.1-2024 XBD <sys/time.h>"
+count = 4
+functions = ["utimes"]
+types = ["struct timeval", "suseconds_t", "time_t"]
+
+[[headers]]
+name = "sys/types.h"
+standard = "POSIX.1-2024 XBD <sys/types.h>"
+count = 16
+types = ["blkcnt_t", "blksize_t", "clock_t", "clockid_t", "dev_t", "gid_t", "ino_t", "mode_t", "nlink_t", "off_t", "pid_t", "size_t", "ssize_t", "suseconds_t", "time_t", "uid_t"]
+
+[[headers]]
+name = "sys/mman.h"
+standard = "Extension ABI <sys/mman.h>"
+count = 1
+functions = ["mremap"]
+
+[[headers]]
+name = "sys/time.h"
+standard = "Extension ABI <sys/time.h>"
+count = 1
+functions = ["gettimeofday"]
+
+[[headers]]
+name = "assert.h"
+standard = "Runtime ABI <assert.h>"
+count = 1
+functions = ["__al_assert_fail"]
+
+[[headers]]
 name = "compiler_rt.h"
 standard = "Runtime ABI <compiler_rt.h>"
-count = 1
-functions = ["__stack_chk_fail"]
+count = 16
+functions = [
+  "__stack_chk_fail", "__atomic_load", "__atomic_store", "__atomic_exchange",
+  "__atomic_compare_exchange", "__atomic_is_lock_free", "__atomic_load_16",
+  "__atomic_store_16", "__atomic_exchange_16", "__atomic_compare_exchange_16",
+  "__atomic_fetch_add_16", "__atomic_fetch_sub_16", "__atomic_fetch_and_16",
+  "__atomic_fetch_or_16", "__atomic_fetch_xor_16", "__atomic_fetch_nand_16",
+]
 
 [[headers]]
 name = "errno.h"
 standard = "Runtime ABI <errno.h>"
 count = 1
 functions = ["__errno_location"]
+
+[[headers]]
+name = "netdb.h"
+standard = "POSIX.1-2024 XBD <netdb.h>"
+count = 27
+functions = ["freeaddrinfo", "gai_strerror", "getaddrinfo", "getnameinfo"]
+types = ["struct addrinfo"]
+macros = ["AI_ADDRCONFIG", "AI_ALL", "AI_CANONNAME", "AI_NUMERICHOST", "AI_NUMERICSERV", "AI_PASSIVE", "AI_V4MAPPED", "EAI_AGAIN", "EAI_BADFLAGS", "EAI_FAIL", "EAI_FAMILY", "EAI_MEMORY", "EAI_NONAME", "EAI_OVERFLOW", "EAI_SERVICE", "EAI_SOCKTYPE", "EAI_SYSTEM", "NI_DGRAM", "NI_NAMEREQD", "NI_NOFQDN", "NI_NUMERICHOST", "NI_NUMERICSERV"]
+
+
+[[headers]]
+name = "termios.h"
+standard = "POSIX.1-2024 XBD <termios.h>"
+count = 115
+functions = ["cfgetispeed", "cfgetospeed", "cfsetispeed", "cfsetospeed", "tcgetattr", "tcsetattr",
+             "tcdrain", "tcflow", "tcflush", "tcsendbreak", "tcgetsid"]
+types = ["cc_t", "pid_t", "speed_t", "tcflag_t", "struct termios"]
+macros = [
+  "NCCS", "VINTR", "VQUIT", "VERASE", "VKILL", "VEOF", "VTIME", "VMIN", "VSTART", "VSTOP", "VSUSP",
+  "VEOL", "IGNBRK", "BRKINT", "IGNPAR", "PARMRK", "INPCK", "ISTRIP", "INLCR", "IGNCR", "ICRNL",
+  "IXON", "IXANY", "IXOFF", "OPOST", "ONLCR", "OCRNL", "ONOCR", "ONLRET", "OFILL", "OFDEL", "NLDLY",
+  "NL0", "NL1", "CRDLY", "CR0", "CR1", "CR2", "CR3", "TABDLY", "TAB0", "TAB1", "TAB2", "TAB3",
+  "BSDLY", "BS0", "BS1", "VTDLY", "VT0", "VT1", "FFDLY", "FF0", "FF1", "CSIZE", "CS5", "CS6", "CS7",
+  "CS8", "CSTOPB", "CREAD", "PARENB", "PARODD", "HUPCL", "CLOCAL", "ISIG", "ICANON", "ECHO",
+  "ECHOE", "ECHOK", "ECHONL", "NOFLSH", "TOSTOP", "IEXTEN", "TCSANOW", "TCSADRAIN", "TCSAFLUSH",
+  "B0", "B50", "B75", "B110", "B134", "B150", "B200", "B300", "B600", "B1200", "B1800", "B2400",
+  "B4800", "B9600", "B19200", "B38400",
+  "TCIFLUSH", "TCOFLUSH", "TCIOFLUSH", "TCOOFF", "TCOON", "TCIOFF", "TCION",
+]
+
+[[headers]]
+name = "termios.h"
+standard = "Extension ABI <termios.h>"
+count = 15
+macros = [
+  "B57600", "B115200", "B230400", "B460800", "B500000", "B576000", "B921600", "B1000000",
+  "B1152000", "B1500000", "B2000000", "B2500000", "B3000000", "B3500000", "B4000000",
+]
 
 [[headers]]
 name = "langinfo.h"
@@ -642,3 +789,32 @@ name = "math.h"
 standard = "POSIX.1-2024 XBD <math.h>"
 count = 1
 macros = ["M_PI"]
+
+[[headers]]
+name = "sched.h"
+standard = "POSIX.1-2024 XBD <sched.h>"
+count = 1
+functions = ["sched_yield"]
+
+[[headers]]
+name = "fnmatch.h"
+standard = "POSIX.1-2024 XBD <fnmatch.h>"
+count = 7
+functions = ["fnmatch"]
+macros = ["FNM_CASEFOLD", "FNM_IGNORECASE", "FNM_NOMATCH", "FNM_NOESCAPE", "FNM_PATHNAME", "FNM_PERIOD"]
+
+[[headers]]
+name = "glob.h"
+standard = "POSIX.1-2024 XBD <glob.h>"
+count = 13
+functions = ["glob", "globfree"]
+types = ["glob_t"]
+macros = ["GLOB_ABORTED", "GLOB_APPEND", "GLOB_DOOFFS", "GLOB_ERR", "GLOB_MARK", "GLOB_NOCHECK", "GLOB_NOESCAPE", "GLOB_NOMATCH", "GLOB_NOSORT", "GLOB_NOSPACE"]
+
+[[headers]]
+name = "regex.h"
+standard = "POSIX.1-2024 XBD <regex.h>"
+count = 26
+functions = ["regcomp", "regerror", "regexec", "regfree"]
+types = ["regex_t", "regmatch_t", "regoff_t"]
+macros = ["REG_BADBR", "REG_BADPAT", "REG_BADRPT", "REG_EBRACE", "REG_EBRACK", "REG_ECOLLATE", "REG_ECTYPE", "REG_EESCAPE", "REG_EPAREN", "REG_ERANGE", "REG_ESPACE", "REG_ESUBREG", "REG_EXTENDED", "REG_ICASE", "REG_NEWLINE", "REG_NOMATCH", "REG_NOSUB", "REG_NOTBOL", "REG_NOTEOL"]

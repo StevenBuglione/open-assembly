@@ -1,0 +1,108 @@
+#!/usr/bin/env python3
+"""Publish an audited, reproducible static archive for one extension package."""
+
+import argparse
+from hashlib import sha256
+import json
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+import tempfile
+
+from extension_build import build_extension, dependency_order
+from extensions import NAME, confined, extension_sources, load_packages
+from gate import BUILD, GateError, identify_tools, source_policy, verify_setup
+from phase1 import phase1_inputs
+from spec import ROOT, SpecError, load_project, matching, snapshot_inputs
+
+
+def artifact_hashes(directory):
+    files = [directory / "crt1.o", directory / "libopenasm-extension.a",
+             *sorted((directory / "include").rglob("*.h"))]
+    return snapshot_inputs(directory, [path.relative_to(directory) for path in files])
+
+
+def publish(directory, destination, metadata, build_hashes):
+    bundle = directory / "bundle"
+    bundle.mkdir()
+    for name in ("crt1.o", "libopenasm-extension.a"):
+        shutil.copyfile(directory / "first" / name, bundle / name)
+    shutil.copytree(BUILD / "include/c", bundle / "include")
+    artifacts = artifact_hashes(bundle)
+    expected = {name: build_hashes[name] for name in ("crt1.o", "libopenasm-extension.a")}
+    header_dir = BUILD / "include/c"
+    for name, digest in metadata["inputs"].items():
+        path = Path(name)
+        if path.is_relative_to(header_dir):
+            expected[f"include/{path.relative_to(header_dir)}"] = digest
+    if artifacts != expected or metadata["inputs"] != phase1_inputs():
+        raise GateError("inputs or artifacts changed during extension packaging")
+    metadata["artifacts"] = artifacts
+    manifest = (json.dumps(metadata, indent=2, sort_keys=True) + "\n").encode("utf-8")
+    (bundle / "manifest.json").write_bytes(manifest)
+    generation = confined(ROOT, destination.relative_to(ROOT) / sha256(manifest).hexdigest())
+    try:
+        bundle.rename(generation)
+    except OSError:
+        # Another invocation can publish the same immutable generation.
+        if (generation.is_symlink() or not generation.is_dir()
+                or (generation / "manifest.json").is_symlink()
+                or (generation / "manifest.json").read_bytes() != manifest
+                or artifact_hashes(generation) != metadata["artifacts"]):
+            raise
+    current = destination / "current"
+    replacement = directory / "current"
+    replacement.symlink_to(generation.name, target_is_directory=True)
+    os.replace(replacement, current)
+    return current
+
+
+def execute(name):
+    project = load_project()
+    packages = load_packages(project)
+    if name not in packages:
+        raise GateError(f"unknown extension package {name}")
+    closure = dependency_order(packages, name)
+    sources = extension_sources(project, packages)
+    for package in closure:
+        if not package.functions:
+            raise GateError(f"extension package {package.name} has no function specifications")
+        missing = [package.source(symbol).as_posix() for symbol in package.functions if symbol not in sources]
+        if missing:
+            raise GateError("unimplemented extension functions: " + ", ".join(missing))
+    destination = confined(ROOT, BUILD / "extensions" / name)
+    checks = {}
+    inputs = verify_setup(checks, False, snapshot=phase1_inputs)
+    destination.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix="package-", dir=destination) as work:
+        directory = Path(work).relative_to(ROOT)
+        source_policy(checks, directory)
+        first = build_extension(directory / "first", closure, sources, [])
+        second = build_extension(directory / "second", closure, sources, [])
+        if first[3] != second[3]:
+            raise GateError("two isolated extension builds differ")
+        metadata = {
+            "schema_version": 1, "scope": "extension-package-build", "outcome": "pass",
+            "package": name, "packages": [package.name for package in closure],
+            "exports": sorted(symbol for package in closure for symbol in package.functions),
+            "inputs": inputs, "toolchain": identify_tools("ar", "make"),
+        }
+        path = publish(directory, destination, metadata, first[3])
+        print(path.relative_to(ROOT))
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("package")
+    args = parser.parse_args()
+    try:
+        execute(matching(args.package, NAME, "package name"))
+    except (GateError, OSError, SpecError, ValueError, subprocess.SubprocessError) as error:
+        parser.exit(1, f"build-extension: {error}\n")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

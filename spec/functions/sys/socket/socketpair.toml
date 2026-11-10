@@ -1,0 +1,18 @@
+name = "socketpair"
+header = "sys/socket.h"
+prototype = "int socketpair(int domain, int type, int protocol, int sv[2])"
+standard = ["POSIX.1-2024 XSH socketpair"]
+deps = ["__errno_location"]
+errno = ["EAFNOSUPPORT", "EFAULT", "EINVAL", "EMFILE", "ENFILE", "EOPNOTSUPP", "EPROTONOSUPPORT"]
+mt_safe = true
+as_safe = false
+oracles = ["reference:linux-x86-64-network-abi", "diff:glibc", "diff:musl"]
+provenance = "original"
+semantics = [
+  "Create a connected pair and store its two descriptors.",
+  "Return the Linux result or minus one with TLS errno. Preserve errno on success.",
+]
+
+[abi]
+narrow_args = ["edi:s32", "esi:s32", "edx:s32"]
+variadic = false

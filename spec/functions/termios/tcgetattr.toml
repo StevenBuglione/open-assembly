@@ -1,0 +1,18 @@
+name = "tcgetattr"
+header = "termios.h"
+prototype = "int tcgetattr(int fd, struct termios *termios_p)"
+standard = ["POSIX.1-2024 XSH tcgetattr"]
+deps = ["__errno_location"]
+errno = ["EBADF", "EFAULT", "EINTR", "EIO", "ENOTTY"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-termios-uapi"]
+provenance = "original"
+semantics = [
+  "Read current Linux terminal attributes using the x86-64 TCGETS record.",
+  "Return zero and preserve errno on success. Return -1 and set errno on failure.",
+]
+
+[abi]
+narrow_args = ["edi:s32"]
+variadic = false

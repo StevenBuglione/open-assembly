@@ -25,6 +25,7 @@ section .text.iswalnum alloc exec nowrite progbits
 iswalnum:
     mov edi, edi
     sub rsp, 8
+    xor esi, esi          ; select the active locale
     call __al_unicode_mask
     and eax, 1
     add rsp, 8

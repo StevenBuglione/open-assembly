@@ -1,0 +1,15 @@
+name = "atomic_flag_test_and_set_explicit"
+header = "stdatomic.h"
+prototype = "_Bool atomic_flag_test_and_set_explicit(volatile atomic_flag *object, memory_order order)"
+standard = ["C17 7.17.8.1"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:c17-atomic-ordering", "reference:amd64-atomic-flag"]
+provenance = "original"
+semantics = ["Atomically exchange the previous byte for true. The locked AMD64 exchange is sufficient for every valid order."]
+
+[abi]
+narrow_args = ["esi:u32"]
+variadic = false

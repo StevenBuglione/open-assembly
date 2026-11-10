@@ -1,0 +1,15 @@
+name = "sysconf"
+header = "unistd.h"
+prototype = "long sysconf(int name)"
+standard = ["POSIX.1-2024 XSH sysconf"]
+deps = ["__errno_location"]
+errno = ["EINVAL"]
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "diff:musl", "reference:linux-filesystem-time-abi"]
+provenance = "original"
+semantics = ["Return the process page size for _SC_PAGESIZE or _SC_PAGE_SIZE. Reject other selectors in this scope.", "Preserve errno on success and translate Linux errors."]
+
+[abi]
+narrow_args = ["edi:s32"]
+variadic = false

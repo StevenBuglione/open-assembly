@@ -25,6 +25,7 @@ section .text.iswdigit alloc exec nowrite progbits
 iswdigit:
     mov edi, edi
     sub rsp, 8
+    xor esi, esi          ; select the active locale
     call __al_unicode_mask
     and eax, 16
     add rsp, 8
