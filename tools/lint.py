@@ -77,6 +77,7 @@ COMPLEX_EXTENDED_ARGUMENTS = {**{name + "l": 2 for name in (
     "creal", "cimag", "conj", "cproj", "cabs", "carg", "clog", "csqrt", "cexp", "ccos", "csin", "ccosh", "csinh", "ctan", "ctanh", "catan", "catanh", "casin", "cacos", "casinh", "cacosh",
 )}, "cpowl": 4}
 PRIVATE_FUNCTIONS = {
+    "compiler_rt/__al_atomic_bytes", "compiler_rt/__al_atomic_quad",
     "glob/__al_glob_add", "glob/__al_glob_candidate", "glob/__al_glob_compare",
     "glob/__al_glob_error", "glob/__al_glob_parse", "glob/__al_glob_path", "glob/__al_glob_walk",
     "stdio/__al_scan_wset", "stdio/__al_scan_wmember", "stdio/__al_scan_wchars",
@@ -261,6 +262,13 @@ HTTP_APP_CALLS = {
 }
 
 RUNTIME_ATOMICS = {
+    "compiler_rt/__al_atomic_bytes": {
+        **{("xchg", (f"{width} [rsi]", accumulator)): (accumulator, ("rsi", "rax"))
+           for width, accumulator in (("byte", "al"), ("word", "ax"), ("dword", "eax"), ("qword", "rax"))},
+        **{("lock", (f"cmpxchg {width} [rsi]", source)): (accumulator, ("rsi", "rax", "r9"))
+           for width, accumulator, source in (("byte", "al", "r9b"), ("word", "ax", "r9w"),
+                                              ("dword", "eax", "r9d"), ("qword", "rax", "r9"))},
+    },
     "stdatomic/atomic_flag_test_and_set_explicit": {
         ("xchg", ("byte [rdi]", "al")): ("al", ("rdi", "rax")),
     },
@@ -405,6 +413,7 @@ KERNEL_STACK_RECORDS = {
     },
 }
 PRIVATE_DATA = {
+    "__al_atomic_mutex": "compiler_rt/__al_atomic_bytes",
     "__al_locale_flags": "locale/setlocale",
     "stdin": "rt/__al_stdio_init", "stdout": "rt/__al_stdio_init", "stderr": "rt/__al_stdio_init",
     "__al_stdio_lock": "rt/__al_stdio_init", "__al_streams": "rt/__al_stdio_init",

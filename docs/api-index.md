@@ -3,12 +3,27 @@
 
 This index lists authored function specifications. For implementation state, run `tools/queue status`.
 
-Specs: 710 of 710 inventoried functions. The inventory covers C17, the named POSIX subset, runtime ABI entries, and Linux compatibility extensions. see [inventory scope](cookbook/specifications.md#inventory-scope).
+Specs: 725 of 725 inventoried functions. The inventory covers C17, the named POSIX subset, runtime ABI entries, and Linux compatibility extensions. see [inventory scope](cookbook/specifications.md#inventory-scope).
 
 | Function | Header | Prototype | Standard |
 | --- | --- | --- | --- |
 | [`_Exit`](../spec/functions/stdlib/_Exit.toml) | `<stdlib.h>` | `_Noreturn void _Exit(int status)` | C17 7.22.4.5 |
 | [`__al_assert_fail`](../spec/functions/assert/__al_assert_fail.toml) | `<assert.h>` | `_Noreturn void __al_assert_fail(const char *expression, const char *file, unsigned int line, const char *function)` | Runtime ABI __al_assert_fail |
+| [`__atomic_compare_exchange`](../spec/functions/compiler_rt/__atomic_compare_exchange.toml) | `<compiler_rt.h>` | `_Bool __atomic_compare_exchange(size_t size, volatile void *object, void *expected, const void *desired, int success_order, int failure_order)` | Runtime ABI __atomic_compare_exchange |
+| [`__atomic_compare_exchange_16`](../spec/functions/compiler_rt/__atomic_compare_exchange_16.toml) | `<compiler_rt.h>` | `_Bool __atomic_compare_exchange_16(volatile void *object, void *expected, unsigned __int128 desired, int success_order, int failure_order)` | Runtime ABI __atomic_compare_exchange_16 |
+| [`__atomic_exchange`](../spec/functions/compiler_rt/__atomic_exchange.toml) | `<compiler_rt.h>` | `void __atomic_exchange(size_t size, volatile void *object, const void *value, void *result, int order)` | Runtime ABI __atomic_exchange |
+| [`__atomic_exchange_16`](../spec/functions/compiler_rt/__atomic_exchange_16.toml) | `<compiler_rt.h>` | `unsigned __int128 __atomic_exchange_16(volatile void *object, unsigned __int128 value, int order)` | Runtime ABI __atomic_exchange_16 |
+| [`__atomic_fetch_add_16`](../spec/functions/compiler_rt/__atomic_fetch_add_16.toml) | `<compiler_rt.h>` | `unsigned __int128 __atomic_fetch_add_16(volatile void *object, unsigned __int128 operand, int order)` | Runtime ABI __atomic_fetch_add_16 |
+| [`__atomic_fetch_and_16`](../spec/functions/compiler_rt/__atomic_fetch_and_16.toml) | `<compiler_rt.h>` | `unsigned __int128 __atomic_fetch_and_16(volatile void *object, unsigned __int128 operand, int order)` | Runtime ABI __atomic_fetch_and_16 |
+| [`__atomic_fetch_nand_16`](../spec/functions/compiler_rt/__atomic_fetch_nand_16.toml) | `<compiler_rt.h>` | `unsigned __int128 __atomic_fetch_nand_16(volatile void *object, unsigned __int128 operand, int order)` | Runtime ABI __atomic_fetch_nand_16 |
+| [`__atomic_fetch_or_16`](../spec/functions/compiler_rt/__atomic_fetch_or_16.toml) | `<compiler_rt.h>` | `unsigned __int128 __atomic_fetch_or_16(volatile void *object, unsigned __int128 operand, int order)` | Runtime ABI __atomic_fetch_or_16 |
+| [`__atomic_fetch_sub_16`](../spec/functions/compiler_rt/__atomic_fetch_sub_16.toml) | `<compiler_rt.h>` | `unsigned __int128 __atomic_fetch_sub_16(volatile void *object, unsigned __int128 operand, int order)` | Runtime ABI __atomic_fetch_sub_16 |
+| [`__atomic_fetch_xor_16`](../spec/functions/compiler_rt/__atomic_fetch_xor_16.toml) | `<compiler_rt.h>` | `unsigned __int128 __atomic_fetch_xor_16(volatile void *object, unsigned __int128 operand, int order)` | Runtime ABI __atomic_fetch_xor_16 |
+| [`__atomic_is_lock_free`](../spec/functions/compiler_rt/__atomic_is_lock_free.toml) | `<compiler_rt.h>` | `_Bool __atomic_is_lock_free(size_t size, const volatile void *object)` | Runtime ABI __atomic_is_lock_free |
+| [`__atomic_load`](../spec/functions/compiler_rt/__atomic_load.toml) | `<compiler_rt.h>` | `void __atomic_load(size_t size, const volatile void *object, void *result, int order)` | Runtime ABI __atomic_load |
+| [`__atomic_load_16`](../spec/functions/compiler_rt/__atomic_load_16.toml) | `<compiler_rt.h>` | `unsigned __int128 __atomic_load_16(const volatile void *object, int order)` | Runtime ABI __atomic_load_16 |
+| [`__atomic_store`](../spec/functions/compiler_rt/__atomic_store.toml) | `<compiler_rt.h>` | `void __atomic_store(size_t size, volatile void *object, const void *value, int order)` | Runtime ABI __atomic_store |
+| [`__atomic_store_16`](../spec/functions/compiler_rt/__atomic_store_16.toml) | `<compiler_rt.h>` | `void __atomic_store_16(volatile void *object, unsigned __int128 value, int order)` | Runtime ABI __atomic_store_16 |
 | [`__errno_location`](../spec/functions/errno/__errno_location.toml) | `<errno.h>` | `int *__errno_location(void)` | Runtime ABI __errno_location, C17 7.5 |
 | [`__stack_chk_fail`](../spec/functions/compiler_rt/__stack_chk_fail.toml) | `<compiler_rt.h>` | `_Noreturn void __stack_chk_fail(void)` | Runtime ABI __stack_chk_fail |
 | [`_exit`](../spec/functions/unistd/_exit.toml) | `<unistd.h>` | `_Noreturn void _exit(int status)` | POSIX.1-2024 XSH _exit |

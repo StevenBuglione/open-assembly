@@ -1,0 +1,15 @@
+name = "__atomic_store"
+header = "compiler_rt.h"
+prototype = "void __atomic_store(size_t size, volatile void *object, const void *value, int order)"
+standard = ["Runtime ABI __atomic_store"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["reference:compiler-atomic-abi", "diff:libatomic"]
+provenance = "original"
+semantics = ["Atomically replace the object representation with value.", "Use sequentially consistent ordering and the baseline alignment policy.", "Preserve errno."]
+
+[abi]
+narrow_args = ["ecx:s32"]
+variadic = false

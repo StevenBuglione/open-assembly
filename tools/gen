@@ -9,7 +9,7 @@ import sys
 import tempfile
 
 from extensions import extension_functions, load_packages
-from spec import (FNM_CONSTANTS, GLOB_CONSTANTS, LANGINFO_CONSTANTS, MATH_XSI_CONSTANTS, NETDB_CONSTANTS, POSIX_FDS, PTHREAD_CREATION, PTHREAD_MUTEX_TYPES, PTHREAD_ONCE_CONSTANTS, PTHREAD_TSD_LIMITS, ROOT, SEEK_ORIGINS, STAT_FILE_KINDS, SpecError, comment_header, has_runtime_entry,
+from spec import (COMPILER_ATOMIC_ABI, FNM_CONSTANTS, GLOB_CONSTANTS, LANGINFO_CONSTANTS, MATH_XSI_CONSTANTS, NETDB_CONSTANTS, POSIX_FDS, PTHREAD_CREATION, PTHREAD_MUTEX_TYPES, PTHREAD_ONCE_CONSTANTS, PTHREAD_TSD_LIMITS, ROOT, SEEK_ORIGINS, STAT_FILE_KINDS, SpecError, comment_header, has_runtime_entry,
                   TERMIOS_LINUX_SPEEDS, TERMIOS_POSIX_CONSTANTS,
                   load_file_abi, load_network_abi, load_process_abi, load_project, load_signal_abi, load_time_abi, nasm_name)
 
@@ -497,6 +497,10 @@ def make_outputs(project, include_tracked=True, include_test=True):
                 prototype = spec.prototype
                 if header == "stdatomic.h":
                     prototype = prototype.replace(f"{spec.name}(", f"({spec.name})(", 1)
+                if spec.name in COMPILER_ATOMIC_ABI:
+                    alias = f"__al_abi_{spec.name.removeprefix('__')}"
+                    prototype = prototype.replace(f"{spec.name}(", f"{alias}(", 1)
+                    attributes = f' __asm__("{spec.name}")'
                 lines.append(f"{prototype}{attributes};")
             if header == "setjmp.h" and any(spec.name == "setjmp" for spec in specs):
                 lines.extend(("", "#define setjmp(env) (setjmp)(env)"))

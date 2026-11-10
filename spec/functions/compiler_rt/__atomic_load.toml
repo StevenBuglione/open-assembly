@@ -1,0 +1,15 @@
+name = "__atomic_load"
+header = "compiler_rt.h"
+prototype = "void __atomic_load(size_t size, const volatile void *object, void *result, int order)"
+standard = ["Runtime ABI __atomic_load"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["reference:compiler-atomic-abi", "diff:libatomic"]
+provenance = "original"
+semantics = ["Atomically copy the object representation to result.", "Use sequentially consistent ordering and the baseline alignment policy.", "Preserve errno."]
+
+[abi]
+narrow_args = ["ecx:s32"]
+variadic = false

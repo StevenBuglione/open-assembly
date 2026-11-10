@@ -10,7 +10,7 @@ import tomllib
 ROOT = Path(__file__).resolve().parent.parent
 IDENTIFIER = r"[A-Za-z_][A-Za-z0-9_]*"
 HEADER = r"[a-z][a-z0-9_]*(?:/[a-z][a-z0-9_]*)*\.h"
-STANDARD = r"(?:C17 7(?:\.[0-9]+)+|POSIX\.1-2024 (?:XBD|XSH) [A-Za-z0-9_./<>-]+|Runtime ABI [A-Za-z_<>.]+|Extension ABI [A-Za-z0-9_<>./]+)"
+STANDARD = r"(?:C17 7(?:\.[0-9]+)+|POSIX\.1-2024 (?:XBD|XSH) [A-Za-z0-9_./<>-]+|Runtime ABI [A-Za-z0-9_<>.]+|Extension ABI [A-Za-z0-9_<>./]+)"
 C17_HEADERS = dict(zip(
     ("assert complex ctype errno fenv float inttypes iso646 limits locale math "
      "setjmp signal stdalign stdarg stdatomic stdbool stddef stdint stdio stdlib "
@@ -215,7 +215,17 @@ EXTENSION_SCOPE = {
     "sys/mman.h": {"functions": {"mremap"}},
     "sys/time.h": {"functions": {"gettimeofday"}},
 }
-RUNTIME_ABI = {"assert.h": "__al_assert_fail", "compiler_rt.h": "__stack_chk_fail", "errno.h": "__errno_location"}
+COMPILER_ATOMIC_ABI = {
+    "__atomic_load", "__atomic_store", "__atomic_exchange", "__atomic_compare_exchange", "__atomic_is_lock_free",
+    "__atomic_load_16", "__atomic_store_16", "__atomic_exchange_16", "__atomic_compare_exchange_16",
+    "__atomic_fetch_add_16", "__atomic_fetch_sub_16", "__atomic_fetch_and_16",
+    "__atomic_fetch_or_16", "__atomic_fetch_xor_16", "__atomic_fetch_nand_16",
+}
+RUNTIME_ABI = {
+    "assert.h": {"__al_assert_fail"},
+    "compiler_rt.h": COMPILER_ATOMIC_ABI | {"__stack_chk_fail"},
+    "errno.h": {"__errno_location"},
+}
 MACRO_BACKED_ABI = {("setjmp.h", "setjmp")}
 
 
@@ -514,8 +524,9 @@ def load_inventory(root):
             fail(where, "expected a conditional array of tables")
         if edition != "C17" and groups:
             fail(where, "the POSIX and runtime ABI bootstrap subsets have no conditional entries")
-        if edition == "Runtime" and [(i.kind, i.name) for i in found] != [("functions", RUNTIME_ABI[name])]:
-            fail(where, "expected only the named runtime ABI entry")
+        if edition == "Runtime" and {(i.kind, i.name) for i in found} != {
+                ("functions", entry) for entry in RUNTIME_ABI[name]}:
+            fail(where, "expected only the named runtime ABI entries")
         if edition == "Extension" and {(i.kind, i.name) for i in found} != {
                 (kind, item) for kind, entries in EXTENSION_SCOPE[name].items() for item in entries}:
             fail(where, "expected only the named Linux compatibility extension entries")
@@ -606,11 +617,11 @@ def builtin_abi_class(declaration):
     # The name of a parameter, if present, follows the builtin type specifiers.
     qualifiers = {"const", "volatile", "restrict", "_Atomic", "register", "_Noreturn", "extern"}
     type_words = {"signed", "unsigned", "short", "int", "long", "char", "_Bool", "void",
-                  "float", "double", "_Complex"}
+                  "float", "double", "_Complex", "__int128"}
     words = [word for word in declaration.split() if word not in qualifiers]
     if len(words) > 1 and words[-1] not in type_words:
         words.pop()
-    if words in (["off_t"], ["time_t"], ["clock_t"], ["__al_sighandler_t"], ["jmp_buf"], ["sigjmp_buf"], ["wctype_t"], ["wctrans_t"], ["nfds_t"], ["ssize_t"]):
+    if words in (["size_t"], ["off_t"], ["time_t"], ["clock_t"], ["__al_sighandler_t"], ["jmp_buf"], ["sigjmp_buf"], ["wctype_t"], ["wctrans_t"], ["nfds_t"], ["ssize_t"]):
         return "wide", ()
     if words in (["mode_t"], ["wint_t"], ["char32_t"], ["socklen_t"], ["in_addr_t"], ["uint32_t"]):
         return "narrow", ("u32",)
@@ -626,6 +637,8 @@ def builtin_abi_class(declaration):
         "long double _Complex",
     )]:
         return "noninteger", ()
+    if words in (["__int128"], ["unsigned", "__int128"], ["signed", "__int128"]):
+        return "doublewide", ()
     if words == ["_Bool"]:
         return "narrow", ("u8",)
     if counts.keys() <= {"char", "signed", "unsigned"} and counts.get("char") == 1 and len(words) <= 2:
@@ -655,6 +668,13 @@ def validate_narrow_args(ret, params, narrow, where):
         if kind is None:
             return
         if kind == "noninteger":
+            continue
+        if kind == "doublewide":
+            # SysV passes both halves in registers or spills the whole argument.
+            if position + 2 <= len(ABI_REGISTERS):
+                if position in actual or position + 1 in actual:
+                    fail(where, f"abi.narrow_args marks a full-width argument as narrow: {declaration!r}")
+                position += 2
             continue
         if kind == "narrow":
             expected = {f"{ABI_REGISTERS[position][{'32': 0, '16': 1, '8': 2}[ext[1:]]]}:{ext}"

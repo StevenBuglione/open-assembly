@@ -723,8 +723,14 @@ functions = ["__al_assert_fail"]
 [[headers]]
 name = "compiler_rt.h"
 standard = "Runtime ABI <compiler_rt.h>"
-count = 1
-functions = ["__stack_chk_fail"]
+count = 16
+functions = [
+  "__stack_chk_fail", "__atomic_load", "__atomic_store", "__atomic_exchange",
+  "__atomic_compare_exchange", "__atomic_is_lock_free", "__atomic_load_16",
+  "__atomic_store_16", "__atomic_exchange_16", "__atomic_compare_exchange_16",
+  "__atomic_fetch_add_16", "__atomic_fetch_sub_16", "__atomic_fetch_and_16",
+  "__atomic_fetch_or_16", "__atomic_fetch_xor_16", "__atomic_fetch_nand_16",
+]
 
 [[headers]]
 name = "errno.h"

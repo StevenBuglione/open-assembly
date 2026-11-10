@@ -260,6 +260,9 @@ def generate_stub(spec, directory, log):
     call __al_syscall
     ud2
 """
+    elif result_type == "unsigned __int128":
+        external = ""
+        body = "    xor eax, eax\n    xor edx, edx\n    ret\n"
     elif result_type == "long double _Complex":
         external = ""
         body = "    fldz\n    fldz\n    ret\n"
