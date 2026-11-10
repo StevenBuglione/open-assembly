@@ -241,6 +241,7 @@ def generate_stub(spec, directory, log):
     source = directory / f"{spec.name}.asm"
     obj = directory / f"{spec.name}.o"
     wrapped = directory / f"{spec.name}.wrapped.o"
+    result_type = spec.prototype.split("(", 1)[0].removesuffix(spec.name).strip()
     if spec.abi.noreturn:
         external = "extern __al_syscall:function\n"
         body = """    sub rsp, 8
@@ -254,6 +255,12 @@ def generate_stub(spec, directory, log):
     call __al_syscall
     ud2
 """
+    elif result_type == "long double":
+        external = ""
+        body = "    fldz\n    ret\n"
+    elif result_type in {"float", "double"}:
+        external = ""
+        body = "    pxor xmm0, xmm0\n    ret\n"
     else:
         external = ""
         body = "    xor eax, eax\n    ret\n"

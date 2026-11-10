@@ -1,0 +1,17 @@
+name = "fegetexceptflag"
+header = "fenv.h"
+prototype = "int fegetexceptflag(fexcept_t *flagp, int excepts)"
+standard = ["C17 7.6.2.2"]
+deps = ["fetestexcept"]
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "reference:fenv-hardware"]
+provenance = "original"
+semantics = [
+  "Store the requested exception flags as an opaque fexcept_t value. Return zero.",
+]
+
+[abi]
+narrow_args = ["esi:s32"]
+variadic = false

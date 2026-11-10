@@ -1,0 +1,18 @@
+name = "feholdexcept"
+header = "fenv.h"
+prototype = "int feholdexcept(fenv_t *envp)"
+standard = ["C17 7.6.4.2"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "reference:fenv-hardware"]
+provenance = "original"
+semantics = [
+  "Save the current environment, clear exception flags, and mask exceptions in both units.",
+  "Keep the rounding mode. Return zero.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

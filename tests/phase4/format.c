@@ -194,7 +194,7 @@ static int policy(void)
     int result = snprintf(buffer, sizeof buffer, "%p:%p", (void *)0, (void *)(uintptr_t)0x1234);
     REQUIRE(TEXT_IS(buffer, result, "0x0:0x1234"), 74);
     errno = 0;
-    REQUIRE(snprintf(buffer, sizeof buffer, "%f", 1.25) < 0 && errno == EINVAL, 75);
+    REQUIRE(snprintf(buffer, sizeof buffer, "%ls", L"wide") < 0 && errno == EINVAL, 75);
     return 0;
 }
 

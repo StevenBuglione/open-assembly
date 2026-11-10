@@ -1,0 +1,18 @@
+name = "feraiseexcept"
+header = "fenv.h"
+prototype = "int feraiseexcept(int excepts)"
+standard = ["C17 7.6.2.3"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "reference:fenv-hardware"]
+provenance = "original"
+semantics = [
+  "Raise the requested supported floating exceptions. Return zero if execution continues.",
+  "Raising overflow or underflow can additionally raise inexact. Preserve rounding modes and exception masks.",
+]
+
+[abi]
+narrow_args = ["edi:s32"]
+variadic = false

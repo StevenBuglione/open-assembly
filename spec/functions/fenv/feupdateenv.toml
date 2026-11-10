@@ -1,0 +1,18 @@
+name = "feupdateenv"
+header = "fenv.h"
+prototype = "int feupdateenv(const fenv_t *envp)"
+standard = ["C17 7.6.4.4"]
+deps = ["fetestexcept", "fesetenv", "feraiseexcept"]
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "reference:fenv-hardware"]
+provenance = "original"
+semantics = [
+  "Restore a saved or default environment and raise the exception flags set before restoration.",
+  "Return zero if execution continues.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

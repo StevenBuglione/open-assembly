@@ -9,10 +9,10 @@ as_safe = false
 oracles = ["diff:glibc", "diff:musl", "reference:phase4-stdio"]
 provenance = "original"
 semantics = [
-  "Interpret the Phase 4 integer, byte, string, pointer, count, percent and bracket-set conversions.",
+  "Interpret the integer, floating, byte, string, pointer, count, percent and bracket-set conversions.",
   "Apply widths and assignment suppression. Preserve the first input byte after a matching item.",
   "Return the number of assignments, or EOF if input fails before the first completed conversion.",
-  "Unsupported floating or wide conversions report EINVAL.",
+  "Unsupported wide conversions report EINVAL.",
 ]
 
 [abi]

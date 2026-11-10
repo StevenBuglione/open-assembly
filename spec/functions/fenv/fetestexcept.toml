@@ -1,0 +1,17 @@
+name = "fetestexcept"
+header = "fenv.h"
+prototype = "int fetestexcept(int excepts)"
+standard = ["C17 7.6.2.5"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "reference:fenv-hardware"]
+provenance = "original"
+semantics = [
+  "Return the intersection of the requested flags and the union of the x87 and SSE standard status flags.",
+]
+
+[abi]
+narrow_args = ["edi:s32"]
+variadic = false

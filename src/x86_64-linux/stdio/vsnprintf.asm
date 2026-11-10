@@ -11,9 +11,9 @@
 ; provenance: original
 ; narrow_args: -
 ; variadic: false
-; semantics: Interpret the Phase 4 integer, string, byte, pointer, count, and percent conversions.
+; semantics: Interpret the integer, floating, string, byte, pointer, count, and percent conversions.
 ; semantics: Return the byte count excluding the terminator on success, or a negative result on error.
-; semantics: Unsupported floating or wide conversions report EINVAL. Count overflow reports EOVERFLOW.
+; semantics: Unsupported wide conversions report EINVAL. Count overflow reports EOVERFLOW.
 ; semantics: Write at most size-1 bytes and terminate when size is nonzero. Return the full untruncated count. With size zero dest may be NULL.
 ; END OPEN ASSEMBLY GENERATED SPEC
 

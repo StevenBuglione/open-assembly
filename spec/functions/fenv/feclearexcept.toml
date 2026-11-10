@@ -1,0 +1,18 @@
+name = "feclearexcept"
+header = "fenv.h"
+prototype = "int feclearexcept(int excepts)"
+standard = ["C17 7.6.2.1"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["diff:glibc", "reference:fenv-hardware"]
+provenance = "original"
+semantics = [
+  "Clear the requested standard exception flags from both x87 and SSE.",
+  "Preserve the other flags, rounding modes and exception masks. Return zero.",
+]
+
+[abi]
+narrow_args = ["edi:s32"]
+variadic = false

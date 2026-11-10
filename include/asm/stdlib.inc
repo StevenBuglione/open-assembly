@@ -5,6 +5,7 @@
 extern _Exit
 extern aligned_alloc
 extern atexit
+extern atof
 extern atoi
 extern atol
 extern atoll
@@ -19,7 +20,10 @@ extern putenv
 extern qsort
 extern realloc
 extern setenv
+extern strtod
+extern strtof
 extern strtol
+extern strtold
 extern strtoll
 extern strtoul
 extern strtoull

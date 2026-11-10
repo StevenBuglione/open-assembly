@@ -168,10 +168,10 @@ static int policy(void)
     int n = -1;
     REQUIRE(sscanf("0x1234!", "%p%n", &pointer, &n) == 1
             && (uintptr_t)pointer == UINT64_C(0x1234) && n == 6, 60);
-    float number = 0.0f;
+    wchar_t character = L'!';
     errno = 0;
-    int result = sscanf("1.25", "%f", &number);
-    REQUIRE(result <= 0 && errno == EINVAL && number == 0.0f, 61);
+    int result = sscanf("a", "%lc", &character);
+    REQUIRE(result <= 0 && errno == EINVAL && character == L'!', 61);
     return 0;
 }
 
