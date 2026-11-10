@@ -19,6 +19,15 @@ checks assembly and C startup, worker TLS isolation, thread create/join,
 clock and allocation behavior, and append-position semantics. Inside the
 old guest it confirms actual `clone3` `ENOSYS`, existing `clone`-based thread
 creation, and a fail-before-write outcome for unsupported `RWF_NOAPPEND`.
+
+The same candidate binaries also run the independent directory iteration
+and refill, signal delivery and suspension, spawn success and failure,
+TCP loopback, poll and epoll, same-socket TCP readiness, and PTY terminal
+attribute/session/error cases on both kernels. The guest PID 1 brings up
+its private loopback interface and mounts its private devpts instance.
+Every case runs in an isolated directory with the original arguments and
+environment. Guest console markers require zero status and silent child
+streams, matching the native expectations.
 [QEMU direct Linux boot documentation](https://www.qemu.org/docs/master/system/linuxboot.html)
 
 The [Debian package index](https://archive.debian.org/debian-security/dists/buster/updates/) binds the exact amd64 package

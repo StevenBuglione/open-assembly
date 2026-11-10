@@ -1,19 +1,31 @@
 #include <asm/unistd.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <linux/if.h>
 #include <linux/memfd.h>
+#include <linux/mount.h>
 #include <linux/reboot.h>
+#include <linux/sockios.h>
 #include <linux/utsname.h>
 #include <pthread.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
 
 extern long __al_syscall(long, long, long, long, long, long, long);
+
+struct platform_case {
+    const char *name;
+    char *const *args;
+    char *const *env;
+};
+#include "platform-cases.h"
 
 static _Thread_local uint64_t thread_value = UINT64_C(0x0fedcba987654321);
 static char worker_complete;
@@ -24,19 +36,67 @@ static int line(const char *text)
     return write(STDOUT_FILENO, text, size) == (ssize_t)size;
 }
 
-static int run_hello(const char *path)
+static int child_status(char *const args[], char *const env[], const char *directory)
 {
     pid_t pid = fork();
     if (pid < 0)
-        return 0;
+        return -1;
     if (!pid) {
-        char *args[] = {(char *)path, NULL};
-        char *env[] = {NULL};
-        execve(path, args, env);
+        if (directory && __al_syscall(__NR_chdir, (long)directory, 0, 0, 0, 0, 0))
+            _exit(89);
+        execve(args[0], args, env);
         _exit(90);
     }
     int status;
-    return waitpid(pid, &status, 0) == pid && WIFEXITED(status) && WEXITSTATUS(status) == 0;
+    return waitpid(pid, &status, 0) == pid ? status : -1;
+}
+
+static int run_hello(const char *path)
+{
+    char *args[] = {(char *)path, NULL};
+    char *env[] = {NULL};
+    return child_status(args, env, NULL) == 0;
+}
+
+static int guest_devices(void)
+{
+    const long fd = __al_syscall(__NR_socket, AF_INET, SOCK_DGRAM, 0, 0, 0, 0);
+    if (fd < 0)
+        return 0;
+    struct ifreq interface = {.ifr_name = "lo"};
+    if (__al_syscall(__NR_ioctl, fd, SIOCGIFFLAGS, (long)&interface, 0, 0, 0))
+        return 0;
+    interface.ifr_flags |= IFF_UP;
+    if (__al_syscall(__NR_ioctl, fd, SIOCSIFFLAGS, (long)&interface, 0, 0, 0) || close((int)fd))
+        return 0;
+    return __al_syscall(__NR_mount, (long)"devpts", (long)"/dev/pts", (long)"devpts",
+                        MS_NOSUID | MS_NOEXEC, (long)"mode=0620,ptmxmode=0666", 0) == 0;
+}
+
+static int guest_cases(void)
+{
+    if (!guest_devices())
+        return 61;
+    for (size_t i = 0; i < sizeof platform_cases / sizeof *platform_cases; ++i) {
+        const struct platform_case *probe = &platform_cases[i];
+        char directory[96], message[112];
+        int length = snprintf(directory, sizeof directory, "/cases/%s", probe->name);
+        if (length < 0 || length >= (int)sizeof directory || mkdir(directory, 0700))
+            return 62;
+        length = snprintf(message, sizeof message, "BEGIN platform case %s\n", probe->name);
+        if (length < 0 || length >= (int)sizeof message || !line(message))
+            return 63;
+        const int status = child_status(probe->args, probe->env, directory);
+        if (status != 0) {
+            if (snprintf(message, sizeof message, "FAIL platform case %s wait-status=%d\n", probe->name, status) > 0)
+                line(message);
+            return 64;
+        }
+        length = snprintf(message, sizeof message, "END platform case %s\n", probe->name);
+        if (length < 0 || length >= (int)sizeof message || !line(message))
+            return 65;
+    }
+    return 0;
 }
 
 static void *worker(void *argument)
@@ -139,6 +199,8 @@ int main(int argc, char **argv)
     if (argc != 1 || getpid() != 1 || strcmp(argv[0], "/init"))
         return 2;
     int status = exercise(1, "/hello-asm", "/hello-c");
+    if (!status)
+        status = guest_cases();
     if (status) {
         char reason[64];
         if (snprintf(reason, sizeof reason, "FAIL platform guest status=%d\n", status) > 0)
