@@ -1,4 +1,4 @@
-; Build one bounded lowercase IN question for A or AAAA.
+; Build one bounded lowercase IN question for A, AAAA or PTR.
 bits 64
 default rel
 
@@ -19,6 +19,8 @@ __al_dns_build:
     cmp r14d, 1
     je .measure
     cmp r14d, 28
+    je .measure
+    cmp r14d, 12
     jne .invalid
 .measure:
     mov r8d, 1                  ; terminal root label

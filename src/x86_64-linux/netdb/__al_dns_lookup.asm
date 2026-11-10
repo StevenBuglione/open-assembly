@@ -6,14 +6,9 @@ default rel
 global __al_dns_lookup:function
 extern __al_dns_publish:function
 extern __al_dns_query:function
-extern __al_gai_line:function
-extern __al_gai_word:function
+extern __al_dns_server:function
 extern calloc:function
-extern fclose:function
-extern fopen:function
 extern free:function
-extern inet_pton:function
-extern strcmp:function
 
 section .text.__al_dns_lookup alloc exec nowrite progbits
 __al_dns_lookup:
@@ -31,64 +26,10 @@ __al_dns_lookup:
     test rax, rax
     jz .no_memory
     mov r14, rax
-    lea rdi, [rel resolv_path]
-    lea rsi, [rel read_mode]
-    call fopen
-    test rax, rax
-    jz .default_server
-    mov r12, rax
-.read_line:
-    mov rdi, r12
-    lea rsi, [rbx + 1088]
-    call __al_gai_line
-    test rax, rax
-    jz .no_configured_server
-    mov [rbx + 40], rax
-    lea rdi, [rbx + 40]
-    call __al_gai_word
-    test rax, rax
-    jz .read_line
-    mov rdi, rax
-    lea rsi, [rel nameserver]
-    call strcmp
-    test eax, eax
-    jnz .read_line
-    lea rdi, [rbx + 40]
-    call __al_gai_word
-    test rax, rax
-    jz .read_line
-    mov [rsp + 8], rax
-    mov edi, 2                  ; AF_INET
-    mov rsi, rax
-    lea rdx, [r14 + 1036]
-    call inet_pton
-    test eax, eax
-    jnz .configured_ipv4
-    mov edi, 10                 ; AF_INET6
-    mov rsi, [rsp + 8]
-    lea rdx, [r14 + 1040]
-    call inet_pton
-    test eax, eax
-    jz .read_line
-    mov word [r14 + 1032], 10
-    mov r15d, 28
-    jmp .configured
-.configured_ipv4:
-    mov word [r14 + 1032], 2
-    mov r15d, 16
-.configured:
-    mov rdi, r12
-    call fclose
-    jmp .server_ready
-.no_configured_server:
-    mov rdi, r12
-    call fclose
-.default_server:
-    mov word [r14 + 1032], 2
-    mov dword [r14 + 1036], 0x0100007f ; loopback default
-    mov r15d, 16
-.server_ready:
-    mov word [r14 + 1034], 0x3500 ; network-order DNS port 53
+    mov rdi, rbx
+    lea rsi, [r14 + 1032]
+    call __al_dns_server
+    mov r15d, eax
     mov dword [rsp], -2        ; first unsuccessful family status
     cmp dword [rbx + 12], 2    ; AF_INET requests only A
     je .ipv4
@@ -158,10 +99,5 @@ __al_dns_lookup:
     pop r12
     pop rbx
     ret
-
-section .rodata.__al_dns_lookup alloc noexec nowrite progbits
-resolv_path: db "/etc/resolv.conf", 0
-read_mode: db "r", 0
-nameserver: db "nameserver", 0
 
 section .note.GNU-stack noalloc noexec nowrite progbits

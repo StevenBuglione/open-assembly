@@ -1,4 +1,4 @@
-; Validate the echoed DNS question and find A/AAAA answers for its owner.
+; Validate the echoed DNS question and find A, AAAA or PTR answers for its owner.
 ; The answer block holds metadata, a canonical wire name, 16 address slots,
 ; and two 256-byte name scratch areas. See ADR 0017 for the private ABI.
 bits 64
@@ -70,6 +70,8 @@ __al_dns_parse:
     cmp eax, 1
     je .question_type
     cmp eax, 28
+    je .question_type
+    cmp eax, 12
     jne .malformed
 .question_type:
     mov [rbx + 4], eax
@@ -136,6 +138,8 @@ __al_dns_parse:
     je .cname
     cmp eax, [rbx + 4]
     jne .next_record
+    cmp eax, 12
+    je .ptr
     mov rax, [rsp + 48]
     cmp dword [rbx + 4], 1
     jne .aaaa
@@ -170,6 +174,23 @@ __al_dns_parse:
     mov [rax], r10
     mov [rax + 8], r11
     inc dword [rbx]
+    jmp .next_record
+.ptr:
+    mov rdi, r12
+    mov rsi, r13
+    mov rdx, [rsp + 48]
+    lea rcx, [rbx + 520]
+    call __al_dns_name
+    test rax, rax
+    jz .malformed
+    cmp rax, [rsp + 24]
+    jne .malformed
+    cmp dword [rbx], 0
+    jne .next_record
+    lea rdi, [rbx + 264]        ; reuse the 256-byte address region
+    lea rsi, [rbx + 520]
+    call memcpy
+    mov dword [rbx], 1
     jmp .next_record
 .cname:
     mov rdi, r12

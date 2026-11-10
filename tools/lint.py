@@ -138,6 +138,8 @@ PRIVATE_FUNCTIONS = {
     "netdb/__al_dns_now", "netdb/__al_dns_wait", "netdb/__al_dns_open",
     "netdb/__al_dns_transfer", "netdb/__al_dns_query",
     "netdb/__al_dns_lookup", "netdb/__al_dns_publish", "netdb/__al_dns_text",
+    "netdb/__al_dns_server", "netdb/__al_dns_reverse", "netdb/__al_dns_reverse_name",
+    "netdb/__al_gni_address",
     "netdb/__al_gni_host", "netdb/__al_gni_service",
     "math/__al_big_muladd", "math/__al_big_left", "math/__al_big_right1",
     "math/__al_big_cmp", "math/__al_big_sub", "math/__al_big_bits", "math/__al_big_copy",
