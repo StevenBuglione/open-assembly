@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Run the separate QEMU-system image before the standard verification tier.
+set -euo pipefail
+cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.."
+started=$(python3 -c 'from time import time_ns; print(time_ns())')
+status=0
+./tools/container --old-kernel make phase11-old-kernel || status=$?
+exec ./tools/container python3 tools/verify_tiers.py "$@" \
+  --old-kernel-started "$started" --old-kernel-status "$status"

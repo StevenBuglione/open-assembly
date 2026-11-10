@@ -33,12 +33,13 @@ PHASES = (
     "phase10-endpoints", "phase10-inet", "phase10-netdb", "phase10-dns", "phase10-http",
     "phase10-terminal", "phase10-libc-test", "phase10-glob", "phase10-regex", "phase11-vdso",
     "phase11-static-pie", "phase11-allocator", "phase11-copy-benchmark", "phase11-allocator-benchmark",
+    "phase11-seccomp", "phase11-old-kernel",
 )
 EXTRA = ("fcntl-production", "extension-control")
 FUZZ_SECONDS = 300
 GAPS = {
-    "old_current_kernel_matrix": "A pinned old Linux kernel must boot and pass the selected matrix alongside the current host.",
-    "restricted_seccomp_matrix": "A separately selected restrictive seccomp policy needs its own runtime observations.",
+    "remaining_old_current_kernel_matrix": "The boot gate covers its named runtime checks. The remaining old/current kernel matrix needs its own evidence.",
+    "remaining_restricted_seccomp_matrix": "Installed filters cover four named failure paths. Remaining restrictive-profile scopes need their own observations.",
     "remaining_binary32_domains": "The full remaining binary32 math campaigns need artifact-bound completion and audit.",
     "ltp_gnulib_conformance": "The roadmap's independent LTP and gnulib subsets need pinned executable gates.",
     "remaining_musl_performance": "Copy and allocator benchmarks cover their predeclared workloads. Remaining musl performance criteria need measured gates.",
@@ -238,6 +239,67 @@ def check_allocator_benchmark(data):
         raise GateError("allocator benchmark exceeds or omits its geometric mean cap")
 
 
+SECCOMP_OUTPUT = {
+    "append-enosys": "PASS seccomp pwritev2 ENOSYS leaves append file unchanged\n",
+    "remap-enosys": "PASS seccomp remap ENOSYS preserves and moves allocation\n",
+    "remap-eperm": "PASS seccomp remap EPERM preserves and moves allocation\n",
+    "vdso-eperm": "PASS seccomp vDSO EPERM uses raw clock and publishes EACCES\n",
+}
+OLD_KERNEL = "4.19.0-27-amd64"
+OLD_KERNEL_SHA = "71947e2c7102ceb224b04b910c5761bc9f2a7986c2c8d868b5553dc8fef57747"
+
+
+def check_seccomp(data):
+    observations = data.get("observations")
+    if (data.get("kernel_release") != os.uname().release or type(observations) is not dict
+            or set(observations) != SECCOMP_OUTPUT.keys()
+            or "tests/phase11/platform/seccomp.c" not in data.get("inputs", {})):
+        raise GateError("seccomp evidence lacks the exact installed-filter scope")
+    for case, expected in SECCOMP_OUTPUT.items():
+        row = observations[case]
+        if (type(row) is not dict or row.get("returncode") != 0 or row.get("stderr") != ""
+                or row.get("stdout") != expected or type(row.get("command")) is not list
+                or row["command"][-1:] != [case]):
+            raise GateError(f"seccomp filter observation failed for {case}")
+
+
+def check_old_kernel(data):
+    observations = data.get("observations")
+    artifacts = data.get("artifacts", {})
+    if (type(observations) is not dict or set(observations) != {"native", "guest"}
+            or type(artifacts) is not dict or artifacts.get("kernel_sha256") != OLD_KERNEL_SHA
+            or type(artifacts.get("initramfs_sha256")) is not str
+            or re.fullmatch(r"[0-9a-f]{64}", artifacts["initramfs_sha256"]) is None
+            or "nix/old-kernel.nix" not in data.get("inputs", {})
+            or "qemu-system-x86_64" not in data.get("toolchain", {})):
+        raise GateError("old-kernel evidence lacks the pinned QEMU-system boot identity")
+    for label, release in (("native", os.uname().release), ("guest", OLD_KERNEL)):
+        item = observations[label]
+        if type(item) is not dict or type(item.get("stdout")) is not str:
+            raise GateError(f"old-kernel evidence lacks complete {label} observations")
+        command, append = item.get("command", []), item.get("append")
+        required = ("startup-c-and-asm", "tls-thread-clone", "clock-and-allocation", "complete")
+        lines = item["stdout"].splitlines()
+        if (item.get("kernel_release") != release or item.get("returncode") != 0
+                or item.get("stderr") != "" or type(command) is not list or not command
+                or any(type(part) is not str for part in command)
+                or not all(f"PASS platform {case}" in lines for case in required)
+                or append not in ("append-unsupported", "append-offset")
+                or f"PASS platform {append}" not in lines):
+            raise GateError(f"old-kernel evidence lacks complete {label} observations")
+        if label == "guest" and (Path(command[0]).name != "qemu-system-x86_64" or "-kernel" not in command
+                                 or append != "append-unsupported" or item.get("clone3_raw") != -38):
+            raise GateError("old-kernel evidence lacks the required boot and fallback proof")
+
+
+def old_kernel(started, status, record):
+    if status != 0:
+        raise GateError(f"old-kernel container exited {status}")
+    path, data = fresh_report(ROOT, "phase11-old-kernel.json", "phase11-old-kernel", started)
+    check_old_kernel(data)
+    record.update(evidence=path.relative_to(ROOT).as_posix(), evidence_sha256=sha256_file(path))
+
+
 def gate(name, record):
     environment = {**os.environ, "LC_ALL": "C", "OPEN_ASSEMBLY_LIBFUZZER_SECONDS": str(FUZZ_SECONDS)}
     started = time_ns()
@@ -265,6 +327,8 @@ def gate(name, record):
             raise GateError("fcntl production evidence is incomplete")
         if name == "phase11-allocator-benchmark":
             check_allocator_benchmark(data)
+        if name == "phase11-seccomp":
+            check_seccomp(data)
     record.update(evidence=path.relative_to(ROOT).as_posix(), evidence_sha256=sha256_file(path))
 
 
@@ -346,7 +410,7 @@ def platform_observation():
             "seccomp": seccomp, "qemu_system": shutil.which("qemu-system-x86_64")}
 
 
-def execute(tier, only, tag):
+def execute(tier, only, tag, old_started, old_status):
     scope = f"verification-{tier}"
     choices = PHASES + EXTRA + (("reproducible",) if tier == "release" else ())
     selected = tuple(only) if only else choices
@@ -372,6 +436,11 @@ def execute(tier, only, tag):
                     extension_control(commit, item)
                 elif name == "reproducible":
                     reproducible(item)
+                elif name == "phase11-old-kernel":
+                    if old_started is None:
+                        item.update(outcome="pending", reason="Use the host wrapper to run the pinned old-kernel container.")
+                        continue
+                    old_kernel(old_started, old_status, item)
                 else:
                     gate(name, item)
                 item["outcome"] = "pass"
@@ -400,6 +469,8 @@ def main():
     parser.add_argument("tier", choices=("nightly", "release"))
     parser.add_argument("--only", choices=PHASES + EXTRA + ("reproducible",), action="append", default=[])
     parser.add_argument("--tag")
+    parser.add_argument("--old-kernel-started", type=int)
+    parser.add_argument("--old-kernel-status", type=int)
     args = parser.parse_args()
     if len(set(args.only)) != len(args.only):
         parser.error("select each check once")
@@ -409,7 +480,12 @@ def main():
         parser.error("release tags must begin with v and a digit")
     if args.tier == "release" and args.tag is None and not args.only:
         parser.error("the release tier requires --tag")
-    return execute(args.tier, args.only, args.tag)
+    if (args.old_kernel_started is None) != (args.old_kernel_status is None):
+        parser.error("old-kernel status and start time must be supplied together")
+    if args.old_kernel_started is not None and not (
+            0 < args.old_kernel_started <= time_ns() and 0 <= args.old_kernel_status <= 255):
+        parser.error("invalid old-kernel start time or status")
+    return execute(args.tier, args.only, args.tag, args.old_kernel_started, args.old_kernel_status)
 
 
 if __name__ == "__main__":

@@ -365,8 +365,8 @@ type changes to existing files fail the check.
 ## Nightly and tagged verification
 
 ```sh
-./tools/container python3 tools/verify_tiers.py nightly
-./tools/container python3 tools/verify_tiers.py release --tag v1.0.0
+./tools/verify-tier nightly
+./tools/verify-tier release --tag v1.0.0
 ```
 
 The nightly entry point runs the available matrix, including Phase 2
@@ -374,7 +374,10 @@ production mutation and 300-second libFuzzer observations, exact binary32
 rounding groups, selected transcendental shards, the isolated memcpy benchmark,
 and the pinned application and external suites. The extension smoke control runs in a separate clone.
 Its unimplemented, scoped, and production-required reports are archived
-with the main evidence.
+with the main evidence. The host wrapper first starts the separate
+QEMU-system image for the pinned old-kernel boot check. The tier validates
+that report against the current inputs and records the four installed
+seccomp filter observations independently.
 
 The release tier additionally validates the checked-out tag and compares
 two independently built and audited sets of runtime, PIE startup and
@@ -385,7 +388,7 @@ deviations. Both workflows upload evidence even when verification fails.
 Every listed gate must produce a fresh passing report with matching input
 hashes. Use repeated `--only` selections for focused diagnosis. Such a run
 exits nonzero with a partial report. The current matrix also records unmet
-old-kernel boot, restrictive seccomp, remaining full binary32 domains,
+broader old/current-kernel and restrictive-seccomp coverage, remaining full binary32 domains,
 LTP and gnulib, performance, and authorship similarity requirements. A tier
 with any failure or unmet requirement exits nonzero and cannot qualify
 a release. The platform section records the actual native kernel and
