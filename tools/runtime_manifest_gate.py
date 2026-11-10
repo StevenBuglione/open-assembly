@@ -16,7 +16,7 @@ from gate import (BUILD, COMPILE_FLAGS, LINK_FLAGS, GateError, checked, identify
                   nm_symbols, verify_setup, write_evidence)
 from phase1 import NASM, build_case, build_runtime
 from phase4 import load_probes, observation, parse_probe
-from phase6 import run_cases, run_stubs
+from phase6 import ABI_FIXTURES, PUBLIC as FILE_PUBLIC, SUITE as FILE_SUITE, run_cases, run_stubs
 from production import applicable_variants, phase2_inputs, source_paths
 from spec import ROOT, load_project, sha256_file, snapshot_inputs
 
@@ -32,10 +32,19 @@ class Plan:
     fuzz: str
     record_sizes: tuple
     contracts: tuple
+    fault_wrappers: tuple = ()
 
 
 FCNTL = Path("tests/phase6/fcntl")
+FILE_MUTATION_FAILURES = {"lseek": (62, 63, 65, 67), "dup": (72, 73, 74), "dup2": (82, 83, 84, 85)}
+FILE_CONTRACTS = (Path("docs/adr/0007-linux-files-process-signal-time.md"),
+                  Path("docs/cookbook/linux-file-verification.md"))
 PLANS = {
+    **{name: Plan(FILE_SUITE, frozenset(FILE_PUBLIC), ABI_FIXTURES,
+                  "file-abi", f"file-{name}", ((f"file-{name}", codes),),
+                  f"file-{name}-fuzz", (16, 24), FILE_CONTRACTS,
+                  ((FILE_SUITE / "fault.c", ("__al_syscall",)),))
+       for name, codes in FILE_MUTATION_FAILURES.items()},
     "fcntl": Plan(
         FCNTL, frozenset({"fcntl"}), (Path("tests/phase2/abi.asm"), FCNTL / "variadic.asm"),
         "fcntl-abi", "fcntl-dispatch",
@@ -83,7 +92,8 @@ def trace_function(name, source, original, probe, directory, runtime, record):
     binary, artifacts = build_case(probe.case, directory / "linked", runtime, log,
                                   candidate=(name, debug))
     record.update(debug_object_sha256=sha256_file(debug), linked_artifacts=artifacts)
-    verify_coverage(record, directory, binary, name, source, [probe.case.args], exact_case=probe.case)
+    verify_coverage(record, directory, binary, name, source, [probe.case.args], exact_case=probe.case,
+                    require_entry=name in FILE_MUTATION_FAILURES)
 
 
 def expected(probe):
@@ -211,10 +221,12 @@ def runtime_manifest_production(function, only=None):
         spec = project.functions[function]
         source = source_paths()[function]
         parse = partial(parse_probe, suite=plan.suite, programs=(), asm_fixtures=plan.assembly,
-                        fault_wrappers={}, allow_fixture_files=True)
+                        fault_wrappers=dict(plan.fault_wrappers), allow_fixture_files=True)
         probes, controls = load_probes(plan.suite / "manifest.toml", plan.public, parse)
         probes = {probe.case.name: probe for probe in probes if function in probe.case.requires}
-        selected = {plan.abi, plan.trace, plan.fuzz, *(case for case, _ in plan.mutations)}
+        required_cases = {"coverage": {plan.trace}, "mutation": {case for case, _ in plan.mutations},
+                          "stub": set(), "fuzz": {plan.fuzz}}
+        selected = {plan.abi}.union(*required_cases.values()) if only is None else required_cases[only]
         if not selected <= probes.keys() or function not in controls:
             raise GateError(f"{function}: incomplete function coverage in the runtime manifest")
         runners = {"native": [], "qemu": [shutil.which("qemu-x86_64")],

@@ -99,10 +99,10 @@ def verify_coverage(record, directory, binary, function, source, commands, *, re
     for index, args in enumerate(commands):
         mode = exact_case.name if exact_case else args[0]
         report = directory / f"edges-{index}.txt"
-        options = f"{plugin},start={addresses[0]:x},end={addresses[-1] + 1:x},output={report}"
-        command = [shutil.which("qemu-x86_64"), "-plugin", options, binary, *args]
+        options = f"{plugin.resolve()},start={addresses[0]:x},end={addresses[-1] + 1:x},output={report.resolve()}"
+        command = [shutil.which("qemu-x86_64"), "-plugin", options, binary.resolve(), *args]
         if exact_case:
-            result = run(command, environment=exact_case.env, timeout=90)
+            result = run(command, environment=exact_case.env, timeout=90, cwd=directory.resolve())
             log.append(result)
             passed = ((result["returncode"], result["stdout"], result["stderr"]) ==
                       (exact_case.status, exact_case.stdout, exact_case.stderr))
