@@ -1,0 +1,27 @@
+#!/usr/bin/env python3
+"""Check required per-function origin records and their generated source headers."""
+
+import argparse
+import sys
+
+from spec import ROOT, SpecError, check_comment_header, load_project, production_sources
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--check", action="store_true", help="check records without modifying files (default)")
+    parser.parse_args()
+    try:
+        project = load_project(ROOT)
+        sources = production_sources(project)
+        for name, source in sources.items():
+            check_comment_header(source, project.functions[name])
+    except (SpecError, OSError) as error:
+        print(f"provenance: {error}", file=sys.stderr)
+        return 1
+    print(f"provenance: checked {len(project.functions)} specification(s) and {len(sources)} production source header(s)")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

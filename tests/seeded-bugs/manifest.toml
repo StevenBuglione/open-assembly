@@ -1,0 +1,212 @@
+# Each seed has one expected checker diagnostic. Positives use the same CLI.
+
+[[case]]
+path = "tests/seeded-bugs/missing_stack_note.asm"
+description = "Omit the ELF note that marks the stack non-executable."
+rule = "STACK_NOTE"
+
+[[case]]
+path = "tests/seeded-bugs/executable_stack_note.asm"
+description = "Declare the GNU stack note executable."
+rule = "STACK_NOTE"
+
+[[case]]
+path = "tests/seeded-bugs/data_in_text.asm"
+description = "Hide an instruction byte in an executable section."
+rule = "EXEC_DATA"
+
+[[case]]
+path = "tests/seeded-bugs/avx_instruction.asm"
+description = "Use an AVX instruction on the SSE2 baseline."
+rule = "ISA_BASELINE"
+
+[[case]]
+path = "tests/seeded-bugs/privileged_instruction.asm"
+description = "Attempt a privileged halt in a user-space function."
+rule = "INSTRUCTION"
+
+[[case]]
+path = "tests/seeded-bugs/wrong_bits.asm"
+description = "Assemble in 32-bit mode inside an x86-64 object."
+rule = "BITS_MODE"
+
+[[case]]
+path = "tests/seeded-bugs/indirect_jump.asm"
+description = "Jump through a register to an unanalyzable destination."
+rule = "CONTROL_FLOW"
+
+[[case]]
+path = "tests/seeded-bugs/indirect_call.asm"
+description = "Call an unanalyzable function pointer with an aligned stack."
+rule = "CONTROL_FLOW"
+
+[[case]]
+path = "tests/seeded-bugs/external_tail_jump.asm"
+description = "Tail jump to a target outside the analyzable body."
+rule = "CONTROL_FLOW"
+
+[[case]]
+path = "tests/seeded-bugs/callee_pops_argument.asm"
+description = "Return while popping a caller-owned argument slot."
+rule = "RETURN_FORM"
+
+[[case]]
+path = "tests/seeded-bugs/clobber_rbx.asm"
+description = "Modify the caller's RBX through integer arithmetic."
+rule = "CALLEE_SAVED"
+
+[[case]]
+path = "tests/seeded-bugs/clobber_rbp.asm"
+description = "Replace RBP without saving the caller's frame pointer."
+rule = "CALLEE_SAVED"
+
+[[case]]
+path = "tests/seeded-bugs/clobber_r12_low.asm"
+description = "Clobber R12 through a zero-extending 32-bit write."
+rule = "CALLEE_SAVED"
+
+[[case]]
+path = "tests/seeded-bugs/clobber_r13_branch.asm"
+description = "Modify R13 only on the nonzero input path."
+rule = "CALLEE_SAVED"
+
+[[case]]
+path = "tests/seeded-bugs/clobber_r14_pop.asm"
+description = "Balance the stack while restoring R14 from a caller-saved register."
+rule = "CALLEE_SAVED"
+
+[[case]]
+path = "tests/seeded-bugs/clobber_r15_after_restore.asm"
+description = "Restore R15 and then corrupt its low byte."
+rule = "CALLEE_SAVED"
+
+[[case]]
+path = "tests/seeded-bugs/unbalanced_stack.asm"
+description = "Return with an allocated stack slot still below the return address."
+rule = "STACK_BALANCE"
+
+[[case]]
+path = "tests/seeded-bugs/return_address_write.asm"
+description = "Overwrite the return address through a stack-relative operand."
+rule = "STACK_ACCESS"
+
+[[case]]
+path = "tests/seeded-bugs/misaligned_call.asm"
+description = "Call a direct target at the misaligned entry stack depth."
+rule = "STACK_ALIGNMENT"
+
+[[case]]
+path = "tests/seeded-bugs/df_at_return.asm"
+description = "Return with the direction flag set."
+rule = "DF_RETURN"
+
+[[case]]
+path = "tests/seeded-bugs/df_at_call.asm"
+description = "Call with DF set, then clear it before the return."
+rule = "DF_CALL"
+
+[[case]]
+path = "tests/seeded-bugs/x87_at_return.asm"
+description = "Leave a value on the x87 stack at an integer return."
+rule = "X87_RETURN"
+
+[[case]]
+path = "tests/seeded-bugs/x87_at_call.asm"
+description = "Carry an x87 stack value into a call that requires an empty stack."
+rule = "X87_CALL"
+
+[[case]]
+path = "tests/seeded-bugs/mxcsr_changed.asm"
+description = "Load MXCSR from an argument without restoring caller control bits."
+rule = "MXCSR"
+
+[[case]]
+path = "tests/seeded-bugs/x87_control_changed.asm"
+description = "Load an x87 control word without restoring caller state."
+rule = "X87_CONTROL"
+
+[[case]]
+path = "tests/seeded-bugs/narrow_unextended.asm"
+description = "Read all 64 bits of an incoming unsigned int argument."
+rule = "NARROW_ARG"
+
+[[case]]
+path = "tests/seeded-bugs/narrow_extension_skipped.asm"
+description = "Read a signed narrow argument after one path skips its extension."
+rule = "NARROW_ARG"
+
+[[case]]
+path = "tests/seeded-bugs/narrow_wrong_signedness.asm"
+description = "Zero-extend a signed argument before consuming its 64-bit value."
+rule = "NARROW_ARG"
+
+[[case]]
+path = "tests/seeded-bugs/variadic_al_unset.asm"
+description = "Call a variadic function with AL still unspecified."
+rule = "VARIADIC_AL"
+
+[[case]]
+path = "tests/seeded-bugs/variadic_al_out_of_range.asm"
+description = "Set a variadic vector argument count above eight."
+rule = "VARIADIC_AL"
+
+[[case]]
+path = "tests/seeded-bugs/syscall_public.asm"
+description = "Issue a Linux syscall without access to the private boundary."
+rule = "SYSCALL_BOUNDARY"
+
+[[case]]
+path = "tests/seeded-bugs/syscall_arg4_in_rcx.asm"
+description = "Keep Linux syscall argument four in the System V register RCX."
+rule = "SYSCALL_ARG4"
+syscall_boundary = true
+
+[[case]]
+path = "tests/seeded-bugs/syscall_uses_rcx.asm"
+description = "Consume the clobbered RCX value after a correctly marshaled syscall."
+rule = "SYSCALL_CLOBBER"
+syscall_boundary = true
+
+[[case]]
+path = "tests/seeded-bugs/syscall_uses_r11.asm"
+description = "Consume the clobbered R11 value after a correctly marshaled syscall."
+rule = "SYSCALL_CLOBBER"
+syscall_boundary = true
+
+[[case]]
+path = "tests/seeded-bugs/frame_alias_at_join.asm"
+description = "Write through a frame alias whose provenance differs across a branch."
+rule = "STACK_ACCESS"
+
+[[positive]]
+path = "tests/seeded-bugs/valid_sse2_leaf.asm"
+description = "Accept an SSE2 leaf and a local conditional branch."
+
+[[positive]]
+path = "tests/seeded-bugs/valid_save_restore.asm"
+description = "Accept aligned calls and caller values restored from the stack."
+
+[[positive]]
+path = "tests/seeded-bugs/valid_direction_flag.asm"
+description = "Accept local changes to DF if DF is clear at calls and return."
+
+[[positive]]
+path = "tests/seeded-bugs/valid_narrow_arguments.asm"
+description = "Accept signed and unsigned extension before full-width consumption."
+
+[[positive]]
+path = "tests/seeded-bugs/valid_x87_balance.asm"
+description = "Accept a temporary x87 value popped before returning."
+
+[[positive]]
+path = "tests/seeded-bugs/valid_variadic_al.asm"
+description = "Accept a known vector argument count at an aligned variadic call."
+
+[[positive]]
+path = "tests/seeded-bugs/valid_private_syscall.asm"
+description = "Accept a private syscall with argument four marshaled through R10."
+syscall_boundary = true
+
+[[positive]]
+path = "tests/seeded-bugs/valid_fp_control_restore.asm"
+description = "Accept caller floating-point control state restored from saved stack slots."

@@ -17,5 +17,10 @@ fi
 if [ "$#" -eq 0 ]; then
     set -- bash
 fi
-exec docker run --rm --network=none --user "$(id -u):$(id -g)" \
+container_user="$(id -u):$(id -g)"
+if docker info --format '{{json .SecurityOptions}}' | python3 -c 'import json, sys; sys.exit("name=rootless" not in json.load(sys.stdin))'; then
+    # Root in a rootless container maps to the host user who owns this checkout.
+    container_user="0:0"
+fi
+exec docker run --rm --network=none --user "$container_user" \
     --volume "$repo_root:/work" --workdir /work "$image_name" "$@"

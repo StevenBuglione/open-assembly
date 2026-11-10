@@ -1,6 +1,7 @@
 let
   pkgs = import ./pkgs.nix;
   packages = import ./packages.nix { inherit pkgs; };
+  environment = import ./environment.nix { inherit pkgs; };
   root = pkgs.buildEnv {
     name = "open-assembly-toolchain-root";
     paths = packages;
@@ -16,7 +17,7 @@ in pkgs.dockerTools.buildLayeredImage {
   '';
   config = {
     WorkingDir = "/work";
-    Env = [ "PATH=/bin" "LC_ALL=C" "PYTHONDONTWRITEBYTECODE=1" ];
+    Env = [ "PATH=/bin" ] ++ pkgs.lib.mapAttrsToList (name: value: "${name}=${value}") environment;
     Cmd = [ "/bin/bash" ];
   };
 }

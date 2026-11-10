@@ -4,3 +4,7 @@
 /include/asm/ @StevenBuglione
 /AGENTS.md @StevenBuglione
 /.github/ @StevenBuglione
+/tools/ @StevenBuglione
+/nix/ @StevenBuglione
+/spec/ @StevenBuglione
+/devenv.* @StevenBuglione
