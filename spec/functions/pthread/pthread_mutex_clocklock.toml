@@ -1,0 +1,19 @@
+name = "pthread_mutex_clocklock"
+header = "pthread.h"
+prototype = "int pthread_mutex_clocklock(pthread_mutex_t *restrict mutex, clockid_t clock, const struct timespec *restrict abstime)"
+standard = ["POSIX.1-2024 XSH pthread_mutex_clocklock"]
+deps = ["__errno_location"]
+errno = ["EAGAIN", "EDEADLK", "EINVAL", "ETIMEDOUT"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:linux-thread-mutex"]
+provenance = "original"
+semantics = [
+  "Select CLOCK_REALTIME or CLOCK_MONOTONIC for the absolute deadline.",
+  "Acquire an immediately available mutex without consulting the deadline.",
+  "Do not return EINTR. Preserve errno.",
+]
+
+[abi]
+narrow_args = ["esi:s32"]
+variadic = false

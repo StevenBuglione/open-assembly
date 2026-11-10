@@ -1,0 +1,18 @@
+name = "pthread_getspecific"
+header = "pthread.h"
+prototype = "void *pthread_getspecific(pthread_key_t key)"
+standard = ["POSIX.1-2024 XSH pthread_getspecific"]
+deps = ["pthread_self"]
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:thread-specific-data"]
+provenance = "original"
+semantics = [
+  "Return the calling thread's value for the current key generation.",
+  "Return null for an unset or unavailable key. Preserve errno.",
+]
+
+[abi]
+narrow_args = ["edi:u32"]
+variadic = false

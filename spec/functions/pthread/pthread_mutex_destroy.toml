@@ -1,0 +1,18 @@
+name = "pthread_mutex_destroy"
+header = "pthread.h"
+prototype = "int pthread_mutex_destroy(pthread_mutex_t *mutex)"
+standard = ["POSIX.1-2024 XSH pthread_mutex_destroy"]
+deps = []
+errno = ["EBUSY", "EINVAL"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:linux-thread-mutex"]
+provenance = "original"
+semantics = [
+  "Invalidate an initialized unlocked mutex. Diagnose an owned mutex with EBUSY.",
+  "Return zero on success or a positive error number. Preserve errno.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

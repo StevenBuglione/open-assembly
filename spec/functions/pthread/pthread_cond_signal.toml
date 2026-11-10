@@ -1,0 +1,18 @@
+name = "pthread_cond_signal"
+header = "pthread.h"
+prototype = "int pthread_cond_signal(pthread_cond_t *cond)"
+standard = ["POSIX.1-2024 XSH pthread_cond_signal"]
+deps = []
+errno = ["EINVAL"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:linux-thread-condition"]
+provenance = "original"
+semantics = [
+  "Select and wake one registered waiter, when present.",
+  "Return zero on success or a positive error number. Preserve errno.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

@@ -8,7 +8,7 @@ import os
 import sys
 import tempfile
 
-from spec import (POSIX_FDS, ROOT, SEEK_ORIGINS, STAT_FILE_KINDS, SpecError, comment_header, has_runtime_entry,
+from spec import (POSIX_FDS, PTHREAD_CREATION, PTHREAD_MUTEX_TYPES, PTHREAD_ONCE_CONSTANTS, PTHREAD_TSD_LIMITS, ROOT, SEEK_ORIGINS, STAT_FILE_KINDS, SpecError, comment_header, has_runtime_entry,
                   load_file_abi, load_process_abi, load_project, load_signal_abi, load_time_abi, nasm_name)
 
 
@@ -47,6 +47,38 @@ LCONV_NUMBERS = (
 )
 
 
+C_THREAD_CONSTANTS = {
+    "mtx_plain": 0, "mtx_recursive": 1, "mtx_timed": 2,
+    "thrd_success": 0, "thrd_busy": 1, "thrd_error": 2, "thrd_nomem": 3, "thrd_timedout": 4,
+}
+C_INTEGER_LIMITS = (
+    "#define CHAR_BIT __CHAR_BIT__",
+    "#define SCHAR_MAX __SCHAR_MAX__",
+    "#define SCHAR_MIN (-SCHAR_MAX - 1)",
+    "#define UCHAR_MAX (2 * SCHAR_MAX + 1)",
+    "#ifdef __CHAR_UNSIGNED__",
+    "#define CHAR_MIN 0",
+    "#define CHAR_MAX UCHAR_MAX",
+    "#else",
+    "#define CHAR_MIN SCHAR_MIN",
+    "#define CHAR_MAX SCHAR_MAX",
+    "#endif",
+    "#define SHRT_MAX __SHRT_MAX__",
+    "#define SHRT_MIN (-SHRT_MAX - 1)",
+    "#define USHRT_MAX (2 * SHRT_MAX + 1)",
+    "#define INT_MAX __INT_MAX__",
+    "#define INT_MIN (-INT_MAX - 1)",
+    "#define UINT_MAX (2U * INT_MAX + 1U)",
+    "#define LONG_MAX __LONG_MAX__",
+    "#define LONG_MIN (-LONG_MAX - 1L)",
+    "#define ULONG_MAX (2UL * LONG_MAX + 1UL)",
+    "#define LLONG_MAX __LONG_LONG_MAX__",
+    "#define LLONG_MIN (-LLONG_MAX - 1LL)",
+    "#define ULLONG_MAX (2ULL * LLONG_MAX + 1ULL)",
+    "#define MB_LEN_MAX 16",
+)
+
+
 def make_outputs(project, include_tracked=True, include_test=True):
     file_abi = load_file_abi(project.root)
     process_abi = load_process_abi(project.root)
@@ -59,6 +91,9 @@ def make_outputs(project, include_tracked=True, include_test=True):
         "dirent.h": file_abi["dirent_types"],
         "sys/wait.h": process_abi["wait_flags"],
         "spawn.h": process_abi["spawn_flags"],
+        "pthread.h": PTHREAD_CREATION | PTHREAD_MUTEX_TYPES | PTHREAD_ONCE_CONSTANTS,
+        "limits.h": PTHREAD_TSD_LIMITS,
+        "threads.h": {"ONCE_FLAG_INIT": 0, "TSS_DTOR_ITERATIONS": PTHREAD_TSD_LIMITS["PTHREAD_DESTRUCTOR_ITERATIONS"]},
         "time.h": time_abi["constants"],
         "signal.h": signal_abi["signals"] | signal_abi["mask_operations"] | signal_abi["action_flags"] | signal_abi["info_codes"],
         "stdio.h": {name: value for name, value in file_abi["seek"].items() if name in SEEK_ORIGINS},
@@ -67,6 +102,7 @@ def make_outputs(project, include_tracked=True, include_test=True):
     grouped = defaultdict(list)
     for spec in project.functions.values():
         grouped[spec.header].append(spec)
+    grouped["limits.h"] = []
     outputs = {}
     for header, specs in sorted(grouped.items()):
         # Hex encoding preserves a distinct include guard for every valid path.
@@ -91,6 +127,12 @@ def make_outputs(project, include_tracked=True, include_test=True):
             elif header == "locale.h":
                 lines.extend(f"%define {name} {value}" for name, value in LOCALE_CONSTANTS.items())
                 lines.append("")
+            if header == "pthread.h":
+                lines.extend(("%define PTHREAD_COND_INITIALIZER 0, 0, 0, 0",
+                              "%define PTHREAD_MUTEX_INITIALIZER 0, 0, 0, 0", ""))
+            if header == "threads.h":
+                lines.extend(f"%define {name} {value}" for name, value in C_THREAD_CONSTANTS.items())
+                lines.append("")
             if header in header_constants:
                 lines.extend(f"%define {name} {value}" for name, value in header_constants[header].items())
                 lines.append("")
@@ -102,7 +144,9 @@ def make_outputs(project, include_tracked=True, include_test=True):
                      f"#define {guard}_C", "", "#include <stddef.h>", ""]
             if header in {"unistd.h", "sys/wait.h", "signal.h"}:
                 lines.extend((f"typedef {process_abi['types']['pid_t']} pid_t;", ""))
-            if header == "unistd.h":
+            if header == "limits.h":
+                lines.extend((*C_INTEGER_LIMITS, ""))
+            elif header == "unistd.h":
                 lines.extend(("typedef long ssize_t;", f"typedef {file_abi['types']['off_t']} off_t;", ""))
                 lines.extend(f"#define {name} {value}" for name, value in POSIX_FDS.items())
                 lines.extend(("", "extern char **environ;", "extern char *optarg;",
@@ -120,6 +164,26 @@ def make_outputs(project, include_tracked=True, include_test=True):
                               "#define st_ctime st_ctim.tv_sec", ""))
                 lines.extend(f"#define S_IS{kind}(mode) (((mode) & S_IFMT) == {mask})"
                              for kind, mask in sorted(STAT_FILE_KINDS.items()))
+            elif header == "pthread.h":
+                lines.extend(("#include <time.h>", "", "typedef struct __al_thread_control *pthread_t;",
+                              "typedef struct { unsigned long __opaque[4]; } pthread_attr_t;",
+                              "typedef struct { unsigned long __opaque[4]; } pthread_cond_t;",
+                              "typedef struct { unsigned long __opaque[2]; } pthread_condattr_t;",
+                              "typedef unsigned int pthread_key_t;",
+                              "typedef struct { unsigned long __opaque[4]; } pthread_mutex_t;",
+                              "typedef struct { unsigned long __opaque[2]; } pthread_mutexattr_t;",
+                              "typedef int pthread_once_t;", "",
+                              "#define PTHREAD_COND_INITIALIZER { { 0 } }",
+                              "#define PTHREAD_MUTEX_INITIALIZER { { 0 } }", ""))
+            elif header == "threads.h":
+                lines.extend(("#include <time.h>", "", "typedef struct __al_thread_control *thrd_t;",
+                              "typedef int (*thrd_start_t)(void *);", "typedef void (*tss_dtor_t)(void *);",
+                              "typedef unsigned int tss_t;", "typedef int once_flag;",
+                              "typedef struct { unsigned long __opaque[4]; } mtx_t;",
+                              "typedef struct { unsigned long __opaque[4]; } cnd_t;", "",
+                              "#define thread_local _Thread_local", "", "enum {"))
+                lines.extend(f"    {name} = {value}," for name, value in C_THREAD_CONSTANTS.items())
+                lines.extend(("};", ""))
             elif header == "spawn.h":
                 lines.extend(("#include <signal.h>", "#include <sys/stat.h>", "",
                               "typedef struct { unsigned long __opaque[2]; } posix_spawnattr_t;",

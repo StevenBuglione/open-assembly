@@ -1,0 +1,15 @@
+name = "call_once"
+header = "threads.h"
+prototype = "void call_once(once_flag *flag, void (*initialize)(void))"
+standard = ["C17 7.26.2.1"]
+deps = ["pthread_once"]
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:c17-threads"]
+provenance = "original"
+semantics = ["Complete the selected initializer once and publish its effects to every caller."]
+
+[abi]
+narrow_args = []
+variadic = false

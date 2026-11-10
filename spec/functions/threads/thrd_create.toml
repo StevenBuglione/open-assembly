@@ -1,0 +1,15 @@
+name = "thrd_create"
+header = "threads.h"
+prototype = "int thrd_create(thrd_t *thread, thrd_start_t start, void *arg)"
+standard = ["C17 7.26.5.1"]
+deps = ["pthread_exit", "thrd_yield"]
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:c17-threads"]
+provenance = "original"
+semantics = ["Create a thread with an independent stack and TLS, publish the handle, then run its int-returning routine."]
+
+[abi]
+narrow_args = []
+variadic = false

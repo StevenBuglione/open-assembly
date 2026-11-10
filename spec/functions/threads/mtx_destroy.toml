@@ -1,0 +1,15 @@
+name = "mtx_destroy"
+header = "threads.h"
+prototype = "void mtx_destroy(mtx_t *mutex)"
+standard = ["C17 7.26.4.1"]
+deps = ["pthread_mutex_destroy"]
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:c17-threads"]
+provenance = "original"
+semantics = ["Destroy an unlocked initialized mutex with no waiters."]
+
+[abi]
+narrow_args = []
+variadic = false

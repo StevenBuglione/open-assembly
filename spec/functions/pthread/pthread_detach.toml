@@ -1,0 +1,20 @@
+name = "pthread_detach"
+header = "pthread.h"
+prototype = "int pthread_detach(pthread_t thread)"
+standard = ["POSIX.1-2024 XSH pthread_detach"]
+deps = []
+errno = ["EINVAL"]
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:linux-thread-lifecycle"]
+provenance = "original"
+semantics = [
+  "Release the join claim on a valid joinable target.",
+  "A running detached target reclaims its runtime storage at termination.",
+  "For a target already exiting, claim and finish cleanup after kernel termination.",
+  "Return zero or a positive error and preserve errno.",
+]
+
+[abi]
+narrow_args = []
+variadic = false

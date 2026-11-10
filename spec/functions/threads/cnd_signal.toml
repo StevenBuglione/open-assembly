@@ -1,0 +1,15 @@
+name = "cnd_signal"
+header = "threads.h"
+prototype = "int cnd_signal(cnd_t *cond)"
+standard = ["C17 7.26.3.4"]
+deps = ["pthread_cond_signal"]
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["diff:glibc", "diff:musl", "reference:c17-threads"]
+provenance = "original"
+semantics = ["Unblock one current waiter and return a C thread status."]
+
+[abi]
+narrow_args = []
+variadic = false
