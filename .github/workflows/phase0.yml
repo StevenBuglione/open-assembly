@@ -159,7 +159,7 @@ jobs:
           persist-credentials: false
       - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b
       - name: Run endpoint, resolver, terminal, and HTTP checks
-        run: ./tools/container make -k phase10-endpoints phase10-inet phase10-dns phase10-netdb phase10-terminal phase10-http phase10-libc-test phase10-glob
+        run: ./tools/container make -k phase10-endpoints phase10-inet phase10-dns phase10-netdb phase10-terminal phase10-http phase10-libc-test phase10-glob phase10-regex
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:

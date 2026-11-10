@@ -118,7 +118,8 @@ def execute_phase6(suite_name):
     )
 
 
-def execute_manifest_gate(scope, suite, public, fault_wrappers, assembly, inputs, host_macro, metadata):
+def execute_manifest_gate(scope, suite, public, fault_wrappers, assembly, inputs, host_macro, metadata, *,
+                          external=None):
     evidence = {"schema_version": 1, "scope": scope, "production_verified": False,
                 "outcome": "fail", "checks": {}, **metadata}
     checks = evidence["checks"]
@@ -151,6 +152,8 @@ def execute_manifest_gate(scope, suite, public, fault_wrappers, assembly, inputs
             run_cases(probes, directory, first, second, runners, checks["cases"], host_macro)
             checks["stub_controls"] = {"outcome": "fail", "symbols": {}}
             run_stubs(controls, project, directory, first, checks["stub_controls"])
+            if external is not None:
+                external(directory, first, runners, checks)
         if evidence["inputs"] != inputs():
             raise GateError(f"inputs changed during {scope} verification")
         evidence["outcome"] = "pass"
