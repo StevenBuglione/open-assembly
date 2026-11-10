@@ -172,3 +172,46 @@ case = "netdb-lifetime-free"
 status = 51
 stdout = ""
 stderr = ""
+
+[[case]]
+name = "netdb-ipv6-scope-shared"
+sources = ["tests/phase10/netdb/scope.c"]
+requires = ["getaddrinfo", "getnameinfo"]
+args = ["shared"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:rfc4007", "reference:linux-file-abi"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "netdb-ipv6-scope-policy"
+sources = ["tests/phase10/netdb/scope.c"]
+requires = ["getaddrinfo", "getnameinfo"]
+args = ["policy"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:rfc4007", "reference:linux-file-abi"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Interface-local multicast names differ on musl; atomic output publication is project policy."
+
+[[case]]
+name = "netdb-ipv6-scope-fault"
+sources = ["tests/phase10/netdb/scope_fault.c"]
+requires = ["getaddrinfo", "getnameinfo"]
+args = []
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:rfc4007", "reference:linux-file-abi"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Injects the Linux interface ioctl errors and observes the private DNS configuration boundary."
+link_wraps = ["ioctl", "__al_dns_config"]

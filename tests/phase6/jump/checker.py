@@ -10,6 +10,7 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[3]
 REGISTERS = ("rbx", "rbp", "r12", "r13", "r14", "r15")
+CHECKER_TOOLS = ("lint", "lint.py", "gen", "spec.py", "extensions.py", "extension_abi.py")
 SAVE_RULE = "context save must capture the caller registers and return point at entry"
 RESUME_RULE = "context resume must restore the exact saved registers and transfer to the saved PC"
 
@@ -65,7 +66,7 @@ def prepare(root):
     for directory in ("spec", "include/asm"):
         shutil.copytree(ROOT / directory, root / directory)
     (root / "tools").mkdir()
-    for name in ("lint", "lint.py", "gen", "spec.py"):
+    for name in CHECKER_TOOLS:
         shutil.copy2(ROOT / "tools" / name, root / "tools" / name)
     (root / "src/x86_64-linux/setjmp").mkdir(parents=True)
 
@@ -106,9 +107,9 @@ def main():
         prepare(root)
         cases = {name: check_case(root, name, function, body, reason)
                  for name, function, body, reason in fixtures()}
-    paths = [Path("tools/lint"), Path("tools/lint.py"), Path("tools/gen"), Path("tools/spec.py"),
-             Path("docs/adr/0007-linux-files-process-signal-time.md"),
-             Path(__file__).resolve().relative_to(ROOT)]
+    paths = [Path("tools") / name for name in CHECKER_TOOLS]
+    paths.extend((Path("docs/adr/0007-linux-files-process-signal-time.md"),
+                  Path(__file__).resolve().relative_to(ROOT)))
     paths.extend(path.relative_to(ROOT) for path in (ROOT / "spec/functions/setjmp").glob("*.toml"))
     report = {"schema": 1, "scope": "Phase 6 independent jump checker controls",
               "sha256": {path.as_posix(): hash_file(ROOT / path) for path in sorted(paths)},

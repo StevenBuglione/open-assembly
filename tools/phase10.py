@@ -57,6 +57,7 @@ def main():
                           Path("docs/adr/0041-resolver-failover.md"),
                           Path("docs/adr/0042-resolver-options.md")))
         wraps = {directory / "files.c": ("fopen",),
+                 directory / "scope_fault.c": ("ioctl", "__al_dns_config"),
                  directory / "lifetime.c": ("malloc", "calloc", "free")}
     if scope == "terminal":
         contracts.append(Path("docs/adr/0026-linux-terminal-controls.md"))
