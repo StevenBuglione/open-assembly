@@ -18,6 +18,11 @@ MULTIBYTE = {
     "mbrtoc16", "c16rtomb", "mbrtoc32", "c32rtomb",
 }
 BULK = {"mblen", "mbtowc", "wctomb", "mbstowcs", "wcstombs", "mbsrtowcs", "wcsrtombs"}
+WIDE = {
+    "wcscat", "wcschr", "wcscmp", "wcscoll", "wcscpy", "wcscspn", "wcslen", "wcsncat",
+    "wcsncmp", "wcsncpy", "wcspbrk", "wcsrchr", "wcsspn", "wcsstr", "wcstok", "wcsxfrm",
+    "wmemchr", "wmemcmp", "wmemcpy", "wmemmove", "wmemset",
+}
 SUITES = {
     "multibyte": (MULTIBYTE, ["Initial C and C.UTF-8 API slice.",
                              "Valid scalar sweeps are complete for the three scalar conversion pairs.",
@@ -27,6 +32,9 @@ SUITES = {
                     "Directed input states, output capacities and malformed sequences."]),
     "worker": ({"mbrlen"}, ["Supplemental worker-local default-state and TLS reuse proof.",
                           "Single-threaded API and stub coverage is in the multibyte gate."]),
+    "worker-sync": ({"mbrtowc"}, ["Supplemental combined worker TLS, condition and TSD proof."]),
+    "wide": (WIDE, ["C-locale host comparisons and project C.UTF-8 collation.",
+                    "Directed guard pages and 512 deterministic reference samples per case."]),
 }
 SCALAR_CASES = ("multibyte-scalar16", "multibyte-scalar32", "multibyte-scalar-wide")
 
@@ -53,7 +61,7 @@ def execute(scope):
         evidence["inputs"] = verify_setup(checks, False, snapshot=snapshot)
         project = load_project()
         if not public <= project.functions.keys():
-            raise GateError("the public multibyte specifications are incomplete")
+            raise GateError("the public Phase 9 specifications are incomplete")
         parse = partial(parse_probe, suite=suite, programs=(), fault_wrappers={})
         probes, controls = load_probes(suite / "manifest.toml", public, parse)
         runners = {"native": [], "qemu": [shutil.which("qemu-x86_64")],

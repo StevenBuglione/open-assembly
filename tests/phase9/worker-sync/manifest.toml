@@ -1,0 +1,26 @@
+schema = 1
+
+[[case]]
+name = "worker-sync-default-state"
+sources = ["tests/phase9/worker-sync/state.c"]
+requires = [
+  "mbrtowc", "mbrtoc16", "c16rtomb", "pthread_create", "pthread_join",
+  "pthread_cond_wait", "pthread_cond_signal", "pthread_key_create",
+  "pthread_getspecific", "pthread_setspecific",
+]
+args = []
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:mbstate-transition", "reference:posix-pthread-cond"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Independent default state for each function and each thread is the project contract."
+
+[[stub]]
+symbol = "mbrtowc"
+case = "worker-sync-default-state"
+status = 11
+stdout = ""
+stderr = ""
