@@ -1,0 +1,16 @@
+name = "map_probe"
+header = "map.h"
+prototype = "long map_probe(const size_t *restrict state, const unsigned char *key, size_t length)"
+standard = ["Extension ABI map"]
+deps = ["memcmp"]
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:bounded-map-model"]
+provenance = "original"
+semantics = ["Find an existing or reusable slot by bounded linear probing with a seeded byte hash.", "Return twice the slot index plus one for a match, twice the index for a reusable slot, or a negative error.", "Preserve map and errno."]
+
+[abi]
+narrow_args = []
+variadic = false
+noreturn = false

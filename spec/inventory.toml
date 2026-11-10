@@ -723,8 +723,14 @@ functions = ["__al_assert_fail"]
 [[headers]]
 name = "compiler_rt.h"
 standard = "Runtime ABI <compiler_rt.h>"
-count = 1
-functions = ["__stack_chk_fail"]
+count = 16
+functions = [
+  "__stack_chk_fail", "__atomic_load", "__atomic_store", "__atomic_exchange",
+  "__atomic_compare_exchange", "__atomic_is_lock_free", "__atomic_load_16",
+  "__atomic_store_16", "__atomic_exchange_16", "__atomic_compare_exchange_16",
+  "__atomic_fetch_add_16", "__atomic_fetch_sub_16", "__atomic_fetch_and_16",
+  "__atomic_fetch_or_16", "__atomic_fetch_xor_16", "__atomic_fetch_nand_16",
+]
 
 [[headers]]
 name = "errno.h"
@@ -796,3 +802,19 @@ standard = "POSIX.1-2024 XBD <fnmatch.h>"
 count = 7
 functions = ["fnmatch"]
 macros = ["FNM_CASEFOLD", "FNM_IGNORECASE", "FNM_NOMATCH", "FNM_NOESCAPE", "FNM_PATHNAME", "FNM_PERIOD"]
+
+[[headers]]
+name = "glob.h"
+standard = "POSIX.1-2024 XBD <glob.h>"
+count = 13
+functions = ["glob", "globfree"]
+types = ["glob_t"]
+macros = ["GLOB_ABORTED", "GLOB_APPEND", "GLOB_DOOFFS", "GLOB_ERR", "GLOB_MARK", "GLOB_NOCHECK", "GLOB_NOESCAPE", "GLOB_NOMATCH", "GLOB_NOSORT", "GLOB_NOSPACE"]
+
+[[headers]]
+name = "regex.h"
+standard = "POSIX.1-2024 XBD <regex.h>"
+count = 26
+functions = ["regcomp", "regerror", "regexec", "regfree"]
+types = ["regex_t", "regmatch_t", "regoff_t"]
+macros = ["REG_BADBR", "REG_BADPAT", "REG_BADRPT", "REG_EBRACE", "REG_EBRACK", "REG_ECOLLATE", "REG_ECTYPE", "REG_EESCAPE", "REG_EPAREN", "REG_ERANGE", "REG_ESPACE", "REG_ESUBREG", "REG_EXTENDED", "REG_ICASE", "REG_NEWLINE", "REG_NOMATCH", "REG_NOSUB", "REG_NOTBOL", "REG_NOTEOL"]

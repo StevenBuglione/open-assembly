@@ -1,4 +1,4 @@
-; Resolve an A or AAAA question through a caller-supplied name server.
+; Resolve an A, AAAA or PTR question through a caller-supplied name server.
 ; UDP and a truncation-triggered TCP retry each have a two-second deadline.
 ; The work block holds a deadline, timespec, pollfd, framed query and reply.
 bits 64

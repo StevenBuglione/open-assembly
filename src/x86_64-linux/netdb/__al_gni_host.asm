@@ -4,6 +4,8 @@ bits 64
 default rel
 
 global __al_gni_host:function
+extern __al_gni_address:function
+extern __al_dns_reverse:function
 extern __al_gai_line:function
 extern __al_gai_word:function
 extern fclose:function
@@ -20,22 +22,29 @@ __al_gni_host:
     push r13
     push r14
     push r15
+    sub rsp, 16
     mov rbx, rdi                ; context
     mov r12, rsi                ; sockaddr
     mov r13d, edx               ; flags
-    movzx r15d, word [r12]
-    test r13d, 1                ; NI_NUMERICHOST bypasses all local names
+    test r13d, 1                ; NI_NUMERICHOST bypasses local and DNS lookup
     jnz .numeric
+    mov rdi, r12
+    call __al_gni_address
+    mov [rsp], rax              ; effective address bytes for name lookup
+    mov r15d, edx
     cmp r15d, 2
     jne .loopback_ipv6
-    cmp dword [r12 + 4], 0x0100007f
+    cmp dword [rax], 0x0100007f
     je .localhost
     jmp .open_file
 .loopback_ipv6:
-    cmp qword [r12 + 8], 0
+    cmp qword [rax], 0
     jne .open_file
+    mov rcx, [rax + 8]
+    test rcx, rcx
+    jz .no_reverse             ; RFC 3493 excludes the unspecified address
     mov rax, 0x0100000000000000
-    cmp [r12 + 16], rax
+    cmp rcx, rax
     je .localhost
 .open_file:
     lea rdi, [rel hosts_path]
@@ -61,18 +70,19 @@ __al_gni_host:
     call inet_pton
     test eax, eax
     jz .read_line
+    mov rcx, [rsp]
     cmp r15d, 2
     jne .compare_ipv6
     mov eax, [rbx + 48]
-    cmp [r12 + 4], eax
+    cmp [rcx], eax
     jne .read_line
     jmp .read_name
 .compare_ipv6:
     mov rax, [rbx + 48]
-    cmp [r12 + 8], rax
+    cmp [rcx], rax
     jne .read_line
     mov rax, [rbx + 56]
-    cmp [r12 + 16], rax
+    cmp [rcx + 8], rax
     jne .read_line
 .read_name:
     lea rdi, [rbx + 40]
@@ -104,9 +114,20 @@ __al_gni_host:
     mov rdi, r14
     call fclose
 .missing:
+    mov rdi, rbx
+    mov rsi, [rsp]
+    mov edx, r15d
+    call __al_dns_reverse
+    test eax, eax
+    jz .success
+    jmp .name_status
+.no_reverse:
+    mov eax, -2                ; EAI_NONAME
+.name_status:
     test r13d, 8                ; NI_NAMEREQD
-    jnz .not_found
+    jnz .return
 .numeric:
+    movzx r15d, word [r12]      ; numeric spelling keeps the supplied family
     mov edi, r15d
     lea rsi, [r12 + 4]
     cmp r15d, 2
@@ -141,12 +162,10 @@ __al_gni_host:
 .success:
     xor eax, eax
     jmp .return
-.not_found:
-    mov eax, -2                 ; EAI_NONAME
-    jmp .return
 .failed:
     mov eax, -4                 ; EAI_FAIL
 .return:
+    add rsp, 16
     pop r15
     pop r14
     pop r13

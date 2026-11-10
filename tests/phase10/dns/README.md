@@ -25,3 +25,18 @@ zero-return stub and verify the exact observable rejection.
 [RFC 1035, DNS wire formats](https://www.rfc-editor.org/rfc/rfc1035.html#section-4.1)
 [RFC 5452, response matching](https://www.rfc-editor.org/rfc/rfc5452.html#section-9.1)
 [RFC 7766, DNS over TCP](https://www.rfc-editor.org/rfc/rfc7766.html)
+
+
+The same gate verifies PTR wire records at both guard edges and runs
+public `getnameinfo` against an independent loopback peer. Reverse
+question names come from the IPv4 and IPv6 reverse namespace rules.
+The peer controls case, compression, unrelated transactions, truncation
+with TCP retry, and explicit NXDOMAIN, SERVFAIL and malformed replies.
+A fixture hosts file and nameserver hook make local priority, numeric
+bypass and required-name failure deterministic. The numeric stub case
+needs neither hook and checks that the zero-return control failed to
+write output.
+
+[IPv4 reverse DNS](https://www.rfc-editor.org/rfc/rfc1035.html#section-3.5) ·
+[IPv6 reverse DNS](https://www.rfc-editor.org/rfc/rfc3596.html#section-2.5) ·
+[Public name lookup](https://www.rfc-editor.org/rfc/rfc3493.html#section-6.2)

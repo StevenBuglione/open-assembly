@@ -5,8 +5,7 @@ bits 64
 default rel
 
 global __al_fnmatch_unit:function
-extern towupper:function
-extern towlower:function
+extern __al_unicode_case:function
 
 section .text.__al_fnmatch_unit alloc exec nowrite progbits
 __al_fnmatch_unit:
@@ -79,16 +78,23 @@ __al_fnmatch_unit:
 .fold:
     push rbx
     push r12
-    sub rsp, 8
+    push r13
     mov ebx, edx
     mov r12d, eax
+    mov r13d, esi
+    and r13d, 1
+    inc r13d
     mov edi, eax
-    call towupper
+    mov esi, 1
+    mov edx, r13d
+    call __al_unicode_case
     mov edi, eax
-    call towlower
+    xor esi, esi
+    mov edx, r13d
+    call __al_unicode_case
     mov ecx, r12d
     mov edx, ebx
-    add rsp, 8
+    pop r13
     pop r12
     pop rbx
     ret

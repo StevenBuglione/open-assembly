@@ -25,6 +25,7 @@ section .text.iswupper alloc exec nowrite progbits
 iswupper:
     mov edi, edi
     sub rsp, 8
+    xor esi, esi          ; select the active locale
     call __al_unicode_mask
     and eax, 1024
     add rsp, 8

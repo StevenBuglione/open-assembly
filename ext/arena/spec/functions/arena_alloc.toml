@@ -1,0 +1,16 @@
+name = "arena_alloc"
+header = "arena.h"
+prototype = "int arena_alloc(size_t *restrict state, size_t size, size_t alignment, void **restrict result)"
+standard = ["Extension ABI arena"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:arena-state-model"]
+provenance = "original"
+semantics = ["Return an aligned pointer from caller-owned storage and advance used for nonzero size.", "Require positive power-of-two alignment. A zero-size request leaves used unchanged.", "Report -EINVAL for invalid arguments, -EOVERFLOW for wrapping arithmetic, or -ENOSPC for insufficient capacity.", "Preserve state and result on failure and preserve errno."]
+
+[abi]
+narrow_args = []
+variadic = false
+noreturn = false

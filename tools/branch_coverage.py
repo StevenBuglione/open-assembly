@@ -14,7 +14,7 @@ INSTRUCTION = re.compile(r"^\s*([0-9a-f]+):\s+([a-z0-9]+)(?:\s+(.*))?$")
 LINE = re.compile(r"^\s*(\S+)\s+(\d+)\s+0x([0-9a-f]+)\b")
 
 
-def describe_branches(binary, function, source, log):
+def describe_branches(binary, function, source, log, *, source_lines=None):
     section = f".text.{function}"
     disassembly = checked(log, ["objdump", "-d", "--no-show-raw-insn", "-j", section, binary])
     instructions = {}
@@ -33,6 +33,8 @@ def describe_branches(binary, function, source, log):
             file, number, pc = match.groups()
             if Path(file).name == source.name:
                 lines[int(pc, 16)] = int(number)
+    if source_lines is not None:
+        source_lines.update(lines)
     addresses = sorted(instructions)
     branches = {}
     for index, pc in enumerate(addresses):
@@ -86,9 +88,10 @@ def read_edges(report, addresses):
 
 
 def verify_coverage(record, directory, binary, function, source, commands, *, require_complete=True,
-                    exact_case=None):
+                    exact_case=None, require_entry=False):
     log = record["commands"]
-    addresses, branches = describe_branches(binary, function, source, log)
+    source_lines = {}
+    addresses, branches = describe_branches(binary, function, source, log, source_lines=source_lines)
     plugin, header_hash = compile_plugin(directory, log)
     record["artifacts"] = {"plugin_sha256": sha256_file(plugin), "qemu_header_sha256": header_hash,
                            "binary_sha256": sha256_file(binary), "source_sha256": sha256_file(source)}
@@ -96,10 +99,10 @@ def verify_coverage(record, directory, binary, function, source, commands, *, re
     for index, args in enumerate(commands):
         mode = exact_case.name if exact_case else args[0]
         report = directory / f"edges-{index}.txt"
-        options = f"{plugin},start={addresses[0]:x},end={addresses[-1] + 1:x},output={report}"
-        command = [shutil.which("qemu-x86_64"), "-plugin", options, binary, *args]
+        options = f"{plugin.resolve()},start={addresses[0]:x},end={addresses[-1] + 1:x},output={report.resolve()}"
+        command = [shutil.which("qemu-x86_64"), "-plugin", options, binary.resolve(), *args]
         if exact_case:
-            result = run(command, environment=exact_case.env, timeout=90)
+            result = run(command, environment=exact_case.env, timeout=90, cwd=directory.resolve())
             log.append(result)
             passed = ((result["returncode"], result["stdout"], result["stderr"]) ==
                       (exact_case.status, exact_case.stdout, exact_case.stderr))
@@ -113,6 +116,13 @@ def verify_coverage(record, directory, binary, function, source, commands, *, re
                                "trace_sha256": sha256_file(report)})
         coverage.update(observed)
 
+    if require_entry:
+        executed = {pc for edge in coverage for pc in edge}
+        entry = addresses[0]
+        if (len(addresses) > 1 and entry not in executed) or entry not in source_lines:
+            raise GateError(f"{function}: source-mapped entry was not observed in QEMU")
+        record["entry"] = {"source": str(source), "line": source_lines[entry], "pc": hex(entry),
+                           "observed": True, "instructions_executed": sum(run["instructions"] for run in record["runs"])}
     edges = []
     for pc, (line, mnemonic, taken, fallthrough) in branches.items():
         for outcome, target in (("taken", taken), ("fallthrough", fallthrough)):

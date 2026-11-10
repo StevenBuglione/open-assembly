@@ -1,0 +1,16 @@
+name = "slice_load_u32be"
+header = "slice.h"
+prototype = "int slice_load_u32be(const unsigned char *bytes, size_t length, unsigned int *restrict result)"
+standard = ["Extension ABI slice"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:bounded-slice-model"]
+provenance = "original"
+semantics = ["Read exactly four bytes at the start of the slice as a big-endian unsigned integer.", "Return -EINVAL for invalid arguments, -EOVERFLOW for a wrapping span, or -ERANGE for fewer than four bytes.", "Preserve result on failure and preserve errno."]
+
+[abi]
+narrow_args = []
+variadic = false
+noreturn = false

@@ -1,0 +1,16 @@
+name = "vector_push"
+header = "vector.h"
+prototype = "int vector_push(size_t *restrict state, size_t *restrict arena_state, const void *element)"
+standard = ["Extension ABI vector"]
+deps = ["vector_reserve", "memmove"]
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:arena-vector-model"]
+provenance = "original"
+semantics = ["Append one element. Grow capacity geometrically in the caller-owned arena when needed.", "Return a negative error for invalid arguments, wrapping extent or arena exhaustion. Preserve both states on failure and preserve errno."]
+
+[abi]
+narrow_args = []
+variadic = false
+noreturn = false

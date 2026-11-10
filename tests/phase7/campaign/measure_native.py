@@ -17,12 +17,20 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "transcendental"
 from oracle import MODES, OBSERVATION, TEST_ERRNO, shard
 from verify import compare
 
+SPECIAL = (0, 0x80000000, 0x7f7ffe00, 0xff7ffe00, 0x7fbffe00, 0xffbffe00)
+NEAR_NORMAL = (0x007ffe00, 0x807ffe00)
+QUADRANTS = (0x3fc90ddb, 0x40490ddb, 0x40c90ddb, 0xbfc90ddb,
+             0x4afffe00, 0x5efffe00, 0xdefffe00, 0x6f000000)
 PROOF_RANGES = {
-    "exp2": (0, 0x80000000, 0x3f000000, 0x42fffe00, 0xc315fe00,
-             0x7f7ffe00, 0xff7ffe00, 0x7fbffe00, 0xffbffe00),
-    "log2": (0, 0x80000000, 0x007ffe00, 0x00800000, 0x3f7ffe00, 0x3ffffe00, 0x5f000000,
-             0x7f7ffe00, 0xff7ffe00, 0x7fbffe00, 0xffbffe00),
+    "exp2": SPECIAL + (0x3f000000, 0x42fffe00, 0xc315fe00),
+    "log2": SPECIAL + (0x007ffe00, 0x00800000, 0x3f7ffe00, 0x3ffffe00, 0x5f000000),
+    "exp": SPECIAL + NEAR_NORMAL + (0x3f000000, 0x42b17018, 0xc2aeaa50, 0xc2ce8cd0, 0xc2cfefb4),
+    "log": SPECIAL + NEAR_NORMAL + (0x3f7ffe00, 0x3ffffe00, 0x40000000, 0x5f000000),
+    "sin": SPECIAL + NEAR_NORMAL + QUADRANTS,
+    "cos": SPECIAL + NEAR_NORMAL + QUADRANTS,
+    "tan": SPECIAL + NEAR_NORMAL + QUADRANTS,
 }
+
 
 
 def prove(helper, folder, operation, start, count, mode):

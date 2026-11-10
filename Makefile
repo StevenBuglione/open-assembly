@@ -8,8 +8,9 @@ ASM_INCLUDES := $(wildcard include/asm/*.inc include/asm/*/*.inc)
 RUNTIME_APPS := $(addprefix $(RUNTIME_BUILD)/apps/,cat wc httpd)
 HTTPD_SOURCES := $(sort $(wildcard apps/httpd/*.asm))
 HTTPD_OBJECTS := $(patsubst apps/httpd/%.asm,$(RUNTIME_BUILD)/app-obj/httpd/%.o,$(HTTPD_SOURCES))
+HTTPD_PACKAGE_OBJECTS := $(addprefix $(RUNTIME_BUILD)/app-obj/http/,http_find_header_end.o http_is_token_byte.o http_parse.o)
 
-.PHONY: phase0 phase1 phase2 phase3 phase4 phase5 phase6-files phase6-compat phase6-busybox phase6-process phase6-signal phase6-jump phase6-time phase6-calendar phase6-luafiles phase6-spawn phase6-shell phase6-path runtime apps gate FORCE phase7-exact phase7-transcendental phase7-complex phase6-lua phase6-strftime phase8-lifecycle phase8-openposix phase8-detectors phase9-wctype phase9-multibyte phase9-bulk phase9-worker phase6-fcntl phase6-zone phase9-worker-sync phase9-wide phase10-http phase9-libc-test phase6-zlib phase8-sync phase8-c11 runtime-pie phase10-endpoints phase10-inet phase10-dns phase6-sqlite phase10-netdb phase10-terminal phase9-stdio phase11-static-pie phase11-copy phase9-narrow-wide phase11-vdso phase10-libc-test
+.PHONY: phase0 phase1 phase2 phase3 phase4 phase5 phase6-files phase6-compat phase6-busybox phase6-process phase6-signal phase6-jump phase6-time phase6-calendar phase6-luafiles phase6-spawn phase6-shell phase6-path runtime apps gate FORCE phase7-exact phase7-transcendental phase7-complex phase6-lua phase6-strftime phase8-lifecycle phase8-openposix phase8-detectors phase9-wctype phase9-multibyte phase9-bulk phase9-worker phase6-fcntl phase6-zone phase9-worker-sync phase9-wide phase10-http phase9-libc-test phase6-zlib phase8-sync phase8-c11 runtime-pie phase10-endpoints phase10-inet phase10-dns phase6-sqlite phase10-netdb phase10-terminal phase9-stdio phase11-static-pie phase11-copy phase9-narrow-wide phase11-vdso phase10-libc-test phase11-allocator phase8-compiler-atomics phase10-regex
 
 phase0:
 	tools/gate --phase0
@@ -19,6 +20,14 @@ phase1:
 
 phase2:
 	python3 tools/phase2.py
+
+.PHONY: production-scalars
+production-scalars:
+	python3 tools/phase2.py --scalars
+
+.PHONY: production-linux-files
+production-linux-files:
+	python3 tools/phase2.py --linux-files
 
 phase3:
 	python3 tools/phase3.py
@@ -84,11 +93,25 @@ phase6-path:
 phase6-strftime:
 	python3 tools/phase6.py --strftime
 
+.PHONY: phase11-seccomp phase11-old-kernel
+phase11-seccomp:
+	python3 tools/phase11_platform.py seccomp
+
+phase11-old-kernel:
+	python3 tools/phase11_platform.py old-kernel
+
 phase11-copy:
 	python3 tools/phase11_copy.py
 
 phase11-copy-benchmark:
 	python3 tools/phase11_copy_benchmark.py
+
+.PHONY: phase11-allocator-benchmark
+phase11-allocator:
+	python3 tools/phase11_allocator.py
+
+phase11-allocator-benchmark:
+	python3 tools/phase11_allocator_benchmark.py
 
 phase7-exact:
 	python3 tools/phase7_exact.py
@@ -107,6 +130,9 @@ phase8-sync:
 
 phase8-c11:
 	python3 tools/phase8.py --c11
+
+phase8-compiler-atomics:
+	python3 tools/phase8_compiler_atomics.py
 
 phase8-openposix:
 	python3 tools/phase8_openposix.py
@@ -159,6 +185,12 @@ phase10-netdb:
 phase10-libc-test:
 	python3 tools/phase10_libc_test.py
 
+phase10-regex:
+	python3 tools/phase10_regex.py
+
+phase10-glob:
+	python3 tools/phase10_glob.py
+
 phase10-terminal:
 	python3 tools/phase10.py --suite terminal
 
@@ -180,17 +212,23 @@ $(RUNTIME_BUILD)/app-obj/httpd/%.o: apps/httpd/%.asm $(ASM_INCLUDES) Makefile
 		nasm -f elf64 -Wall -Werror -Wno-reloc-rel-dword -I include/asm/ -o "$$tmp" $< && \
 		tools/elf-audit --assembly-object "$$tmp" && mv -f "$$tmp" $@
 
+$(RUNTIME_BUILD)/app-obj/http/%.o: ext/http/src/x86_64-linux/%.asm $(ASM_INCLUDES) Makefile
+	mkdir -p $(@D)
+	tmp=$$(mktemp "$@.XXXXXX") && trap 'rm -f "$$tmp"' EXIT && \
+		nasm -f elf64 -Wall -Werror -Wno-reloc-rel-dword -I include/asm/ -o "$$tmp" $< && \
+		tools/elf-audit --assembly-object "$$tmp" && mv -f "$$tmp" $@
+
 $(RUNTIME_BUILD)/app-obj/%.o: apps/%/main.asm $(ASM_INCLUDES) Makefile
 	mkdir -p $(@D)
 	tmp=$$(mktemp "$@.XXXXXX") && trap 'rm -f "$$tmp"' EXIT && \
 		nasm -f elf64 -Wall -Werror -Wno-reloc-rel-dword -I include/asm/ -o "$$tmp" $< && \
 		tools/elf-audit --assembly-object "$$tmp" && mv -f "$$tmp" $@
 
-$(RUNTIME_BUILD)/apps/httpd: $(HTTPD_OBJECTS) $(RUNTIME_BUILD)/crt1.o $(RUNTIME_BUILD)/libopenasm.a
+$(RUNTIME_BUILD)/apps/httpd: $(HTTPD_OBJECTS) $(HTTPD_PACKAGE_OBJECTS) $(RUNTIME_BUILD)/crt1.o $(RUNTIME_BUILD)/libopenasm.a
 	mkdir -p $(@D)
 	tmp=$$(mktemp -d "$(@D)/.app.XXXXXX") && trap 'rm -rf "$$tmp"' EXIT && \
 		ld -m elf_x86_64 -static -no-pie -z noexecstack --fatal-warnings --no-undefined --gc-sections \
-			-e _start -o "$$tmp/$(@F)" $(RUNTIME_BUILD)/crt1.o $(HTTPD_OBJECTS) $(RUNTIME_BUILD)/libopenasm.a && \
+			-e _start -o "$$tmp/$(@F)" $(RUNTIME_BUILD)/crt1.o $(HTTPD_OBJECTS) $(HTTPD_PACKAGE_OBJECTS) $(RUNTIME_BUILD)/libopenasm.a && \
 		tools/elf-audit "$$tmp/$(@F)" && mv -f "$$tmp/$(@F)" $@
 
 $(RUNTIME_BUILD)/apps/%: $(RUNTIME_BUILD)/app-obj/%.o $(RUNTIME_BUILD)/crt1.o $(RUNTIME_BUILD)/libopenasm.a
@@ -226,3 +264,18 @@ gate:
 	tools/gate "$(FUNC)"
 
 FORCE:
+
+.PHONY: scan-musl-authorship
+scan-musl-authorship:
+	python3 tools/musl_authorship.py
+
+.PHONY: phase10-gnulib phase10-native-ltp
+phase10-gnulib:
+	python3 tools/upstream_conformance.py gnulib
+
+phase10-native-ltp:
+	python3 tools/upstream_conformance.py native-ltp
+
+.PHONY: phase11-vdso-benchmark
+phase11-vdso-benchmark:
+	python3 tools/phase11_vdso_benchmark.py

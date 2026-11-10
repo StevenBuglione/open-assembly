@@ -21,8 +21,9 @@ are matched case-insensitively, with a trailing dot ignored,
 against names and aliases in `/etc/hosts` in file order. This
 slice reads a maximum of 32 matching address records and skips
 physical lines longer than 4095 bytes. Missing files or absent
-matches yield the corresponding EAI error. AI_ADDRCONFIG and
-zone identifiers are outside this slice.
+matches yield the corresponding EAI error. AI_ADDRCONFIG applies
+the [configured family snapshot](0038-address-configuration.md).
+IPv6 zone identifiers remain separate.
 
 AI_V4MAPPED applies when AF_INET6 is requested. It makes
 matching IPv4 addresses available as mapped IPv6 addresses if

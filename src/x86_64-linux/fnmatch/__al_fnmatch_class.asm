@@ -1,16 +1,22 @@
 ; Match a bounded ASCII class name against the selected wide character class.
-; Return minus one for an unknown name, otherwise zero or one.
+; ECX carries the captured character mode. Return minus one for an unknown
+; name, otherwise zero or one.
 bits 64
 default rel
 
 global __al_fnmatch_class:function
 extern wctype:function
-extern iswctype:function
+extern __al_unicode_mask:function
 
 section .text.__al_fnmatch_class alloc exec nowrite progbits
 __al_fnmatch_class:
     push rbx
+    push r12
+    push r13
     mov ebx, edx
+    mov r12d, ecx
+    and r12d, 1
+    inc r12d
     test rsi, rsi
     jz .unknown
     cmp rsi, 6
@@ -30,10 +36,11 @@ __al_fnmatch_class:
     jb .compare
     mov rdi, r8
     call wctype
-    mov rsi, rax
+    mov r13d, eax
     mov edi, ebx
-    call iswctype
-    test eax, eax
+    mov esi, r12d
+    call __al_unicode_mask
+    and eax, r13d
     jz .return
     mov eax, 1
     jmp .return
@@ -44,6 +51,8 @@ __al_fnmatch_class:
 .unknown:
     mov eax, -1
 .return:
+    pop r13
+    pop r12
     pop rbx
     ret
 

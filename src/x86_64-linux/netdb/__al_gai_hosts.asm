@@ -68,7 +68,11 @@ __al_gai_hosts:
     cmp dword [rbx + 12], 2
     je .only_ipv4
     cmp dword [rbx + 12], 10
-    je .only_ipv6
+    jne .both_families
+    mov edx, [rbx + 16]
+    and edx, 40                 ; AI_ADDRCONFIG | AI_V4MAPPED
+    cmp edx, 40
+    jne .only_ipv6
 .both_families:
     mov dword [rbx + 64], 10
     mov [rbx + 87], al          ; last IPv6 address byte

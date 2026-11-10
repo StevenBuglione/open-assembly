@@ -49,7 +49,10 @@ def main():
     contracts = [Path("docs/adr") / contract]
     wraps = {}
     if scope == "netdb":
-        contracts.extend((Path("docs/adr/0017-dns-forward.md"), Path("docs/adr/0019-local-reverse-lookup.md")))
+        contracts.extend((Path("docs/adr/0017-dns-forward.md"),
+                          Path("docs/adr/0019-local-reverse-lookup.md"),
+                          Path("docs/adr/0038-address-configuration.md"),
+                          Path("docs/adr/0039-resolver-search.md")))
         wraps = {directory / "files.c": ("fopen",),
                  directory / "lifetime.c": ("malloc", "calloc", "free")}
     if scope == "terminal":

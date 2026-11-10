@@ -1,0 +1,156 @@
+schema = 1
+
+[[case]]
+name = "regex-compile"
+sources = ["tests/phase10/regex/match.c"]
+requires = ["regcomp"]
+args = ["compile"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:posix-regex"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "regex-captures"
+sources = ["tests/phase10/regex/match.c"]
+requires = ["regexec"]
+args = ["captures"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:posix-regex"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "regex-anchors"
+sources = ["tests/phase10/regex/match.c"]
+requires = ["regexec"]
+args = ["anchors"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:posix-regex"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "regex-nosub"
+sources = ["tests/phase10/regex/match.c"]
+requires = ["regexec"]
+args = ["nosub"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:posix-regex"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "regex-diagnostic"
+sources = ["tests/phase10/regex/match.c"]
+requires = ["regerror"]
+args = ["diagnostic"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:posix-regex"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "regex-release"
+sources = ["tests/phase10/regex/match.c"]
+requires = ["regfree"]
+args = ["release"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:posix-regex"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Project clears the compiled expression on release."
+env = {}
+
+[[case]]
+name = "regex-policy"
+sources = ["tests/phase10/regex/match.c"]
+requires = ["regcomp", "regexec"]
+args = ["policy"]
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:posix-regex"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Project compile-locale snapshot, ERE escaping, subgroup tie and interval policies."
+env = {}
+
+[[case]]
+name = "regex-model"
+sources = ["tests/phase10/regex/model.c"]
+requires = ["regcomp", "regexec"]
+args = []
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:posix-regex"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+env = {}
+
+[[case]]
+name = "regex-fault"
+sources = ["tests/phase10/regex/fault.c"]
+requires = ["regcomp"]
+args = []
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:posix-regex"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Uses the targeted project allocator failure wrapper."
+link_wraps = ["calloc"]
+env = {}
+
+[[stub]]
+symbol = "regcomp"
+case = "regex-compile"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "regexec"
+case = "regex-captures"
+status = 21
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "regerror"
+case = "regex-diagnostic"
+status = 31
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "regfree"
+case = "regex-release"
+status = 41
+stdout = ""
+stderr = ""

@@ -1,0 +1,16 @@
+name = "json_parse"
+header = "json.h"
+prototype = "long json_parse(const unsigned char *restrict data, size_t length, size_t *restrict workspace, size_t frame_capacity, size_t *restrict tokens, size_t token_capacity)"
+standard = ["Extension ABI json"]
+deps = ["json_lex"]
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:json-token-model"]
+provenance = "original"
+semantics = ["Validate one bounded JSON value with caller scratch frames.", "Return the count of preorder source tokens or a negative error while preserving errno.", "Preserve all output tokens on failure."]
+
+[abi]
+narrow_args = []
+variadic = false
+noreturn = false

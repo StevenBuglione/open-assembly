@@ -3,7 +3,7 @@
 ; header: netdb.h
 ; prototype: int getaddrinfo(const char *restrict node, const char *restrict service, const struct addrinfo *restrict hints, struct addrinfo **restrict result)
 ; standard: POSIX.1-2024 XSH getaddrinfo
-; deps: __errno_location, calloc, clock_gettime, close, connect, fclose, feof, fgetc, fgets, fopen, free, freeaddrinfo, getsockopt, inet_pton, malloc, memcmp, memcpy, poll, recv, send, socket, strchr, strcmp, strlen
+; deps: __errno_location, calloc, clock_gettime, close, connect, fclose, feof, fgetc, fgets, fopen, free, freeaddrinfo, getsockopt, inet_pton, malloc, memcmp, memcpy, poll, recv, recvfrom, send, sendto, socket, strchr, strcmp, strlen, strncmp
 ; errno: -
 ; mt_safe: true
 ; as_safe: false
@@ -12,8 +12,9 @@
 ; narrow_args: -
 ; variadic: false
 ; semantics: Resolve numeric, local-file and DNS node inputs and numeric or local-file services into an owned IPv4 or IPv6 TCP/UDP address list.
+; semantics: Apply resolv.conf search, domain and ndots to forward DNS candidates.
 ; semantics: Return zero on success or an EAI error and a null result on failure.
-; semantics: Preserve errno. The resolver supports AI_PASSIVE, AI_CANONNAME, AI_NUMERICHOST, AI_NUMERICSERV, AI_V4MAPPED and AI_ALL.
+; semantics: Preserve errno. The resolver supports AI_PASSIVE, AI_CANONNAME, AI_NUMERICHOST, AI_NUMERICSERV, AI_V4MAPPED, AI_ALL and AI_ADDRCONFIG.
 ; END OPEN ASSEMBLY GENERATED SPEC
 
 bits 64
@@ -22,6 +23,7 @@ default rel
 global getaddrinfo:function
 extern __al_gai_service:function
 extern __al_gai_hosts:function
+extern __al_gai_addrconfig:function
 extern __al_dns_lookup:function
 extern __al_gai_filter:function
 extern __al_gai_result:function
@@ -52,7 +54,7 @@ getaddrinfo:
     jz .missing_input
     test r14, r14
     jz .allocate
-    test dword [r14], 0xfffffbe0 ; flags outside the local resolver mask
+    test dword [r14], 0xfffffbc0 ; flags outside the supported resolver mask
     jnz .bad_flags
     mov eax, [r14 + 4]
     test eax, eax               ; AF_UNSPEC
@@ -68,6 +70,7 @@ getaddrinfo:
     test rax, rax
     jz .no_memory
     mov rbx, rax
+    mov dword [rbx + 48], 3   ; enabled IPv4 and IPv6 source families
     xor edx, edx                ; default socket type and protocol
     xor ecx, ecx
     test r14, r14
@@ -84,6 +87,14 @@ getaddrinfo:
     call __al_gai_service
     test eax, eax
     jnz .finish
+    test dword [rbx + 16], 32 ; AI_ADDRCONFIG
+    jz .local
+    call __al_gai_addrconfig
+    test eax, eax
+    js .finish
+    jz .missing_input
+    mov [rbx + 48], eax
+.local:
     mov rdi, rbx
     mov rsi, r12
     call __al_gai_hosts

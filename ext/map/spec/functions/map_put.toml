@@ -1,0 +1,16 @@
+name = "map_put"
+header = "map.h"
+prototype = "int map_put(size_t *restrict state, size_t *restrict arena_state, const unsigned char *key, size_t length, size_t value)"
+standard = ["Extension ABI map"]
+deps = ["arena_alloc", "map_probe", "memmove"]
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:bounded-map-model"]
+provenance = "original"
+semantics = ["Update an existing value or insert an owned key copied into the caller-owned arena.", "Preserve the map and arena on failure and preserve errno."]
+
+[abi]
+narrow_args = []
+variadic = false
+noreturn = false

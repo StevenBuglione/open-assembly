@@ -8,7 +8,7 @@ HEADER = struct.Struct("!6H")
 FRAME = struct.Struct("<5I")
 RESULT = struct.Struct("<iI")
 BODY = struct.Struct("<II")
-A, AAAA = 1, 28
+A, PTR, AAAA = 1, 12, 28
 ID = 0x9c39
 SEED = 0x8a2c6bc1
 
@@ -42,7 +42,7 @@ def unpack_query(raw):
     if (flags, questions, answers, authority, additional) != (0x0100, 1, 0, 0, 0):
         raise ValueError("unexpected DNS query header")
     qtype, qclass = struct.unpack("!HH", remaining)
-    if qtype not in (A, AAAA) or qclass != 1:
+    if qtype not in (A, PTR, AAAA) or qclass != 1:
         raise ValueError("unexpected DNS question type or class")
     return ident, name, qtype
 
@@ -93,11 +93,16 @@ def decoded(data, requests):
         if mode == 1 and status == 0:
             count, kind = BODY.unpack_from(payload)
             canonical, addresses = parse_name(payload[BODY.size:])
-            if len(addresses) != count * 16 or not 1 <= count <= 16:
-                raise ValueError("invalid DNS answer count")
-            payload = answer(kind, canonical, [addresses[i:i + 16] for i in range(0, len(addresses), 16)])
-            if BODY.unpack_from(payload)[0] != count:
-                raise ValueError("candidate returned duplicate DNS addresses")
+            if kind == PTR:
+                _, excess = parse_name(addresses)
+                if count != 1 or excess:
+                    raise ValueError("invalid DNS PTR answer count or target extent")
+            else:
+                if len(addresses) != count * 16 or not 1 <= count <= 16:
+                    raise ValueError("invalid DNS answer count")
+                payload = answer(kind, canonical, [addresses[i:i + 16] for i in range(0, len(addresses), 16)])
+                if BODY.unpack_from(payload)[0] != count:
+                    raise ValueError("candidate returned duplicate DNS addresses")
         results.append((status, payload))
     if cursor != len(data):
         raise ValueError("unexpected trailing fixture reply bytes")
@@ -190,4 +195,64 @@ def sampled(count):
             if choice == 5:
                 response = response[:-1]
             rows.append(parse_record(q, response, status, body))
+    return rows
+
+
+def ptr_directed():
+    name = b"77.2.0.192.in-addr.arpa"
+    q = query(name, PTR, ID)
+    owner = pointer(12)
+    target = b"\x05MiXeD\x07ExAmPlE\0"
+    canonical = labels(name)
+    expected = BODY.pack(1, PTR) + canonical + labels(b"mixed.example")
+    record = rr(owner, PTR, target)
+    # The first target may compress its suffix against an earlier RR owner.
+    alias = labels(b"example")
+    prior = rr(alias, A, b"\xc0\x00\x02\x01")
+    compressed = rr(owner, PTR, b"\x05MiXeD" + pointer(len(q)))
+    # Indirection through CNAME uses the selected target as canonical owner.
+    cname = rr(owner, 5, b"\x05AlIaS" + pointer(12))
+    cname_name = b"\x05alias" + canonical
+    target_owner = pointer(len(q) + 12)
+    forwarded = rr(target_owner, PTR, target)
+    return [
+        build_record(name.upper(), PTR, ID | 0x12340000, len(q), q),
+        build_record(name, PTR, ID, len(q) - 1, b""),
+        parse_record(q, reply(q, (record,)), 0, expected),
+        parse_record(q, reply(q, (prior, compressed)), 0, expected),
+        parse_record(q, reply(q, (record, rr(owner, PTR, labels(b"second.example")))), 0, expected),
+        parse_record(q, reply(q, (cname, forwarded)), 0,
+                     BODY.pack(1, PTR) + cname_name + labels(b"mixed.example")),
+        parse_record(q, reply(q, (rr(labels(b"wrong.example"), PTR, target),)), socket.EAI_NONAME),
+        parse_record(q, reply(q, (rr(owner, PTR, target, record_class=3),)), socket.EAI_NONAME),
+        parse_record(q, reply(q, (rr(owner, PTR, b""),)), socket.EAI_FAIL),
+        parse_record(q, reply(q, (rr(owner, PTR, target + b"\x01"),)), socket.EAI_FAIL),
+        parse_record(q, reply(q, (rr(owner, PTR, pointer(len(q) + 12)),)), socket.EAI_FAIL),
+        parse_record(q, reply(q, (record[:-1],)), socket.EAI_FAIL),
+        parse_record(q, reply(q, flags=0x8380), 1),
+        parse_record(q, reply(q, (record,), ident=ID ^ 1), 2),
+        parse_record(q, reply(q, flags=0x8183), socket.EAI_NONAME),
+        parse_record(q, reply(q, flags=0x8182), socket.EAI_AGAIN),
+    ]
+
+
+def ptr_sampled(count):
+    rng = random.Random(SEED ^ 12)
+    rows = []
+    for index in range(count):
+        name = f"{rng.randrange(256)}.{rng.randrange(256)}.0.192.in-addr.arpa".encode("ascii")
+        target = f"Name{index}.H{rng.randrange(65536):04X}.EXample".encode("ascii")
+        mixed = b"".join(bytes([len(part)]) + part for part in target.split(b".")) + b"\0"
+        q = query(name, PTR, rng.randrange(65536))
+        record = rr(pointer(12), PTR, mixed)
+        expected = BODY.pack(1, PTR) + labels(name) + labels(target)
+        choice = index % 4
+        if choice == 1:
+            record = rr(pointer(12), PTR, mixed[:-1])
+        if choice == 2:
+            record = rr(pointer(12), PTR, mixed, record_class=3)
+        status, body = ((0, expected), (socket.EAI_FAIL, b""), (socket.EAI_NONAME, b""),
+                        (2, b""))[choice]
+        ident = (struct.unpack_from("!H", q)[0] ^ 1) if choice == 3 else None
+        rows.append(parse_record(q, reply(q, (record,), ident=ident), status, body))
     return rows

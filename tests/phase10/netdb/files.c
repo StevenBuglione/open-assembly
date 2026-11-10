@@ -150,8 +150,9 @@ static int reverse(void)
         return 23;
     memset(node, '#', sizeof node);
     memset(service, '$', sizeof service);
-    ((unsigned char *)&address.sin_addr)[3] = 99;
-    if (getnameinfo((const struct sockaddr *)&address, sizeof address, node, sizeof node,
+    /* RFC 3493 section 6.2 excludes the IPv6 unspecified address from lookup. */
+    struct sockaddr_in6 unspecified = {.sin6_family = AF_INET6};
+    if (getnameinfo((const struct sockaddr *)&unspecified, sizeof unspecified, node, sizeof node,
                     service, sizeof service, NI_NAMEREQD) != EAI_NONAME ||
         node[0] != '#' || service[0] != '$' || errno != EDOM)
         return 24;

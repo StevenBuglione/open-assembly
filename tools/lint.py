@@ -77,6 +77,14 @@ COMPLEX_EXTENDED_ARGUMENTS = {**{name + "l": 2 for name in (
     "creal", "cimag", "conj", "cproj", "cabs", "carg", "clog", "csqrt", "cexp", "ccos", "csin", "ccosh", "csinh", "ctan", "ctanh", "catan", "catanh", "casin", "cacos", "casinh", "cacosh",
 )}, "cpowl": 4}
 PRIVATE_FUNCTIONS = {
+    "regex/__al_regex_bounds", "regex/__al_regex_bracket", "regex/__al_regex_bracket_atom",
+    "regex/__al_regex_branch", "regex/__al_regex_emit", "regex/__al_regex_node",
+    "regex/__al_regex_parse", "regex/__al_regex_token",
+    "regex/__al_regex_backref", "regex/__al_regex_better", "regex/__al_regex_exec",
+    "regex/__al_regex_push", "regex/__al_regex_seen", "regex/__al_regex_span_count",
+    "compiler_rt/__al_atomic_bytes", "compiler_rt/__al_atomic_quad",
+    "glob/__al_glob_add", "glob/__al_glob_candidate", "glob/__al_glob_compare",
+    "glob/__al_glob_error", "glob/__al_glob_parse", "glob/__al_glob_path", "glob/__al_glob_walk",
     "stdio/__al_scan_wset", "stdio/__al_scan_wmember", "stdio/__al_scan_wchars",
     "stdio/__al_fmt_unit", "stdio/__al_fmt_wemit", "stdio/__al_fmt_wtext",
     "stdio/__al_fmt_nwide",
@@ -126,10 +134,14 @@ PRIVATE_FUNCTIONS = {
     "netdb/__al_gai_port", "netdb/__al_gai_word", "netdb/__al_gai_line",
     "netdb/__al_gai_equalname", "netdb/__al_gai_service", "netdb/__al_gai_hosts",
     "netdb/__al_gai_filter", "netdb/__al_gai_result",
+    "netdb/__al_gai_addrconfig", "netdb/__al_gai_addrconfig_parse",
     "netdb/__al_dns_build", "netdb/__al_dns_name", "netdb/__al_dns_parse",
     "netdb/__al_dns_now", "netdb/__al_dns_wait", "netdb/__al_dns_open",
     "netdb/__al_dns_transfer", "netdb/__al_dns_query",
     "netdb/__al_dns_lookup", "netdb/__al_dns_publish", "netdb/__al_dns_text",
+    "netdb/__al_dns_server", "netdb/__al_dns_reverse",
+    "netdb/__al_dns_config", "netdb/__al_dns_lookup_one", "netdb/__al_dns_reverse_name",
+    "netdb/__al_gni_address",
     "netdb/__al_gni_host", "netdb/__al_gni_service",
     "math/__al_big_muladd", "math/__al_big_left", "math/__al_big_right1",
     "math/__al_big_cmp", "math/__al_big_sub", "math/__al_big_bits", "math/__al_big_copy",
@@ -255,10 +267,16 @@ CALLBACK_TABLES = {
 HTTP_APP_CALLS = {
     "apps/httpd/main.asm": {"__al_http_client"},
     "apps/httpd/http_client.asm": {"__al_http_find", "__al_http_parse"},
-    "apps/httpd/http_parse.asm": {"__al_http_find", "__al_http_token"},
 }
 
 RUNTIME_ATOMICS = {
+    "compiler_rt/__al_atomic_bytes": {
+        **{("xchg", (f"{width} [rsi]", accumulator)): (accumulator, ("rsi", "rax"))
+           for width, accumulator in (("byte", "al"), ("word", "ax"), ("dword", "eax"), ("qword", "rax"))},
+        **{("lock", (f"cmpxchg {width} [rsi]", source)): (accumulator, ("rsi", "rax", "r9"))
+           for width, accumulator, source in (("byte", "al", "r9b"), ("word", "ax", "r9w"),
+                                              ("dword", "eax", "r9d"), ("qword", "rax", "r9"))},
+    },
     "stdatomic/atomic_flag_test_and_set_explicit": {
         ("xchg", ("byte [rdi]", "al")): ("al", ("rdi", "rax")),
     },
@@ -403,6 +421,7 @@ KERNEL_STACK_RECORDS = {
     },
 }
 PRIVATE_DATA = {
+    "__al_atomic_mutex": "compiler_rt/__al_atomic_bytes",
     "__al_locale_flags": "locale/setlocale",
     "stdin": "rt/__al_stdio_init", "stdout": "rt/__al_stdio_init", "stderr": "rt/__al_stdio_init",
     "__al_stdio_lock": "rt/__al_stdio_init", "__al_streams": "rt/__al_stdio_init",
@@ -1377,7 +1396,8 @@ def check_file(path, function, fixture_syscall, functions_snapshot=project_funct
         "rt/__errno_location", "rt/__al_stream_owner", "pthread/pthread_self", "locale/__al_mbstate_default",
     }
     program.callback_table = CALLBACK_TABLES.get(relative_runtime)
-    program.callback_argument = ("rdi" if relative_runtime == "pthread/__al_thread_start"
+    program.callback_argument = ("rdx" if relative_runtime == "glob/__al_glob_error"
+                                   else "rdi" if relative_runtime == "pthread/__al_thread_start"
                                    else CALLBACK_ARGUMENTS.get(function))
     if relative_runtime == "time/__al_realtime_parts":
         program.callback_resolver = "__al_vdso_clock_entry"

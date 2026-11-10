@@ -2,7 +2,12 @@
 set -euo pipefail
 repo_root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 cd "$repo_root"
-image_archive=$(nix build --file nix/image.nix --no-link --print-out-paths)
+image_arguments=()
+if [[ "${1:-}" == --old-kernel ]]; then
+    image_arguments=(--arg withOldKernel true)
+    shift
+fi
+image_archive=$(nix build --file nix/image.nix "${image_arguments[@]}" --no-link --print-out-paths)
 image_name=$(python3 - "$image_archive" <<'PY'
 import json
 import sys

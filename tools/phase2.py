@@ -1,4 +1,4 @@
-"""Run independent Phase 2 function gates and aggregate every result."""
+"""Run independent hosted production function gates and aggregate every result."""
 
 import argparse
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -9,8 +9,9 @@ import sys
 from gate import EVIDENCE, GateError, run, write_evidence
 from phase2_helpers import HELPER, WRAPPERS
 from phase11_copy import HELPER as COPY_HELPER
-from production import phase2_inputs
+from production import SCALAR_FUNCTIONS, libfuzzer_seconds, phase2_inputs
 from runtime_gate import ERRNO
+from runtime_manifest_gate import FILE_MUTATION_FAILURES, PLANS as RUNTIME_PLANS, manifest_inputs
 from spec import ROOT, load_project, sha256_file
 
 ADDITIONAL = {"atoi", "atol", "atoll", "strtol", "strtoll", "strtoul", "strtoull",
@@ -30,7 +31,8 @@ def phase2_functions():
 def check_function(function, only):
     command = [TOOLS[only], function] if only else ["tools/gate", "--production", function]
     try:
-        result = run(command, timeout=240)
+        timeout = max(240, libfuzzer_seconds() + 180) if only is None else 240
+        result = run(command, timeout=timeout)
     except (GateError, OSError) as error:
         return {"outcome": "fail", "error": str(error)}
     report = EVIDENCE / f"{function}.{only or 'production'}.json"
@@ -40,12 +42,16 @@ def check_function(function, only):
         if result["returncode"] == 0:
             try:
                 record = json.loads(report.read_text(encoding="utf-8"))
+                inputs = phase2_inputs
                 if function == ERRNO:
                     scope = "production-runtime-function"
+                elif function in RUNTIME_PLANS:
+                    scope = f"production-runtime-manifest-{only or 'function'}"
+                    inputs = lambda: manifest_inputs(function)
                 else:
                     scope = f"production-{only}" if only else "production-function"
                 if (record.get("scope") == scope and record.get("outcome") == "pass"
-                        and record.get("function") == function and record.get("inputs") == phase2_inputs()
+                        and record.get("function") == function and record.get("inputs") == inputs()
                         and record.get("production_verified") is (only is None)):
                     result["outcome"] = "pass"
                 else:
@@ -79,10 +85,18 @@ def main():
     parser.add_argument("functions", nargs="*")
     parser.add_argument("--jobs", type=int, default=min(8, len(os.sched_getaffinity(0))))
     parser.add_argument("--only", choices=TOOLS)
+    batches = parser.add_mutually_exclusive_group()
+    batches.add_argument("--scalars", action="store_true", help="verify the C17 scalar arithmetic batch")
+    batches.add_argument("--linux-files", action="store_true", help="verify the Linux file-descriptor batch")
     args = parser.parse_args()
-    available = phase2_functions()
+    if args.scalars:
+        name, label, available = "production-scalars", "Scalar production", sorted(SCALAR_FUNCTIONS)
+    elif args.linux_files:
+        name, label, available = "production-linux-files", "Linux file production", sorted(FILE_MUTATION_FAILURES)
+    else:
+        name, label, available = "phase2", "Phase 2", phase2_functions()
     if args.jobs < 1 or set(args.functions) - set(available) or len(set(args.functions)) != len(args.functions):
-        parser.error("supply unique Phase 2 function names and a positive job count")
+        parser.error("supply unique function names from the selected batch and a positive job count")
     functions = args.functions or available
     specs = load_project().functions
     results = {}
@@ -129,7 +143,8 @@ def main():
     passed = sum(result["outcome"] == "pass" for result in results.values())
     success = passed == len(functions) and all(item is None or item["outcome"] == "pass"
                                                for item in (helper, tls, copy))
-    evidence = {"schema_version": 1, "scope": "phase2-batch" if not args.only else f"phase2-batch-{args.only}",
+    scope = f"{name}-batch" if not args.only else f"{name}-batch-{args.only}"
+    evidence = {"schema_version": 1, "scope": scope,
                 "outcome": "pass" if success else "fail", "passed": passed,
                 "total": len(functions), "functions": results, "full_scope": set(functions) == set(available)}
     if helper is not None:
@@ -137,8 +152,8 @@ def main():
         evidence["runtime_tls_accessor"] = tls
     if copy is not None:
         evidence["bulk_memcpy"] = copy
-    report = write_evidence(f"phase2.{args.only}" if args.only else "phase2", evidence)
-    print(f"Phase 2 gate results {passed}/{len(functions)}. Evidence at {report}", flush=True)
+    report = write_evidence(f"{name}.{args.only}" if args.only else name, evidence)
+    print(f"{label} gate results {passed}/{len(functions)}. Evidence at {report}", flush=True)
     return 0 if success else 1
 
 

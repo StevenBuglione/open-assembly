@@ -1,26 +1,15 @@
-; Return the byte count through the first complete CRLF CRLF, or zero.
+; Keep the app-private entry point linked to the HTTP package.
 bits 64
 default rel
 
 global __al_http_find:function
+extern http_find_header_end:function
 
 section .text.__al_http_find alloc exec nowrite progbits
 __al_http_find:
-    cmp rsi, 4
-    jb .missing
-    sub rsi, 3                  ; possible four-byte starts
-    xor ecx, ecx
-.next:
-    cmp dword [rdi + rcx], 0x0a0d0a0d
-    je .found
-    inc rcx
-    cmp rcx, rsi
-    jb .next
-.missing:
-    xor eax, eax
-    ret
-.found:
-    lea rax, [rcx + 4]
+    sub rsp, 8
+    call http_find_header_end
+    add rsp, 8
     ret
 
 section .note.GNU-stack noalloc noexec nowrite progbits

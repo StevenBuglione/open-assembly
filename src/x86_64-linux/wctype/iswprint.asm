@@ -25,6 +25,7 @@ section .text.iswprint alloc exec nowrite progbits
 iswprint:
     mov edi, edi
     sub rsp, 8
+    xor esi, esi          ; select the active locale
     call __al_unicode_mask
     and eax, 128
     add rsp, 8

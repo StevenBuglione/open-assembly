@@ -25,6 +25,7 @@ section .text.iswcntrl alloc exec nowrite progbits
 iswcntrl:
     mov edi, edi
     sub rsp, 8
+    xor esi, esi          ; select the active locale
     call __al_unicode_mask
     and eax, 8
     add rsp, 8

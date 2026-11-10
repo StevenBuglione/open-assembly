@@ -33,6 +33,7 @@ iswctype:
     jnz .absent
     push rbx
     mov ebx, esi
+    xor esi, esi          ; select the active locale
     call __al_unicode_mask
     and eax, ebx
     pop rbx

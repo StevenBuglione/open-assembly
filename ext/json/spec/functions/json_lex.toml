@@ -1,0 +1,16 @@
+name = "json_lex"
+header = "json.h"
+prototype = "int json_lex(const unsigned char *restrict data, size_t length, size_t offset, size_t *restrict record)"
+standard = ["Extension ABI json"]
+deps = ["json_scan_string", "json_scan_number"]
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:json-token-model"]
+provenance = "original"
+semantics = ["Skip ASCII JSON whitespace and scan one lexical token or end of input.", "Write its kind and source offsets only on success and preserve errno."]
+
+[abi]
+narrow_args = []
+variadic = false
+noreturn = false

@@ -40,12 +40,12 @@ class GateError(Exception):
     pass
 
 
-def run(command, *, timeout=30, environment=None):
+def run(command, *, timeout=30, environment=None, cwd=ROOT):
     command = list(map(str, command))
     try:
         if environment is None:
             environment = {**os.environ, "LC_ALL": "C"}
-        result = subprocess.run(command, cwd=ROOT, capture_output=True,
+        result = subprocess.run(command, cwd=cwd, capture_output=True,
                                 timeout=timeout, env=environment)
         return {"command": command, "returncode": result.returncode,
                 "stdout": result.stdout.decode("utf-8", errors="surrogateescape"),

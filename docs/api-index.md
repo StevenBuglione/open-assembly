@@ -3,12 +3,27 @@
 
 This index lists authored function specifications. For implementation state, run `tools/queue status`.
 
-Specs: 708 of 708 inventoried functions. The inventory covers C17, the named POSIX subset, runtime ABI entries, and Linux compatibility extensions. see [inventory scope](cookbook/specifications.md#inventory-scope).
+Specs: 729 of 729 inventoried functions. The inventory covers C17, the named POSIX subset, runtime ABI entries, and Linux compatibility extensions. see [inventory scope](cookbook/specifications.md#inventory-scope).
 
 | Function | Header | Prototype | Standard |
 | --- | --- | --- | --- |
 | [`_Exit`](../spec/functions/stdlib/_Exit.toml) | `<stdlib.h>` | `_Noreturn void _Exit(int status)` | C17 7.22.4.5 |
 | [`__al_assert_fail`](../spec/functions/assert/__al_assert_fail.toml) | `<assert.h>` | `_Noreturn void __al_assert_fail(const char *expression, const char *file, unsigned int line, const char *function)` | Runtime ABI __al_assert_fail |
+| [`__atomic_compare_exchange`](../spec/functions/compiler_rt/__atomic_compare_exchange.toml) | `<compiler_rt.h>` | `_Bool __atomic_compare_exchange(size_t size, volatile void *object, void *expected, const void *desired, int success_order, int failure_order)` | Runtime ABI __atomic_compare_exchange |
+| [`__atomic_compare_exchange_16`](../spec/functions/compiler_rt/__atomic_compare_exchange_16.toml) | `<compiler_rt.h>` | `_Bool __atomic_compare_exchange_16(volatile void *object, void *expected, unsigned __int128 desired, int success_order, int failure_order)` | Runtime ABI __atomic_compare_exchange_16 |
+| [`__atomic_exchange`](../spec/functions/compiler_rt/__atomic_exchange.toml) | `<compiler_rt.h>` | `void __atomic_exchange(size_t size, volatile void *object, const void *value, void *result, int order)` | Runtime ABI __atomic_exchange |
+| [`__atomic_exchange_16`](../spec/functions/compiler_rt/__atomic_exchange_16.toml) | `<compiler_rt.h>` | `unsigned __int128 __atomic_exchange_16(volatile void *object, unsigned __int128 value, int order)` | Runtime ABI __atomic_exchange_16 |
+| [`__atomic_fetch_add_16`](../spec/functions/compiler_rt/__atomic_fetch_add_16.toml) | `<compiler_rt.h>` | `unsigned __int128 __atomic_fetch_add_16(volatile void *object, unsigned __int128 operand, int order)` | Runtime ABI __atomic_fetch_add_16 |
+| [`__atomic_fetch_and_16`](../spec/functions/compiler_rt/__atomic_fetch_and_16.toml) | `<compiler_rt.h>` | `unsigned __int128 __atomic_fetch_and_16(volatile void *object, unsigned __int128 operand, int order)` | Runtime ABI __atomic_fetch_and_16 |
+| [`__atomic_fetch_nand_16`](../spec/functions/compiler_rt/__atomic_fetch_nand_16.toml) | `<compiler_rt.h>` | `unsigned __int128 __atomic_fetch_nand_16(volatile void *object, unsigned __int128 operand, int order)` | Runtime ABI __atomic_fetch_nand_16 |
+| [`__atomic_fetch_or_16`](../spec/functions/compiler_rt/__atomic_fetch_or_16.toml) | `<compiler_rt.h>` | `unsigned __int128 __atomic_fetch_or_16(volatile void *object, unsigned __int128 operand, int order)` | Runtime ABI __atomic_fetch_or_16 |
+| [`__atomic_fetch_sub_16`](../spec/functions/compiler_rt/__atomic_fetch_sub_16.toml) | `<compiler_rt.h>` | `unsigned __int128 __atomic_fetch_sub_16(volatile void *object, unsigned __int128 operand, int order)` | Runtime ABI __atomic_fetch_sub_16 |
+| [`__atomic_fetch_xor_16`](../spec/functions/compiler_rt/__atomic_fetch_xor_16.toml) | `<compiler_rt.h>` | `unsigned __int128 __atomic_fetch_xor_16(volatile void *object, unsigned __int128 operand, int order)` | Runtime ABI __atomic_fetch_xor_16 |
+| [`__atomic_is_lock_free`](../spec/functions/compiler_rt/__atomic_is_lock_free.toml) | `<compiler_rt.h>` | `_Bool __atomic_is_lock_free(size_t size, const volatile void *object)` | Runtime ABI __atomic_is_lock_free |
+| [`__atomic_load`](../spec/functions/compiler_rt/__atomic_load.toml) | `<compiler_rt.h>` | `void __atomic_load(size_t size, const volatile void *object, void *result, int order)` | Runtime ABI __atomic_load |
+| [`__atomic_load_16`](../spec/functions/compiler_rt/__atomic_load_16.toml) | `<compiler_rt.h>` | `unsigned __int128 __atomic_load_16(const volatile void *object, int order)` | Runtime ABI __atomic_load_16 |
+| [`__atomic_store`](../spec/functions/compiler_rt/__atomic_store.toml) | `<compiler_rt.h>` | `void __atomic_store(size_t size, volatile void *object, const void *value, int order)` | Runtime ABI __atomic_store |
+| [`__atomic_store_16`](../spec/functions/compiler_rt/__atomic_store_16.toml) | `<compiler_rt.h>` | `void __atomic_store_16(volatile void *object, unsigned __int128 value, int order)` | Runtime ABI __atomic_store_16 |
 | [`__errno_location`](../spec/functions/errno/__errno_location.toml) | `<errno.h>` | `int *__errno_location(void)` | Runtime ABI __errno_location, C17 7.5 |
 | [`__stack_chk_fail`](../spec/functions/compiler_rt/__stack_chk_fail.toml) | `<compiler_rt.h>` | `_Noreturn void __stack_chk_fail(void)` | Runtime ABI __stack_chk_fail |
 | [`_exit`](../spec/functions/unistd/_exit.toml) | `<unistd.h>` | `_Noreturn void _exit(int status)` | POSIX.1-2024 XSH _exit |
@@ -290,6 +305,8 @@ Specs: 708 of 708 inventoried functions. The inventory covers C17, the named POS
 | [`gettimeofday`](../spec/functions/sys/time/gettimeofday.toml) | `<sys/time.h>` | `int gettimeofday(struct timeval *restrict value, void *restrict zone)` | Extension ABI gettimeofday |
 | [`getwc`](../spec/functions/wchar/getwc.toml) | `<wchar.h>` | `wint_t getwc(FILE *stream)` | C17 7.29.3.6 |
 | [`getwchar`](../spec/functions/wchar/getwchar.toml) | `<wchar.h>` | `wint_t getwchar(void)` | C17 7.29.3.7 |
+| [`glob`](../spec/functions/glob/glob.toml) | `<glob.h>` | `int glob(const char *restrict pattern, int flags, int (*errfunc)(const char *, int), glob_t *restrict result)` | POSIX.1-2024 XSH glob |
+| [`globfree`](../spec/functions/glob/globfree.toml) | `<glob.h>` | `void globfree(glob_t *result)` | POSIX.1-2024 XSH globfree |
 | [`gmtime`](../spec/functions/time/gmtime.toml) | `<time.h>` | `struct tm *gmtime(const time_t *timer)` | C17 7.27.3.3 |
 | [`gmtime_r`](../spec/functions/time/gmtime_r.toml) | `<time.h>` | `struct tm *gmtime_r(const time_t *restrict timer, struct tm *restrict result)` | POSIX.1-2024 XSH gmtime_r |
 | [`htonl`](../spec/functions/arpa/inet/htonl.toml) | `<arpa/inet.h>` | `uint32_t htonl(uint32_t value)` | POSIX.1-2024 XSH htonl |
@@ -517,6 +534,10 @@ Specs: 708 of 708 inventoried functions. The inventory covers C17, the named POS
 | [`recv`](../spec/functions/sys/socket/recv.toml) | `<sys/socket.h>` | `ssize_t recv(int fd, void *buffer, size_t length, int flags)` | POSIX.1-2024 XSH recv |
 | [`recvfrom`](../spec/functions/sys/socket/recvfrom.toml) | `<sys/socket.h>` | `ssize_t recvfrom(int fd, void *restrict buffer, size_t length, int flags, struct sockaddr *restrict address, socklen_t *restrict address_length)` | POSIX.1-2024 XSH recvfrom |
 | [`recvmsg`](../spec/functions/sys/socket/recvmsg.toml) | `<sys/socket.h>` | `ssize_t recvmsg(int fd, struct msghdr *message, int flags)` | POSIX.1-2024 XSH recvmsg |
+| [`regcomp`](../spec/functions/regex/regcomp.toml) | `<regex.h>` | `int regcomp(regex_t *restrict expression, const char *restrict pattern, int flags)` | POSIX.1-2024 XSH regcomp |
+| [`regerror`](../spec/functions/regex/regerror.toml) | `<regex.h>` | `size_t regerror(int code, const regex_t *restrict expression, char *restrict buffer, size_t size)` | POSIX.1-2024 XSH regerror |
+| [`regexec`](../spec/functions/regex/regexec.toml) | `<regex.h>` | `int regexec(const regex_t *restrict expression, const char *restrict string, size_t count, regmatch_t *restrict matches, int flags)` | POSIX.1-2024 XSH regexec |
+| [`regfree`](../spec/functions/regex/regfree.toml) | `<regex.h>` | `void regfree(regex_t *expression)` | POSIX.1-2024 XSH regfree |
 | [`remainder`](../spec/functions/math/remainder.toml) | `<math.h>` | `double remainder(double x, double y)` | C17 7.12.10.2 |
 | [`remainderf`](../spec/functions/math/remainderf.toml) | `<math.h>` | `float remainderf(float x, float y)` | C17 7.12.10.2 |
 | [`remainderl`](../spec/functions/math/remainderl.toml) | `<math.h>` | `long double remainderl(long double x, long double y)` | C17 7.12.10.2 |
@@ -715,3 +736,31 @@ Specs: 708 of 708 inventoried functions. The inventory covers C17, the named POS
 | [`wprintf`](../spec/functions/wchar/wprintf.toml) | `<wchar.h>` | `int wprintf(const wchar_t *restrict format, ...)` | C17 7.29.2.11 |
 | [`write`](../spec/functions/unistd/write.toml) | `<unistd.h>` | `ssize_t write(int fd, const void *buf, size_t count)` | POSIX.1-2024 XSH write |
 | [`wscanf`](../spec/functions/wchar/wscanf.toml) | `<wchar.h>` | `int wscanf(const wchar_t *restrict format, ...)` | C17 7.29.2.12 |
+
+## Extension packages
+
+| Function | Header | Prototype | Standard |
+| --- | --- | --- | --- |
+| [`arena_alloc`](../ext/arena/spec/functions/arena_alloc.toml) | `<arena.h>` | `int arena_alloc(size_t *restrict state, size_t size, size_t alignment, void **restrict result)` | Extension ABI arena |
+| [`arena_init`](../ext/arena/spec/functions/arena_init.toml) | `<arena.h>` | `int arena_init(size_t state[3], void *storage, size_t capacity)` | Extension ABI arena |
+| [`arena_reset`](../ext/arena/spec/functions/arena_reset.toml) | `<arena.h>` | `int arena_reset(size_t state[3])` | Extension ABI arena |
+| [`http_find_header_end`](../ext/http/spec/functions/http_find_header_end.toml) | `<http.h>` | `size_t http_find_header_end(const unsigned char *bytes, size_t length)` | Extension ABI http |
+| [`http_is_token_byte`](../ext/http/spec/functions/http_is_token_byte.toml) | `<http.h>` | `unsigned int http_is_token_byte(unsigned char byte)` | Extension ABI http |
+| [`http_parse`](../ext/http/spec/functions/http_parse.toml) | `<http.h>` | `unsigned int http_parse(const unsigned char *bytes, size_t length)` | Extension ABI http |
+| [`json_lex`](../ext/json/spec/functions/json_lex.toml) | `<json.h>` | `int json_lex(const unsigned char *restrict data, size_t length, size_t offset, size_t *restrict record)` | Extension ABI json |
+| [`json_parse`](../ext/json/spec/functions/json_parse.toml) | `<json.h>` | `long json_parse(const unsigned char *restrict data, size_t length, size_t *restrict workspace, size_t frame_capacity, size_t *restrict tokens, size_t token_capacity)` | Extension ABI json |
+| [`json_scan_number`](../ext/json/spec/functions/json_scan_number.toml) | `<json.h>` | `long json_scan_number(const unsigned char *data, size_t length, size_t offset)` | Extension ABI json |
+| [`json_scan_string`](../ext/json/spec/functions/json_scan_string.toml) | `<json.h>` | `long json_scan_string(const unsigned char *data, size_t length, size_t offset)` | Extension ABI json |
+| [`map_get`](../ext/map/spec/functions/map_get.toml) | `<map.h>` | `int map_get(const size_t *restrict state, const unsigned char *key, size_t length, size_t *restrict value)` | Extension ABI map |
+| [`map_init`](../ext/map/spec/functions/map_init.toml) | `<map.h>` | `int map_init(size_t *restrict state, size_t *restrict slots, size_t capacity, size_t seed)` | Extension ABI map |
+| [`map_probe`](../ext/map/spec/functions/map_probe.toml) | `<map.h>` | `long map_probe(const size_t *restrict state, const unsigned char *key, size_t length)` | Extension ABI map |
+| [`map_put`](../ext/map/spec/functions/map_put.toml) | `<map.h>` | `int map_put(size_t *restrict state, size_t *restrict arena_state, const unsigned char *key, size_t length, size_t value)` | Extension ABI map |
+| [`map_remove`](../ext/map/spec/functions/map_remove.toml) | `<map.h>` | `int map_remove(size_t *restrict state, const unsigned char *key, size_t length, size_t *restrict value)` | Extension ABI map |
+| [`slice_find_byte`](../ext/slice/spec/functions/slice_find_byte.toml) | `<slice.h>` | `int slice_find_byte(const unsigned char *bytes, size_t length, unsigned int needle, size_t *restrict offset)` | Extension ABI slice |
+| [`slice_load_u32be`](../ext/slice/spec/functions/slice_load_u32be.toml) | `<slice.h>` | `int slice_load_u32be(const unsigned char *bytes, size_t length, unsigned int *restrict result)` | Extension ABI slice |
+| [`slice_take`](../ext/slice/spec/functions/slice_take.toml) | `<slice.h>` | `int slice_take(const unsigned char **restrict cursor, size_t *restrict available, size_t length, const unsigned char **restrict result)` | Extension ABI slice |
+| [`vector_at`](../ext/vector/spec/functions/vector_at.toml) | `<vector.h>` | `int vector_at(const size_t *restrict state, size_t index, void **restrict result)` | Extension ABI vector |
+| [`vector_init`](../ext/vector/spec/functions/vector_init.toml) | `<vector.h>` | `int vector_init(size_t state[5], size_t element_size, size_t alignment)` | Extension ABI vector |
+| [`vector_pop`](../ext/vector/spec/functions/vector_pop.toml) | `<vector.h>` | `int vector_pop(size_t *restrict state, void *result)` | Extension ABI vector |
+| [`vector_push`](../ext/vector/spec/functions/vector_push.toml) | `<vector.h>` | `int vector_push(size_t *restrict state, size_t *restrict arena_state, const void *element)` | Extension ABI vector |
+| [`vector_reserve`](../ext/vector/spec/functions/vector_reserve.toml) | `<vector.h>` | `int vector_reserve(size_t *restrict state, size_t *restrict arena_state, size_t capacity)` | Extension ABI vector |

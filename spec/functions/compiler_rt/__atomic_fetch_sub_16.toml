@@ -1,0 +1,15 @@
+name = "__atomic_fetch_sub_16"
+header = "compiler_rt.h"
+prototype = "unsigned __int128 __atomic_fetch_sub_16(volatile void *object, unsigned __int128 operand, int order)"
+standard = ["Runtime ABI __atomic_fetch_sub_16"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = false
+oracles = ["reference:compiler-atomic-abi", "diff:libatomic"]
+provenance = "original"
+semantics = ["Atomically replace the 16-byte value with the modular difference and return the previous value.", "Use sequentially consistent ordering and the baseline alignment policy.", "Preserve errno."]
+
+[abi]
+narrow_args = ["ecx:s32"]
+variadic = false

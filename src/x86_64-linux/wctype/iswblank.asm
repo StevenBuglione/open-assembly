@@ -25,6 +25,7 @@ section .text.iswblank alloc exec nowrite progbits
 iswblank:
     mov edi, edi
     sub rsp, 8
+    xor esi, esi          ; select the active locale
     call __al_unicode_mask
     and eax, 4
     add rsp, 8

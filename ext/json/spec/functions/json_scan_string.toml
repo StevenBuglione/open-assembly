@@ -1,0 +1,16 @@
+name = "json_scan_string"
+header = "json.h"
+prototype = "long json_scan_string(const unsigned char *data, size_t length, size_t offset)"
+standard = ["Extension ABI json"]
+deps = []
+errno = []
+mt_safe = true
+as_safe = true
+oracles = ["reference:json-token-model"]
+provenance = "original"
+semantics = ["Scan a quoted byte span using JSON escapes and strict RFC 3629 scalar UTF-8.", "Return its exclusive end offset or a negative error without changing errno."]
+
+[abi]
+narrow_args = []
+variadic = false
+noreturn = false
