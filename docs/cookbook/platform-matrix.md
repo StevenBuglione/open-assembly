@@ -8,7 +8,11 @@ kernel filter is active. The test exercises allocator copy fallback after
 `mremap` returns `ENOSYS` or `EPERM`, realtime fallback after a denied vDSO
 lookup, and unchanged append file contents after `pwritev2` returns
 `ENOSYS`. A second filter denying the raw clock verifies that `time`
-actually uses the fallback. [Linux seccomp filter documentation](https://docs.kernel.org/userspace-api/seccomp_filter.html)
+actually uses the fallback. Additional stacked rules check directory
+`openat` denial, signal-action denial with a successful unchanged query,
+spawn failure before a child is created, `epoll_wait` denial with an
+unchanged output buffer and still-ready `poll` endpoint, and terminal
+`ioctl` denial with an unchanged `termios` buffer. [Linux seccomp filter documentation](https://docs.kernel.org/userspace-api/seccomp_filter.html)
 
 Run `./tools/container --old-kernel make phase11-old-kernel` to exercise
 current native Linux and a separately booted Debian `4.19.0-27-amd64`

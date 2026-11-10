@@ -31,6 +31,11 @@ SECCOMP_CASES = {
     "remap-eperm": "PASS seccomp remap EPERM preserves and moves allocation\n",
     "vdso-eperm": "PASS seccomp vDSO EPERM uses raw clock and publishes EACCES\n",
     "append-enosys": "PASS seccomp pwritev2 ENOSYS leaves append file unchanged\n",
+    "directory-eacces": "PASS seccomp openat EACCES rejects directory open\n",
+    "signal-eperm": "PASS seccomp rt_sigaction EPERM preserves disposition and output\n",
+    "spawn-eperm": "PASS seccomp fork EPERM preserves spawn pid output and creates no child\n",
+    "readiness-eperm": "PASS seccomp epoll_wait EPERM preserves output and poll readiness\n",
+    "terminal-eperm": "PASS seccomp ioctl EPERM preserves terminal output\n",
 }
 
 
@@ -51,7 +56,8 @@ def platform_case(name, filename, required):
 
 def seccomp(directory, runtime, report):
     case = platform_case("seccomp", "seccomp.c", ("__al_syscall", "malloc", "realloc", "free",
-                         "pwrite", "pread", "time", "write", "fcntl"))
+                         "pwrite", "pread", "time", "write", "fcntl", "opendir", "closedir", "sigaction",
+                         "posix_spawn", "waitpid", "epoll_wait", "poll", "tcgetattr"))
     binary, artifacts = build_case(case, directory / "seccomp", runtime, report["commands"])
     report["artifacts"][case.name] = artifacts
     report["kernel_release"] = os.uname().release
