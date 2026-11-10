@@ -1,0 +1,848 @@
+schema = 1
+
+[[case]]
+name = "sync-attr-init"
+sources = ["tests/phase8/sync/attr.c"]
+requires = ["pthread_attr_init"]
+args = ["init"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-attributes"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "sync-attr-destroy"
+sources = ["tests/phase8/sync/attr.c"]
+requires = ["pthread_attr_destroy"]
+args = ["destroy"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-attributes"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The project diagnoses use of a destroyed attribute object. POSIX leaves that use undefined."
+
+[[case]]
+name = "sync-attr-get-detach"
+sources = ["tests/phase8/sync/attr.c"]
+requires = ["pthread_attr_getdetachstate"]
+args = ["get-detach"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-attributes"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "sync-attr-get-guard"
+sources = ["tests/phase8/sync/attr.c"]
+requires = ["pthread_attr_getguardsize"]
+args = ["get-guard"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-attributes"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "sync-attr-get-stack"
+sources = ["tests/phase8/sync/attr.c"]
+requires = ["pthread_attr_getstacksize"]
+args = ["get-stack"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-attributes"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "sync-attr-set-detach"
+sources = ["tests/phase8/sync/attr.c"]
+requires = ["pthread_attr_setdetachstate"]
+args = ["set-detach"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-attributes"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "sync-attr-set-guard"
+sources = ["tests/phase8/sync/attr.c"]
+requires = ["pthread_attr_setguardsize"]
+args = ["set-guard"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-attributes"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "sync-attr-set-stack"
+sources = ["tests/phase8/sync/attr.c"]
+requires = ["pthread_attr_setstacksize"]
+args = ["set-stack"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-attributes"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "sync-mutex-attr-init"
+sources = ["tests/phase8/sync/mutex.c"]
+requires = ["pthread_mutexattr_init"]
+args = ["attr-init"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-mutex"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "sync-mutex-attr-destroy"
+sources = ["tests/phase8/sync/mutex.c"]
+requires = ["pthread_mutexattr_destroy"]
+args = ["attr-destroy"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-mutex"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The project diagnoses use of a destroyed attribute object. POSIX leaves that use undefined."
+
+[[case]]
+name = "sync-mutex-attr-gettype"
+sources = ["tests/phase8/sync/mutex.c"]
+requires = ["pthread_mutexattr_gettype"]
+args = ["attr-gettype"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-mutex"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "sync-mutex-attr-settype"
+sources = ["tests/phase8/sync/mutex.c"]
+requires = ["pthread_mutexattr_settype"]
+args = ["attr-settype"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-mutex"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "sync-mutex-init"
+sources = ["tests/phase8/sync/mutex.c"]
+requires = ["pthread_mutex_init"]
+args = ["init"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-mutex"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "sync-mutex-destroy"
+sources = ["tests/phase8/sync/mutex.c"]
+requires = ["pthread_mutex_destroy"]
+args = ["destroy"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-mutex"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The project diagnoses destroying an owned mutex with EBUSY. POSIX leaves the operation undefined."
+
+[[case]]
+name = "sync-mutex-lock"
+sources = ["tests/phase8/sync/mutex.c"]
+requires = ["pthread_mutex_lock"]
+args = ["lock"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-mutex"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "sync-mutex-trylock"
+sources = ["tests/phase8/sync/mutex.c"]
+requires = ["pthread_mutex_trylock"]
+args = ["trylock"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-mutex"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "sync-mutex-unlock"
+sources = ["tests/phase8/sync/mutex.c"]
+requires = ["pthread_mutex_unlock"]
+args = ["unlock"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-mutex"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "sync-mutex-timedlock"
+sources = ["tests/phase8/sync/mutex.c"]
+requires = ["pthread_mutex_timedlock"]
+args = ["timedlock"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-mutex"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "sync-mutex-clocklock"
+sources = ["tests/phase8/sync/mutex.c"]
+requires = ["pthread_mutex_clocklock"]
+args = ["clocklock"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-mutex"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The pinned musl build has no pthread_mutex_clocklock declaration or symbol."
+
+[[case]]
+name = "sync-mutex-recursive"
+sources = ["tests/phase8/sync/mutex.c"]
+requires = ["pthread_mutexattr_settype", "pthread_mutex_lock", "pthread_mutex_trylock", "pthread_mutex_unlock"]
+args = ["recursive"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-mutex"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "sync-mutex-ownership"
+sources = ["tests/phase8/sync/mutex.c"]
+requires = ["pthread_mutex_lock", "pthread_mutex_trylock", "pthread_mutex_unlock"]
+args = ["ownership"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-mutex"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "sync-mutex-contention"
+sources = ["tests/phase8/sync/mutex.c"]
+requires = ["pthread_mutex_lock", "pthread_mutex_unlock"]
+args = ["contention"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-mutex"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "sync-condition-attr-init"
+sources = ["tests/phase8/sync/condition.c"]
+requires = ["pthread_condattr_init"]
+args = ["attr-init"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-condition"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "sync-condition-attr-destroy"
+sources = ["tests/phase8/sync/condition.c"]
+requires = ["pthread_condattr_destroy"]
+args = ["attr-destroy"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-condition"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The project diagnoses use of a destroyed attribute object. POSIX leaves that use undefined."
+
+[[case]]
+name = "sync-condition-attr-getclock"
+sources = ["tests/phase8/sync/condition.c"]
+requires = ["pthread_condattr_getclock"]
+args = ["attr-getclock"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-condition"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "sync-condition-attr-setclock"
+sources = ["tests/phase8/sync/condition.c"]
+requires = ["pthread_condattr_setclock"]
+args = ["attr-setclock"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-condition"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "sync-condition-attr-invalid-clock"
+sources = ["tests/phase8/sync/condition.c"]
+requires = ["pthread_condattr_setclock"]
+args = ["attr-invalid-clock"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-condition"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Pinned musl accepts INT_MAX and stores it as the clock. The project and pinned glibc return EINVAL and retain CLOCK_MONOTONIC."
+
+[[case]]
+name = "sync-condition-init"
+sources = ["tests/phase8/sync/condition.c"]
+requires = ["pthread_cond_init"]
+args = ["init"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-condition"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "sync-condition-destroy"
+sources = ["tests/phase8/sync/condition.c"]
+requires = ["pthread_cond_destroy"]
+args = ["destroy"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-condition"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The project diagnoses an active waiter with EBUSY. POSIX leaves destroying a condition variable with waiters undefined."
+
+[[case]]
+name = "sync-condition-timedwait"
+sources = ["tests/phase8/sync/condition.c"]
+requires = ["pthread_cond_timedwait"]
+args = ["timedwait"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-condition"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "sync-condition-clockwait"
+sources = ["tests/phase8/sync/condition.c"]
+requires = ["pthread_cond_clockwait"]
+args = ["clockwait"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-condition"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The pinned musl build has no pthread_cond_clockwait declaration or symbol."
+
+[[case]]
+name = "sync-condition-signal"
+sources = ["tests/phase8/sync/condition.c"]
+requires = ["pthread_cond_signal"]
+args = ["signal"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-condition"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "sync-condition-broadcast"
+sources = ["tests/phase8/sync/condition.c"]
+requires = ["pthread_cond_broadcast"]
+args = ["broadcast"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-condition"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "sync-condition-wait"
+sources = ["tests/phase8/sync/condition.c"]
+requires = ["pthread_cond_wait"]
+args = ["wait"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:linux-thread-condition"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "sync-specific-create"
+sources = ["tests/phase8/sync/specific.c"]
+requires = ["pthread_key_create"]
+args = ["create"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:posix-key-generations"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "sync-specific-set"
+sources = ["tests/phase8/sync/specific.c"]
+requires = ["pthread_setspecific"]
+args = ["set"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:posix-key-generations"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "sync-specific-get"
+sources = ["tests/phase8/sync/specific.c"]
+requires = ["pthread_getspecific"]
+args = ["get"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:posix-key-generations"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "sync-specific-delete"
+sources = ["tests/phase8/sync/specific.c"]
+requires = ["pthread_key_delete"]
+args = ["delete"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:posix-key-generations"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The project defines lookup and deletion of an unavailable key. POSIX leaves those operations outside the valid-key contract."
+
+[[case]]
+name = "sync-specific-capacity"
+sources = ["tests/phase8/sync/specific.c"]
+requires = ["pthread_key_create", "pthread_key_delete", "pthread_setspecific", "pthread_getspecific"]
+args = ["capacity"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:posix-key-generations"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The project supports exactly 128 live keys and defines reads and writes to unavailable keys."
+
+[[case]]
+name = "sync-specific-exit"
+sources = ["tests/phase8/sync/specific.c"]
+requires = ["pthread_key_create", "pthread_key_delete", "pthread_setspecific", "pthread_getspecific"]
+args = ["exit"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:posix-key-generations"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "sync-specific-exit-cap"
+sources = ["tests/phase8/sync/specific.c"]
+requires = ["pthread_key_create", "pthread_key_delete", "pthread_setspecific", "pthread_getspecific"]
+args = ["exit-cap"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:posix-key-generations"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The project uses exactly four destructor passes for a destructor that keeps rearming its key."
+
+[[case]]
+name = "sync-once-publication"
+sources = ["tests/phase8/sync/once.c"]
+requires = ["pthread_once"]
+args = ["publication"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:posix-pthread-once"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "sync-once-restart"
+sources = ["tests/phase8/sync/once.c"]
+requires = ["pthread_once"]
+args = ["restart"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:posix-pthread-once"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The project explicitly resets an incomplete once operation when its initializer calls pthread_exit."
+
+[[stub]]
+symbol = "pthread_attr_init"
+case = "sync-attr-init"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "pthread_attr_destroy"
+case = "sync-attr-destroy"
+status = 24
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "pthread_attr_getdetachstate"
+case = "sync-attr-get-detach"
+status = 13
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "pthread_attr_getguardsize"
+case = "sync-attr-get-guard"
+status = 15
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "pthread_attr_getstacksize"
+case = "sync-attr-get-stack"
+status = 16
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "pthread_attr_setdetachstate"
+case = "sync-attr-set-detach"
+status = 17
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "pthread_attr_setguardsize"
+case = "sync-attr-set-guard"
+status = 19
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "pthread_attr_setstacksize"
+case = "sync-attr-set-stack"
+status = 21
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "pthread_mutexattr_init"
+case = "sync-mutex-attr-init"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "pthread_mutexattr_destroy"
+case = "sync-mutex-attr-destroy"
+status = 15
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "pthread_mutexattr_gettype"
+case = "sync-mutex-attr-gettype"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "pthread_mutexattr_settype"
+case = "sync-mutex-attr-settype"
+status = 12
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "pthread_mutex_init"
+case = "sync-mutex-init"
+status = 31
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "pthread_mutex_destroy"
+case = "sync-mutex-destroy"
+status = 38
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "pthread_mutex_lock"
+case = "sync-mutex-lock"
+status = 34
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "pthread_mutex_trylock"
+case = "sync-mutex-trylock"
+status = 34
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "pthread_mutex_unlock"
+case = "sync-mutex-unlock"
+status = 36
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "pthread_mutex_timedlock"
+case = "sync-mutex-timedlock"
+status = 51
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "pthread_mutex_clocklock"
+case = "sync-mutex-clocklock"
+status = 51
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "pthread_condattr_init"
+case = "sync-condition-attr-init"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "pthread_condattr_destroy"
+case = "sync-condition-attr-destroy"
+status = 15
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "pthread_condattr_getclock"
+case = "sync-condition-attr-getclock"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "pthread_condattr_setclock"
+case = "sync-condition-attr-setclock"
+status = 12
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "pthread_cond_init"
+case = "sync-condition-init"
+status = 32
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "pthread_cond_destroy"
+case = "sync-condition-destroy"
+status = 36
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "pthread_cond_timedwait"
+case = "sync-condition-timedwait"
+status = 21
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "pthread_cond_clockwait"
+case = "sync-condition-clockwait"
+status = 21
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "pthread_cond_signal"
+case = "sync-condition-signal"
+status = 38
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "pthread_cond_broadcast"
+case = "sync-condition-broadcast"
+status = 41
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "pthread_cond_wait"
+case = "sync-condition-wait"
+status = 41
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "pthread_key_create"
+case = "sync-specific-create"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "pthread_setspecific"
+case = "sync-specific-set"
+status = 13
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "pthread_getspecific"
+case = "sync-specific-get"
+status = 13
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "pthread_key_delete"
+case = "sync-specific-delete"
+status = 15
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "pthread_once"
+case = "sync-once-publication"
+status = 12
+stdout = ""
+stderr = ""

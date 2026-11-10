@@ -1,0 +1,614 @@
+schema = 1
+
+[[case]]
+name = "c11-thread-create"
+sources = ["tests/phase8/c11/thread.c"]
+requires = ["thrd_create"]
+args = ["create"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-threads"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "c11-thread-current"
+sources = ["tests/phase8/c11/thread.c"]
+requires = ["thrd_current"]
+args = ["current"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-threads"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "c11-thread-equal"
+sources = ["tests/phase8/c11/thread.c"]
+requires = ["thrd_equal"]
+args = ["equal"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-threads"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "c11-thread-join"
+sources = ["tests/phase8/c11/thread.c"]
+requires = ["thrd_join"]
+args = ["join"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-threads"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "c11-thread-exit"
+sources = ["tests/phase8/c11/thread.c"]
+requires = ["thrd_exit"]
+args = ["exit"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = "thread result\n"
+stderr = ""
+oracle = ["reference:c17-threads"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "c11-thread-published"
+sources = ["tests/phase8/c11/thread.c"]
+requires = ["thrd_create", "thrd_current", "thrd_equal", "thrd_join"]
+args = ["published"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-threads"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The project publishes the handle before the C11 callback begins."
+
+[[case]]
+name = "c11-thread-sleep"
+sources = ["tests/phase8/c11/thread.c"]
+requires = ["thrd_sleep"]
+args = ["sleep"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-threads"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "c11-detach-detached"
+sources = ["tests/phase8/c11/detach.c"]
+requires = ["thrd_detach"]
+args = ["detached"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-threads"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "c11-sync-mutex-init"
+sources = ["tests/phase8/c11/sync.c"]
+requires = ["mtx_init"]
+args = ["mutex-init"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-threads"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "c11-sync-mutex-destroy"
+sources = ["tests/phase8/c11/sync.c"]
+requires = ["mtx_destroy"]
+args = ["mutex-destroy"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-threads"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The project publishes a destroyed-object state. Use of the object after destruction is outside the C17 host comparison."
+
+[[case]]
+name = "c11-sync-lock"
+sources = ["tests/phase8/c11/sync.c"]
+requires = ["mtx_lock"]
+args = ["lock"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-threads"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "c11-sync-trylock"
+sources = ["tests/phase8/c11/sync.c"]
+requires = ["mtx_trylock"]
+args = ["trylock"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-threads"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "c11-sync-unlock"
+sources = ["tests/phase8/c11/sync.c"]
+requires = ["mtx_unlock"]
+args = ["unlock"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-threads"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "c11-sync-timedlock"
+sources = ["tests/phase8/c11/sync.c"]
+requires = ["mtx_timedlock"]
+args = ["timedlock"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-threads"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "c11-sync-recursive"
+sources = ["tests/phase8/c11/sync.c"]
+requires = ["mtx_init", "mtx_lock", "mtx_trylock", "mtx_unlock"]
+args = ["recursive"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-threads"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "c11-sync-cond-init"
+sources = ["tests/phase8/c11/sync.c"]
+requires = ["cnd_init"]
+args = ["cond-init"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-threads"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "c11-sync-cond-destroy"
+sources = ["tests/phase8/c11/sync.c"]
+requires = ["cnd_destroy"]
+args = ["cond-destroy"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-threads"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The project publishes a destroyed-object state. Use of the object after destruction is outside the C17 host comparison."
+
+[[case]]
+name = "c11-sync-timedwait"
+sources = ["tests/phase8/c11/sync.c"]
+requires = ["cnd_timedwait"]
+args = ["timedwait"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-threads"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "c11-sync-signal"
+sources = ["tests/phase8/c11/sync.c"]
+requires = ["cnd_signal"]
+args = ["signal"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-threads"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "c11-sync-broadcast"
+sources = ["tests/phase8/c11/sync.c"]
+requires = ["cnd_broadcast"]
+args = ["broadcast"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-threads"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "c11-sync-wait"
+sources = ["tests/phase8/c11/sync.c"]
+requires = ["cnd_wait"]
+args = ["wait"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-threads"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "c11-state-create"
+sources = ["tests/phase8/c11/state.c"]
+requires = ["tss_create"]
+args = ["create"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-threads"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "c11-state-set"
+sources = ["tests/phase8/c11/state.c"]
+requires = ["tss_set"]
+args = ["set"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-threads"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "c11-state-get"
+sources = ["tests/phase8/c11/state.c"]
+requires = ["tss_get"]
+args = ["get"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-threads"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "c11-state-delete"
+sources = ["tests/phase8/c11/state.c"]
+requires = ["tss_delete"]
+args = ["delete"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-threads"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "The project diagnoses invalidated keys. C17 does not specify reading a deleted key."
+
+[[case]]
+name = "c11-state-destructors"
+sources = ["tests/phase8/c11/state.c"]
+requires = ["tss_create", "tss_set", "tss_get", "tss_delete"]
+args = ["destructors"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-threads"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "c11-state-once"
+sources = ["tests/phase8/c11/state.c"]
+requires = ["call_once"]
+args = ["once"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-threads"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "c11-fault-first"
+sources = ["tests/phase8/c11/fault.c"]
+requires = ["thrd_create"]
+args = ["first"]
+link_wraps = ["__al_syscall"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-threads"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Uses the Linux syscall boundary to inject ENOMEM."
+
+[[case]]
+name = "c11-fault-second"
+sources = ["tests/phase8/c11/fault.c"]
+requires = ["thrd_create"]
+args = ["second"]
+link_wraps = ["__al_syscall"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-threads"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Uses the Linux syscall boundary to inject ENOMEM."
+
+[[case]]
+name = "c11-fault-sleep"
+sources = ["tests/phase8/c11/fault.c"]
+requires = ["thrd_sleep"]
+args = ["sleep"]
+link_wraps = ["__al_syscall"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-threads"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Uses the Linux syscall boundary to inject EINTR."
+
+[[case]]
+name = "c11-fault-yield"
+sources = ["tests/phase8/c11/fault.c"]
+requires = ["thrd_yield"]
+args = ["yield"]
+link_wraps = ["__al_syscall"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:c17-threads"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Audits a real Linux scheduler syscall while the observer is armed."
+
+[[stub]]
+symbol = "thrd_create"
+case = "c11-thread-create"
+status = 13
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "thrd_current"
+case = "c11-thread-current"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "thrd_equal"
+case = "c11-thread-equal"
+status = 12
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "thrd_join"
+case = "c11-thread-join"
+status = 16
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "thrd_exit"
+case = "c11-thread-exit"
+status = 0
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "thrd_detach"
+case = "c11-detach-detached"
+status = 14
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "mtx_init"
+case = "c11-sync-mutex-init"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "mtx_destroy"
+case = "c11-sync-mutex-destroy"
+status = 16
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "mtx_lock"
+case = "c11-sync-lock"
+status = 12
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "mtx_trylock"
+case = "c11-sync-trylock"
+status = 12
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "mtx_unlock"
+case = "c11-sync-unlock"
+status = 13
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "mtx_timedlock"
+case = "c11-sync-timedlock"
+status = 15
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "cnd_init"
+case = "c11-sync-cond-init"
+status = 20
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "cnd_destroy"
+case = "c11-sync-cond-destroy"
+status = 21
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "cnd_timedwait"
+case = "c11-sync-timedwait"
+status = 24
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "cnd_signal"
+case = "c11-sync-signal"
+status = 34
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "cnd_broadcast"
+case = "c11-sync-broadcast"
+status = 37
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "cnd_wait"
+case = "c11-sync-wait"
+status = 37
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "tss_create"
+case = "c11-state-create"
+status = 10
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "tss_set"
+case = "c11-state-set"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "tss_get"
+case = "c11-state-get"
+status = 11
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "tss_delete"
+case = "c11-state-delete"
+status = 14
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "call_once"
+case = "c11-state-once"
+status = 22
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "thrd_sleep"
+case = "c11-fault-sleep"
+status = 21
+stdout = ""
+stderr = ""
+
+[[stub]]
+symbol = "thrd_yield"
+case = "c11-fault-yield"
+status = 31
+stdout = ""
+stderr = ""
