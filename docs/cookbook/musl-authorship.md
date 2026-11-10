@@ -32,3 +32,13 @@ and requires it to clear the same thresholds. Neither artifact enters
 the shipped archive. `build/evidence/musl-authorship.json` records the
 scan and `build/evidence/musl-authorship-review.json` binds the review
 queue to that report's SHA-256.
+
+In the initial source-bound review, `setjmp` and `_setjmp` each matched
+11 of 12 normalized instructions in the same musl entry. Both project
+functions save the six callee-saved registers, resumed stack pointer,
+and return address in the order fixed by the project's
+[jump buffer ABI](../adr/0007-linux-files-process-signal-time.md#signals-and-non-local-control-flow).
+The project exports two sibling routines with identical bodies. That
+accounts for the duplicate finding and for much of the instruction
+sequence. Keep both findings visible in the queue; this review changes
+neither the scan threshold nor the source provenance record.
