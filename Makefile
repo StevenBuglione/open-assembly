@@ -89,6 +89,10 @@ production-stat:
 	tools/gate stat
 	tools/gate lstat
 
+.PHONY: production-mbsinit
+production-mbsinit:
+	tools/gate mbsinit
+
 .PHONY: production-wide-core
 production-wide-core:
 	tools/gate wcslen
@@ -108,6 +112,11 @@ production-wide-memory:
 	tools/gate wmemcmp
 	tools/gate wmemset
 
+.PHONY: production-moves
+production-moves:
+	tools/gate memmove
+	tools/gate wmemmove
+
 .PHONY: verify-wide-memory-wrappers
 verify-wide-memory-wrappers:
 	python3 tools/runtime_manifest_gate.py --wide-memory-wrappers
@@ -119,6 +128,17 @@ production-wide-matching:
 	tools/gate wcscspn
 	tools/gate wcspbrk
 	tools/gate wcsstr
+
+.PHONY: production-wide-concat-collate
+production-wide-concat-collate:
+	tools/gate wcscmp
+	tools/gate wcscat
+	tools/gate wcsncat
+	tools/gate wcscoll
+
+.PHONY: verify-wide-collation-wrappers
+verify-wide-collation-wrappers:
+	python3 tools/runtime_manifest_gate.py --wide-collation-wrappers
 
 .PHONY: verify-math-wrappers
 verify-math-wrappers:

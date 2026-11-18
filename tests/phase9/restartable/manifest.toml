@@ -1,0 +1,238 @@
+schema = 1
+stub = []
+
+[[case]]
+name = "restartable-mbrlen-typed-abi"
+sources = ["tests/phase9/restartable/abi.c", "tests/phase2/abi.asm"]
+requires = ["mbrlen"]
+args = ["mbrlen"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["abi:sysv-amd64", "reference:mbstate-transition"]
+backends = ["native", "qemu"]
+host_skip = "The trampoline observes candidate machine state and typed return bits."
+[case.skip]
+valgrind = "A no-op callback reports x87 and MXCSR control differences (probe mask 0x300) in Valgrind and zero on native Linux and QEMU."
+
+[[case]]
+name = "restartable-mbrlen-guard"
+sources = ["tests/phase9/restartable/packets.c"]
+requires = ["mbrlen"]
+args = ["mbrlen", "guard"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition", "reference:linux-guard-pages"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "restartable-mbrlen-contract"
+sources = ["tests/phase9/restartable/packets.c"]
+requires = ["mbrlen"]
+args = ["mbrlen", "contract"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition", "reference:linux-guard-pages"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Project error reset and strict ASCII/Unicode policy are separately checked. Raw host output is retained without inspecting post-error state."
+
+[[case]]
+name = "restartable-mbrlen-fuzz"
+sources = ["tests/phase9/restartable/packets.c"]
+requires = ["mbrlen"]
+args = ["mbrlen"]
+env = {}
+status = 0
+stdin_hex = "00000000000000c000000000000000000b000000000000c0000000000000000000000000000000c000000000000000800b000000000000c00000000000000080"
+stdout = ""
+stdout_hex = "0100000000000000265941310000000000000000000000000100000000000000e592d134b7d63100bc02000000000000000000000000000003000000000000000000000000000000265941310000000000000000000000000100000000000000e48ecb30b6d63100bc020000000000000b0000000000000003000000000000000100000000000000265941310000000000000000000000000100000000000000e592d134b7d63100bc02000000000000000000000000000007000000000000000000000000000000265941310000000000000000000000000100000000000000e48ecb30b6d63100bc020000000000000b000000000000000700000000000000"
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition", "diff:glibc", "diff:musl"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "restartable-mbrtowc-typed-abi"
+sources = ["tests/phase9/restartable/abi.c", "tests/phase2/abi.asm"]
+requires = ["mbrtowc"]
+args = ["mbrtowc"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["abi:sysv-amd64", "reference:mbstate-transition"]
+backends = ["native", "qemu"]
+host_skip = "The trampoline observes candidate machine state and typed return bits."
+[case.skip]
+valgrind = "A no-op callback reports x87 and MXCSR control differences (probe mask 0x300) in Valgrind and zero on native Linux and QEMU."
+
+[[case]]
+name = "restartable-mbrtowc-guard"
+sources = ["tests/phase9/restartable/packets.c"]
+requires = ["mbrtowc"]
+args = ["mbrtowc", "guard"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition", "reference:linux-guard-pages"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "restartable-mbrtowc-contract"
+sources = ["tests/phase9/restartable/packets.c"]
+requires = ["mbrtowc"]
+args = ["mbrtowc", "contract"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition", "reference:linux-guard-pages"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Project error reset and strict ASCII/Unicode policy are separately checked. Raw host output is retained without inspecting post-error state."
+
+[[case]]
+name = "restartable-mbrtowc-fuzz"
+sources = ["tests/phase9/restartable/packets.c"]
+requires = ["mbrtowc"]
+args = ["mbrtowc"]
+env = {}
+status = 0
+stdin_hex = "00000000000000c000000000000000000b000000000000c0000000000000000000000000000000c000000000000000800b000000000000c00000000000000080"
+stdout = ""
+stdout_hex = "0100000000000000410000000000000000000000000000000100000000000000008bd64f06010000bc02000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000000100000000000000bec30c0a05010000bc020000000000000b0000000000000003000000000000000100000000000000410000000000000000000000000000000100000000000000008bd64f06010000bc02000000000000000000000000000007000000000000000000000000000000000000000000000000000000000000000100000000000000bec30c0a05010000bc020000000000000b000000000000000700000000000000"
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition", "diff:glibc", "diff:musl"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "restartable-wcrtomb-typed-abi"
+sources = ["tests/phase9/restartable/abi.c", "tests/phase2/abi.asm"]
+requires = ["wcrtomb"]
+args = ["wcrtomb"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["abi:sysv-amd64", "reference:mbstate-transition"]
+backends = ["native", "qemu"]
+host_skip = "The trampoline observes candidate machine state and typed return bits."
+[case.skip]
+valgrind = "A no-op callback reports x87 and MXCSR control differences (probe mask 0x300) in Valgrind and zero on native Linux and QEMU."
+
+[[case]]
+name = "restartable-wcrtomb-guard"
+sources = ["tests/phase9/restartable/packets.c"]
+requires = ["wcrtomb"]
+args = ["wcrtomb", "guard"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition", "reference:linux-guard-pages"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "restartable-wcrtomb-contract"
+sources = ["tests/phase9/restartable/packets.c"]
+requires = ["wcrtomb"]
+args = ["wcrtomb", "contract"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition", "reference:linux-guard-pages"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Project error reset and strict ASCII/Unicode policy are separately checked. Raw host output is retained without inspecting post-error state."
+
+[[case]]
+name = "restartable-wcrtomb-fuzz"
+sources = ["tests/phase9/restartable/packets.c"]
+requires = ["wcrtomb"]
+args = ["wcrtomb"]
+env = {}
+status = 0
+stdin_hex = "00000000000000c000000000000000000b000000000000c0000000000000000000000000000000c000000000000000800b000000000000c00000000000000080"
+stdout = ""
+stdout_hex = "01000000000000004100000000000000415a5a000000000001000000000000004167265f61010000bc02000000000000000000000000000003000000000000000100000000000000000000000000000000000000000000000100000000000000bfc7120e06010000bc020000000000000b00000000000000030000000000000001000000000000004100000000000000415a5a000000000001000000000000004167265f61010000bc02000000000000000000000000000007000000000000000100000000000000000000000000000000000000000000000100000000000000bfc7120e06010000bc020000000000000b000000000000000700000000000000"
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition", "diff:glibc", "diff:musl"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "restartable-mbsinit-typed-abi"
+sources = ["tests/phase9/restartable/abi.c", "tests/phase2/abi.asm"]
+requires = ["mbsinit"]
+args = ["mbsinit"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["abi:sysv-amd64", "reference:mbstate-transition"]
+backends = ["native", "qemu"]
+host_skip = "The trampoline observes candidate machine state and typed return bits."
+[case.skip]
+valgrind = "A no-op callback reports x87 and MXCSR control differences (probe mask 0x300) in Valgrind and zero on native Linux and QEMU."
+
+[[case]]
+name = "restartable-mbsinit-guard"
+sources = ["tests/phase9/restartable/packets.c"]
+requires = ["mbsinit"]
+args = ["mbsinit", "guard"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition", "reference:linux-guard-pages"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "restartable-mbsinit-contract"
+sources = ["tests/phase9/restartable/packets.c"]
+requires = ["mbsinit"]
+args = ["mbsinit", "contract"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition", "reference:linux-guard-pages"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "Project error reset and strict ASCII/Unicode policy are separately checked. Raw host output is retained without inspecting post-error state."
+
+[[case]]
+name = "restartable-mbsinit-fuzz"
+sources = ["tests/phase9/restartable/packets.c"]
+requires = ["mbsinit"]
+args = ["mbsinit"]
+env = {}
+status = 0
+stdin_hex = "00000000000000c000000000000000000b000000000000c0000000000000000000000000000000c000000000000000800b000000000000c00000000000000080"
+stdout = ""
+stdout_hex = "0100000000000000000000000000000000000000000000000100000000000000bfc7120e06010000bc020000000000000000000000000000030000000000000001000000000000000000000000000000000000000000000002000000000000007c4172af900df49fbc020000000000000b0000000000000003000000000000000100000000000000000000000000000000000000000000000100000000000000bfc7120e06010000bc020000000000000000000000000000070000000000000001000000000000000000000000000000000000000000000002000000000000007c4172af900df49fbc020000000000000b000000000000000700000000000000"
+stderr = ""
+oracle = ["reference:unicode-scalar", "reference:mbstate-transition", "diff:glibc", "diff:musl"]
+backends = ["native", "qemu", "valgrind"]
+host = true

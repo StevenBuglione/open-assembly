@@ -25,13 +25,17 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: ./tools/container tools/gate --protected-base "$BASE_SHA"
+      - name: Check tier readers and process-boundary controls in the pinned PID namespace
+        run: ./tools/container sh -ec 'python3 tests/tooling/test_phase2_manifest_tier.py && python3 tests/tooling/test_tier_process.py && python3 tests/tooling/test_fcntl_tier_session.py'
       - name: Run pinned Phase 0 through Phase 5 gates
         run: ./tools/container make -k phase0 phase1 phase2 phase3 phase4 phase5 production-scalars
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
           name: core-verification-evidence
-          path: build/evidence/
+          path: |
+            build/evidence/
+            build/author/fcntl-tier-session-preflight.json
           if-no-files-found: warn
 
   integration:
@@ -155,7 +159,7 @@ jobs:
           if-no-files-found: error
 
   wide_core_production:
-    name: Wide string core production gates
+    name: Wide core and multibyte state production gates
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -164,9 +168,9 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b
-      - name: Verify full wide string core gates
+      - name: Verify full wide core and multibyte state gates
         timeout-minutes: 25
-        run: ./tools/container make production-wide-core
+        run: ./tools/container sh -ec 'python3 tests/tooling/test_independent_models.py && python3 tests/tooling/test_manifest_references.py && python3 tests/tooling/test_manifest_fixture_audits.py && make production-wide-core production-mbsinit'
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
@@ -176,6 +180,7 @@ jobs:
             build/evidence/wcscmp.production.json
             build/evidence/wcsncmp.production.json
             build/evidence/wmemchr.production.json
+            build/evidence/mbsinit.production.json
           if-no-files-found: error
 
   wide_search_copy:
@@ -203,7 +208,7 @@ jobs:
           if-no-files-found: error
 
   wide_memory:
-    name: Wide memory with scoped copy wrappers
+    name: Wide memory with scoped memcpy wrapper
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -223,8 +228,29 @@ jobs:
             build/evidence/wmemcmp.production.json
             build/evidence/wmemset.production.json
             build/evidence/wmemcpy.wide-memory-wrapper.json
-            build/evidence/wmemmove.wide-memory-wrapper.json
             build/evidence/wide-memory-wrappers.json
+          if-no-files-found: error
+
+  move_production:
+    name: Byte and wide move production gates
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b
+      - name: Verify exact memmove and dependent wmemmove proofs
+        timeout-minutes: 20
+        run: ./tools/container sh -ec 'python3 tests/tooling/test_public_copy_production.py && python3 tests/tooling/test_wide_matching_wrappers.py && python3 tests/tooling/test_verification_tiers.py && make production-moves'
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: move-production-evidence
+          path: |
+            build/evidence/memmove.production.json
+            build/evidence/wmemmove.production.json
           if-no-files-found: error
 
   wide_matching:
@@ -250,6 +276,32 @@ jobs:
             build/evidence/wcscspn.production.json
             build/evidence/wcspbrk.production.json
             build/evidence/wcsstr.production.json
+          if-no-files-found: error
+
+  wide_concat_collate:
+    name: Wide concatenation and collation scopes
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b
+      - name: Verify exact concatenation and collation scopes
+        timeout-minutes: 30
+        run: ./tools/container sh -ec 'python3 tests/tooling/test_wide_collation_dependencies.py && python3 tests/tooling/test_manifest_retention.py && python3 tests/tooling/test_wide_matching_wrappers.py && python3 tests/tooling/test_verification_tiers.py && make production-wide-concat-collate verify-wide-collation-wrappers'
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: wide-concat-collate-scope-evidence
+          path: |
+            build/evidence/wcscmp.production.json
+            build/evidence/wcscat.production.json
+            build/evidence/wcsncat.production.json
+            build/evidence/wcscoll.production.json
+            build/evidence/wcsxfrm.wide-collation-wrapper.json
+            build/evidence/wide-collation-wrappers.json
           if-no-files-found: error
 
   stream_indicators:
@@ -473,7 +525,7 @@ jobs:
   acceptance:
     name: acceptance
     if: always()
-    needs: [core, integration, process_production, pathname_production, wait_exec_production, stat_production, wide_core_production, wide_search_copy, wide_memory, wide_matching, stream_indicators, mathematics, applications, threads, locale, real_programs, network, platform, extensions, extension_formats]
+    needs: [core, integration, process_production, pathname_production, wait_exec_production, stat_production, wide_core_production, wide_search_copy, wide_memory, move_production, wide_matching, wide_concat_collate, stream_indicators, mathematics, applications, threads, locale, real_programs, network, platform, extensions, extension_formats]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions: {}
@@ -487,7 +539,9 @@ jobs:
       WIDE_CORE_PRODUCTION_RESULT: ${{ needs.wide_core_production.result }}
       WIDE_SEARCH_COPY_RESULT: ${{ needs.wide_search_copy.result }}
       WIDE_MEMORY_RESULT: ${{ needs.wide_memory.result }}
+      MOVE_PRODUCTION_RESULT: ${{ needs.move_production.result }}
       WIDE_MATCHING_RESULT: ${{ needs.wide_matching.result }}
+      WIDE_CONCAT_COLLATE_RESULT: ${{ needs.wide_concat_collate.result }}
       STREAM_INDICATORS_RESULT: ${{ needs.stream_indicators.result }}
       MATH_RESULT: ${{ needs.mathematics.result }}
       APPLICATION_RESULT: ${{ needs.applications.result }}
@@ -518,7 +572,11 @@ jobs:
           printf 'Wide search/copy: %s\nWide memory scopes: %s\nWide matching: %s\n' "$WIDE_SEARCH_COPY_RESULT" "$WIDE_MEMORY_RESULT" "$WIDE_MATCHING_RESULT"
           test "$WIDE_SEARCH_COPY_RESULT" = success
           test "$WIDE_MEMORY_RESULT" = success
+          printf 'Byte and wide move production: %s\n' "$MOVE_PRODUCTION_RESULT"
+          test "$MOVE_PRODUCTION_RESULT" = success
           test "$WIDE_MATCHING_RESULT" = success
+          printf 'Wide concatenation and collation scopes: %s\n' "$WIDE_CONCAT_COLLATE_RESULT"
+          test "$WIDE_CONCAT_COLLATE_RESULT" = success
           printf 'Scoped stream indicators: %s\n' "$STREAM_INDICATORS_RESULT"
           test "$STREAM_INDICATORS_RESULT" = success
           test "$MATH_RESULT" = success
