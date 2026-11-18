@@ -170,15 +170,22 @@ def production_status(project, spec, implementation):
                 or candidate.get("source_sha256") != hashes.get(relative_source)
                 or not is_hash(candidate.get(artifact))):
             return False, "production evidence does not bind the candidate"
+        if manifest:
+            from manifest_fixture_audits import check_declared_audits
+            check_declared_audits(spec.name, PLANS[spec.name], checks, hashes)
         if manifest and PLANS[spec.name].private_engine == STAT_ENGINE:
             check_stat_dependency_binding(checks)
         if manifest and PLANS[spec.name].private_engine == WIDE_SPAN_ENGINE:
             from wide_span_production import check_span_dependency_binding
             check_span_dependency_binding(checks)
         if manifest and PLANS[spec.name].required_production:
-            dependencies = manifest_dependency_bindings(PLANS[spec.name].required_production)
+            plan = PLANS[spec.name]
+            dependencies = manifest_dependency_bindings(plan.required_production, bind_runtime=plan.exact_dependencies)
             if checks.get("production_dependencies") != dependencies:
                 return False, "production dependency evidence has changed"
+            if plan.exact_dependencies:
+                from runtime_manifest_gate import check_exact_production_dependencies
+                check_exact_production_dependencies(checks, plan.required_production)
         return True, f"fresh {scope} pass"
     except (ImportError, OSError, ValueError, RecursionError) as error:
         return False, f"malformed or stale production evidence ({error})"

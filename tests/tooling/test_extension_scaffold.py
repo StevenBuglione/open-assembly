@@ -129,7 +129,8 @@ class ExtensionMutationProofs(unittest.TestCase):
                          + ["return-plus-one", "return-minus-one"])
 
     def evaluate(self, killed):
-        spec = SimpleNamespace(prototype="int mutation_control(void)", abi=SimpleNamespace(noreturn=False))
+        spec = SimpleNamespace(name=self.name, prototype="int mutation_control(void)",
+                               abi=SimpleNamespace(noreturn=False))
         case = SimpleNamespace(status=0)
         probe = SimpleNamespace(case=case, stdout=b"", stderr=b"", wraps=())
         plan = SimpleNamespace(mutations=(("probe", (42,)),))

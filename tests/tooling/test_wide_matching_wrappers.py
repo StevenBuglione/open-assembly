@@ -55,12 +55,23 @@ class MatchingWrapperSelection(unittest.TestCase):
 
     def test_memory_copy_batch_stays_scoped(self):
         writes=self.run_cli([],0,"--wide-memory-wrappers")
-        self.assertEqual(set(writes[0][1]["functions"]),{"wmemcpy","wmemmove"})
+        self.assertEqual(set(writes[0][1]["functions"]),{"wmemcpy"})
         self.assertFalse(writes[0][1]["production_verified"])
         self.assertTrue(writes[0][1]["full_scope"])
 
     def test_memory_full_function_is_not_a_scoped_copy(self):
         self.assertEqual(self.run_cli(["wmemset"],2,"--wide-memory-wrappers"),[])
+        self.assertEqual(self.run_cli(["wmemmove"],2,"--wide-memory-wrappers"),[])
+
+    def test_collation_copy_wrapper_stays_scoped(self):
+        writes = self.run_cli([], 0, "--wide-collation-wrappers")
+        self.assertEqual(set(writes[0][1]["functions"]), {"wcsxfrm"})
+        self.assertFalse(writes[0][1]["production_verified"])
+        self.assertTrue(writes[0][1]["full_scope"])
+
+    def test_collation_full_api_and_duplicate_are_rejected(self):
+        self.assertEqual(self.run_cli(["wcscoll"], 2, "--wide-collation-wrappers"), [])
+        self.assertEqual(self.run_cli(["wcsxfrm", "wcsxfrm"], 2, "--wide-collation-wrappers"), [])
 
     def test_duplicate(self):
         self.assertEqual(self.run_cli(["wcscspn", "wcscspn"], 2), [])

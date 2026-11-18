@@ -7,10 +7,12 @@ from pathlib import Path
 import sys
 import tempfile
 from time import time_ns
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "tools"))
+import manifest_audit_fixture
 from failure_journal import hash_json
 from gate import GateError
 from math_production import SCOPE as MATH_WRAPPER_SCOPE, SECONDS as MATH_WRAPPER_SECONDS, WRAPPERS
@@ -22,7 +24,8 @@ from runtime_manifest_gate import (FILENO_DESCRIPTORLESS, FILENO_REVIEW, FUZZ_SE
                                    manifest_dependency_bindings, pending_dependency)
 from verify_tiers import (MANIFEST_PRODUCTION_GROUPS, PHASES, SCOPED_WRAPPER_BATCHES, check_allocator_benchmark,
                           check_authorship, evidence_json, fresh_report, gate, invoke, manifest_production_reports,
-                          math_wrapper_report, scoped_wrapper_report, span_tier_binding, stat_tier_binding)
+                          math_wrapper_report, retained_manifest_leaf, retained_tier_children, scoped_wrapper_report,
+                          span_tier_binding, stat_tier_binding)
 
 
 class TierEvidence(unittest.TestCase):
@@ -118,6 +121,17 @@ class TierEvidence(unittest.TestCase):
                    "obj/internal/__al_stat_query.o": "c" * 64, "obj/rt/__errno_location.o": "c" * 64}
         archive.update({f"obj/posix/{name}.o": "c" * 64
                         for symbols in MANIFEST_PRODUCTION_GROUPS.values() for name in symbols})
+        public_names = {name for symbols in MANIFEST_PRODUCTION_GROUPS.values() for name in symbols}
+        common_sources = {Path(f"src/x86_64-linux/posix/{name}.asm") for name in public_names}
+        common_sources.update((Path("src/x86_64-linux/internal/__al_stat_query.asm"),
+                               Path("src/x86_64-linux/rt/__errno_location.asm")))
+        for source in common_sources:
+            (self.root / source).parent.mkdir(parents=True, exist_ok=True)
+            (self.root / source).write_text(f"source for {source.stem}\n")
+        hashes = snapshot_inputs(self.root, ["Makefile", "devenv.lock", *common_sources,
+                                                  *manifest_audit_fixture.sources(self.root)])
+        self.enterContext(patch("verify_tiers.load_project", return_value=SimpleNamespace(
+            functions={name: SimpleNamespace(deps=()) for name in public_names})))
         functions = {}
         for name, scope, obj in ((STAT_ENGINE, "production-private-dependency", "obj/internal/__al_stat_query.o"),
                                  ("__errno_location", "production-runtime-function", "obj/rt/__errno_location.o")):
@@ -150,9 +164,6 @@ class TierEvidence(unittest.TestCase):
         for symbols in MANIFEST_PRODUCTION_GROUPS.values():
             for name in symbols:
                 source = Path(f"src/x86_64-linux/posix/{name}.asm")
-                (self.root / source).parent.mkdir(parents=True, exist_ok=True)
-                (self.root / source).write_text(f"source for {name}\n")
-                hashes = snapshot_inputs(self.root, ["Makefile", "devenv.lock", source])
                 checks = {key: {"outcome": "pass"} for key in MANIFEST_CHECKS}
                 checks["candidate_build"].update(source=source.as_posix(), source_sha256=hashes[source.as_posix()],
                                                  object_sha256="c" * 64)
@@ -160,12 +171,16 @@ class TierEvidence(unittest.TestCase):
                     elapsed_s=60.01, records=512, runs=["candidate", "glibc", "musl"],
                     sha256={"candidate": "a" * 64, "glibc": "a" * 64, "musl": "a" * 64, "input": "b" * 64})
                 checks["runtime_build"]["artifacts"] = {"first": archive, "second": archive}
+                if MANIFEST_PLANS[name].independent_model is not None:
+                    for check, fields in manifest_audit_fixture.records(hashes).items():
+                        checks[check].update(fields)
                 if MANIFEST_PLANS[name].private_engine == STAT_ENGINE:
                     checks["dependency_closure"] = self.stat_binding
                 if MANIFEST_PLANS[name].private_engine == WIDE_SPAN_ENGINE:
                     checks["dependency_closure"] = self.span_binding
                 if required := MANIFEST_PLANS[name].required_production:
-                    checks["production_dependencies"] = manifest_dependency_bindings(required)
+                    checks["production_dependencies"] = manifest_dependency_bindings(
+                        required, bind_runtime=MANIFEST_PLANS[name].exact_dependencies)
                 record = {**self.data, "scope": "production-runtime-manifest-function", "function": name,
                           "production_verified": True, "inputs": hashes, "checks": checks}
                 path = self.report.parent / f"{name}.production.json"
@@ -181,7 +196,8 @@ class TierEvidence(unittest.TestCase):
                          {"getpid", "getppid", "pipe", "pipe2", "open", "openat", "readlink", "unlink", "rmdir",
                           "waitpid", "wait", "execve", "execv", "fstat", "fstatat", "stat", "lstat",
                           "wcslen", "wcscmp", "wcsncmp", "wmemchr", "wcschr", "wcsrchr", "wcscpy", "wcsncpy",
-                          "wmemcmp", "wmemset", "wcsspn", "wcscspn", "wcspbrk", "wcsstr"})
+                          "wmemcmp", "wmemset", "memmove", "wmemmove", "wcsspn", "wcscspn", "wcspbrk", "wcsstr",
+                          "wcscat", "wcsncat", "wcscoll", "mbsinit"})
         with patch("verify_tiers.time_ns", return_value=self.started):
             for group, symbols in MANIFEST_PRODUCTION_GROUPS.items():
                 with self.subTest(group=group), patch("verify_tiers.invoke") as invoke_gate:
@@ -190,8 +206,100 @@ class TierEvidence(unittest.TestCase):
                     self.assertEqual(invoke_gate.call_args.args[0], ["make", "--no-print-directory", group])
                     self.assertEqual(tuple(result["children"]), symbols)
                     for name, child in result["children"].items():
-                        self.assertEqual(child, {"outcome": "pass", "evidence": f"build/evidence/{name}.production.json",
-                                                 "evidence_sha256": sha256_file(self.root / child["evidence"])})
+                        if group == "production-wide-core" and name == "wcscmp":
+                            self.assertTrue(child["retained"])
+                            self.assertEqual(retained_manifest_leaf(name, child, self.started)["function"], name)
+                        else:
+                            self.assertEqual(child, {"outcome": "pass", "evidence": f"build/evidence/{name}.production.json",
+                                                     "evidence_sha256": sha256_file(self.root / child["evidence"])})
+
+    def test_move_group_requires_current_exact_dependency_and_excludes_scoped_promotion(self):
+        records = self.manifest_reports()
+        group = "production-moves"
+        self.assertEqual(MANIFEST_PRODUCTION_GROUPS[group], ("memmove", "wmemmove"))
+        self.assertEqual(SCOPED_WRAPPER_BATCHES["verify-wide-memory-wrappers"][1], {"wmemcpy"})
+        caller = self.report.parent / "wmemmove.production.json"
+        original = caller.read_bytes()
+        for kind, reason in (
+                ("absent", "exact production dependency evidence changed"),
+                ("second-map", "equal complete candidate runtime builds"),
+                ("wrong-map", "complete runtime map differs from candidate"),
+                ("wrong-object", "caller object is outside the bound runtime map")):
+            changed = deepcopy(records["wmemmove"])
+            checks = changed["checks"]
+            builds = checks["runtime_build"]["artifacts"]
+            if kind == "absent":
+                checks.pop("production_dependencies")
+            elif kind == "second-map":
+                builds["second"] = {**builds["second"], "crt1.o": "0" * 64}
+            elif kind == "wrong-map":
+                builds["first"] = builds["second"] = {**builds["first"], "crt1.o": "0" * 64}
+            else:
+                checks["candidate_build"]["object_sha256"] = "0" * 64
+            caller.write_text(json.dumps(changed))
+            with self.subTest(kind=kind), self.assertRaisesRegex(ValueError, reason):
+                manifest_production_reports(self.started, group)
+        caller.write_bytes(original)
+        dependency = self.report.parent / "memmove.production.json"
+        dependency_bytes = dependency.read_bytes()
+        dependency.write_bytes(dependency_bytes + b" ")
+        with self.assertRaisesRegex(ValueError, "exact production dependency evidence changed"):
+            manifest_production_reports(self.started, group)
+        dependency.write_bytes(dependency_bytes)
+        self.assertEqual(tuple(manifest_production_reports(self.started, group)), ("memmove", "wmemmove"))
+
+    def test_declared_fixture_audits_bind_tier_and_dependency_readers(self):
+        records = self.manifest_reports()
+        path = self.report.parent / "mbsinit.production.json"
+        original = path.read_bytes()
+        self.assertEqual(tuple(manifest_production_reports(self.started, "production-mbsinit")), ("mbsinit",))
+        manifest_dependency_bindings(("mbsinit",), bind_runtime=True)
+        for kind in ("model-missing", "model-false", "reference-missing", "reference-false", "reference-weak"):
+            changed = deepcopy(records["mbsinit"])
+            checks = changed["checks"]
+            if kind == "model-missing":
+                checks["candidate_build"].pop("fixture_independence")
+            elif kind == "model-false":
+                checks["candidate_build"]["fixture_independence"]["outcome"] = "fail"
+            elif kind == "reference-missing":
+                checks["native_oracles"].pop("required_references")
+            elif kind == "reference-false":
+                checks["native_oracles"]["required_references"]["outcome"] = "fail"
+            else:
+                binding = checks["native_oracles"]["required_references"]["bindings"]["multibyte-scalar16"]
+                binding["builds"]["second"]["undefined_symbol"] = {"mbsinit": "w"}
+            path.write_text(json.dumps(changed))
+            with self.subTest(kind=kind), self.assertRaises(ValueError):
+                manifest_production_reports(self.started, "production-mbsinit")
+            with self.subTest(kind=kind, reader="dependency"), self.assertRaises(ValueError):
+                manifest_dependency_bindings(("mbsinit",), bind_runtime=True)
+        path.write_bytes(original)
+        manifest_dependency_bindings(("mbsinit",), bind_runtime=True)
+
+    def test_repeated_core_and_concat_preserve_both_exact_foundation_identities(self):
+        records = self.manifest_reports()
+        canonical = self.report.parent / "wcscmp.production.json"
+        first_bytes = canonical.read_bytes()
+        first_digest = sha256_file(canonical)
+        with patch("verify_tiers.time_ns", return_value=self.started), patch("verify_tiers.invoke"):
+            core = {}
+            gate("production-wide-core", core)
+        self.assertEqual(core["children"]["wcscmp"]["evidence_sha256"], first_digest)
+        changed = deepcopy(records["wcscmp"])
+        changed["synthetic_run_marker"] = "second actual target invocation"
+        canonical.write_text(json.dumps(changed))
+        second_digest = sha256_file(canonical)
+        self.assertNotEqual(second_digest, first_digest)
+        caller = deepcopy(records["wcscoll"])
+        caller["checks"]["production_dependencies"] = manifest_dependency_bindings(("wcscmp",), bind_runtime=True)
+        (self.report.parent / "wcscoll.production.json").write_text(json.dumps(caller))
+        with patch("verify_tiers.time_ns", return_value=self.started), patch("verify_tiers.invoke"):
+            concat = {}
+            gate("production-wide-concat-collate", concat)
+        self.assertEqual(concat["children"]["wcscmp"]["evidence_sha256"], second_digest)
+        retained_tier_children({"production-wide-core": core, "production-wide-concat-collate": concat})
+        self.assertEqual((self.root / core["children"]["wcscmp"]["evidence"]).read_bytes(), first_bytes)
+        self.assertEqual(sha256_file(canonical), second_digest)
 
     def test_manifest_production_rejects_missing_stale_and_incomplete_children(self):
         records = self.manifest_reports()
@@ -216,7 +324,7 @@ class TierEvidence(unittest.TestCase):
 
         for key, value, error in (("scope", "phase6-process", "expected a passing"),
                                   ("function", "pipe", "input snapshot"),
-                                  ("production_verified", False, "timed candidate/glibc/musl"),
+                                  ("production_verified", False, "full manifest leaf must be production verified"),
                                   ("inputs", self.data["inputs"], "input snapshot"),
                                   ("checks", {"abi": {"outcome": "pass"}}, "incomplete manifest production checks")):
             with self.subTest(key=key):

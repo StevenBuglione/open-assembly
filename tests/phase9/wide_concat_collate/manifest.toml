@@ -1,0 +1,196 @@
+schema = 1
+stub = []
+
+[[case]]
+name = "wide-concat-collate-wcscat-typed-abi"
+sources = ["tests/phase9/wide_concat_collate/abi.c", "tests/phase2/abi.asm"]
+requires = ["wcscat"]
+args = ["wcscat"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["abi:sysv-amd64", "reference:wide-object-bounds"]
+backends = ["native", "qemu"]
+host_skip = "The trampoline captures candidate machine state and result bits."
+[case.skip]
+valgrind = "A no-op callback reports x87 and MXCSR control differences (probe mask 0x300) in Valgrind and zero on native Linux and QEMU."
+
+[[case]]
+name = "wide-concat-collate-wcscat-guard"
+sources = ["tests/phase9/wide_concat_collate/packets.c"]
+requires = ["wcscat"]
+args = ["wcscat", "guard"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:wide-object-bounds", "reference:linux-guard-pages"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "wide-concat-collate-wcscat-fuzz"
+sources = ["tests/phase9/wide_concat_collate/packets.c"]
+requires = ["wcscat"]
+args = ["wcscat"]
+env = {}
+status = 0
+stdin_hex = "00000000000000c0000000000000000001000000000000c0000000000000000000000000000000c00000000000000080"
+stdout = ""
+stdout_hex = "000000000000000000000000000000000300000000000000050000000000000000000000000000000000000000000000091f68d73de0a7c3bc020000000000000000000000000000010000000000000001000000000000000100000000000000000000000000000000000000000000000306070401000000bc02000000000000000000000000000000000000000000000300000000000000050000000000000000000000000000000100000000000000091f68d73de0a7c3bc02000000000000"
+stderr = ""
+oracle = ["reference:wide-object-bounds", "diff:glibc", "diff:musl"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "wide-concat-collate-wcsncat-typed-abi"
+sources = ["tests/phase9/wide_concat_collate/abi.c", "tests/phase2/abi.asm"]
+requires = ["wcsncat"]
+args = ["wcsncat"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["abi:sysv-amd64", "reference:wide-object-bounds"]
+backends = ["native", "qemu"]
+host_skip = "The trampoline captures candidate machine state and result bits."
+[case.skip]
+valgrind = "A no-op callback reports x87 and MXCSR control differences (probe mask 0x300) in Valgrind and zero on native Linux and QEMU."
+
+[[case]]
+name = "wide-concat-collate-wcsncat-guard"
+sources = ["tests/phase9/wide_concat_collate/packets.c"]
+requires = ["wcsncat"]
+args = ["wcsncat", "guard"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:wide-object-bounds", "reference:linux-guard-pages"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "wide-concat-collate-wcsncat-fuzz"
+sources = ["tests/phase9/wide_concat_collate/packets.c"]
+requires = ["wcsncat"]
+args = ["wcsncat"]
+env = {}
+status = 0
+stdin_hex = "00000000000000c0000000000000000009000000000000c000000000000000000b000000000000c0000000000000000000000000000000c00000000000000080"
+stdout = ""
+stdout_hex = "00000000000000000000000000000000020000000000000005000000000000000200000000000000000000000000000008184f984538014cbc020000000000000000000000000000090000000000000000000000000000000100000000000000000000000000000000000000000000000203030100000000bc0200000000000000000000000000000b00000000000000010000000000000003000000000000000100000000000000000000000000000004071217928c0986bc0200000000000000000000000000000000000000000000020000000000000005000000000000000200000000000000010000000000000008184f984538014cbc02000000000000"
+stderr = ""
+oracle = ["reference:wide-object-bounds", "diff:glibc", "diff:musl"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "wide-concat-collate-wcscoll-typed-abi"
+sources = ["tests/phase9/wide_concat_collate/abi.c", "tests/phase2/abi.asm"]
+requires = ["wcscoll"]
+args = ["wcscoll"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["abi:sysv-amd64", "reference:wide-object-bounds"]
+backends = ["native", "qemu"]
+host_skip = "The trampoline captures candidate machine state and result bits."
+[case.skip]
+valgrind = "A no-op callback reports x87 and MXCSR control differences (probe mask 0x300) in Valgrind and zero on native Linux and QEMU."
+
+[[case]]
+name = "wide-concat-collate-wcscoll-guard"
+sources = ["tests/phase9/wide_concat_collate/packets.c"]
+requires = ["wcscoll"]
+args = ["wcscoll", "guard"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:wide-object-bounds", "reference:linux-guard-pages"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "wide-concat-collate-wcscoll-fuzz"
+sources = ["tests/phase9/wide_concat_collate/packets.c"]
+requires = ["wcscoll"]
+args = ["wcscoll"]
+env = {}
+status = 0
+stdin_hex = "00000000000000c0000000000000000001000000000000c0000000000000000002000000000000c0000000000000000003000000000000c0000000000000000006000000000000c0000000000000000007000000000000c0000000000000000008000000000000c0000000000000000006000000000000c00000000000000080"
+stdout = ""
+stdout_hex = "ffffffffffffffff000000000000000003000000000000000300000000000000000000000000000000000000000000000e3067908a592509bc020000000000000000000000000000010000000000000001000000000000000100000000000000000000000000000000000000000000000306070401000000bc02000000000000ffffffffffffffff0200000000000000010000000000000003000000000000000000000000000000000000000000000008111a1910060100bc020000000000000100000000000000030000000000000003000000000000000100000000000000000000000000000000000000000000000819282616070100bc02000000000000ffffffffffffffff0600000000000000030000000000000003000000000000000000000000000000000000000000000004091b2f3d3f37aebc02000000000000ffffffffffffffff0700000000000000040000000000000004000000000000000000000000000000000000000000000090bf2fd3606ce32fbc020000000000000000000000000000080000000000000004000000000000000400000000000000000000000000000000000000000000000a297ef8e683b22ebc02000000000000ffffffffffffffff0600000000000000030000000000000003000000000000000000000000000000010000000000000004091b2f3d3f37aebc02000000000000"
+stderr = ""
+oracle = ["reference:wide-object-bounds", "diff:glibc", "diff:musl"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "wide-concat-collate-wcsxfrm-typed-abi"
+sources = ["tests/phase9/wide_concat_collate/abi.c", "tests/phase2/abi.asm"]
+requires = ["wcsxfrm"]
+args = ["wcsxfrm"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["abi:sysv-amd64", "reference:wide-object-bounds"]
+backends = ["native", "qemu"]
+host_skip = "The trampoline captures candidate machine state and result bits."
+[case.skip]
+valgrind = "A no-op callback reports x87 and MXCSR control differences (probe mask 0x300) in Valgrind and zero on native Linux and QEMU."
+
+[[case]]
+name = "wide-concat-collate-wcsxfrm-guard"
+sources = ["tests/phase9/wide_concat_collate/packets.c"]
+requires = ["wcsxfrm"]
+args = ["wcsxfrm", "guard"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:wide-object-bounds", "reference:linux-guard-pages"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "wide-concat-collate-wcsxfrm-fuzz"
+sources = ["tests/phase9/wide_concat_collate/packets.c"]
+requires = ["wcsxfrm"]
+args = ["wcsxfrm"]
+env = {}
+status = 0
+stdin_hex = "00000000000000c0000000000000000001000000000000c0000000000000000007000000000000c0000000000000000000000000000000c00000000000000080"
+stdout = ""
+stdout_hex = "020000000000000000000000000000000300000000000000030000000000000003000000000000000000000000000000cb26590223998609bc020000000000000000000000000000010000000000000001000000000000000100000000000000010000000000000000000000000000000306070401000000bc020000000000000300000000000000070000000000000004000000000000000400000000000000040000000000000000000000000000008b5bbc5110cd3d25bc02000000000000020000000000000000000000000000000300000000000000030000000000000003000000000000000100000000000000cb26590223998609bc02000000000000"
+stderr = ""
+oracle = ["reference:wide-object-bounds", "diff:glibc", "diff:musl"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "wide-concat-collate-wcsxfrm-contract"
+sources = ["tests/phase9/wide_concat_collate/packets.c"]
+requires = ["wcsxfrm"]
+args = ["wcsxfrm", "contract"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:wide-object-bounds", "reference:linux-guard-pages"]
+backends = ["native", "qemu", "valgrind"]
+host_skip = "C17 leaves an inadequate transform destination unspecified. The project no-store rule and raw host buffers are recorded separately."

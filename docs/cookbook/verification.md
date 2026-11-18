@@ -17,7 +17,12 @@ stream lock ownership. The manifests record backend-specific omissions.
 control, 64-bit process and OFD locks, and successful negative process
 group owners. It also exercises the reserved -1 result using the
 container's PID namespace and requires the exact bad-fd stub rejection.
-Evidence is written to `build/evidence/phase6-fcntl.json`.
+Evidence is written to `build/evidence/phase6-fcntl.json`. The two tier targets
+`phase6-fcntl` and `fcntl-production` inherit the pinned container process
+group so the unchanged reserved-owner sentinel observes group 1. Their local
+subreaper and pidfd cleanup is exercised by 13 causal boundary controls and
+the unchanged sentinel under native Linux, QEMU and Memcheck. Other tier
+targets retain their isolated-session launch boundary.
 [Descriptor control fixtures](../../tests/phase6/fcntl/README.md)
 
 The BusyBox gate extracts the pinned 1.37.0 source with networking disabled.
@@ -427,19 +432,34 @@ Run `./tools/container make production-wide-core` for `wcslen`, `wcscmp`,
 source against the candidate and hosted libcs, while the inherited
 Phase 9 C-locale cases retain their original adapter and stub controls.
 
+`./tools/container make production-mbsinit` verifies the self-contained
+restartable-state query with independent opaque-state packets and typed ABI.
+Its model audit binds three freshly compiled model objects and their captured
+headers, with no undefined imports. The unchanged original UTF-16 assertions
+also require a strong public reference and linked text definition in both
+builds. The full queue and tier readers require those declared audit records.
+The other restartable conversion engines retain their separate pending scope.
+
 The next wide-element groups have separate entry points.
 
 ```sh
 ./tools/container make production-wide-search-copy
-./tools/container make production-wide-memory verify-wide-memory-wrappers
+./tools/container make production-wide-memory production-moves verify-wide-memory-wrappers
 ./tools/container make production-wide-matching
+./tools/container make production-wide-concat-collate verify-wide-collation-wrappers
 ```
 
 Search/copy checks cover `wcschr`, `wcsrchr`, `wcscpy`, and `wcsncpy`.
-Memory production checks cover `wmemcmp` and `wmemset`. The companion copy
-wrapper batch keeps `wmemcpy` and `wmemmove` at `production_verified=false`
-with their byte-copy dependency closure pending. Its source entry, own
-mutations, typed ABI, and timed observations remain recorded.
+Memory production checks cover `wmemcmp` and `wmemset`. The separate move
+group runs a fresh `memmove` proof followed by `wmemmove`, which binds the exact
+foundation report, source, object and both complete matching runtime maps.
+The companion copy wrapper batch keeps `wmemcpy` at
+`production_verified=false` with its byte-copy helper closure pending.
+Its source entry, own mutations, typed ABI, and timed observations remain
+recorded. Earlier scoped `wmemmove` reports remain historical evidence.
+The pinned move job permits 20 minutes for both proofs and controls. The
+standalone runs completed two 60-second packet intervals, with 71,680 byte
+packets and 4,305,920 wide packets in their distinct recorded workloads.
 
 Matching checks first rebuild and prove `__al_wide_span`, then verify
 `wcsspn`, `wcscspn`, `wcspbrk`, and `wcsstr`. The span wrappers bind the fresh
@@ -490,6 +510,32 @@ two independently built and audited sets of runtime, PIE startup and
 application artifacts. Its JSON evidence includes fresh per-function
 coverage, mutation summaries, the outstanding inventory, and the declared
 deviations. Both workflows upload evidence even when verification fails.
+
+The concatenation/collation group runs a fresh complete `wcscmp` proof before
+`wcscat`, `wcsncat`, and `wcscoll`. The comparison wrapper binds that exact
+foundation report, its source and object, and both complete matching runtime
+maps. `verify-wide-collation-wrappers` exercises `wcsxfrm` with the shared
+`wmemcpy` dependency pending. Its own mutation probes include the frozen
+argument-only guard and typed ABI. These preserve the original failed 3/4
+selection as separate evidence. The pinned job permits 30 minutes for the
+four full proofs and scoped wrapper. That budget includes five 60-second
+packet intervals. The initial uninterrupted retry took approximately eleven
+minutes and completed four intervals before the scoped mutation shortfall.
+
+During a tier replay, wide-core retains its fully validated self-contained
+`wcscmp` leaf as exact content-addressed bytes. A later concatenation target
+produces its own canonical foundation for `wcscoll`. Each group keeps its
+original report identity. Retention checks the original invocation freshness,
+current complete inputs and runtime maps, function and schema, and hash-named
+file bytes. It rejects nested dependencies, overwritten content, and symlink
+paths. This retention records an executed proof without claiming another run.
+The Phase 2 tier reader dispatches the self-contained `memmove` manifest
+child through the same complete checks and runtime-map binding, while scalar
+children retain their 300-second libFuzzer requirement. Phase 2 retains its
+exact `memmove` leaf before the later move group writes a new canonical proof
+for `wmemmove`. Retained leaves are limited to the reviewed producer for each
+function and keep the parent invocation's original start marker. The raw
+Phase 2 aggregate and its child digests remain unchanged.
 
 Both tiers replay the scoped allocator wrapper and stream indicator batches.
 Each batch validates every fresh child report and its timed packet comparisons

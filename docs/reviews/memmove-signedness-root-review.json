@@ -1,0 +1,66 @@
+{
+  "all_raw_operator_source_hashes": {
+    "comparison-signedness-30": "8d28eded323ca66caf1208bd766bb4efadce5c66083a5ef9b450b501994d872d",
+    "comparison-signedness-36": "00c42a0d80a5f1d1c6976bc8a0ac2151e8577338bd1dfb708fe3a3638b465d79",
+    "invert-branch-27": "6892dfd4fcbc9c3c36e41a23c433b31946b6adac8e59b6dfe8213ded8a8b0757",
+    "invert-branch-29": "d12cba28b0fbd6a96db1a80ff56ebb0e640f15807f6c348d72eb5ad2d9cfd2b9",
+    "invert-branch-30": "79d33914be432130770abb759f5f6c0c7727e6b3ed595cb398f3014bf77ade99",
+    "invert-branch-36": "f0978cc6627c6a4f1f6c400bbdf7f1d45e83b014e258086c6ff762992a179e29",
+    "invert-branch-42": "27fdb83c812a897202ff841e6d36af9e4e51641def741a51a3ac1764129e4064",
+    "invert-branch-51": "fcffb2041cfb27351390c6362e58e872013f94ed3714316fe6d2fbe61d70ea09",
+    "return-minus-one": "b689ced7cbf95e99011e931620fa5c77de43400778a114f1c9ad32a0a2fe801d",
+    "return-plus-one": "b5e178016cc4637ea6e7993bb8003151d3a9405ea06b3f6b78c1107721408653"
+  },
+  "applicable_total_permitted": 8,
+  "approved": true,
+  "case_review": [
+    "n=0 or d=s exits before either changed condition.",
+    "Overlapping valid canonical regions start in the same half, so signed and unsigned pointer order agree.",
+    "On dest>src overlap, 0<dest-src<n<2^63, so signed and unsigned distance/count comparison agree and select backward copying.",
+    "For disjoint regions, either existing loop copies exactly the same n source bytes to corresponding destinations without modifying source bytes.",
+    "RAX retains original destination; saved registers,RSP,DF,FPU control and errno are unchanged by these two condition substitutions."
+  ],
+  "domain": {
+    "abi": "System V AMD64",
+    "architecture": "x86-64",
+    "high_legacy_vsyscall": "included when readable; user pointers are not assumed all low-half",
+    "invalidations": [
+      "different source or exact mutant contents",
+      "tagged noncanonical pointer domain",
+      "target with accessible contiguous region of at least 2^63 bytes"
+    ],
+    "length_bound": "n < 2^63 for a nonempty accessible contiguous region",
+    "os": "Linux",
+    "regions": "valid contiguous nonwrapping source and destination regions of n bytes, or n=0",
+    "virtual_addressing": "48-bit or 57-bit canonical pointers"
+  },
+  "kind": "independently-reviewed-memmove-semantic-equivalence",
+  "primary_source": "https://www.kernel.org/doc/html/v6.6/arch/x86/x86_64/mm.html",
+  "production_verified": false,
+  "proof": {
+    "path": "docs/cookbook/memmove-signedness-domain.md",
+    "sha256": "f01bd370aa52b231d065749ca570f8d788b98b949b8d0766cc3cf447fc9f95ba"
+  },
+  "raw_total_required": 10,
+  "reduced_arithmetic_corroboration": {
+    "abstract_calls": 409504,
+    "candidate_pointer_calls": 0,
+    "role": "corroboration only; 64-bit conclusion follows the case argument",
+    "script_sha256": "c403940819cfc318677cbe1e05295bd9197a3d2f73b91f0a5f6b77ee369a737a"
+  },
+  "retention_rules": [
+    "Execute and retain every raw operator and observation; never relabel equivalent as killed.",
+    "Apply only the two exact reviewed operators when observed as surviving valid probes; any unclassified result or named rejection contradicting the proof fails closed.",
+    "Missing,extra,duplicate,changed or stale source/proof/receipt/operator binding invalidates the adjustment."
+  ],
+  "reviewed_equivalent_operator_source_hashes": {
+    "comparison-signedness-30": "8d28eded323ca66caf1208bd766bb4efadce5c66083a5ef9b450b501994d872d",
+    "comparison-signedness-36": "00c42a0d80a5f1d1c6976bc8a0ac2151e8577338bd1dfb708fe3a3638b465d79"
+  },
+  "reviewer": "root coordinating source and arithmetic review",
+  "schema_version": 1,
+  "source": {
+    "path": "src/x86_64-linux/string/memmove.asm",
+    "sha256": "0d280e67a9e08a4acfc70222ce1b14e27e7225ccb0a38ed46936db51486ea54f"
+  }
+}

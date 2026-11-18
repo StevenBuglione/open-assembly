@@ -16,10 +16,12 @@ import sys
 import tempfile
 from time import monotonic, time_ns
 
+from failure_journal import hash_json
 from extension_abi import stable_abi_evidence
 from extension_build import dependency_order
 from extensions import load_packages
 from gate import BUILD, EVIDENCE, GateError, checked, identify_tools, verify_setup, write_evidence
+from manifest_fixture_audits import check_declared_audits
 from math_production import SCOPE as MATH_WRAPPER_SCOPE, SECONDS as MATH_WRAPPER_SECONDS, WRAPPERS
 from math_production import math_inputs as math_wrapper_inputs
 from musl_authorship import ARCHIVE_SHA256 as MUSL_ARCHIVE_SHA, POLICY as AUTHORSHIP_POLICY
@@ -31,13 +33,15 @@ from phase11_vdso_benchmark import inputs as vdso_inputs
 from production import SCALAR_FUNCTIONS, source_paths
 from runtime_manifest_gate import (ALLOCATOR_FUNCTIONS, FILE_MUTATION_FAILURES, IO_FUNCTIONS,
                                    FUZZ_SECONDS as PACKET_FUZZ_SECONDS, FUZZ_SEED as PACKET_FUZZ_SEED,
-                                   PLANS as MANIFEST_PLANS, WIDE_MEMORY_DEPENDENCIES, WIDE_MEMORY_SUFFIX, WIDE_SPAN_ENGINE,
+                                   PLANS as MANIFEST_PLANS, WIDE_COLLATION_SCOPED, WIDE_COLLATION_SUFFIX,
+                                   WIDE_MEMORY_DEPENDENCIES, WIDE_MEMORY_SUFFIX, WIDE_SPAN_ENGINE,
                                    REQUIRED_CHECKS as MANIFEST_CHECKS, STAT_ENGINE, STREAM_FAILURES, STREAM_WRAPPER_SUFFIX,
-                                   bind_descriptorless_scope, check_stat_archive, manifest_dependency_bindings,
-                                   manifest_inputs, manifest_stat_binding, pending_dependency)
+                                   bind_descriptorless_scope, check_exact_production_dependencies, check_stat_archive, manifest_dependency_bindings,
+                                   manifest_inputs, manifest_stat_binding, pending_dependency, read_manifest_json)
 from wide_span_production import check_span_dependency_binding, span_dependency_bindings
 from upstream_conformance import PINS as UPSTREAM_PINS, inputs as upstream_inputs
 from spec import ROOT, SpecError, has_runtime_entry, load_project, regular_file, relative_path, sha256_file, snapshot_inputs
+from tier_process import inherited_pgid1_run
 
 PHASES = (
     "phase0", "phase1", "phase2", "production-scalars", "production-linux-files", "production-linux-io",
@@ -50,8 +54,9 @@ PHASES = (
     "phase7-exact", "phase7-transcendental", "phase7-complex", "verify-math-wrappers",
     "phase8-lifecycle", "phase8-fork", "phase8-sync", "phase8-c11", "phase8-openposix", "phase8-detectors",
     "phase8-compiler-atomics",
-    "phase9-multibyte", "phase9-bulk", "phase9-worker", "phase9-worker-sync", "phase9-wide", "production-wide-core",
-    "production-wide-search-copy", "production-wide-memory", "verify-wide-memory-wrappers", "production-wide-matching",
+    "phase9-multibyte", "production-mbsinit", "phase9-bulk", "phase9-worker", "phase9-worker-sync", "phase9-wide", "production-wide-core",
+    "production-wide-search-copy", "production-wide-memory", "production-moves", "verify-wide-memory-wrappers", "production-wide-matching",
+    "production-wide-concat-collate", "verify-wide-collation-wrappers",
     "phase9-libc-test", "phase9-stdio", "phase9-narrow-wide", "phase9-wctype",
     "phase10-endpoints", "phase10-inet", "phase10-netdb", "phase10-dns", "phase10-addrconfig",
     "phase10-dns-failover", "phase10-dns-options",
@@ -72,13 +77,19 @@ MANIFEST_PRODUCTION_GROUPS = {
     "production-wait": ("waitpid", "wait"),
     "production-exec": ("execve", "execv"),
     "production-stat": ("fstat", "fstatat", "stat", "lstat"),
+    "production-mbsinit": ("mbsinit",),
     "production-wide-core": ("wcslen", "wcscmp", "wcsncmp", "wmemchr"),
     "production-wide-search-copy": ("wcschr", "wcsrchr", "wcscpy", "wcsncpy"),
     "production-wide-memory": ("wmemcmp", "wmemset"),
+    "production-moves": ("memmove", "wmemmove"),
     "production-wide-matching": ("wcsspn", "wcscspn", "wcspbrk", "wcsstr"),
+    "production-wide-concat-collate": ("wcscmp", "wcscat", "wcsncat", "wcscoll"),
 }
+RETAINED_PRODUCERS = {"wcscmp": "production-wide-core", "memmove": "phase2"}
 SCOPED_WRAPPER_BATCHES = {
-    "verify-wide-memory-wrappers": (WIDE_MEMORY_SUFFIX, frozenset(WIDE_MEMORY_DEPENDENCIES)),
+    "verify-wide-collation-wrappers": (WIDE_COLLATION_SUFFIX, WIDE_COLLATION_SCOPED),
+    "verify-wide-memory-wrappers": (WIDE_MEMORY_SUFFIX, frozenset(
+        name for name in WIDE_MEMORY_DEPENDENCIES if MANIFEST_PLANS[name].private_engine)),
     "verify-allocator-wrappers": ("allocator-wrapper", ALLOCATOR_FUNCTIONS),
     "verify-stream-indicators": (STREAM_WRAPPER_SUFFIX, frozenset(STREAM_FAILURES)),
 }
@@ -192,6 +203,26 @@ def span_tier_binding(started):
     return binding
 
 
+def check_manifest_child(name, record, source):
+    if record.get("production_verified") is not True:
+        raise GateError(f"{name}: full manifest leaf must be production verified")
+    hashes, checks = record["inputs"], record.get("checks")
+    if record.get("function") != name or hashes != manifest_inputs(name):
+        raise GateError(f"{name}: incomplete manifest production identity or input snapshot")
+    if (type(checks) is not dict or not MANIFEST_CHECKS <= checks.keys()
+            or any(type(item) is not dict or item.get("outcome") != "pass" for item in checks.values())):
+        raise GateError(f"{name}: incomplete manifest production checks")
+    source = source.as_posix()
+    candidate = checks["candidate_build"]
+    object_hash = candidate.get("object_sha256")
+    if (candidate.get("source") != source or source not in hashes or candidate.get("source_sha256") != hashes[source]
+            or type(object_hash) is not str or re.fullmatch(r"[0-9a-f]{64}", object_hash) is None):
+        raise GateError(f"{name}: manifest production evidence does not bind the candidate source and object")
+    packet_fuzz(record, name)
+    check_declared_audits(name, MANIFEST_PLANS[name], checks, hashes)
+    return checks
+
+
 def manifest_production_reports(started, group):
     children = {}
     sources = source_paths()
@@ -199,19 +230,7 @@ def manifest_production_reports(started, group):
     span_binding = span_tier_binding(started) if group == "production-wide-matching" else None
     for name in MANIFEST_PRODUCTION_GROUPS[group]:
         path, record = fresh_report(ROOT, f"{name}.production.json", "production-runtime-manifest-function", started)
-        hashes, checks = record["inputs"], record.get("checks")
-        if record.get("function") != name or hashes != manifest_inputs(name):
-            raise GateError(f"{name}: incomplete manifest production identity or input snapshot")
-        if (type(checks) is not dict or not MANIFEST_CHECKS <= checks.keys()
-                or any(type(item) is not dict or item.get("outcome") != "pass" for item in checks.values())):
-            raise GateError(f"{name}: incomplete manifest production checks")
-        source = sources[name].as_posix()
-        candidate = checks["candidate_build"]
-        object_hash = candidate.get("object_sha256")
-        if (candidate.get("source") != source or source not in hashes or candidate.get("source_sha256") != hashes[source]
-                or type(object_hash) is not str or re.fullmatch(r"[0-9a-f]{64}", object_hash) is None):
-            raise GateError(f"{name}: manifest production evidence does not bind the candidate source and object")
-        packet_fuzz(record, name)
+        checks = check_manifest_child(name, record, sources[name])
         if stat_binding is not None:
             if checks.get("dependency_closure") != stat_binding:
                 raise GateError(f"{name}: stat tier dependency binding differs from the fresh proofs")
@@ -224,7 +243,10 @@ def manifest_production_reports(started, group):
             if check_span_dependency_binding(checks) != span_binding:
                 raise GateError(f"{name}: span dependency differs from the fresh helper")
         if required := MANIFEST_PLANS[name].required_production:
-            bindings = manifest_dependency_bindings(required)
+            plan = MANIFEST_PLANS[name]
+            bindings = manifest_dependency_bindings(required, bind_runtime=plan.exact_dependencies)
+            if plan.exact_dependencies:
+                check_exact_production_dependencies(checks, required)
             builds = checks["runtime_build"].get("artifacts")
             first = builds.get("first") if type(builds) is dict else None
             archive = first.get("libopenasm.a") if type(first) is dict else None
@@ -235,6 +257,113 @@ def manifest_production_reports(started, group):
         children[name] = {"outcome": "pass", "evidence": path.relative_to(ROOT).as_posix(),
                           "evidence_sha256": sha256_file(path)}
     return children
+
+
+def self_contained_retained_leaf(name, data):
+    plan = MANIFEST_PLANS.get(name)
+    project = load_project(ROOT)
+    if (name not in RETAINED_PRODUCERS or plan is None or project.functions[name].deps
+            or plan.private_engine or plan.private_helpers or plan.required_production
+            or any(key in data.get("checks", {}) for key in
+                   ("dependency_closure", "production_dependencies", "dependency_coverage_mutation"))):
+        raise GateError("tier retention requires a reviewed self-contained manifest leaf")
+
+
+def retained_manifest_leaf(name, item, started):
+    if (name not in RETAINED_PRODUCERS or type(item) is not dict or item.get("retained") is not True or item.get("outcome") != "pass"
+            or type(item.get("schema_version")) is not int or item["schema_version"] != 1
+            or item.get("function") != name or item.get("scope") != "production-runtime-manifest-function"
+            or type(started) is not int or started <= 0
+            or type(item.get("origin_started_ns")) is not int or item["origin_started_ns"] != started
+            or type(item.get("origin_mtime_ns")) is not int or item["origin_mtime_ns"] < started):
+        raise GateError("invalid retained leaf identity or original freshness marker")
+    digest = item.get("evidence_sha256")
+    if type(digest) is not str or re.fullmatch(r"[0-9a-f]{64}", digest) is None:
+        raise GateError("retained leaf lacks an exact byte identity")
+    relative = EVIDENCE / "tier-retained" / name / f"{digest}.json"
+    if item.get("evidence") != relative.as_posix() or item.get("canonical_evidence") != f"build/evidence/{name}.production.json":
+        raise GateError("retained leaf path does not match its content identity")
+    path = regular_file(ROOT, relative, "retained manifest leaf")
+    raw = path.read_bytes()
+    if sha256_file(path) != digest:
+        raise GateError("retained leaf bytes do not match its filename")
+    data = read_manifest_json(raw)
+    self_contained_retained_leaf(name, data)
+    binding = manifest_dependency_bindings((name,), bind_runtime=True,
+                                          evidence_paths={name: relative})["functions"][name]
+    identity = {key: binding[key] for key in ("source", "source_sha256", "object", "object_sha256",
+                "archive_sha256", "runtime_artifacts_sha256")}
+    if (binding["evidence_sha256"] != digest or item.get("identity") != identity
+            or item.get("inputs_sha256") != hash_json(data["inputs"]) or path.read_bytes() != raw):
+        raise GateError("retained leaf source, runtime maps, inputs or exact bytes changed")
+    packet_fuzz(data, name)
+    return data
+
+
+def retain_manifest_leaf(name, child, started):
+    path, data = fresh_report(ROOT, f"{name}.production.json", "production-runtime-manifest-function", started)
+    self_contained_retained_leaf(name, data)
+    raw = path.read_bytes()
+    digest = sha256_file(path)
+    if (child.get("outcome") != "pass" or child.get("evidence") != path.relative_to(ROOT).as_posix()
+            or child.get("evidence_sha256") != digest):
+        raise GateError("retained leaf differs from this invocation's validated child")
+    binding = manifest_dependency_bindings((name,), bind_runtime=True)["functions"][name]
+    if binding["evidence_sha256"] != digest:
+        raise GateError("retained leaf changed before publication")
+    packet_fuzz(data, name)
+    relative = EVIDENCE / "tier-retained" / name / f"{digest}.json"
+    directory = ROOT
+    for component in relative.parent.parts:
+        directory = directory / component
+        if directory.is_symlink():
+            raise GateError("retained leaf parent must not be a symlink")
+        directory.mkdir(exist_ok=True)
+        if not directory.is_dir():
+            raise GateError("retained leaf parent must be a directory")
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(prefix=f".{digest}-", suffix=".tmp", dir=directory, delete=False) as stream:
+            temporary = Path(stream.name)
+            stream.write(raw)
+            stream.flush()
+            os.fsync(stream.fileno())
+        try:
+            os.link(temporary, ROOT / relative)
+        except FileExistsError:
+            existing = regular_file(ROOT, relative, "existing retained manifest leaf")
+            if existing.read_bytes() != raw:
+                raise GateError("existing content-addressed leaf contains different bytes")
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
+    item = {"outcome": "pass", "retained": True, "schema_version": 1, "function": name,
+            "scope": "production-runtime-manifest-function", "evidence": relative.as_posix(),
+            "evidence_sha256": digest, "canonical_evidence": path.relative_to(ROOT).as_posix(),
+            "origin_started_ns": started, "origin_mtime_ns": path.stat().st_mtime_ns,
+            "inputs_sha256": hash_json(data["inputs"]),
+            "identity": {key: binding[key] for key in ("source", "source_sha256", "object", "object_sha256",
+                         "archive_sha256", "runtime_artifacts_sha256")}}
+    retained_manifest_leaf(name, item, started)
+    return item
+
+
+def retained_tier_children(gates):
+    seen = set()
+    for producer, gate_record in gates.items():
+        children = gate_record.get("children", {})
+        if type(children) is not dict:
+            raise GateError("tier children must be named records")
+        for name, child in children.items():
+            if type(child) is not dict:
+                raise GateError("tier child identity must be a record")
+            evidence = child.get("evidence", "")
+            retained_path = type(evidence) is str and evidence.startswith("build/evidence/tier-retained/")
+            if "retained" in child or retained_path:
+                if RETAINED_PRODUCERS.get(name) != producer or name in seen:
+                    raise GateError("retained leaf has an unexpected or duplicate producer")
+                seen.add(name)
+                retained_manifest_leaf(name, child, gate_record.get("retained_origin_started_ns"))
 
 
 def supplemental_batch(started, name):
@@ -358,8 +487,17 @@ def math_wrapper_report(started):
 
 def phase2_report(started):
     path, data = batch_report(started, "phase2", phase2_functions())
+    sources = source_paths()
     for name, item in data["functions"].items():
-        engine_fuzz(production_child(started, name, "production-function", item), name)
+        if name in MANIFEST_PLANS:
+            record = production_child(started, name, "production-runtime-manifest-function", item)
+            check_manifest_child(name, record, sources[name])
+            self_contained_retained_leaf(name, record)
+            binding = manifest_dependency_bindings((name,), bind_runtime=True)["functions"][name]
+            if binding["evidence_sha256"] != item["evidence_sha256"]:
+                raise GateError(f"{name}: phase2 manifest child changed during validation")
+        else:
+            engine_fuzz(production_child(started, name, "production-function", item), name)
     for field, name, scope in (
         ("shared_integer_scanner", "__al_strtox", "production-private-dependency"),
         ("runtime_tls_accessor", "__errno_location", "production-runtime-function"),
@@ -369,27 +507,32 @@ def phase2_report(started):
     return path, data
 
 
-def invoke(command, record, *, timeout, environment=None):
+def invoke(command, record, *, timeout, environment=None, preserve_pgid1=False):
     started = monotonic()
-    with subprocess.Popen(list(map(str, command)), cwd=ROOT, env=environment,
-                          stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=True) as child:
-        try:
-            stdout, stderr = child.communicate(timeout=timeout)
-        except subprocess.TimeoutExpired:
+    if preserve_pgid1:
+        result = inherited_pgid1_run(command, record, cwd=ROOT, environment=environment, timeout=timeout)
+        stdout, stderr, returncode = result.stdout, result.stderr, result.returncode
+    else:
+        with subprocess.Popen(list(map(str, command)), cwd=ROOT, env=environment,
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=True) as child:
             try:
-                os.killpg(child.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
-            stdout, stderr = child.communicate()
-            record["timed_out"] = True
-    record.update(command=list(map(str, command)), returncode=child.returncode,
+                stdout, stderr = child.communicate(timeout=timeout)
+            except subprocess.TimeoutExpired:
+                try:
+                    os.killpg(child.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+                stdout, stderr = child.communicate()
+                record["timed_out"] = True
+        returncode = child.returncode
+    record.update(command=list(map(str, command)), returncode=returncode,
                   elapsed_seconds=round(monotonic() - started, 3),
                   stdout=stdout.decode(errors="replace"), stderr=stderr.decode(errors="replace"))
     if record.get("timed_out"):
         raise GateError(f"{command[0]} exceeded its {timeout}-second tier budget")
-    if child.returncode:
+    if returncode:
         detail = (record["stderr"] or record["stdout"]).strip()
-        raise GateError(f"{command[0]} exited {child.returncode}: {detail[-1200:]}")
+        raise GateError(f"{command[0]} exited {returncode}: {detail[-1200:]}")
 
 
 def extension_control(commit, record):
@@ -829,13 +972,20 @@ def gate(name, record):
         scope = "phase11-native-warm-vdso-time-benchmark"
     elif name == "scan-musl-authorship":
         filename, scope = "musl-authorship.json", "nightly-same-symbol-musl-authorship-scan"
-    invoke(command, record, timeout=timeout, environment=environment)
+    invoke(command, record, timeout=timeout, environment=environment,
+           preserve_pgid1=name in {"phase6-fcntl", "fcntl-production"})
     if name == "phase2":
-        path, _ = phase2_report(started)
+        path, data = phase2_report(started)
+        record["retained_origin_started_ns"] = started
+        record["children"] = {symbol: retain_manifest_leaf(symbol, item, started)
+                              for symbol, item in data["functions"].items() if symbol in MANIFEST_PLANS}
     elif name in ("production-scalars", "production-linux-files", "production-linux-io"):
         path, _ = supplemental_batch(started, name)
     elif name in MANIFEST_PRODUCTION_GROUPS:
         record["children"] = manifest_production_reports(started, name)
+        if name == "production-wide-core":
+            record["retained_origin_started_ns"] = started
+            record["children"]["wcscmp"] = retain_manifest_leaf("wcscmp", record["children"]["wcscmp"], started)
         if name == "production-stat":
             record["dependencies"] = stat_tier_binding(started)["functions"]
         if name == "production-wide-matching":
@@ -1021,6 +1171,7 @@ def execute(tier, only, tag, old_started, old_status, campaign_root):
             except (GateError, OSError, SpecError, ValueError) as error:
                 item["error"] = str(error)
                 print(f"FAIL {scope} {name}: {error}", file=sys.stderr, flush=True)
+        retained_tier_children(gates)
         checks["production_inventory"] = coverage_and_deviations()
         if evidence["inputs"] != phase1_inputs() or checked([], ["git", "rev-parse", "HEAD"]).strip() != commit:
             raise GateError("verification inputs changed during the tier run")

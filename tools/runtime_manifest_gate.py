@@ -27,7 +27,7 @@ from phase1 import NASM, build_case, build_runtime, load_manifest as load_phase1
 from phase4 import Probe, load_probes, observation, parse_probe
 from phase6 import (ABI_FIXTURES, COMPAT as COMPAT_PUBLIC, COMPAT_FAULT_WRAPPERS, PATH_EXEC,
                     PROCESS as PROCESS_PUBLIC, PUBLIC as FILE_PUBLIC, SUITE as FILE_SUITE, run_cases, run_stubs)
-from phase9 import WIDE as WIDE_PUBLIC
+from phase9 import MULTIBYTE as MULTIBYTE_PUBLIC, WIDE as WIDE_PUBLIC
 from production import CANDIDATE_ROOT, applicable_variants, phase2_inputs, result_type, source_paths
 from spec import ROOT, load_project, regular_file, sha256_file, snapshot_inputs
 
@@ -54,6 +54,11 @@ class Plan:
     required_production: tuple = ()
     original_host_macro: str = "OA_PHASE6_HOST"
     extra_manifests: tuple = ()
+    exact_dependencies: bool = False
+    generated_control: tuple | None = None
+    raw_mutations: bool = False
+    independent_model: Path | None = None
+    required_references: tuple = ()
 
 
 FCNTL = Path("tests/phase6/fcntl")
@@ -161,6 +166,10 @@ WIDE_MATCHING_MUTANTS = {
 WIDE_SUITE = Path("tests/phase9/wide")
 WIDE_SUPPLEMENT = Path("tests/phase9/wide_core")
 WIDE_CONTRACT = Path("docs/adr/0012-c-utf8-multibyte.md")
+WIDE_CONCAT_COLLATE_SUITE = Path("tests/phase9/wide_concat_collate")
+WIDE_CONCAT_COLLATE = frozenset({"wcscat", "wcsncat", "wcscoll", "wcsxfrm"})
+WIDE_COLLATION_SCOPED = frozenset({"wcsxfrm"})
+WIDE_COLLATION_SUFFIX = "wide-collation-wrapper"
 FILE_CONTRACTS = (Path("docs/adr/0007-linux-files-process-signal-time.md"),
                   Path("docs/cookbook/linux-file-verification.md"))
 ALLOCATOR = Path("tests/allocator-production")
@@ -208,8 +217,28 @@ FILENO_DOMAIN_FIXED_INPUTS = (
     "Makefile", "tools/gen", "tools/phase1.py", "tools/spec.py",
     *(str(path) for path in (*STREAM_CONTRACTS, *FILENO_DOMAIN_CONTRACTS)),
 )
-FILENO_DOMAIN_SHA256 = "ae58e23dccecaf6064898da7c151ec2497bffa11c7b7997f6fa214f8498a1ffa"
+FILENO_DOMAIN_SHA256 = "7d31574bf0509035eab3c0a3e6e34d70851b1004d72d2f60e9d71a0b69a6cd5b"
 PLANS = {
+    "mbsinit": Plan(Path("tests/phase9/multibyte"), frozenset(MULTIBYTE_PUBLIC),
+                    (Path("tests/phase2/abi.asm"),), "restartable-mbsinit-typed-abi",
+                    "restartable-mbsinit-guard",
+                    (("restartable-mbsinit-guard", (21, 22, 23, 24, 25)),
+                     ("restartable-mbsinit-typed-abi", (11, 12, 13))),
+                    "restartable-mbsinit-fuzz", (16, 64), (WIDE_CONTRACT,),
+                    supplement=Path("tests/phase9/restartable"), abi_result=True,
+                    original_host_macro="OA_PHASE9_HOST",
+                    independent_model=Path("tests/phase9/restartable/model.c"),
+                    required_references=(("multibyte-scalar16", "mbsinit"),)),
+    "memmove": Plan(Path("tests/phase2/copy_bulk"), frozenset({"memcpy", "wmemcpy", "memmove"}),
+                    (Path("tests/phase2/abi.asm"),), "copy-bulk-memmove-typed-abi",
+                    "copy-bulk-memmove-ordinary",
+                    (("copy-bulk-memmove-ordinary", (21, 22, 23)),
+                     ("copy-bulk-memmove-typed-abi", (11, 12, 13))),
+                    "copy-bulk-memmove-fuzz", (16, 64), (Path("docs/adr/0002-runtime-abi.md"),
+                    Path("docs/cookbook/memmove-signedness-domain.md"),
+                    Path("docs/reviews/memmove-signedness-root-review.json")),
+                    abi_result=True, generated_control=("copy-bulk-memmove-ordinary", (21, b"", b"")),
+                    raw_mutations=True),
     **{name: Plan(FILE_SUITE, frozenset(FILE_PUBLIC), ABI_FIXTURES,
                   "file-abi", f"file-{name}", ((f"file-{name}", codes),),
                   f"file-{name}-fuzz", (16, 24), FILE_CONTRACTS,
@@ -300,9 +329,12 @@ PLANS = {
                   ((f"wide-memory-{name}-typed-abi", (11, 12, 13)),),
                   f"wide-memory-{name}-fuzz", (16, 64), (WIDE_CONTRACT,),
                   supplement=WIDE_MEMORY_SUITE, abi_result=True, original_host_macro="OA_PHASE9_HOST",
-                  private_engine=WIDE_MEMORY_DEPENDENCIES.get(name, ""), wrapper_suffix=WIDE_MEMORY_SUFFIX,
+                  private_engine=WIDE_MEMORY_DEPENDENCIES.get(name, "") if name != "wmemmove" else "",
+                  wrapper_suffix=WIDE_MEMORY_SUFFIX,
                   private_helpers=("__al_memcpy_bulk",) if name == "wmemcpy" else (),
-                  semantic_mutants=WIDE_MEMORY_MUTANTS if name in WIDE_MEMORY_DEPENDENCIES else ())
+                  semantic_mutants=WIDE_MEMORY_MUTANTS if name in WIDE_MEMORY_DEPENDENCIES else (),
+                  required_production=("memmove",) if name == "wmemmove" else (),
+                  exact_dependencies=name == "wmemmove")
        for name in WIDE_MEMORY},
     **{name: Plan(WIDE_SUITE, frozenset(WIDE_PUBLIC), (Path("tests/phase2/abi.asm"),),
                   f"wide-matching-{name}-typed-abi", f"wide-matching-{name}-guard",
@@ -322,6 +354,17 @@ PLANS = {
                     "wide-matching-wcsstr-fuzz", (16, 64), (WIDE_CONTRACT,),
                     supplement=WIDE_MATCHING_SUITE, abi_result=True, original_host_macro="OA_PHASE9_HOST",
                     extra_manifests=(Path("tests/phase9/wide_matching_control"),)),
+    **{name: Plan(WIDE_SUITE, frozenset(WIDE_PUBLIC), (Path("tests/phase2/abi.asm"),),
+                  f"wide-concat-collate-{name}-typed-abi", f"wide-concat-collate-{name}-guard",
+                  ((f"wide-concat-collate-{name}-typed-abi", (11, 12, 13)),) +
+                  (((f"wide-concat-collate-{name}-guard", (21, 22, 23)),) if name == "wcsxfrm" else ()),
+                  f"wide-concat-collate-{name}-fuzz", (16, 64), (WIDE_CONTRACT,),
+                  supplement=WIDE_CONCAT_COLLATE_SUITE, abi_result=True, original_host_macro="OA_PHASE9_HOST",
+                  private_engine="wmemcpy" if name == "wcsxfrm" else "", wrapper_suffix=WIDE_COLLATION_SUFFIX,
+                  private_helpers=("wcslen", "memcpy", "__al_memcpy_bulk") if name == "wcsxfrm" else (),
+                  required_production=("wcscmp",) if name == "wcscoll" else (),
+                  exact_dependencies=name == "wcscoll")
+       for name in WIDE_CONCAT_COLLATE},
     "fcntl": Plan(
         FCNTL, frozenset({"fcntl"}), (Path("tests/phase2/abi.asm"), FCNTL / "variadic.asm"),
         "fcntl-abi", "fcntl-dispatch",
@@ -381,10 +424,12 @@ def check_stat_dependency_binding(checks):
     check_stat_archive(current, artifacts["first"])
 
 
-def manifest_dependency_bindings(names):
+def manifest_dependency_bindings(names, *, bind_runtime=False, evidence_paths=None):
+    if evidence_paths is not None and (type(evidence_paths) is not dict or evidence_paths.keys() != set(names)):
+        raise ValueError("production dependency paths must name exactly the requested functions")
     bindings = {}
     for name in names:
-        relative = EVIDENCE / f"{name}.production.json"
+        relative = Path(evidence_paths[name]) if evidence_paths is not None else EVIDENCE / f"{name}.production.json"
         raw = regular_file(ROOT, relative, "manifest production dependency").read_bytes()
         record = read_manifest_json(raw)
         inputs = manifest_inputs(name)
@@ -409,6 +454,8 @@ def manifest_dependency_bindings(names):
                 or any(type(value) is not str or re.fullmatch(r"[0-9a-f]{64}", value) is None
                        for value in (archive, object_hash)) or first != builds.get("second")):
             raise ValueError(f"{name}: manifest production dependency does not bind the source and archive")
+        from manifest_fixture_audits import check_declared_audits
+        check_declared_audits(name, PLANS[name], checks, inputs)
         if PLANS[name].private_engine == STAT_ENGINE:
             check_stat_dependency_binding(checks)
         if PLANS[name].private_engine == WIDE_SPAN_ENGINE:
@@ -416,7 +463,48 @@ def manifest_dependency_bindings(names):
             check_span_dependency_binding(checks)
         bindings[name] = {"evidence": relative.as_posix(), "evidence_sha256": sha256(raw).hexdigest(),
                           "archive_sha256": archive}
+        if bind_runtime:
+            from stat_query_production import stat_runtime_artifacts
+
+            object_path = (Path("obj") / Path(source).relative_to(CANDIDATE_ROOT).with_suffix(".o")).as_posix()
+            if (builds.keys() != {"first", "second"} or first.keys() != stat_runtime_artifacts(inputs)
+                    or any(type(value) is not str or re.fullmatch(r"[0-9a-f]{64}", value) is None
+                           for value in first.values()) or first.get(object_path) != object_hash):
+                raise ValueError(f"{name}: production dependency lacks its complete runtime member identity")
+            bindings[name].update(source=source, source_sha256=inputs[source], object=object_path,
+                                  object_sha256=object_hash, runtime_artifacts_sha256=hash_json(first))
     return {"outcome": "pass", "functions": bindings}
+
+
+def check_production_dependency_archive(binding, artifacts):
+    if type(artifacts) is not dict:
+        raise ValueError("production dependency candidate runtime map is missing")
+    for name, item in binding["functions"].items():
+        if item["archive_sha256"] != artifacts.get("libopenasm.a"):
+            raise ValueError(f"{name}: production dependency archive differs from candidate runtime")
+        if "runtime_artifacts_sha256" in item and (
+                hash_json(artifacts) != item["runtime_artifacts_sha256"]
+                or artifacts.get(item["object"]) != item["object_sha256"]):
+            raise ValueError(f"{name}: production dependency complete runtime map differs from candidate")
+
+
+def check_exact_production_dependencies(checks, names):
+    binding = manifest_dependency_bindings(names, bind_runtime=True)
+    if checks.get("production_dependencies") != binding:
+        raise ValueError("exact production dependency evidence changed")
+    builds = checks.get("runtime_build", {}).get("artifacts")
+    if (type(builds) is not dict or builds.keys() != {"first", "second"}
+            or type(builds["first"]) is not dict or builds["first"] != builds["second"]):
+        raise ValueError("exact production dependency requires equal complete candidate runtime builds")
+    check_production_dependency_archive(binding, builds["first"])
+    candidate = checks.get("candidate_build")
+    source = candidate.get("source") if type(candidate) is dict else None
+    if type(source) is not str or not Path(source).is_relative_to(CANDIDATE_ROOT):
+        raise ValueError("exact production dependency caller source is missing")
+    object_path = (Path("obj") / Path(source).relative_to(CANDIDATE_ROOT).with_suffix(".o")).as_posix()
+    if object_path not in builds["first"] or candidate.get("object_sha256") != builds["first"][object_path]:
+        raise ValueError("exact production dependency caller object is outside the bound runtime map")
+    return binding
 
 
 def phase1_probe(case):
@@ -427,8 +515,18 @@ def phase1_probe(case):
 def load_plan_probes(function, plan, *, required_cases=None, extra_controls=None):
     parse = partial(parse_probe, suite=plan.suite, programs=(), asm_fixtures=plan.assembly,
                     fault_wrappers=dict(plan.fault_wrappers), allow_fixture_files=True)
-    probes, controls = load_probes(plan.suite / "manifest.toml", plan.public, parse)
+    probes, controls = load_probes(plan.suite / "manifest.toml", plan.public, parse,
+                                   supplement=plan.generated_control is not None)
+    if plan.generated_control is not None:
+        from public_copy_production import validate_manifest
+        validate_manifest(function, plan, probes)
     selected = {probe.case.name: probe for probe in probes if function in probe.case.requires}
+    if plan.required_references:
+        from manifest_references import select_required_references
+        selected.update(select_required_references(function, plan, probes))
+    if plan.generated_control is not None:
+        from public_copy_production import generated_control
+        generated_control(function, plan, selected, controls)
     for index, suite in enumerate((plan.supplement, *plan.extra_manifests)):
         if suite is None or (required_cases is not None and not required_cases - selected.keys()):
             continue
@@ -548,6 +646,9 @@ def semantic_variants(source, replacements):
 
 def mutate_function(name, spec, source, original, probes, plan, directory, runtime, record, *,
                     run_equivalent=False, semantic_mutants=(), isolate_candidate=False):
+    if getattr(plan, "raw_mutations", False):
+        from public_copy_production import raw_mutation_campaign
+        return raw_mutation_campaign(name, spec, source, original, probes, plan, directory, runtime, record)
     directory.mkdir()
     returns_value = result_type(spec) != "void" and not spec.abi.noreturn
     variants = applicable_variants(name, source, record, returns_value=returns_value, run_equivalent=run_equivalent)
@@ -726,7 +827,8 @@ def runtime_manifest_production(function, only=None, *, attempt=None, wrapper_on
             if plan.required_production:
                 if not set(plan.required_production) <= set(spec.deps):
                     raise GateError(f"{function}: undeclared required production dependency")
-                dependencies = checks["production_dependencies"] = manifest_dependency_bindings(plan.required_production)
+                dependencies = checks["production_dependencies"] = manifest_dependency_bindings(
+                    plan.required_production, bind_runtime=plan.exact_dependencies)
         required_cases = {"coverage": {plan.trace}, "mutation": {case for case, _ in plan.mutations},
                           "stub": set(), "fuzz": {plan.fuzz}}
         selected = {plan.abi}.union(*required_cases.values()) if only is None else required_cases[only]
@@ -750,9 +852,8 @@ def runtime_manifest_production(function, only=None, *, attempt=None, wrapper_on
                 build["artifacts"]["second"] = second[3]
                 if runtime[3] != second[3]:
                     raise GateError(f"{function}: repeated runtime artifacts differ")
-                if dependencies is not None and any(item["archive_sha256"] != runtime[3]["libopenasm.a"]
-                                                    for item in dependencies["functions"].values()):
-                    raise GateError(f"{function}: runtime archive differs from its production dependency")
+                if dependencies is not None:
+                    check_production_dependency_archive(dependencies, runtime[3])
                 if stat_binding is not None:
                     check_stat_archive(stat_binding, runtime[3])
                 if span_binding is not None:
@@ -764,6 +865,14 @@ def runtime_manifest_production(function, only=None, *, attempt=None, wrapper_on
             checked(candidate["commands"], ["tools/lint", source])
             candidate.update(outcome="pass", source=str(source), source_sha256=sha256_file(source),
                              object_sha256=sha256_file(original))
+            if plan.independent_model is not None:
+                from fixture_model import audit_model
+                candidate["fixture_independence"] = audit_model(plan.independent_model, directory,
+                                                               candidate["commands"], evidence["inputs"])
+            if plan.generated_control is not None:
+                from public_copy_production import audit_model
+                candidate["fixture_independence"] = audit_model(plan.suite / "model.c", directory,
+                                                               candidate["commands"])
 
             if only is None:
                 for check, cases in (("native_oracles", [probe for key, probe in probes.items() if key != plan.abi]),
@@ -773,6 +882,10 @@ def runtime_manifest_production(function, only=None, *, attempt=None, wrapper_on
                     record = checks[check] = {"outcome": "fail", "cases": {}}
                     run_cases(cases, target, runtime, second, runners, record["cases"],
                               host_macro=partial(manifest_host_macro, plan), classify_native=True)
+                    if check == "native_oracles" and plan.required_references:
+                        from manifest_references import audit_required_references
+                        record["required_references"] = audit_required_references(function, plan, probes,
+                                                                                 target, record["cases"])
                     if check == "abi" and plan.abi_result:
                         probe = probes[plan.abi].case
                         objects = [target / plan.abi / "first" / f"test-{index}.o"
@@ -811,7 +924,8 @@ def runtime_manifest_production(function, only=None, *, attempt=None, wrapper_on
             check_stat_dependency_binding(checks)
         if span_binding is not None and span_binding != span_dependency_bindings():
             raise GateError("wide span dependency evidence changed during verification")
-        if dependencies is not None and dependencies != manifest_dependency_bindings(plan.required_production):
+        if dependencies is not None and dependencies != manifest_dependency_bindings(
+                plan.required_production, bind_runtime=plan.exact_dependencies):
             raise GateError(f"{function}: production dependency evidence changed during verification")
         required = REQUIRED_CHECKS - {"branch_coverage"} if function == "fileno" and wrapper_only else REQUIRED_CHECKS
         if only is None and (not required <= checks.keys()
@@ -871,8 +985,14 @@ if __name__ == "__main__":
     modes.add_argument("--stat-wrappers", action="store_true")
     modes.add_argument("--wide-memory-wrappers", action="store_true")
     modes.add_argument("--wide-matching-wrappers", action="store_true")
+    modes.add_argument("--wide-collation-wrappers", action="store_true")
     parser.add_argument("functions", nargs="*")
     args = parser.parse_args()
+    if args.wide_collation_wrappers:
+        selected = tuple(args.functions) if args.functions else tuple(sorted(WIDE_COLLATION_SCOPED))
+        if len(set(selected)) != len(selected) or not set(selected) <= WIDE_COLLATION_SCOPED:
+            parser.error("wide collation wrappers require unique supported function names")
+        raise SystemExit(wrapper_batch(selected, WIDE_COLLATION_SCOPED, WIDE_COLLATION_SUFFIX, "Wide collation"))
     if args.getcwd_wrapper or args.execvp_wrapper:
         name = "getcwd" if args.getcwd_wrapper else "execvp"
         if args.functions:
@@ -881,7 +1001,8 @@ if __name__ == "__main__":
     if args.allocator_wrappers:
         available, suffix, label = ALLOCATOR_FUNCTIONS, "allocator-wrapper", "Allocator"
     elif args.wide_memory_wrappers:
-        available, suffix, label = WIDE_MEMORY_DEPENDENCIES.keys(), WIDE_MEMORY_SUFFIX, "Wide memory"
+        available = frozenset(name for name in WIDE_MEMORY_DEPENDENCIES if PLANS[name].private_engine)
+        suffix, label = WIDE_MEMORY_SUFFIX, "Wide memory"
     elif args.wide_matching_wrappers:
         available, suffix, label = frozenset(WIDE_MATCHING), WIDE_MATCHING_SUFFIX, "Wide matching"
     elif args.stat_wrappers:

@@ -1,0 +1,179 @@
+schema = 1
+stub = []
+
+[[case]]
+name = "copy-bulk-memcpy-typed-abi"
+sources = ["tests/phase2/copy_bulk/abi.c", "tests/phase2/abi.asm"]
+requires = ["memcpy"]
+args = ["memcpy"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:byte-ranges", "reference:wide-object-bounds", "abi:sysv-amd64"]
+backends = ["native", "qemu"]
+host_skip = "The shared typed trampoline checks candidate machine state and captured return bits."
+[case.skip]
+valgrind = "A no-op callback reports control-state mask 0x300 under Valgrind; native and QEMU report zero."
+
+[[case]]
+name = "copy-bulk-memcpy-ordinary"
+sources = ["tests/phase2/copy_bulk/packets.c"]
+requires = ["memcpy"]
+args = ["memcpy", "ordinary"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:byte-ranges", "reference:wide-object-bounds", "abi:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "copy-bulk-memcpy-guard"
+sources = ["tests/phase2/copy_bulk/packets.c"]
+requires = ["memcpy"]
+args = ["memcpy", "guard"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:byte-ranges", "reference:wide-object-bounds", "abi:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "copy-bulk-memcpy-fuzz"
+sources = ["tests/phase2/copy_bulk/packets.c"]
+requires = ["memcpy"]
+args = ["memcpy"]
+env = {}
+status = 0
+stdin_hex = "0200000000000000c500000000000000"
+stdout = ""
+stdout_hex = "000000000000000001000000000000000100000000000000450000000000000046000000000000000000000000000000bee3688508714cd3dc80b85c5b2348b6"
+stderr = ""
+oracle = ["reference:byte-ranges", "reference:wide-object-bounds", "abi:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "copy-bulk-wmemcpy-typed-abi"
+sources = ["tests/phase2/copy_bulk/abi.c", "tests/phase2/abi.asm"]
+requires = ["wmemcpy"]
+args = ["wmemcpy"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:byte-ranges", "reference:wide-object-bounds", "abi:sysv-amd64"]
+backends = ["native", "qemu"]
+host_skip = "The shared typed trampoline checks candidate machine state and captured return bits."
+[case.skip]
+valgrind = "A no-op callback reports control-state mask 0x300 under Valgrind; native and QEMU report zero."
+
+[[case]]
+name = "copy-bulk-wmemcpy-ordinary"
+sources = ["tests/phase2/copy_bulk/packets.c"]
+requires = ["wmemcpy"]
+args = ["wmemcpy", "ordinary"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:byte-ranges", "reference:wide-object-bounds", "abi:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "copy-bulk-wmemcpy-guard"
+sources = ["tests/phase2/copy_bulk/packets.c"]
+requires = ["wmemcpy"]
+args = ["wmemcpy", "guard"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:byte-ranges", "reference:wide-object-bounds", "abi:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "copy-bulk-wmemcpy-fuzz"
+sources = ["tests/phase2/copy_bulk/packets.c"]
+requires = ["wmemcpy"]
+args = ["wmemcpy"]
+env = {}
+status = 0
+stdin_hex = "0200000000000000c500000000000000"
+stdout = ""
+stdout_hex = "000000000000000004000000000000000100000000000000440000000000000044000000000000000000000000000000bee3688508714cd36948d3735aecec9d"
+stderr = ""
+oracle = ["reference:byte-ranges", "reference:wide-object-bounds", "abi:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "copy-bulk-memmove-typed-abi"
+sources = ["tests/phase2/copy_bulk/abi.c", "tests/phase2/abi.asm"]
+requires = ["memmove"]
+args = ["memmove"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:byte-ranges", "reference:wide-object-bounds", "abi:sysv-amd64"]
+backends = ["native", "qemu"]
+host_skip = "The shared typed trampoline checks candidate machine state and captured return bits."
+[case.skip]
+valgrind = "A no-op callback reports control-state mask 0x300 under Valgrind; native and QEMU report zero."
+
+[[case]]
+name = "copy-bulk-memmove-ordinary"
+sources = ["tests/phase2/copy_bulk/packets.c"]
+requires = ["memmove"]
+args = ["memmove", "ordinary"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:byte-ranges", "reference:wide-object-bounds", "abi:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "copy-bulk-memmove-guard"
+sources = ["tests/phase2/copy_bulk/packets.c"]
+requires = ["memmove"]
+args = ["memmove", "guard"]
+env = {}
+status = 0
+stdin_hex = ""
+stdout = ""
+stderr = ""
+oracle = ["reference:byte-ranges", "reference:wide-object-bounds", "abi:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
+
+[[case]]
+name = "copy-bulk-memmove-fuzz"
+sources = ["tests/phase2/copy_bulk/packets.c"]
+requires = ["memmove"]
+args = ["memmove"]
+env = {}
+status = 0
+stdin_hex = "0200000000000000c500000000000000"
+stdout = ""
+stdout_hex = "000000000000000001000000000000000100000000000000450000000000000046000000000000000000000000000000bee3688508714cd3dc80b85c5b2348b6"
+stderr = ""
+oracle = ["reference:byte-ranges", "reference:wide-object-bounds", "abi:sysv-amd64"]
+backends = ["native", "qemu", "valgrind"]
+host = true
